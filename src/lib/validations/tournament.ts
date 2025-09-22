@@ -13,6 +13,15 @@ export const tournamentFormSchema = z.object({
   ], {
     message: "El tipo de torneo es requerido"
   }),
+  status: z.enum([
+    "DRAFT",
+    "PUBLISHED",
+    "REGISTRATION_OPEN",
+    "REGISTRATION_CLOSED",
+    "IN_PROGRESS",
+    "COMPLETED",
+    "CANCELLED"
+  ]).optional(),
   visibility: z.enum(["PUBLIC", "PRIVATE", "CLUB_MEMBERS"]).default("PUBLIC"),
   registrationStart: z.date({
     message: "La fecha de inicio de inscripciones es requerida"
@@ -25,7 +34,7 @@ export const tournamentFormSchema = z.object({
   }),
   tournamentEnd: z.date().optional(),
   maxParticipants: z.number().int().positive("Debe ser un número positivo").optional(),
-  minParticipants: z.number().int().positive("Debe ser un número positivo").default(4),
+  minParticipants: z.number().int().positive("Debe ser un número positivo").min(2, "Mínimo 2 participantes"),
   registrationFee: z.number().min(0, "La tarifa no puede ser negativa").default(0),
   prizePool: z.number().min(0, "El premio no puede ser negativo").default(0),
   setsToWin: z.number().int().positive("Debe ser un número positivo").default(2),
@@ -115,4 +124,11 @@ export const tournamentVisibilityOptions = [
   { value: "PUBLIC", label: "Público" },
   { value: "PRIVATE", label: "Privado" },
   { value: "CLUB_MEMBERS", label: "Solo Miembros del Club" },
+] as const
+
+export const tournamentStatusOptionsForForm = [
+  { value: "DRAFT", label: "Borrador" },
+  { value: "PUBLISHED", label: "Publicado" },
+  { value: "REGISTRATION_OPEN", label: "Inscripciones Abiertas" },
+  { value: "REGISTRATION_CLOSED", label: "Inscripciones Cerradas" },
 ] as const

@@ -6,7 +6,7 @@ import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { TournamentForm } from "@/components/tournaments/tournament-form"
 
 interface EditTournamentPageProps {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
 async function getTournament(id: string, userId: string) {
@@ -50,7 +50,8 @@ export default async function EditTournamentPage({ params }: EditTournamentPageP
     notFound()
   }
 
-  const tournament = await getTournament(params.id, session.user.id)
+  const { id } = await params
+  const tournament = await getTournament(id, session.user.id)
 
   if (!tournament) {
     notFound()
@@ -92,6 +93,8 @@ export default async function EditTournamentPage({ params }: EditTournamentPageP
         <TournamentForm
           initialData={initialData}
           tournamentId={tournament.id}
+          initialSelectedCategories={tournament.categories.map(c => c.categoryId)}
+          initialSelectedClubs={tournament.clubs.map(c => c.clubId)}
         />
       </div>
     </DashboardLayout>

@@ -49,17 +49,24 @@ import { CategoryOption, ClubOption } from "@/types/tournament"
 interface TournamentFormProps {
   initialData?: Partial<TournamentFormData>
   tournamentId?: string
+  initialSelectedCategories?: string[]
+  initialSelectedClubs?: string[]
 }
 
-export function TournamentForm({ initialData, tournamentId }: TournamentFormProps) {
+export function TournamentForm({
+  initialData,
+  tournamentId,
+  initialSelectedCategories = [],
+  initialSelectedClubs = []
+}: TournamentFormProps) {
   const router = useRouter()
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
   const [categories, setCategories] = useState<CategoryOption[]>([])
   const [clubs, setClubs] = useState<ClubOption[]>([])
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([])
-  const [selectedClubs, setSelectedClubs] = useState<string[]>([])
-  const previousMainClubIdRef = useRef<string | null>(null)
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(initialSelectedCategories)
+  const [selectedClubs, setSelectedClubs] = useState<string[]>(initialSelectedClubs)
+  const previousMainClubIdRef = useRef<string | null>(initialData?.mainClubId || null)
 
   const defaultValues = useMemo(() => {
     const now = new Date()
@@ -73,7 +80,7 @@ export function TournamentForm({ initialData, tournamentId }: TournamentFormProp
       tournamentStart: new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000),
       tournamentEnd: undefined,
       maxParticipants: undefined,
-      minParticipants: 4,
+      minParticipants: undefined,
       registrationFee: 0,
       prizePool: 0,
       setsToWin: 2,
@@ -177,6 +184,8 @@ export function TournamentForm({ initialData, tournamentId }: TournamentFormProp
         clubs: allClubs,
       }
 
+      console.log('Payload being sent:', payload)
+
       const url = tournamentId ? `/api/tournaments/${tournamentId}` : "/api/tournaments"
       const method = tournamentId ? "PUT" : "POST"
 
@@ -188,8 +197,21 @@ export function TournamentForm({ initialData, tournamentId }: TournamentFormProp
         body: JSON.stringify(payload),
       })
 
+      console.log('Response status:', response.status)
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()))
+
       if (!response.ok) {
         const error = await response.json()
+        console.error('Server error response:', error)
+        if (error.details) {
+          console.error('Validation details:', error.details)
+          // Formatear errores de validación específicos
+          const validationErrors = error.details.map((issue: any) => {
+            const fieldPath = issue.path.join('.')
+            return `${fieldPath}: ${issue.message}`
+          }).join(', ')
+          throw new Error(`${error.error}: ${validationErrors}`)
+        }
         throw new Error(error.error || "Error al guardar torneo")
       }
 
@@ -283,7 +305,11 @@ export function TournamentForm({ initialData, tournamentId }: TournamentFormProp
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Tipo de Torneo *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      key={`type-${field.value || 'empty'}`}
+                      onValueChange={field.onChange}
+                      value={field.value || ""}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Seleccionar tipo" />
@@ -308,7 +334,11 @@ export function TournamentForm({ initialData, tournamentId }: TournamentFormProp
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Visibilidad</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      key={`visibility-${field.value || 'empty'}`}
+                      onValueChange={field.onChange}
+                      value={field.value || ""}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Seleccionar visibilidad" />
@@ -514,10 +544,18 @@ export function TournamentForm({ initialData, tournamentId }: TournamentFormProp
                         <Input
                           type="number"
                           min="2"
-                          value={field.value || ""}
+                          placeholder="4"
+                          value={field.value === undefined ? "" : field.value}
                           onChange={(e) => {
                             const value = e.target.value
-                            field.onChange(value === "" ? undefined : parseInt(value))
+                            if (value === "") {
+                              field.onChange(undefined)
+                            } else {
+                              const numValue = parseInt(value)
+                              if (!isNaN(numValue)) {
+                                field.onChange(numValue)
+                              }
+                            }
                           }}
                         />
                       </FormControl>
@@ -603,7 +641,11 @@ export function TournamentForm({ initialData, tournamentId }: TournamentFormProp
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Club Principal</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      key={`mainClub-${field.value || 'empty'}`}
+                      onValueChange={field.onChange}
+                      value={field.value || ""}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Seleccionar club" />

@@ -4,6 +4,9 @@ import { TournamentStatus, MatchStatus } from "@prisma/client"
 
 export async function getDashboardStats() {
   try {
+    // Test connection first
+    await prisma.$queryRaw`SELECT 1`;
+    console.log('Database connection verified');
     // Estadísticas de torneos
     const [
       totalTournaments,

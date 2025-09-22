@@ -92,7 +92,8 @@ export default async function TournamentDetailPage({ params }: TournamentDetailP
     notFound()
   }
 
-  const tournament = await getTournament(params.id)
+  const { id } = await params
+  const tournament = await getTournament(id)
 
   if (!tournament) {
     notFound()
