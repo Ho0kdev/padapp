@@ -4,6 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
+import { TournamentStatusManager } from "./tournament-status-manager"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
@@ -107,25 +108,6 @@ export function TournamentDetail({ tournament, currentUserId }: TournamentDetail
     }
   }
 
-  const getStatusBadge = (status: string) => {
-    if (!statusConfig) return <Badge variant="secondary">{status}</Badge>
-
-    const variants: Record<string, any> = {
-      gray: "secondary",
-      blue: "default",
-      green: "default",
-      yellow: "secondary",
-      orange: "secondary",
-      purple: "default",
-      red: "destructive",
-    }
-
-    return (
-      <Badge variant={variants[statusConfig.color] || "secondary"}>
-        {statusConfig.label}
-      </Badge>
-    )
-  }
 
   return (
     <div className="space-y-6">
@@ -134,7 +116,11 @@ export function TournamentDetail({ tournament, currentUserId }: TournamentDetail
         <div className="space-y-1">
           <div className="flex items-center gap-3">
             <h1 className="text-3xl font-bold tracking-tight">{tournament.name}</h1>
-            {getStatusBadge(tournament.status)}
+            <TournamentStatusManager
+              tournamentId={tournament.id}
+              currentStatus={tournament.status}
+              isOwner={isOwner}
+            />
           </div>
           {tournament.description && (
             <p className="text-muted-foreground">{tournament.description}</p>
