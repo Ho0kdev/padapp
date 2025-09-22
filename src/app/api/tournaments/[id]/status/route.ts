@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { TournamentLogService } from "@/lib/services/tournament-log-service"
 import { z } from "zod"
 
 const statusChangeSchema = z.object({
@@ -228,6 +229,20 @@ export async function PATCH(
         }
       }
     })
+
+    // Registrar en el log
+    await TournamentLogService.logTournamentStatusChanged(
+      {
+        userId: session.user.id,
+        tournamentId: updatedTournament.id,
+        ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0] ||
+                  request.headers.get('x-real-ip') || 'unknown',
+        userAgent: request.headers.get('user-agent') || 'unknown'
+      },
+      updatedTournament,
+      currentStatus,
+      newStatus
+    )
 
     return NextResponse.json(updatedTournament)
 

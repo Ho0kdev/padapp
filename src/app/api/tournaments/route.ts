@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { TournamentLogService } from "@/lib/services/tournament-log-service"
 import { z } from "zod"
 
 const createTournamentSchema = z.object({
@@ -252,6 +253,18 @@ export async function POST(request: NextRequest) {
         }
       }
     })
+
+    // Registrar en el log
+    await TournamentLogService.logTournamentCreated(
+      {
+        userId: session.user.id,
+        tournamentId: tournament.id,
+        ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0] ||
+                  request.headers.get('x-real-ip') || 'unknown',
+        userAgent: request.headers.get('user-agent') || 'unknown'
+      },
+      tournament
+    )
 
     return NextResponse.json(tournament, { status: 201 })
 

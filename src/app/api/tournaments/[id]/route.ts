@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { TournamentLogService } from "@/lib/services/tournament-log-service"
 import { z } from "zod"
 
 const updateTournamentSchema = z.object({
@@ -190,11 +191,22 @@ export async function PUT(
       return NextResponse.json({ error: "No autorizado" }, { status: 401 })
     }
 
-    // Verificar que el torneo existe
+    // Verificar que el torneo existe y obtener datos para logging
     const { id } = await params
     const existingTournament = await prisma.tournament.findUnique({
       where: { id },
-      select: { organizerId: true, status: true }
+      include: {
+        categories: {
+          include: {
+            category: true
+          }
+        },
+        clubs: {
+          include: {
+            club: true
+          }
+        }
+      }
     })
 
     if (!existingTournament) {
@@ -278,6 +290,19 @@ export async function PUT(
       }
     })
 
+    // Registrar en el log
+    await TournamentLogService.logTournamentUpdated(
+      {
+        userId: session.user.id,
+        tournamentId: tournament.id,
+        ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0] ||
+                  request.headers.get('x-real-ip') || 'unknown',
+        userAgent: request.headers.get('user-agent') || 'unknown'
+      },
+      existingTournament,
+      tournament
+    )
+
     return NextResponse.json(tournament)
 
   } catch (error) {
@@ -307,11 +332,13 @@ export async function DELETE(
       return NextResponse.json({ error: "No autorizado" }, { status: 401 })
     }
 
-    // Verificar que el torneo existe
+    // Verificar que el torneo existe y obtener datos para logging
     const { id } = await params
     const existingTournament = await prisma.tournament.findUnique({
       where: { id },
-      select: { organizerId: true, status: true, _count: { select: { teams: true } } }
+      include: {
+        _count: { select: { teams: true } }
+      }
     })
 
     if (!existingTournament) {
@@ -341,6 +368,18 @@ export async function DELETE(
         { status: 400 }
       )
     }
+
+    // Registrar en el log antes de eliminar
+    await TournamentLogService.logTournamentDeleted(
+      {
+        userId: session.user.id,
+        tournamentId: existingTournament.id,
+        ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0] ||
+                  request.headers.get('x-real-ip') || 'unknown',
+        userAgent: request.headers.get('user-agent') || 'unknown'
+      },
+      existingTournament
+    )
 
     await prisma.tournament.delete({
       where: { id }

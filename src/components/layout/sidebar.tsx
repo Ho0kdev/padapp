@@ -4,6 +4,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/hooks/use-auth"
 import {
   Trophy,
   Users,
@@ -15,6 +16,7 @@ import {
   Medal,
   CreditCard,
   Bell,
+  Shield,
 } from "lucide-react"
 
 const navigation = [
@@ -32,6 +34,15 @@ const navigation = [
 
 export function Sidebar() {
   const pathname = usePathname()
+  const { user } = useAuth()
+
+  // Agregar enlace de admin si el usuario es administrador
+  const navigationItems = [
+    ...navigation,
+    ...(user?.role === "ADMIN" ? [
+      { name: "Admin Dashboard", href: "/dashboard/admin/tournaments", icon: Shield }
+    ] : [])
+  ]
 
   return (
     <div className="flex h-full w-64 flex-col bg-gray-900">
@@ -43,7 +54,7 @@ export function Sidebar() {
       </div>
       
       <nav className="flex-1 space-y-1 px-3 py-4">
-        {navigation.map((item) => {
+        {navigationItems.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
           
           return (

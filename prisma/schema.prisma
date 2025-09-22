@@ -61,6 +61,7 @@ model User {
   organizerTournaments Tournament[]   @relation("TournamentOrganizer")
   refereeMatches       Match[]        @relation("MatchReferee")
   notifications        Notification[]
+  logs                 TournamentLog[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -386,6 +387,7 @@ model Tournament {
   zones         TournamentZone[]
   stats         TournamentStats[]
   notifications Notification[]
+  logs          TournamentLog[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -657,4 +659,53 @@ model Notification {
   createdAt DateTime @default(now())
 
   @@map("notifications")
+}
+
+// ============================================
+// AUDIT LOG / LOGS DE AUDITORIA
+// ============================================
+
+enum LogAction {
+  TOURNAMENT_CREATED
+  TOURNAMENT_UPDATED
+  TOURNAMENT_DELETED
+  TOURNAMENT_STATUS_CHANGED
+  TEAM_REGISTERED
+  TEAM_UNREGISTERED
+  MATCH_CREATED
+  MATCH_UPDATED
+  MATCH_RESULT_ADDED
+  USER_ACTION
+}
+
+model TournamentLog {
+  id           String    @id @default(cuid())
+
+  // Información del evento
+  action       LogAction
+  description  String    // Descripción human-readable del evento
+
+  // Contexto del evento
+  tournamentId String?
+  userId       String    // Usuario que realizó la acción
+  ipAddress    String?   // IP desde donde se realizó la acción
+  userAgent    String?   // User Agent del navegador
+
+  // Datos del evento
+  oldData      Json?     // Estado anterior (para updates)
+  newData      Json?     // Estado nuevo (para creates/updates)
+  metadata     Json?     // Información adicional contextual
+
+  // Timestamps
+  createdAt    DateTime  @default(now())
+
+  // Relaciones
+  tournament   Tournament? @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  user         User        @relation(fields: [userId], references: [id])
+
+  @@index([tournamentId])
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("tournament_logs")
 }
