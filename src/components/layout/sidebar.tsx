@@ -22,9 +22,9 @@ import {
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: Home },
   { name: "Torneos", href: "/dashboard/tournaments", icon: Trophy },
+  { name: "Clubes", href: "/dashboard/clubs", icon: Building },
   { name: "Jugadores", href: "/dashboard/players", icon: Users },
   { name: "Partidos", href: "/dashboard/matches", icon: Calendar },
-  { name: "Clubes", href: "/dashboard/clubs", icon: Building },
   { name: "Rankings", href: "/dashboard/rankings", icon: Medal },
   { name: "Pagos", href: "/dashboard/payments", icon: CreditCard },
   { name: "Reportes", href: "/dashboard/reports", icon: BarChart3 },

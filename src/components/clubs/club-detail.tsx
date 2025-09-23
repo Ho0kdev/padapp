@@ -42,6 +42,7 @@ import {
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/hooks/use-auth"
+import { CourtsList } from "@/components/courts/courts-list"
 
 interface Court {
   id: string
@@ -55,6 +56,14 @@ interface Tournament {
   name: string
   status: string
   tournamentStart: string
+}
+
+interface AuxiliaryTournament {
+  id: string
+  name: string
+  status: string
+  tournamentStart: string
+  mainClubName: string
 }
 
 interface Club {
@@ -75,6 +84,7 @@ interface Club {
   logoUrl?: string
   courts: Court[]
   tournaments: Tournament[]
+  auxiliaryTournaments?: AuxiliaryTournament[]
   _count: {
     courts: number
     tournaments: number
@@ -147,19 +157,6 @@ export function ClubDetail({ club, currentUserId }: ClubDetailProps) {
     )
   }
 
-  const getCourtSurfaceBadge = (surface: string) => {
-    const colors = {
-      CONCRETE: "bg-gray-100 text-gray-800",
-      SYNTHETIC: "bg-blue-100 text-blue-800",
-      GLASS: "bg-cyan-100 text-cyan-800"
-    }
-
-    return (
-      <Badge variant="outline" className={colors[surface as keyof typeof colors] || "bg-gray-100 text-gray-800"}>
-        {surface}
-      </Badge>
-    )
-  }
 
   return (
     <div className="space-y-6">
@@ -211,7 +208,7 @@ export function ClubDetail({ club, currentUserId }: ClubDetailProps) {
         <TabsList>
           <TabsTrigger value="overview">Información General</TabsTrigger>
           <TabsTrigger value="courts">Canchas ({club._count.courts})</TabsTrigger>
-          <TabsTrigger value="tournaments">Torneos ({club._count.tournaments})</TabsTrigger>
+          <TabsTrigger value="tournaments">Torneos ({club._count.tournaments + (club._count.tournamentClubs || 0)})</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
@@ -254,11 +251,11 @@ export function ClubDetail({ club, currentUserId }: ClubDetailProps) {
                       <span className="ml-2 font-medium">{club._count.courts}</span>
                     </div>
                     <div>
-                      <span className="text-muted-foreground">Torneos sede:</span>
+                      <span className="text-muted-foreground">Torneos como sede principal:</span>
                       <span className="ml-2 font-medium">{club._count.tournaments}</span>
                     </div>
                     <div>
-                      <span className="text-muted-foreground">Participaciones:</span>
+                      <span className="text-muted-foreground">Torneos como sede auxiliar:</span>
                       <span className="ml-2 font-medium">{club._count.tournamentClubs}</span>
                     </div>
                   </div>
@@ -350,34 +347,7 @@ export function ClubDetail({ club, currentUserId }: ClubDetailProps) {
         </TabsContent>
 
         <TabsContent value="courts" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Canchas del Club</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {club.courts.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">
-                  Este club no tiene canchas registradas
-                </p>
-              ) : (
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {club.courts.map((court) => (
-                    <Card key={court.id} className="border-l-4 border-l-blue-500">
-                      <CardContent className="pt-4">
-                        <div className="space-y-2">
-                          <h4 className="font-medium">{court.name}</h4>
-                          <div className="flex items-center gap-2">
-                            {getCourtSurfaceBadge(court.surface)}
-                            {getStatusBadge(court.status)}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <CourtsList clubId={club.id} />
         </TabsContent>
 
         <TabsContent value="tournaments" className="space-y-6">
@@ -396,6 +366,48 @@ export function ClubDetail({ club, currentUserId }: ClubDetailProps) {
                     <div key={tournament.id} className="flex items-center justify-between p-4 border rounded-lg">
                       <div>
                         <h4 className="font-medium">{tournament.name}</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {new Date(tournament.tournamentStart).toLocaleDateString('es', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          })}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {getStatusBadge(tournament.status)}
+                        <Link href={`/dashboard/tournaments/${tournament.id}`}>
+                          <Button variant="outline" size="sm">
+                            Ver torneo
+                          </Button>
+                        </Link>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Torneos como Sede Auxiliar */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Torneos como Sede Auxiliar</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {!club.auxiliaryTournaments || club.auxiliaryTournaments.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">
+                  Este club no participa como sede auxiliar en torneos
+                </p>
+              ) : (
+                <div className="space-y-4">
+                  {(club.auxiliaryTournaments || []).map((tournament) => (
+                    <div key={tournament.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div>
+                        <h4 className="font-medium">{tournament.name}</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Sede principal: <span className="font-medium">{tournament.mainClubName}</span>
+                        </p>
                         <p className="text-sm text-muted-foreground">
                           {new Date(tournament.tournamentStart).toLocaleDateString('es', {
                             year: 'numeric',

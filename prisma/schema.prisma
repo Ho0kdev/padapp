@@ -273,15 +273,19 @@ model Club {
 }
 
 model Court {
-  id          String       @id @default(cuid())
-  clubId      String
-  name        String
-  surface     CourtSurface
-  hasLighting Boolean      @default(false)
-  hasRoof     Boolean      @default(false)
-  status      CourtStatus  @default(AVAILABLE)
-  hourlyRate  Float?
-  notes       String?
+  id                String       @id @default(cuid())
+  clubId            String
+  name              String
+  surface           CourtSurface
+  hasLighting       Boolean      @default(false)
+  hasRoof           Boolean      @default(false)
+  isOutdoor         Boolean      @default(false)
+  hasPanoramicGlass Boolean      @default(false)
+  hasConcreteWall   Boolean      @default(false)
+  hasNet4m          Boolean      @default(false)
+  status            CourtStatus  @default(AVAILABLE)
+  hourlyRate        Float?
+  notes             String?
 
   // Relaciones
   club    Club    @relation(fields: [clubId], references: [id], onDelete: Cascade)

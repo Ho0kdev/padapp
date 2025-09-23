@@ -15,29 +15,55 @@ export async function GET(request: NextRequest) {
 
     const clubs = await prisma.club.findMany({
       orderBy: { name: "asc" },
-      select: {
-        id: true,
-        name: true,
-        description: true,
-        address: true,
-        city: true,
-        state: true,
-        country: true,
-        phone: true,
-        email: true,
-        website: true,
-        status: true,
+      include: {
         _count: {
           select: {
-            courts: true,
-            tournaments: true,
-            tournamentClubs: true
+            courts: true
           }
         }
       }
     })
 
-    return NextResponse.json({ clubs })
+    // Calcular conteos manualmente para evitar el problema de doble conteo
+    const clubsWithCounts = await Promise.all(
+      clubs.map(async (club) => {
+        // Contar torneos como sede principal
+        const tournamentsAsMain = await prisma.tournament.count({
+          where: {
+            mainClubId: club.id,
+            status: {
+              in: ["PUBLISHED", "REGISTRATION_OPEN", "REGISTRATION_CLOSED", "IN_PROGRESS"]
+            }
+          }
+        });
+
+        // Contar participaciones como club auxiliar (excluyendo cuando es sede principal)
+        const tournamentsAsAuxiliary = await prisma.tournamentClub.count({
+          where: {
+            clubId: club.id,
+            tournament: {
+              status: {
+                in: ["PUBLISHED", "REGISTRATION_OPEN", "REGISTRATION_CLOSED", "IN_PROGRESS"]
+              },
+              mainClubId: {
+                not: club.id
+              }
+            }
+          }
+        });
+
+        return {
+          ...club,
+          _count: {
+            courts: club._count.courts,
+            tournaments: tournamentsAsMain,
+            tournamentClubs: tournamentsAsAuxiliary
+          }
+        };
+      })
+    )
+
+    return NextResponse.json({ clubs: clubsWithCounts })
 
   } catch (error) {
     console.error("Error fetching clubs:", error)

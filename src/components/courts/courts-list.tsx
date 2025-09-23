@@ -39,75 +39,87 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import {
-  Building,
+  SquareSplitHorizontal,
   Plus,
   Search,
   MoreHorizontal,
   Edit,
   Trash2,
   Eye,
-  MapPin,
-  Phone,
-  Mail,
-  Globe,
-  SquareSplitHorizontal,
-  Trophy,
-  CheckCircle  
+  DollarSign,
+  Activity,
+  Lightbulb,
+  Home,
+  CheckCircle,
+  Trees,
+  Layers,
+  Grid
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/hooks/use-auth"
 
-interface Club {
+interface Court {
   id: string
   name: string
-  description?: string
-  address: string
-  city: string
-  state?: string
-  country: string
-  phone?: string
-  email?: string
-  website?: string
+  surface: string
+  hasLighting: boolean
+  hasRoof: boolean
+  isOutdoor: boolean
+  hasPanoramicGlass: boolean
+  hasConcreteWall: boolean
+  hasNet4m: boolean
   status: string
+  hourlyRate?: number
+  notes?: string
   _count: {
-    courts: number
-    tournaments?: number
-    tournamentClubs?: number
+    matches: number
   }
 }
 
-export function ClubsList() {
-  const [clubs, setClubs] = useState<Club[]>([])
+interface Club {
+  id: string
+  name: string
+}
+
+interface CourtsListProps {
+  clubId: string
+}
+
+export function CourtsList({ clubId }: CourtsListProps) {
+  const [courts, setCourts] = useState<Court[]>([])
+  const [club, setClub] = useState<Club | null>(null)
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
+  const [surfaceFilter, setSurfaceFilter] = useState("all")
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [clubToDelete, setClubToDelete] = useState<Club | null>(null)
+  const [courtToDelete, setCourtToDelete] = useState<Court | null>(null)
   const [activateDialogOpen, setActivateDialogOpen] = useState(false)
-  const [clubToActivate, setClubToActivate] = useState<Club | null>(null)
+  const [courtToActivate, setCourtToActivate] = useState<Court | null>(null)
   const { toast } = useToast()
   const { user } = useAuth()
 
   const isAdmin = user?.role === "ADMIN"
 
   useEffect(() => {
-    fetchClubs()
-  }, [])
+    fetchCourts()
+  }, [clubId])
 
-  const fetchClubs = async () => {
+  const fetchCourts = async () => {
     try {
       setLoading(true)
-      const response = await fetch("/api/clubs")
+      const response = await fetch(`/api/clubs/${clubId}/courts`)
       if (response.ok) {
         const data = await response.json()
-        setClubs(data.clubs || [])
+        setCourts(data.courts || [])
+        setClub(data.club)
       } else {
-        throw new Error("Error al cargar clubes")
+        throw new Error("Error al cargar canchas")
       }
     } catch (error) {
       toast({
         title: "Error",
-        description: "No se pudieron cargar los clubes",
+        description: "No se pudieron cargar las canchas",
         variant: "destructive",
       })
     } finally {
@@ -116,78 +128,78 @@ export function ClubsList() {
   }
 
   const handleDelete = async () => {
-    if (!clubToDelete) return
+    if (!courtToDelete) return
 
     try {
-      const response = await fetch(`/api/clubs/${clubToDelete.id}`, {
+      const response = await fetch(`/api/clubs/${clubId}/courts/${courtToDelete.id}`, {
         method: "DELETE",
       })
 
       if (response.ok) {
         toast({
-          title: "Club desactivado",
-          description: "El club ha sido desactivado exitosamente",
+          title: "Cancha desactivada",
+          description: "La cancha ha sido desactivada exitosamente",
         })
-        fetchClubs()
+        fetchCourts()
       } else {
         const error = await response.json()
-        console.error("Error response:", error)
-        throw new Error(error.details || error.error || "Error al desactivar club")
+        throw new Error(error.error || "Error al desactivar cancha")
       }
     } catch (error) {
-      console.error("Delete error:", error)
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Error al desactivar club",
+        description: error instanceof Error ? error.message : "Error al desactivar cancha",
         variant: "destructive",
       })
     } finally {
       setDeleteDialogOpen(false)
-      setClubToDelete(null)
+      setCourtToDelete(null)
     }
   }
 
   const handleActivate = async () => {
-    if (!clubToActivate) return
+    if (!courtToActivate) return
 
     try {
-      const response = await fetch(`/api/clubs/${clubToActivate.id}`, {
+      const response = await fetch(`/api/clubs/${clubId}/courts/${courtToActivate.id}`, {
         method: "PATCH",
       })
 
       if (response.ok) {
         toast({
-          title: "Club activado",
-          description: "El club ha sido activado exitosamente",
+          title: "Cancha activada",
+          description: "La cancha ha sido activada exitosamente",
         })
-        fetchClubs()
+        fetchCourts()
       } else {
         const error = await response.json()
-        console.error("Error response:", error)
-        throw new Error(error.details || error.error || "Error al activar club")
+        throw new Error(error.error || "Error al activar cancha")
       }
     } catch (error) {
-      console.error("Activate error:", error)
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Error al activar club",
+        description: error instanceof Error ? error.message : "Error al activar cancha",
         variant: "destructive",
       })
     } finally {
       setActivateDialogOpen(false)
-      setClubToActivate(null)
+      setCourtToActivate(null)
     }
   }
 
   const getStatusBadge = (status: string) => {
     const variants = {
-      ACTIVE: "bg-green-100 text-green-800",
-      INACTIVE: "bg-red-100 text-red-800"
+      AVAILABLE: "bg-green-100 text-green-800",
+      MAINTENANCE: "bg-yellow-100 text-yellow-800",
+      RESERVED: "bg-blue-100 text-blue-800",
+      UNAVAILABLE: "bg-red-100 text-red-800"
     }
 
     const labels = {
-      ACTIVE: "Activo",
-      INACTIVE: "Inactivo"
+      AVAILABLE: "Disponible",
+      MAINTENANCE: "Mantenimiento",
+      RESERVED: "Reservada",
+      UNAVAILABLE: "No Disponible"
     }
 
     return (
@@ -197,14 +209,34 @@ export function ClubsList() {
     )
   }
 
-  const filteredClubs = clubs.filter(club => {
-    const matchesSearch = club.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         club.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         club.address.toLowerCase().includes(searchTerm.toLowerCase())
+  const getSurfaceBadge = (surface: string) => {
+    const variants = {
+      CONCRETE: "bg-gray-100 text-gray-800",
+      ARTIFICIAL_GRASS: "bg-green-100 text-green-800",
+      CERAMIC: "bg-orange-100 text-orange-800",
+      OTHER: "bg-blue-100 text-blue-800"
+    }
 
-    const matchesStatus = statusFilter === "all" || club.status === statusFilter
+    const labels = {
+      CONCRETE: "Concreto",
+      ARTIFICIAL_GRASS: "Césped Artificial",
+      CERAMIC: "Cerámica",
+      OTHER: "Otra"
+    }
 
-    return matchesSearch && matchesStatus
+    return (
+      <Badge variant="outline" className={variants[surface as keyof typeof variants]}>
+        {labels[surface as keyof typeof labels] || surface}
+      </Badge>
+    )
+  }
+
+  const filteredCourts = courts.filter(court => {
+    const matchesSearch = court.name.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesStatus = statusFilter === "all" || court.status === statusFilter
+    const matchesSurface = surfaceFilter === "all" || court.surface === surfaceFilter
+
+    return matchesSearch && matchesStatus && matchesSurface
   })
 
   if (loading) {
@@ -213,7 +245,7 @@ export function ClubsList() {
         <CardContent className="p-6">
           <div className="flex items-center justify-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <span className="ml-2">Cargando clubes...</span>
+            <span className="ml-2">Cargando canchas...</span>
           </div>
         </CardContent>
       </Card>
@@ -227,14 +259,14 @@ export function ClubsList() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
-              <Building className="h-5 w-5" />
-              Clubes ({filteredClubs.length})
+              <SquareSplitHorizontal className="h-5 w-5" />
+              Canchas de {club?.name} ({filteredCourts.length})
             </CardTitle>
             {isAdmin && (
-              <Link href="/dashboard/clubs/new">
+              <Link href={`/dashboard/clubs/${clubId}/courts/new`}>
                 <Button>
                   <Plus className="h-4 w-4 mr-2" />
-                  Nuevo Club
+                  Nueva Cancha
                 </Button>
               </Link>
             )}
@@ -245,7 +277,7 @@ export function ClubsList() {
             <div className="relative flex-1">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar clubes..."
+                placeholder="Buscar canchas..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-8"
@@ -256,114 +288,128 @@ export function ClubsList() {
                 <SelectValue placeholder="Estado" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="ACTIVE">Activos</SelectItem>
-                <SelectItem value="INACTIVE">Inactivos</SelectItem>
+                <SelectItem value="all">Todos los estados</SelectItem>
+                <SelectItem value="AVAILABLE">Disponible</SelectItem>
+                <SelectItem value="MAINTENANCE">Mantenimiento</SelectItem>
+                <SelectItem value="RESERVED">Reservada</SelectItem>
+                <SelectItem value="UNAVAILABLE">No Disponible</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={surfaceFilter} onValueChange={setSurfaceFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Superficie" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas las superficies</SelectItem>
+                <SelectItem value="CONCRETE">Concreto</SelectItem>
+                <SelectItem value="ARTIFICIAL_GRASS">Césped Artificial</SelectItem>
+                <SelectItem value="CERAMIC">Cerámica</SelectItem>
+                <SelectItem value="OTHER">Otra</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </CardContent>
       </Card>
 
-      {/* Tabla de clubes */}
+      {/* Tabla de canchas */}
       <Card>
         <CardContent className="p-0">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Club</TableHead>
-                <TableHead>Ubicación</TableHead>
-                <TableHead>Contacto</TableHead>
+                <TableHead>Cancha</TableHead>
+                <TableHead>Superficie</TableHead>
+                <TableHead>Características</TableHead>
+                <TableHead>Precio/Hora</TableHead>
                 <TableHead>Estadísticas</TableHead>
                 <TableHead>Estado</TableHead>
                 <TableHead className="w-[100px]">Acciones</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredClubs.length === 0 ? (
+              {filteredCourts.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8">
-                    {searchTerm || statusFilter !== "all"
-                      ? "No se encontraron clubes con los filtros aplicados"
-                      : "No hay clubes registrados"
+                  <TableCell colSpan={7} className="text-center py-8">
+                    {searchTerm || statusFilter !== "all" || surfaceFilter !== "all"
+                      ? "No se encontraron canchas con los filtros aplicados"
+                      : "No hay canchas registradas"
                     }
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredClubs.map((club) => (
-                  <TableRow key={club.id}>
+                filteredCourts.map((court) => (
+                  <TableRow key={court.id}>
                     <TableCell>
                       <div>
-                        <div className="font-medium">{club.name}</div>
-                        {club.description && (
+                        <div className="font-medium">{court.name}</div>
+                        {court.notes && (
                           <div className="text-sm text-muted-foreground line-clamp-1">
-                            {club.description}
+                            {court.notes}
                           </div>
                         )}
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-start gap-1">
-                        <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                        <div className="text-sm">
-                          <div>{club.address}</div>
-                          <div className="text-muted-foreground">
-                            {club.city}, {club.state && `${club.state}, `}{club.country}
+                      {getSurfaceBadge(court.surface)}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap items-center gap-1">
+                        {court.hasLighting && (
+                          <div className="flex items-center gap-1 text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">
+                            <Lightbulb className="h-3 w-3" />
+                            Iluminación
                           </div>
+                        )}
+                        {court.hasRoof && (
+                          <div className="flex items-center gap-1 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                            <Home className="h-3 w-3" />
+                            Techada
+                          </div>
+                        )}
+                        {court.isOutdoor && (
+                          <div className="flex items-center gap-1 text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+                            <Trees className="h-3 w-3" />
+                            Exterior
+                          </div>
+                        )}
+                        {court.hasPanoramicGlass && (
+                          <div className="flex items-center gap-1 text-xs bg-cyan-100 text-cyan-800 px-2 py-1 rounded">
+                            <Eye className="h-3 w-3" />
+                            Cristal
+                          </div>
+                        )}
+                        {court.hasConcreteWall && (
+                          <div className="flex items-center gap-1 text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded">
+                            <Layers className="h-3 w-3" />
+                            Concreto
+                          </div>
+                        )}
+                        {court.hasNet4m && (
+                          <div className="flex items-center gap-1 text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">
+                            <Grid className="h-3 w-3" />
+                            Red 4m
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {court.hourlyRate ? (
+                        <div className="flex items-center gap-1">
+                          <DollarSign className="h-3 w-3 text-muted-foreground" />
+                          <span>${court.hourlyRate}</span>
                         </div>
+                      ) : (
+                        <span className="text-muted-foreground">No definido</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1 text-sm">
+                        <Activity className="h-3 w-3 text-muted-foreground" />
+                        {court._count.matches} partidos
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="space-y-1">
-                        {club.phone && (
-                          <div className="flex items-center gap-1 text-sm">
-                            <Phone className="h-3 w-3 text-muted-foreground" />
-                            {club.phone}
-                          </div>
-                        )}
-                        {club.email && (
-                          <div className="flex items-center gap-1 text-sm">
-                            <Mail className="h-3 w-3 text-muted-foreground" />
-                            {club.email}
-                          </div>
-                        )}
-                        {club.website && (
-                          <div className="flex items-center gap-1 text-sm">
-                            <Globe className="h-3 w-3 text-muted-foreground" />
-                            <a
-                              href={club.website}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-600 hover:underline"
-                            >
-                              Sitio web
-                            </a>
-                          </div>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-1 text-sm">
-                          <SquareSplitHorizontal className="h-3 w-3 text-muted-foreground" />
-                          ( {club._count.courts} ) Canchas
-                        </div>
-                        {club._count.tournaments !== undefined && club._count.tournaments > 0 && (
-                          <div className="flex items-center gap-1 text-sm">
-                            <Trophy className="h-3 w-3 text-muted-foreground" />
-                            ( {club._count.tournaments} ) Sede Principal
-                          </div>
-                        )}
-                        {club._count.tournamentClubs !== undefined && club._count.tournamentClubs > 0 && (
-                          <div className="flex items-center gap-1 text-sm">
-                            <Trophy className="h-3 w-3 text-muted-foreground" />
-                            ( {club._count.tournamentClubs} ) Sede Auxiliar
-                          </div>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {getStatusBadge(club.status)}
+                      {getStatusBadge(court.status)}
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>
@@ -373,7 +419,7 @@ export function ClubsList() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <Link href={`/dashboard/clubs/${club.id}`}>
+                          <Link href={`/dashboard/clubs/${clubId}/courts/${court.id}`}>
                             <DropdownMenuItem>
                               <Eye className="mr-2 h-4 w-4" />
                               Ver detalles
@@ -381,18 +427,18 @@ export function ClubsList() {
                           </Link>
                           {isAdmin && (
                             <>
-                              <Link href={`/dashboard/clubs/${club.id}/edit`}>
+                              <Link href={`/dashboard/clubs/${clubId}/courts/${court.id}/edit`}>
                                 <DropdownMenuItem>
                                   <Edit className="mr-2 h-4 w-4" />
                                   Editar
                                 </DropdownMenuItem>
                               </Link>
                               <DropdownMenuSeparator />
-                              {club.status === "ACTIVE" ? (
+                              {court.status !== "UNAVAILABLE" ? (
                                 <DropdownMenuItem
                                   className="text-red-600"
                                   onClick={() => {
-                                    setClubToDelete(club)
+                                    setCourtToDelete(court)
                                     setDeleteDialogOpen(true)
                                   }}
                                 >
@@ -403,7 +449,7 @@ export function ClubsList() {
                                 <DropdownMenuItem
                                   className="text-green-600"
                                   onClick={() => {
-                                    setClubToActivate(club)
+                                    setCourtToActivate(court)
                                     setActivateDialogOpen(true)
                                   }}
                                 >
@@ -428,9 +474,9 @@ export function ClubsList() {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Desactivar club?</AlertDialogTitle>
+            <AlertDialogTitle>¿Desactivar cancha?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción desactivará el club &quot;{clubToDelete?.name}&quot;. El club no será eliminado pero no aparecerá en las listas activas.
+              Esta acción desactivará la cancha "{courtToDelete?.name}". La cancha no será eliminada pero no estará disponible para nuevos partidos.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -446,9 +492,9 @@ export function ClubsList() {
       <AlertDialog open={activateDialogOpen} onOpenChange={setActivateDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Activar club?</AlertDialogTitle>
+            <AlertDialogTitle>¿Activar cancha?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción activará el club &quot;{clubToActivate?.name}&quot;. El club volverá a aparecer en las listas activas y estará disponible para torneos.
+              Esta acción activará la cancha "{courtToActivate?.name}". La cancha volverá a estar disponible para programar partidos.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

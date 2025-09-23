@@ -29,6 +29,11 @@ export async function GET(
           }
         },
         tournaments: {
+          where: {
+            status: {
+              in: ["PUBLISHED", "REGISTRATION_OPEN", "REGISTRATION_CLOSED", "IN_PROGRESS"]
+            }
+          },
           select: {
             id: true,
             name: true,
@@ -36,13 +41,30 @@ export async function GET(
             tournamentStart: true
           },
           orderBy: { tournamentStart: 'desc' },
-          take: 5
+          take: 10
         },
         _count: {
           select: {
             courts: true,
-            tournaments: true,
-            tournamentClubs: true
+            tournaments: {
+              where: {
+                status: {
+                  in: ["PUBLISHED", "REGISTRATION_OPEN", "REGISTRATION_CLOSED", "IN_PROGRESS"]
+                }
+              }
+            },
+            tournamentClubs: {
+              where: {
+                tournament: {
+                  status: {
+                    in: ["PUBLISHED", "REGISTRATION_OPEN", "REGISTRATION_CLOSED", "IN_PROGRESS"]
+                  },
+                  mainClubId: {
+                    not: id
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -55,7 +77,52 @@ export async function GET(
       )
     }
 
-    return NextResponse.json(club)
+    // Obtener torneos donde participa como sede auxiliar (excluyendo donde es sede principal)
+    const auxiliaryTournaments = await prisma.tournamentClub.findMany({
+      where: {
+        clubId: id,
+        tournament: {
+          status: {
+            in: ["PUBLISHED", "REGISTRATION_OPEN", "REGISTRATION_CLOSED", "IN_PROGRESS"]
+          },
+          mainClubId: {
+            not: id  // Excluir torneos donde es sede principal
+          }
+        }
+      },
+      select: {
+        tournament: {
+          select: {
+            id: true,
+            name: true,
+            status: true,
+            tournamentStart: true,
+            mainClub: {
+              select: {
+                name: true
+              }
+            }
+          }
+        }
+      },
+      orderBy: {
+        tournament: {
+          tournamentStart: 'desc'
+        }
+      },
+      take: 10
+    })
+
+    // Combinar la información
+    const clubWithAuxiliaryTournaments = {
+      ...club,
+      auxiliaryTournaments: auxiliaryTournaments.map(at => ({
+        ...at.tournament,
+        mainClubName: at.tournament.mainClub?.name || 'Desconocido'
+      }))
+    }
+
+    return NextResponse.json(clubWithAuxiliaryTournaments)
 
   } catch (error) {
     console.error("Error fetching club:", error)
