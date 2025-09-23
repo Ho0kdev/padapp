@@ -148,13 +148,13 @@ export async function PATCH(
 
     switch (newStatus) {
       case "REGISTRATION_OPEN":
-        if (existingTournament.registrationStart > now) {
+        if (existingTournament.registrationStart && existingTournament.registrationStart > now) {
           return NextResponse.json(
             { error: "No se puede abrir inscripciones antes de la fecha de inicio de inscripciones" },
             { status: 400 }
           )
         }
-        if (existingTournament.registrationEnd < now) {
+        if (existingTournament.registrationEnd && existingTournament.registrationEnd < now) {
           return NextResponse.json(
             { error: "No se puede abrir inscripciones después de la fecha de fin de inscripciones" },
             { status: 400 }

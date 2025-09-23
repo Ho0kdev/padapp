@@ -102,10 +102,10 @@ async function getAdminStats(userId: string) {
         let suggestedStatus = tournament.status
         let reason = ""
 
-        if (tournament.status === "PUBLISHED" && tournament.registrationStart <= now && tournament.registrationEnd >= now) {
+        if (tournament.status === "PUBLISHED" && tournament.registrationStart && tournament.registrationStart <= now && tournament.registrationEnd && tournament.registrationEnd >= now) {
           suggestedStatus = "REGISTRATION_OPEN"
           reason = "Fecha de inicio de inscripciones alcanzada"
-        } else if (tournament.status === "REGISTRATION_OPEN" && tournament.registrationEnd < now) {
+        } else if (tournament.status === "REGISTRATION_OPEN" && tournament.registrationEnd && tournament.registrationEnd < now) {
           suggestedStatus = "REGISTRATION_CLOSED"
           reason = "Fecha de fin de inscripciones alcanzada"
         } else if (tournament.status === "REGISTRATION_CLOSED" && tournament.tournamentStart <= now && tournament._count.teams > 0) {

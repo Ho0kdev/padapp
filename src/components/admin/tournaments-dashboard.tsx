@@ -61,7 +61,7 @@ interface AdminTournamentsDashboardProps {
     topOrganizers: Array<{
       organizerId: string
       _count: { id: number }
-      organizer: { name: string; email: string } | null
+      organizer: { name: string | null; email: string } | null
     }>
     tournamentsNeedingUpdate: Array<{
       id: string

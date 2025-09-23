@@ -212,12 +212,12 @@ export async function GET() {
         let reason = ""
 
         if (tournament.status === "PUBLISHED" &&
-            tournament.registrationStart <= now &&
-            tournament.registrationEnd >= now) {
+            tournament.registrationStart && tournament.registrationStart <= now &&
+            tournament.registrationEnd && tournament.registrationEnd >= now) {
           suggestedStatus = "REGISTRATION_OPEN"
           reason = "Fecha de inicio de inscripciones alcanzada"
         } else if (tournament.status === "REGISTRATION_OPEN" &&
-                   tournament.registrationEnd < now) {
+                   tournament.registrationEnd && tournament.registrationEnd < now) {
           suggestedStatus = "REGISTRATION_CLOSED"
           reason = "Fecha de fin de inscripciones alcanzada"
         } else if (tournament.status === "REGISTRATION_CLOSED" &&
