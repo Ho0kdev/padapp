@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { clubFormSchema } from "@/lib/validations/club"
+import { ClubLogService } from "@/lib/services/club-log-service"
 import { z } from "zod"
 
 // GET /api/clubs - Obtener lista de clubes
@@ -177,6 +178,12 @@ export async function POST(request: NextRequest) {
         }
       }
     })
+
+    // Log la creación del club
+    await ClubLogService.logClubCreated(
+      { userId: session.user.id, clubId: club.id },
+      club
+    )
 
     return NextResponse.json(club, { status: 201 })
 

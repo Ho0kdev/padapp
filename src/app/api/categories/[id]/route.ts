@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { categoryEditSchema } from "@/lib/validations/category"
+import { CategoryLogService } from "@/lib/services/category-log-service"
 import { z } from "zod"
 
 // GET /api/categories/[id] - Obtener categoría por ID
@@ -143,6 +144,13 @@ export async function PUT(
       }
     })
 
+    // Log la actualización
+    await CategoryLogService.logCategoryUpdated(
+      { userId: session.user.id, categoryId: category.id },
+      existingCategory,
+      category
+    )
+
     return NextResponse.json(category)
 
   } catch (error) {
@@ -239,6 +247,14 @@ export async function DELETE(
       }
     })
 
+    // Log la desactivación
+    await CategoryLogService.logCategoryStatusChanged(
+      { userId: session.user.id, categoryId: category.id },
+      { ...existingCategory, isActive: true },
+      true,
+      false
+    )
+
     return NextResponse.json({
       message: "Categoría desactivada exitosamente",
       category
@@ -321,6 +337,14 @@ export async function PATCH(
         }
       }
     })
+
+    // Log la activación
+    await CategoryLogService.logCategoryStatusChanged(
+      { userId: session.user.id, categoryId: category.id },
+      existingCategory,
+      false,
+      true
+    )
 
     return NextResponse.json({
       message: "Categoría activada exitosamente",

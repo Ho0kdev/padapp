@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { courtEditSchema, courtStatusSchema } from "@/lib/validations/court"
+import { CourtLogService } from "@/lib/services/court-log-service"
 import { z } from "zod"
 
 // GET /api/clubs/[id]/courts/[courtId] - Obtener una cancha específica
@@ -129,6 +130,14 @@ export async function PUT(
           }
         }
       })
+
+      // Log cambio de estado de cancha
+      await CourtLogService.logCourtStatusChanged(
+        { userId: session.user.id, courtId, clubId },
+        court,
+        existingCourt.status,
+        validatedData.status
+      )
     } else {
       // Edición completa - verificar nombre duplicado
       const duplicateCourt = await prisma.court.findFirst({
@@ -174,6 +183,13 @@ export async function PUT(
           }
         }
       })
+
+      // Log actualización de cancha
+      await CourtLogService.logCourtUpdated(
+        { userId: session.user.id, courtId, clubId },
+        existingCourt,
+        court
+      )
     }
 
     return NextResponse.json(court)

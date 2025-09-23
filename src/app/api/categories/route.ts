@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { categoryFormSchema } from "@/lib/validations/category"
+import { CategoryLogService } from "@/lib/services/category-log-service"
 import { z } from "zod"
 
 // GET /api/categories - Obtener lista de categorías
@@ -154,6 +155,12 @@ export async function POST(request: NextRequest) {
         }
       }
     })
+
+    // Log la creación
+    await CategoryLogService.logCategoryCreated(
+      { userId: session.user.id, categoryId: category.id },
+      category
+    )
 
     return NextResponse.json(category, { status: 201 })
 

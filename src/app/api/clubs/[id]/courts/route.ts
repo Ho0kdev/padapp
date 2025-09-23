@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { courtFormSchema } from "@/lib/validations/court"
+import { CourtLogService } from "@/lib/services/court-log-service"
 import { z } from "zod"
 
 // GET /api/clubs/[id]/courts - Obtener canchas de un club
@@ -139,6 +140,12 @@ export async function POST(
         }
       }
     })
+
+    // Log la creación de la cancha
+    await CourtLogService.logCourtCreated(
+      { userId: session.user.id, courtId: court.id, clubId },
+      court
+    )
 
     return NextResponse.json(court, { status: 201 })
 

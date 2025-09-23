@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { clubEditSchema } from "@/lib/validations/club"
+import { ClubLogService } from "@/lib/services/club-log-service"
 import { z } from "zod"
 
 // GET /api/clubs/[id] - Obtener un club específico
@@ -170,10 +171,37 @@ export async function PUT(
         )
       }
 
+      const existingClub = await prisma.club.findUnique({
+        where: { id }
+      })
+
+      if (!existingClub) {
+        return NextResponse.json(
+          { error: "Club no encontrado" },
+          { status: 404 }
+        )
+      }
+
       const club = await prisma.club.update({
         where: { id },
-        data: { status: body.status }
+        data: { status: body.status },
+        include: {
+          _count: {
+            select: {
+              courts: true,
+              tournaments: true
+            }
+          }
+        }
       })
+
+
+      await ClubLogService.logClubStatusChanged(
+        { userId: session.user.id, clubId: club.id },
+        club,
+        existingClub.status,
+        body.status
+      )
 
       return NextResponse.json(club)
     }
@@ -235,6 +263,13 @@ export async function PUT(
         }
       }
     })
+
+    // Log la actualización del club
+    await ClubLogService.logClubUpdated(
+      { userId: session.user.id, clubId: club.id },
+      existingClub,
+      club
+    )
 
     return NextResponse.json(club)
 

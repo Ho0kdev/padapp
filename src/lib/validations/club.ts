@@ -21,7 +21,7 @@ export const clubFormSchema = z.object({
     z.number(),
     z.undefined()
   ]).refine((val) => val === undefined || (val >= -180 && val <= 180), "Longitud inválida"),
-  status: z.enum(["ACTIVE", "INACTIVE"]).default("ACTIVE"),
+  status: z.enum(["ACTIVE", "INACTIVE", "MAINTENANCE"]).default("ACTIVE"),
   logoUrl: z.string().url("URL del logo inválida").optional().or(z.literal(""))
 })
 
@@ -47,6 +47,7 @@ export type ClubFilters = z.infer<typeof clubFilterSchema>
 export const clubStatusOptions = [
   { value: "ACTIVE", label: "Activo", color: "green" },
   { value: "INACTIVE", label: "Inactivo", color: "red" },
+  { value: "MAINTENANCE", label: "Mantenimiento", color: "yellow" },
 ] as const
 
 export const countryOptions = [

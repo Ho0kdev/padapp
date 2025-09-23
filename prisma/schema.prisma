@@ -61,7 +61,12 @@ model User {
   organizerTournaments Tournament[]   @relation("TournamentOrganizer")
   refereeMatches       Match[]        @relation("MatchReferee")
   notifications        Notification[]
-  logs                 TournamentLog[]
+
+  // Logs de auditoría
+  tournamentLogs       TournamentLog[]
+  clubLogs             ClubLog[]
+  courtLogs            CourtLog[]
+  categoryLogs         CategoryLog[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -265,6 +270,8 @@ model Club {
   courts          Court[]
   tournaments     Tournament[]     @relation("TournamentMainClub")
   tournamentClubs TournamentClub[]
+  logs            ClubLog[]
+  courtLogs       CourtLog[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -288,8 +295,9 @@ model Court {
   notes             String?
 
   // Relaciones
-  club    Club    @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  club    Club      @relation(fields: [clubId], references: [id], onDelete: Cascade)
   matches Match[]
+  logs    CourtLog[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -319,6 +327,7 @@ model Category {
   matches              Match[]
   zones                TournamentZone[]
   rankings             PlayerRanking[]
+  logs                 CategoryLog[]
 
   createdAt DateTime @default(now())
 
@@ -670,6 +679,7 @@ model Notification {
 // ============================================
 
 enum LogAction {
+  // Torneos
   TOURNAMENT_CREATED
   TOURNAMENT_UPDATED
   TOURNAMENT_DELETED
@@ -679,6 +689,26 @@ enum LogAction {
   MATCH_CREATED
   MATCH_UPDATED
   MATCH_RESULT_ADDED
+
+  // Clubes
+  CLUB_CREATED
+  CLUB_UPDATED
+  CLUB_DELETED
+  CLUB_STATUS_CHANGED
+
+  // Canchas
+  COURT_CREATED
+  COURT_UPDATED
+  COURT_DELETED
+  COURT_STATUS_CHANGED
+
+  // Categorías
+  CATEGORY_CREATED
+  CATEGORY_UPDATED
+  CATEGORY_DELETED
+  CATEGORY_STATUS_CHANGED
+
+  // General
   USER_ACTION
 }
 
@@ -712,4 +742,103 @@ model TournamentLog {
   @@index([action])
   @@index([createdAt])
   @@map("tournament_logs")
+}
+
+model ClubLog {
+  id           String    @id @default(cuid())
+
+  // Información del evento
+  action       LogAction
+  description  String    // Descripción human-readable del evento
+
+  // Contexto del evento
+  clubId       String?
+  userId       String    // Usuario que realizó la acción
+  ipAddress    String?   // IP desde donde se realizó la acción
+  userAgent    String?   // User Agent del navegador
+
+  // Datos del evento
+  oldData      Json?     // Estado anterior (para updates)
+  newData      Json?     // Estado nuevo (para creates/updates)
+  metadata     Json?     // Información adicional contextual
+
+  // Timestamps
+  createdAt    DateTime  @default(now())
+
+  // Relaciones
+  club         Club? @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  user         User  @relation(fields: [userId], references: [id])
+
+  @@index([clubId])
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("club_logs")
+}
+
+model CourtLog {
+  id           String    @id @default(cuid())
+
+  // Información del evento
+  action       LogAction
+  description  String    // Descripción human-readable del evento
+
+  // Contexto del evento
+  courtId      String?
+  clubId       String?   // Para contexto adicional
+  userId       String    // Usuario que realizó la acción
+  ipAddress    String?   // IP desde donde se realizó la acción
+  userAgent    String?   // User Agent del navegador
+
+  // Datos del evento
+  oldData      Json?     // Estado anterior (para updates)
+  newData      Json?     // Estado nuevo (para creates/updates)
+  metadata     Json?     // Información adicional contextual
+
+  // Timestamps
+  createdAt    DateTime  @default(now())
+
+  // Relaciones
+  court        Court? @relation(fields: [courtId], references: [id], onDelete: Cascade)
+  club         Club?  @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  user         User   @relation(fields: [userId], references: [id])
+
+  @@index([courtId])
+  @@index([clubId])
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("court_logs")
+}
+
+model CategoryLog {
+  id           String    @id @default(cuid())
+
+  // Información del evento
+  action       LogAction
+  description  String    // Descripción human-readable del evento
+
+  // Contexto del evento
+  categoryId   String?
+  userId       String    // Usuario que realizó la acción
+  ipAddress    String?   // IP desde donde se realizó la acción
+  userAgent    String?   // User Agent del navegador
+
+  // Datos del evento
+  oldData      Json?     // Estado anterior (para updates)
+  newData      Json?     // Estado nuevo (para creates/updates)
+  metadata     Json?     // Información adicional contextual
+
+  // Timestamps
+  createdAt    DateTime  @default(now())
+
+  // Relaciones
+  category     Category? @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  user         User      @relation(fields: [userId], references: [id])
+
+  @@index([categoryId])
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("category_logs")
 }

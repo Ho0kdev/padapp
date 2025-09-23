@@ -42,7 +42,7 @@ import {
   Play,
   History
 } from "lucide-react"
-import { TournamentLogs } from "./tournament-logs"
+import { SystemLogs } from "./system-logs"
 import { tournamentStatusOptions, tournamentTypeOptions, tournamentVisibilityOptions } from "@/lib/validations/tournament"
 
 interface AdminTournamentsDashboardProps {
@@ -189,7 +189,7 @@ export function AdminTournamentsDashboard({ stats }: AdminTournamentsDashboardPr
           <TabsTrigger value="status">Estados</TabsTrigger>
           <TabsTrigger value="trends">Tendencias</TabsTrigger>
           <TabsTrigger value="attention">Atención</TabsTrigger>
-          <TabsTrigger value="logs">Logs</TabsTrigger>
+          <TabsTrigger value="system-logs">Logs</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
@@ -422,8 +422,8 @@ export function AdminTournamentsDashboard({ stats }: AdminTournamentsDashboardPr
           </Card>
         </TabsContent>
 
-        <TabsContent value="logs" className="space-y-6">
-          <TournamentLogs />
+        <TabsContent value="system-logs" className="space-y-6">
+          <SystemLogs />
         </TabsContent>
       </Tabs>
     </div>
