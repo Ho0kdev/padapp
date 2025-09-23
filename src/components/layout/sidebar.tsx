@@ -42,7 +42,7 @@ export function Sidebar() {
   const navigationItems = [
     ...navigation,
     ...(user?.role === "ADMIN" ? [
-      { name: "Admin Dashboard", href: "/dashboard/admin/tournaments", icon: Shield }
+      { name: "Panel de Admin", href: "/dashboard/admin", icon: Shield }
     ] : [])
   ]
 

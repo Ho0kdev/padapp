@@ -122,7 +122,7 @@ async function getAdminStats(userId: string) {
   }
 }
 
-export default async function AdminTournamentsPage() {
+export default async function AdminDashboardPage() {
   const session = await getServerSession(authOptions)
 
   if (!session?.user?.id) {
