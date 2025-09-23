@@ -34,7 +34,7 @@ export type ClubEditData = z.infer<typeof clubEditSchema>
 export const clubFilterSchema = z.object({
   page: z.number().int().positive().default(1),
   limit: z.number().int().positive().max(100).default(10),
-  status: z.enum(["ACTIVE", "INACTIVE"]).optional(),
+  status: z.enum(["ACTIVE", "INACTIVE", "MAINTENANCE"]).optional(),
   search: z.string().optional(),
   city: z.string().optional(),
   state: z.string().optional(),

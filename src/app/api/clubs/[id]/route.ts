@@ -159,6 +159,25 @@ export async function PUT(
 
     const { id } = await params
     const body = await request.json()
+
+    // Si solo está cambiando el status, usar un endpoint simple
+    if (Object.keys(body).length === 1 && body.status) {
+      const validStatus = ["ACTIVE", "INACTIVE", "MAINTENANCE"]
+      if (!validStatus.includes(body.status)) {
+        return NextResponse.json(
+          { error: "Estado inválido" },
+          { status: 400 }
+        )
+      }
+
+      const club = await prisma.club.update({
+        where: { id },
+        data: { status: body.status }
+      })
+
+      return NextResponse.json(club)
+    }
+
     const validatedData = clubEditSchema.parse(body)
 
     // Verificar que el club existe

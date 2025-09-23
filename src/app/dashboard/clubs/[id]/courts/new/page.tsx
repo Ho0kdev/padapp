@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth"
 import { redirect } from "next/navigation"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { CourtForm } from "@/components/courts/court-form"
 import { Card, CardContent } from "@/components/ui/card"
 
@@ -59,29 +60,31 @@ export default async function NewCourtPage({ params }: PageProps) {
   }
 
   return (
-    <div className="container mx-auto py-6">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold tracking-tight">Nueva Cancha</h1>
-        <p className="text-muted-foreground">
-          Crear una nueva cancha para {club.name}
-        </p>
-      </div>
+    <DashboardLayout>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Nueva Cancha</h1>
+          <p className="text-muted-foreground">
+            Crear una nueva cancha para {club.name}
+          </p>
+        </div>
 
-      <Suspense fallback={
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              <span className="ml-2">Cargando formulario...</span>
-            </div>
-          </CardContent>
-        </Card>
-      }>
-        <CourtForm
-          clubId={club.id}
-          clubName={club.name}
-        />
-      </Suspense>
-    </div>
+        <Suspense fallback={
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <span className="ml-2">Cargando formulario...</span>
+              </div>
+            </CardContent>
+          </Card>
+        }>
+          <CourtForm
+            clubId={club.id}
+            clubName={club.name}
+          />
+        </Suspense>
+      </div>
+    </DashboardLayout>
   )
 }

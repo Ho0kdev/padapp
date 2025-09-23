@@ -1,8 +1,11 @@
+import { Suspense } from "react"
 import { notFound } from "next/navigation"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
-import { ClubsList } from "@/components/clubs/clubs-list"
+import { ClubsHeader } from "@/components/clubs/clubs-header"
+import { ClubsTable } from "@/components/clubs/clubs-table"
+import { DataTableSkeleton } from "@/components/ui/data-table-skeleton"
 
 export default async function ClubsPage() {
   const session = await getServerSession(authOptions)
@@ -14,14 +17,11 @@ export default async function ClubsPage() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Clubes</h1>
-          <p className="text-muted-foreground">
-            Gestiona los clubes de pádel de la plataforma
-          </p>
-        </div>
+        <ClubsHeader />
 
-        <ClubsList />
+        <Suspense fallback={<DataTableSkeleton columns={6} rows={5} showHeader={false} />}>
+          <ClubsTable />
+        </Suspense>
       </div>
     </DashboardLayout>
   )

@@ -167,6 +167,13 @@ export function ClubDetail({ club, currentUserId }: ClubDetailProps) {
             <Button variant="ghost" size="sm" onClick={() => router.back()}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
+            {club.logoUrl && (
+              <img
+                src={club.logoUrl}
+                alt={`Logo de ${club.name}`}
+                className="h-12 w-12 rounded-full object-cover border-2"
+              />
+            )}
             <h1 className="text-3xl font-bold tracking-tight">{club.name}</h1>
             {getStatusBadge(club.status)}
           </div>
@@ -223,16 +230,23 @@ export function ClubDetail({ club, currentUserId }: ClubDetailProps) {
               </CardHeader>
               <CardContent className="space-y-4">
                 {club.logoUrl && (
-                  <div className="flex items-center gap-2">
-                    <ImageIcon className="h-4 w-4 text-muted-foreground" />
-                    <a
-                      href={club.logoUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline flex items-center gap-1"
-                    >
-                      Ver logo <ExternalLink className="h-3 w-3" />
-                    </a>
+                  <div className="space-y-2">
+                    <h4 className="font-medium">Logo del Club</h4>
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={club.logoUrl}
+                        alt={`Logo de ${club.name}`}
+                        className="h-16 w-16 rounded-lg object-cover border"
+                      />
+                      <a
+                        href={club.logoUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline flex items-center gap-1 text-sm"
+                      >
+                        Ver en tamaño completo <ExternalLink className="h-3 w-3" />
+                      </a>
+                    </div>
                   </div>
                 )}
 

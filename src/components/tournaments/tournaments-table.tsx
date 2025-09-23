@@ -35,7 +35,7 @@ import Link from "next/link"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import { tournamentStatusOptions, tournamentTypeOptions } from "@/lib/validations/tournament"
-import { TournamentsPagination } from "./tournaments-pagination"
+import { DataTablePagination } from "@/components/ui/data-table-pagination"
 import { useToast } from "@/hooks/use-toast"
 
 export function TournamentsTable() {
@@ -257,10 +257,13 @@ export function TournamentsTable() {
         </Table>
       </div>
 
-      <TournamentsPagination
+      <DataTablePagination
         currentPage={pagination.page}
         totalPages={pagination.totalPages}
         total={pagination.total}
+        itemsPerPage={pagination.limit}
+        basePath="/dashboard/tournaments"
+        itemName="torneos"
       />
 
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>

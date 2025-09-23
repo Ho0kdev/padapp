@@ -53,7 +53,9 @@ import {
   CheckCircle,
   Trees,
   Layers,
-  Grid
+  Grid,
+  Wrench,
+  Calendar
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/hooks/use-auth"
@@ -96,6 +98,10 @@ export function CourtsList({ clubId }: CourtsListProps) {
   const [courtToDelete, setCourtToDelete] = useState<Court | null>(null)
   const [activateDialogOpen, setActivateDialogOpen] = useState(false)
   const [courtToActivate, setCourtToActivate] = useState<Court | null>(null)
+  const [maintenanceDialogOpen, setMaintenanceDialogOpen] = useState(false)
+  const [courtToMaintenance, setCourtToMaintenance] = useState<Court | null>(null)
+  const [reserveDialogOpen, setReserveDialogOpen] = useState(false)
+  const [courtToReserve, setCourtToReserve] = useState<Court | null>(null)
   const { toast } = useToast()
   const { user } = useAuth()
 
@@ -162,13 +168,17 @@ export function CourtsList({ clubId }: CourtsListProps) {
 
     try {
       const response = await fetch(`/api/clubs/${clubId}/courts/${courtToActivate.id}`, {
-        method: "PATCH",
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: "AVAILABLE" })
       })
 
       if (response.ok) {
         toast({
           title: "Cancha activada",
-          description: "La cancha ha sido activada exitosamente",
+          description: "La cancha ha sido puesta como disponible exitosamente",
         })
         fetchCourts()
       } else {
@@ -184,6 +194,74 @@ export function CourtsList({ clubId }: CourtsListProps) {
     } finally {
       setActivateDialogOpen(false)
       setCourtToActivate(null)
+    }
+  }
+
+  const handleMaintenance = async () => {
+    if (!courtToMaintenance) return
+
+    try {
+      const response = await fetch(`/api/clubs/${clubId}/courts/${courtToMaintenance.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: "MAINTENANCE" })
+      })
+
+      if (response.ok) {
+        toast({
+          title: "Cancha en mantenimiento",
+          description: "La cancha ha sido puesta en mantenimiento exitosamente",
+        })
+        fetchCourts()
+      } else {
+        const error = await response.json()
+        throw new Error(error.error || "Error al poner cancha en mantenimiento")
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Error al poner cancha en mantenimiento",
+        variant: "destructive",
+      })
+    } finally {
+      setMaintenanceDialogOpen(false)
+      setCourtToMaintenance(null)
+    }
+  }
+
+  const handleReserve = async () => {
+    if (!courtToReserve) return
+
+    try {
+      const response = await fetch(`/api/clubs/${clubId}/courts/${courtToReserve.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: "RESERVED" })
+      })
+
+      if (response.ok) {
+        toast({
+          title: "Cancha reservada",
+          description: "La cancha ha sido reservada exitosamente",
+        })
+        fetchCourts()
+      } else {
+        const error = await response.json()
+        throw new Error(error.error || "Error al reservar cancha")
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Error al reservar cancha",
+        variant: "destructive",
+      })
+    } finally {
+      setReserveDialogOpen(false)
+      setCourtToReserve(null)
     }
   }
 
@@ -232,7 +310,34 @@ export function CourtsList({ clubId }: CourtsListProps) {
   }
 
   const filteredCourts = courts.filter(court => {
-    const matchesSearch = court.name.toLowerCase().includes(searchTerm.toLowerCase())
+    const searchLower = searchTerm.toLowerCase()
+
+    // Búsqueda en nombre
+    const matchesName = court.name.toLowerCase().includes(searchLower)
+
+    // Búsqueda en características
+    const characteristics = []
+    if (court.hasLighting) characteristics.push("iluminación", "luz", "lighting")
+    if (court.hasRoof) characteristics.push("techo", "techada", "cubierta", "roof")
+    if (court.isOutdoor) characteristics.push("exterior", "outdoor", "al aire libre")
+    else characteristics.push("interior", "indoor", "cerrada")
+    if (court.hasPanoramicGlass) characteristics.push("cristal", "panorámico", "vidrio", "glass")
+    if (court.hasConcreteWall) characteristics.push("concreto", "pared", "concrete")
+    if (court.hasNet4m) characteristics.push("red", "4m", "net")
+
+    // Búsqueda en superficie
+    const surfaceLabels = {
+      CONCRETE: ["concreto", "concrete"],
+      ARTIFICIAL_GRASS: ["césped", "artificial", "grass", "cesped"],
+      CERAMIC: ["cerámica", "ceramic", "ceramica"],
+      OTHER: ["otra", "other"]
+    }
+    const surfaceWords = surfaceLabels[court.surface as keyof typeof surfaceLabels] || []
+
+    const matchesCharacteristics = characteristics.some(char => char.includes(searchLower)) ||
+                                  surfaceWords.some(word => word.includes(searchLower))
+
+    const matchesSearch = !searchTerm || matchesName || matchesCharacteristics
     const matchesStatus = statusFilter === "all" || court.status === statusFilter
     const matchesSurface = surfaceFilter === "all" || court.surface === surfaceFilter
 
@@ -277,7 +382,7 @@ export function CourtsList({ clubId }: CourtsListProps) {
             <div className="relative flex-1">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar canchas..."
+                placeholder="Buscar canchas (nombre, superficie, características)..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-8"
@@ -434,17 +539,39 @@ export function CourtsList({ clubId }: CourtsListProps) {
                                 </DropdownMenuItem>
                               </Link>
                               <DropdownMenuSeparator />
-                              {court.status !== "UNAVAILABLE" ? (
-                                <DropdownMenuItem
-                                  className="text-red-600"
-                                  onClick={() => {
-                                    setCourtToDelete(court)
-                                    setDeleteDialogOpen(true)
-                                  }}
-                                >
-                                  <Trash2 className="mr-2 h-4 w-4" />
-                                  Desactivar
-                                </DropdownMenuItem>
+                              {court.status === "AVAILABLE" ? (
+                                <>
+                                  <DropdownMenuItem
+                                    className="text-yellow-600"
+                                    onClick={() => {
+                                      setCourtToMaintenance(court)
+                                      setMaintenanceDialogOpen(true)
+                                    }}
+                                  >
+                                    <Wrench className="mr-2 h-4 w-4" />
+                                    Mantenimiento
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    className="text-blue-600"
+                                    onClick={() => {
+                                      setCourtToReserve(court)
+                                      setReserveDialogOpen(true)
+                                    }}
+                                  >
+                                    <Calendar className="mr-2 h-4 w-4" />
+                                    Reservar
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    className="text-red-600"
+                                    onClick={() => {
+                                      setCourtToDelete(court)
+                                      setDeleteDialogOpen(true)
+                                    }}
+                                  >
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Desactivar
+                                  </DropdownMenuItem>
+                                </>
                               ) : (
                                 <DropdownMenuItem
                                   className="text-green-600"
@@ -454,7 +581,7 @@ export function CourtsList({ clubId }: CourtsListProps) {
                                   }}
                                 >
                                   <CheckCircle className="mr-2 h-4 w-4" />
-                                  Activar
+                                  Poner Disponible
                                 </DropdownMenuItem>
                               )}
                             </>
@@ -492,15 +619,51 @@ export function CourtsList({ clubId }: CourtsListProps) {
       <AlertDialog open={activateDialogOpen} onOpenChange={setActivateDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Activar cancha?</AlertDialogTitle>
+            <AlertDialogTitle>¿Poner cancha disponible?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción activará la cancha "{courtToActivate?.name}". La cancha volverá a estar disponible para programar partidos.
+              Esta acción pondrá la cancha "{courtToActivate?.name}" como disponible. La cancha estará lista para programar partidos.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleActivate} className="bg-green-600 hover:bg-green-700">
-              Activar
+              Poner Disponible
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Dialog de confirmación para mantenimiento */}
+      <AlertDialog open={maintenanceDialogOpen} onOpenChange={setMaintenanceDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Poner cancha en mantenimiento?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción pondrá la cancha "{courtToMaintenance?.name}" en modo mantenimiento. La cancha no estará disponible para nuevos partidos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleMaintenance} className="bg-yellow-600 hover:bg-yellow-700">
+              Poner en Mantenimiento
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Dialog de confirmación para reservar */}
+      <AlertDialog open={reserveDialogOpen} onOpenChange={setReserveDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Reservar cancha?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción marcará la cancha "{courtToReserve?.name}" como reservada. La cancha no estará disponible para otros partidos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleReserve} className="bg-blue-600 hover:bg-blue-700">
+              Reservar
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

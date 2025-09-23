@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
-import { courtEditSchema } from "@/lib/validations/court"
+import { courtEditSchema, courtStatusSchema } from "@/lib/validations/court"
 import { z } from "zod"
 
 // GET /api/clubs/[id]/courts/[courtId] - Obtener una cancha específica
@@ -82,7 +82,16 @@ export async function PUT(
 
     const { id: clubId, courtId } = await params
     const body = await request.json()
-    const validatedData = courtEditSchema.parse(body)
+
+    // Detectar si es solo un cambio de estado o una edición completa
+    const isStatusChange = Object.keys(body).length === 1 && 'status' in body
+
+    let validatedData
+    if (isStatusChange) {
+      validatedData = courtStatusSchema.parse(body)
+    } else {
+      validatedData = courtEditSchema.parse(body)
+    }
 
     // Verificar que la cancha existe y pertenece al club
     const existingCourt = await prisma.court.findUnique({
@@ -99,50 +108,73 @@ export async function PUT(
       )
     }
 
-    // Verificar que no exista otra cancha con el mismo nombre en el club
-    const duplicateCourt = await prisma.court.findFirst({
-      where: {
-        clubId,
-        name: validatedData.name,
-        id: { not: courtId }
-      }
-    })
-
-    if (duplicateCourt) {
-      return NextResponse.json(
-        { error: "Ya existe otra cancha con ese nombre en este club" },
-        { status: 400 }
-      )
-    }
-
-    const court = await prisma.court.update({
-      where: { id: courtId },
-      data: {
-        name: validatedData.name,
-        surface: validatedData.surface,
-        hasLighting: validatedData.hasLighting,
-        hasRoof: validatedData.hasRoof,
-        isOutdoor: validatedData.isOutdoor,
-        hasPanoramicGlass: validatedData.hasPanoramicGlass,
-        hasConcreteWall: validatedData.hasConcreteWall,
-        hasNet4m: validatedData.hasNet4m,
-        status: validatedData.status,
-        hourlyRate: validatedData.hourlyRate,
-        notes: validatedData.notes,
-      },
-      include: {
-        club: {
-          select: {
-            name: true
-          }
+    let court
+    if (isStatusChange) {
+      // Solo cambiar el estado
+      court = await prisma.court.update({
+        where: { id: courtId },
+        data: {
+          status: validatedData.status,
         },
-        _count: {
-          select: {
-            matches: true
+        include: {
+          club: {
+            select: {
+              name: true
+            }
+          },
+          _count: {
+            select: {
+              matches: true
+            }
           }
         }
+      })
+    } else {
+      // Edición completa - verificar nombre duplicado
+      const duplicateCourt = await prisma.court.findFirst({
+        where: {
+          clubId,
+          name: validatedData.name,
+          id: { not: courtId }
+        }
+      })
+
+      if (duplicateCourt) {
+        return NextResponse.json(
+          { error: "Ya existe otra cancha con ese nombre en este club" },
+          { status: 400 }
+        )
       }
-    })
+
+      court = await prisma.court.update({
+        where: { id: courtId },
+        data: {
+          name: validatedData.name,
+          surface: validatedData.surface,
+          hasLighting: validatedData.hasLighting,
+          hasRoof: validatedData.hasRoof,
+          isOutdoor: validatedData.isOutdoor,
+          hasPanoramicGlass: validatedData.hasPanoramicGlass,
+          hasConcreteWall: validatedData.hasConcreteWall,
+          hasNet4m: validatedData.hasNet4m,
+          status: validatedData.status,
+          hourlyRate: validatedData.hourlyRate,
+          notes: validatedData.notes,
+        },
+        include: {
+          club: {
+            select: {
+              name: true
+            }
+          },
+          _count: {
+            select: {
+              matches: true
+            }
+          }
+        }
+      })
+    }
 
     return NextResponse.json(court)
 

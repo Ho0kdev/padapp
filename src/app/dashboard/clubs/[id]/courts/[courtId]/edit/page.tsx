@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth"
 import { redirect } from "next/navigation"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { CourtForm } from "@/components/courts/court-form"
 import { Card, CardContent } from "@/components/ui/card"
 
@@ -63,44 +64,46 @@ export default async function EditCourtPage({ params }: PageProps) {
   }
 
   return (
-    <div className="container mx-auto py-6">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold tracking-tight">Editar Cancha</h1>
-        <p className="text-muted-foreground">
-          Editar {court.name} de {court.club.name}
-        </p>
-      </div>
+    <DashboardLayout>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Editar Cancha</h1>
+          <p className="text-muted-foreground">
+            Editar {court.name} de {court.club.name}
+          </p>
+        </div>
 
-      <Suspense fallback={
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              <span className="ml-2">Cargando formulario...</span>
-            </div>
-          </CardContent>
-        </Card>
-      }>
-        <CourtForm
-          initialData={{
-            name: court.name,
-            surface: court.surface,
-            hasLighting: court.hasLighting,
-            hasRoof: court.hasRoof,
-            isOutdoor: court.isOutdoor,
-            hasPanoramicGlass: court.hasPanoramicGlass,
-            hasConcreteWall: court.hasConcreteWall,
-            hasNet4m: court.hasNet4m,
-            status: court.status,
-            hourlyRate: court.hourlyRate,
-            notes: court.notes,
-            clubId: court.clubId
-          }}
-          courtId={court.id}
-          clubId={court.club.id}
-          clubName={court.club.name}
-        />
-      </Suspense>
-    </div>
+        <Suspense fallback={
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <span className="ml-2">Cargando formulario...</span>
+              </div>
+            </CardContent>
+          </Card>
+        }>
+          <CourtForm
+            initialData={{
+              name: court.name,
+              surface: court.surface,
+              hasLighting: court.hasLighting,
+              hasRoof: court.hasRoof,
+              isOutdoor: court.isOutdoor,
+              hasPanoramicGlass: court.hasPanoramicGlass,
+              hasConcreteWall: court.hasConcreteWall,
+              hasNet4m: court.hasNet4m,
+              status: court.status,
+              hourlyRate: court.hourlyRate,
+              notes: court.notes,
+              clubId: court.clubId
+            }}
+            courtId={court.id}
+            clubId={court.club.id}
+            clubName={court.club.name}
+          />
+        </Suspense>
+      </div>
+    </DashboardLayout>
   )
 }

@@ -62,11 +62,11 @@ const updateTournamentSchema = z.object({
   path: ["tournamentStart"]
 }).refine((data) => {
   if (data.tournamentEnd) {
-    return data.tournamentEnd > data.tournamentStart
+    return data.tournamentEnd >= data.tournamentStart
   }
   return true
 }, {
-  message: "La fecha de fin del torneo debe ser posterior al inicio",
+  message: "La fecha de fin del torneo debe ser igual o posterior al inicio",
   path: ["tournamentEnd"]
 }).refine((data) => {
   if (data.maxParticipants) {
@@ -239,6 +239,45 @@ export async function PUT(
         { error: "No se puede editar un torneo que ya está en progreso o completado" },
         { status: 400 }
       )
+    }
+
+    // Verificar que el club principal esté activo
+    const mainClub = await prisma.club.findUnique({
+      where: { id: validatedData.mainClubId },
+      select: { status: true, name: true }
+    })
+
+    if (!mainClub) {
+      return NextResponse.json(
+        { error: "El club principal seleccionado no existe" },
+        { status: 400 }
+      )
+    }
+
+    if (mainClub.status !== "ACTIVE") {
+      return NextResponse.json(
+        { error: `El club principal "${mainClub.name}" no está activo` },
+        { status: 400 }
+      )
+    }
+
+    // Verificar que todos los clubes participantes estén activos
+    if (clubs && clubs.length > 0) {
+      const inactiveClubs = await prisma.club.findMany({
+        where: {
+          id: { in: clubs },
+          status: { not: "ACTIVE" }
+        },
+        select: { id: true, name: true, status: true }
+      })
+
+      if (inactiveClubs.length > 0) {
+        const inactiveClubNames = inactiveClubs.map(club => club.name).join(", ")
+        return NextResponse.json(
+          { error: `Los siguientes clubes no están activos: ${inactiveClubNames}` },
+          { status: 400 }
+        )
+      }
     }
 
     // Preparar los datos de actualización

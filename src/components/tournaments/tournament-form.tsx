@@ -105,11 +105,28 @@ export function TournamentForm({
 
   useEffect(() => {
     if (initialData && Object.keys(initialData).length > 0) {
-      // Reset form with initial data
-      form.reset({
+      // Reset form with initial data, ensuring dates are properly converted
+      const formData = {
         ...defaultValues,
-        ...initialData
-      })
+        ...initialData,
+        // Ensure all date fields are Date objects
+        registrationStart: initialData.registrationStart instanceof Date
+          ? initialData.registrationStart
+          : new Date(initialData.registrationStart || defaultValues.registrationStart),
+        registrationEnd: initialData.registrationEnd instanceof Date
+          ? initialData.registrationEnd
+          : new Date(initialData.registrationEnd || defaultValues.registrationEnd),
+        tournamentStart: initialData.tournamentStart instanceof Date
+          ? initialData.tournamentStart
+          : new Date(initialData.tournamentStart || defaultValues.tournamentStart),
+        tournamentEnd: initialData.tournamentEnd
+          ? (initialData.tournamentEnd instanceof Date
+              ? initialData.tournamentEnd
+              : new Date(initialData.tournamentEnd))
+          : undefined
+      }
+
+      form.reset(formData)
     }
   }, [initialData, form, defaultValues])
 
@@ -157,7 +174,7 @@ export function TournamentForm({
 
   const fetchClubs = async () => {
     try {
-      const response = await fetch("/api/clubs")
+      const response = await fetch("/api/clubs?status=ACTIVE")
       if (response.ok) {
         const data = await response.json()
         setClubs(data.clubs)

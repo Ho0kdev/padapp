@@ -27,6 +27,12 @@ export type CourtFormData = z.infer<typeof courtFormSchema>
 export const courtEditSchema = courtFormSchema.omit({ clubId: true })
 export type CourtEditData = z.infer<typeof courtEditSchema>
 
+// Schema para cambios de estado solamente
+export const courtStatusSchema = z.object({
+  status: z.enum(["AVAILABLE", "MAINTENANCE", "RESERVED", "UNAVAILABLE"])
+})
+export type CourtStatusData = z.infer<typeof courtStatusSchema>
+
 export const courtFilterSchema = z.object({
   page: z.number().int().positive().default(1),
   limit: z.number().int().positive().max(100).default(10),

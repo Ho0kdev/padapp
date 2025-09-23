@@ -45,8 +45,7 @@ import {
   courtEditSchema,
   CourtFormData,
   CourtEditData,
-  courtSurfaceOptions,
-  courtStatusOptions
+  courtSurfaceOptions
 } from "@/lib/validations/court"
 
 interface CourtFormProps {
@@ -72,7 +71,6 @@ export function CourtForm({ initialData, courtId, clubId, clubName }: CourtFormP
       hasPanoramicGlass: initialData?.hasPanoramicGlass || false,
       hasConcreteWall: initialData?.hasConcreteWall || false,
       hasNet4m: initialData?.hasNet4m || false,
-      status: initialData?.status || "AVAILABLE",
       hourlyRate: initialData?.hourlyRate?.toString() ?? "",
       notes: initialData?.notes || "",
       // Solo incluir clubId para creación
@@ -89,12 +87,18 @@ export function CourtForm({ initialData, courtId, clubId, clubName }: CourtFormP
         : `/api/clubs/${clubId}/courts`
       const method = courtId ? "PUT" : "POST"
 
+      // Para edición, remover el campo status. Para creación, establecer como AVAILABLE
+      const submitData = courtId ? { ...data } : { ...data, status: "AVAILABLE" }
+      if (courtId && 'status' in submitData) {
+        delete (submitData as any).status
+      }
+
       const response = await fetch(url, {
         method,
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(submitData),
       })
 
       if (!response.ok) {
@@ -183,30 +187,6 @@ export function CourtForm({ initialData, courtId, clubId, clubName }: CourtFormP
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Estado *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecciona el estado" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {courtStatusOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
             </CardContent>
           </Card>
 

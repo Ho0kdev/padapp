@@ -4,32 +4,41 @@ import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
 
-interface TournamentsPaginationProps {
+interface DataTablePaginationProps {
   currentPage: number
   totalPages: number
   total: number
+  itemsPerPage?: number
+  basePath: string
+  itemName?: string
 }
 
-export function TournamentsPagination({
+export function DataTablePagination({
   currentPage,
   totalPages,
-  total
-}: TournamentsPaginationProps) {
+  total,
+  itemsPerPage = 10,
+  basePath,
+  itemName = "elementos"
+}: DataTablePaginationProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
 
   const goToPage = (page: number) => {
     const params = new URLSearchParams(searchParams)
     params.set("page", page.toString())
-    router.push(`/dashboard/tournaments?${params.toString()}`)
+    router.push(`${basePath}?${params.toString()}`)
   }
 
   if (totalPages <= 1) return null
 
+  const startItem = ((currentPage - 1) * itemsPerPage) + 1
+  const endItem = Math.min(currentPage * itemsPerPage, total)
+
   return (
     <div className="flex items-center justify-between">
       <div className="text-sm text-muted-foreground">
-        Mostrando {((currentPage - 1) * 10) + 1} - {Math.min(currentPage * 10, total)} de {total} torneos
+        Mostrando {startItem} - {endItem} de {total} {itemName}
       </div>
 
       <div className="flex items-center space-x-2">

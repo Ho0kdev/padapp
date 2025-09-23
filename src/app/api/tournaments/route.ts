@@ -53,11 +53,11 @@ const createTournamentSchema = z.object({
   path: ["tournamentStart"]
 }).refine((data) => {
   if (data.tournamentEnd) {
-    return data.tournamentEnd > data.tournamentStart
+    return data.tournamentEnd >= data.tournamentStart
   }
   return true
 }, {
-  message: "La fecha de fin del torneo debe ser posterior al inicio",
+  message: "La fecha de fin del torneo debe ser igual o posterior al inicio",
   path: ["tournamentEnd"]
 }).refine((data) => {
   if (data.maxParticipants) {
@@ -92,9 +92,35 @@ export async function GET(request: NextRequest) {
     }
 
     if (search) {
+      // Mapear búsquedas de tipos legibles a códigos de base de datos
+      const typeMapping: Record<string, string[]> = {
+        'eliminacion': ['SINGLE_ELIMINATION', 'DOUBLE_ELIMINATION'],
+        'simple': ['SINGLE_ELIMINATION'],
+        'doble': ['DOUBLE_ELIMINATION'],
+        'todos': ['ROUND_ROBIN'],
+        'contra': ['ROUND_ROBIN'],
+        'suizo': ['SWISS'],
+        'grupos': ['GROUP_STAGE_ELIMINATION'],
+        'americano': ['AMERICANO']
+      }
+
+      const searchLower = search.toLowerCase()
+      let typeFilters: any[] = []
+
+      // Buscar tipos que coincidan
+      Object.entries(typeMapping).forEach(([key, types]) => {
+        if (searchLower.includes(key)) {
+          typeFilters.push(...types.map(type => ({ type })))
+        }
+      })
+
       where.OR = [
         { name: { contains: search, mode: "insensitive" } },
-        { description: { contains: search, mode: "insensitive" } }
+        { description: { contains: search, mode: "insensitive" } },
+        { mainClub: { name: { contains: search, mode: "insensitive" } } },
+        { mainClub: { city: { contains: search, mode: "insensitive" } } },
+        { categories: { some: { category: { name: { contains: search, mode: "insensitive" } } } } },
+        ...typeFilters
       ]
     }
 
@@ -196,6 +222,45 @@ export async function POST(request: NextRequest) {
         { error: "La fecha de inicio del torneo debe ser posterior al fin de inscripciones" },
         { status: 400 }
       )
+    }
+
+    // Verificar que el club principal esté activo
+    const mainClub = await prisma.club.findUnique({
+      where: { id: validatedData.mainClubId },
+      select: { status: true, name: true }
+    })
+
+    if (!mainClub) {
+      return NextResponse.json(
+        { error: "El club principal seleccionado no existe" },
+        { status: 400 }
+      )
+    }
+
+    if (mainClub.status !== "ACTIVE") {
+      return NextResponse.json(
+        { error: `El club principal "${mainClub.name}" no está activo` },
+        { status: 400 }
+      )
+    }
+
+    // Verificar que todos los clubes participantes estén activos
+    if (validatedData.clubs && validatedData.clubs.length > 0) {
+      const inactiveClubs = await prisma.club.findMany({
+        where: {
+          id: { in: validatedData.clubs },
+          status: { not: "ACTIVE" }
+        },
+        select: { id: true, name: true, status: true }
+      })
+
+      if (inactiveClubs.length > 0) {
+        const inactiveClubNames = inactiveClubs.map(club => club.name).join(", ")
+        return NextResponse.json(
+          { error: `Los siguientes clubes no están activos: ${inactiveClubNames}` },
+          { status: 400 }
+        )
+      }
     }
 
     const tournament = await prisma.tournament.create({

@@ -63,11 +63,11 @@ export const tournamentFormSchema = z.object({
   path: ["tournamentStart"]
 }).refine((data) => {
   if (data.tournamentEnd) {
-    return data.tournamentEnd > data.tournamentStart
+    return data.tournamentEnd >= data.tournamentStart
   }
   return true
 }, {
-  message: "La fecha de fin del torneo debe ser posterior al inicio",
+  message: "La fecha de fin del torneo debe ser igual o posterior al inicio",
   path: ["tournamentEnd"]
 }).refine((data) => {
   if (data.maxParticipants) {

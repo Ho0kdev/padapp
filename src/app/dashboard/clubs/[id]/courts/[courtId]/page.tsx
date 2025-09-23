@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth"
 import { redirect } from "next/navigation"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { CourtDetail } from "@/components/courts/court-detail"
 
 interface PageProps {
@@ -115,8 +116,10 @@ export default async function CourtDetailPage({ params }: PageProps) {
   }
 
   return (
-    <div className="container mx-auto py-6">
-      <CourtDetail court={court} currentUserId={session.user.id} />
-    </div>
+    <DashboardLayout>
+      <div className="space-y-6">
+        <CourtDetail court={court} currentUserId={session.user.id} />
+      </div>
+    </DashboardLayout>
   )
 }

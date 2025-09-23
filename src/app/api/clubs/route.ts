@@ -13,16 +13,45 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 })
     }
 
-    const clubs = await prisma.club.findMany({
-      orderBy: { name: "asc" },
-      include: {
-        _count: {
-          select: {
-            courts: true
+    // Obtener parámetros de query
+    const { searchParams } = new URL(request.url)
+    const page = parseInt(searchParams.get("page") || "1")
+    const limit = parseInt(searchParams.get("limit") || "10")
+    const statusFilter = searchParams.get('status')
+    const search = searchParams.get('search')
+
+    const skip = (page - 1) * limit
+
+    // Construir filtro de where basado en parámetros
+    const whereClause: any = {}
+    if (statusFilter) {
+      whereClause.status = statusFilter
+    }
+
+    if (search) {
+      whereClause.OR = [
+        { name: { contains: search, mode: "insensitive" } },
+        { city: { contains: search, mode: "insensitive" } },
+        { address: { contains: search, mode: "insensitive" } }
+      ]
+    }
+
+    const [clubs, total] = await Promise.all([
+      prisma.club.findMany({
+        where: whereClause,
+        skip,
+        take: limit,
+        orderBy: { name: "asc" },
+        include: {
+          _count: {
+            select: {
+              courts: true
+            }
           }
         }
-      }
-    })
+      }),
+      prisma.club.count({ where: whereClause })
+    ])
 
     // Calcular conteos manualmente para evitar el problema de doble conteo
     const clubsWithCounts = await Promise.all(
@@ -63,7 +92,15 @@ export async function GET(request: NextRequest) {
       })
     )
 
-    return NextResponse.json({ clubs: clubsWithCounts })
+    return NextResponse.json({
+      clubs: clubsWithCounts,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit)
+      }
+    })
 
   } catch (error) {
     console.error("Error fetching clubs:", error)
