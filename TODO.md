@@ -3,7 +3,44 @@
 //CLUBES
 //ADMIN
 
+TODO
+================================
+🏗️ Módulos por desarrollar:
 
+  👥 Gestión de Usuarios/Jugadores
+
+  - Perfiles de jugadores
+  - Rankings y estadísticas
+  - Gestión de equipos/parejas
+  - Sistema de roles (Admin, Organizador, Jugador)
+
+  🏆 Sistema de Partidos
+
+  - Programación de partidos
+  - Gestión de resultados
+  - Árbitros y mesa de control
+  - Sistema de puntajes en tiempo real
+
+  📊 Categorías y Rankings
+
+  - Gestión de categorías
+  - Sistemas de puntuación
+  - Rankings dinámicos
+  - Históricos de rendimiento
+
+  💰 Gestión Económica
+
+  - Pagos e inscripciones
+  - Premios y distribución
+  - Reportes financieros
+  - Gestión de sponsors
+
+  📱 Funcionalidades Avanzadas
+
+  - Notificaciones en tiempo real
+  - App móvil/PWA
+  - Streaming/transmisiones
+  - Integración con redes sociales
 
 TEST
 =======================

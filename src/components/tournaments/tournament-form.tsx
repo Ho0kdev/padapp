@@ -46,6 +46,13 @@ import {
 } from "@/lib/validations/tournament"
 import { CategoryOption, ClubOption } from "@/types/tournament"
 
+const genderFilterOptions = [
+  { value: "all", label: "Todas las categorías" },
+  { value: "NONE", label: "Sin restricción de género" },
+  { value: "MALE", label: "Masculino (+ mixtas)" },
+  { value: "FEMALE", label: "Femenino (+ mixtas)" },
+]
+
 interface TournamentFormProps {
   initialData?: Partial<TournamentFormData>
   tournamentId?: string
@@ -66,6 +73,7 @@ export function TournamentForm({
   const [clubs, setClubs] = useState<ClubOption[]>([])
   const [selectedCategories, setSelectedCategories] = useState<string[]>(initialSelectedCategories)
   const [selectedClubs, setSelectedClubs] = useState<string[]>(initialSelectedClubs)
+  const [genderFilter, setGenderFilter] = useState<string>("all")
   const previousMainClubIdRef = useRef<string | null>(initialData?.mainClubId || null)
 
   const defaultValues = useMemo(() => {
@@ -162,7 +170,7 @@ export function TournamentForm({
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch("/api/categories")
+      const response = await fetch("/api/categories?limit=1000&isActive=true")
       if (response.ok) {
         const data = await response.json()
         setCategories(data.categories)
@@ -258,6 +266,26 @@ export function TournamentForm({
         : [...prev, categoryId]
     )
   }, [])
+
+  // Función para filtrar categorías por género
+  const filteredCategories = useMemo(() => {
+    if (genderFilter === "all") {
+      return categories
+    }
+
+    return categories.filter(category => {
+      if (genderFilter === "NONE") {
+        return !category.genderRestriction || category.genderRestriction === null
+      }
+
+      // Las categorías MIXED aparecen en todos los filtros de género
+      if (category.genderRestriction === "MIXED") {
+        return true
+      }
+
+      return category.genderRestriction === genderFilter
+    })
+  }, [categories, genderFilter])
 
   const handleClubToggle = useCallback((clubId: string) => {
     const mainClubId = form.getValues("mainClubId")
@@ -826,8 +854,38 @@ export function TournamentForm({
             <CardTitle>Categorías</CardTitle>
           </CardHeader>
           <CardContent>
+            {/* Filtro por género */}
+            <div className="mb-4">
+              <Label htmlFor="gender-filter" className="text-sm font-medium">
+                Filtrar por restricción de género
+              </Label>
+              <Select value={genderFilter} onValueChange={setGenderFilter}>
+                <SelectTrigger className="w-full mt-1">
+                  <SelectValue placeholder="Seleccionar filtro" />
+                </SelectTrigger>
+                <SelectContent>
+                  {genderFilterOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {filteredCategories.length !== categories.length && (
+              <div className="mb-3 text-sm text-muted-foreground">
+                Mostrando {filteredCategories.length} de {categories.length} categorías
+              </div>
+            )}
+
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {categories.map((category) => (
+              {filteredCategories.length === 0 ? (
+                <div className="col-span-full text-center py-8 text-muted-foreground">
+                  No hay categorías que coincidan con el filtro seleccionado
+                </div>
+              ) : (
+                filteredCategories.map((category) => (
                 <div
                   key={category.id}
                   className={cn(
@@ -853,7 +911,8 @@ export function TournamentForm({
                     )}
                   </div>
                 </div>
-              ))}
+                ))
+              )}
             </div>
           </CardContent>
         </Card>

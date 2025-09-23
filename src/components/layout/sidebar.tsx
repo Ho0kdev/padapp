@@ -17,12 +17,14 @@ import {
   CreditCard,
   Bell,
   Shield,
+  Tag,
 } from "lucide-react"
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: Home },
   { name: "Torneos", href: "/dashboard/tournaments", icon: Trophy },
   { name: "Clubes", href: "/dashboard/clubs", icon: Building },
+  { name: "Categorías", href: "/dashboard/categories", icon: Tag },
   { name: "Jugadores", href: "/dashboard/players", icon: Users },
   { name: "Partidos", href: "/dashboard/matches", icon: Calendar },
   { name: "Rankings", href: "/dashboard/rankings", icon: Medal },
