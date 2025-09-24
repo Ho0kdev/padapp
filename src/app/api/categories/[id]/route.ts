@@ -122,7 +122,7 @@ export async function PUT(
         type: validatedData.type,
         minAge: validatedData.minAge ?? null,
         maxAge: validatedData.maxAge ?? null,
-        genderRestriction: validatedData.genderRestriction ?? null,
+        genderRestriction: validatedData.genderRestriction as any ?? null,
         minRankingPoints: validatedData.minRankingPoints ?? null,
         maxRankingPoints: validatedData.maxRankingPoints ?? null,
         isActive: validatedData.isActive,

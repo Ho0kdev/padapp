@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
         type: validatedData.type,
         minAge: validatedData.minAge,
         maxAge: validatedData.maxAge,
-        genderRestriction: validatedData.genderRestriction,
+        genderRestriction: validatedData.genderRestriction as any,
         minRankingPoints: validatedData.minRankingPoints,
         maxRankingPoints: validatedData.maxRankingPoints,
         isActive: validatedData.isActive,

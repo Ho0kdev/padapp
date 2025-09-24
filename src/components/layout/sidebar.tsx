@@ -25,13 +25,13 @@ const navigation = [
   { name: "Torneos", href: "/dashboard/tournaments", icon: Trophy },
   { name: "Clubes", href: "/dashboard/clubs", icon: Building },
   { name: "Categorías", href: "/dashboard/categories", icon: Tag },
-  { name: "Jugadores", href: "/dashboard/players", icon: Users },
-  { name: "Partidos", href: "/dashboard/matches", icon: Calendar },
-  { name: "Rankings", href: "/dashboard/rankings", icon: Medal },
-  { name: "Pagos", href: "/dashboard/payments", icon: CreditCard },
-  { name: "Reportes", href: "/dashboard/reports", icon: BarChart3 },
-  { name: "Notificaciones", href: "/dashboard/notifications", icon: Bell },
-  { name: "Configuración", href: "/dashboard/settings", icon: Settings },
+  { name: "Usuarios", href: "/dashboard/users", icon: Users },
+  // { name: "Partidos", href: "/dashboard/matches", icon: Calendar },
+  // { name: "Rankings", href: "/dashboard/rankings", icon: Medal },
+  // { name: "Pagos", href: "/dashboard/payments", icon: CreditCard },
+  // { name: "Reportes", href: "/dashboard/reports", icon: BarChart3 },
+  // { name: "Notificaciones", href: "/dashboard/notifications", icon: Bell },
+  // { name: "Configuración", href: "/dashboard/settings", icon: Settings },
 ]
 
 export function Sidebar() {
