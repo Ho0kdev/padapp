@@ -66,6 +66,7 @@ export async function GET(request: NextRequest) {
       include: {
         player: {
           include: {
+            primaryCategory: true,
             rankings: {
               include: {
                 category: true
@@ -228,6 +229,7 @@ export async function POST(request: NextRequest) {
             emergencyContactPhone,
             medicalNotes,
             rankingPoints,
+            primaryCategoryId: categoryId,
             profileImageUrl
           }
         } : undefined

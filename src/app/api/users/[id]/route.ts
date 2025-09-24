@@ -184,7 +184,8 @@ export async function PUT(
       emergencyContactName,
       emergencyContactPhone,
       medicalNotes,
-      rankingPoints
+      rankingPoints,
+      categoryId
     } = body
 
     // Get existing user
@@ -323,9 +324,50 @@ export async function PUT(
         })
       },
       include: {
-        player: true
+        player: {
+          include: {
+            rankings: {
+              include: {
+                category: true
+              }
+            }
+          }
+        }
       }
     })
+
+    // Handle primary category change if specified and player exists
+    if (categoryId && user.player) {
+      // Update the primary category
+      await prisma.player.update({
+        where: { id: user.player.id },
+        data: { primaryCategoryId: categoryId }
+      })
+
+      // Also ensure player has a ranking in this category
+      const currentYear = new Date().getFullYear()
+      const existingRanking = await prisma.playerRanking.findUnique({
+        where: {
+          playerId_categoryId_seasonYear: {
+            playerId: user.player.id,
+            categoryId: categoryId,
+            seasonYear: currentYear
+          }
+        }
+      })
+
+      if (!existingRanking) {
+        // Create new ranking for the category
+        await prisma.playerRanking.create({
+          data: {
+            playerId: user.player.id,
+            categoryId: categoryId,
+            currentPoints: user.player.rankingPoints || 0,
+            seasonYear: currentYear
+          }
+        })
+      }
+    }
 
     return NextResponse.json(user)
 

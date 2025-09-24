@@ -72,6 +72,10 @@ interface User {
     phone?: string
     gender?: 'MALE' | 'FEMALE' | 'MIXED'
     rankingPoints: number
+    primaryCategory?: {
+      id: string
+      name: string
+    }
     rankings: Array<{
       id: string
       currentPoints: number
@@ -372,7 +376,7 @@ export function UsersTable() {
               <TableHead>Rol</TableHead>
               <TableHead>Estado</TableHead>
               <TableHead>Género</TableHead>
-              <TableHead>Puntos</TableHead>
+              <TableHead>Categoría</TableHead>
               <TableHead>Torneos Activos</TableHead>
               <TableHead>Registro</TableHead>
               <TableHead className="w-[50px]"></TableHead>
@@ -426,19 +430,16 @@ export function UsersTable() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-1">
-                          <Trophy className="h-3 w-3 text-muted-foreground" />
-                          <div>
-                            <div className="font-medium text-sm">
-                              {user.player?.rankingPoints || 0} pts
-                            </div>
-                            {user.player?.rankings && user.player.rankings.length > 0 && (
-                              <div className="text-xs text-muted-foreground">
-                                {user.player.rankings[0].category.name}
-                              </div>
-                            )}
+                        {user.player?.primaryCategory ? (
+                          <div className="flex items-center gap-1">
+                            <Trophy className="h-3 w-3 text-muted-foreground" />
+                            <span className="font-medium text-sm">
+                              {user.player.primaryCategory.name}
+                            </span>
                           </div>
-                        </div>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">-</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         {activeTournaments.length > 0 ? (

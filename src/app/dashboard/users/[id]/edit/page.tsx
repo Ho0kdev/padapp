@@ -20,6 +20,7 @@ async function getUser(id: string, sessionUserId: string) {
     include: {
       player: {
         include: {
+          primaryCategory: true,
           rankings: {
             include: {
               category: true
@@ -83,7 +84,7 @@ export default async function EditUserPage({ params }: Props) {
     emergencyContactPhone: user.player?.emergencyContactPhone || '',
     medicalNotes: user.player?.medicalNotes || '',
     rankingPoints: user.player?.rankingPoints || 0,
-    categoryId: user.player?.rankings?.[0]?.category?.id,
+    categoryId: user.player?.primaryCategoryId || user.player?.rankings?.[0]?.category?.id,
     profileImageUrl: user.player?.profileImageUrl || ''
   }
 

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { ArrowLeft, Save, Loader2, Eye, EyeOff } from 'lucide-react'
+import { ArrowLeft, Save, Loader2, Eye, EyeOff, User, Shield, UserCheck, Phone, Heart } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -27,12 +27,14 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useRouter } from 'next/navigation'
-import { toast } from 'sonner'
+import { useToast } from '@/hooks/use-toast'
 
 const userFormSchema = z.object({
   email: z.string().email('Email inválido'),
   name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres'),
-  password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres').optional(),
+  password: z.string().optional().refine((val) => !val || val.length >= 6, {
+    message: 'La contraseña debe tener al menos 6 caracteres'
+  }),
   role: z.enum(['ADMIN', 'ORGANIZER', 'PLAYER']).default('PLAYER'),
   status: z.enum(['ACTIVE', 'INACTIVE']).default('ACTIVE'),
   createPlayer: z.boolean().default(true),
@@ -71,11 +73,12 @@ interface UserFormProps {
 }
 
 export function UserForm({ initialData, userId }: UserFormProps) {
-  const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [categories, setCategories] = useState<Category[]>([])
   const [loadingCategories, setLoadingCategories] = useState(false)
+  const { toast } = useToast()
+  const router = useRouter()
 
   const isEditing = !!userId
 
@@ -199,40 +202,38 @@ export function UserForm({ initialData, userId }: UserFormProps) {
         throw new Error(error.error || `Error al ${isEditing ? 'actualizar' : 'crear'} usuario`)
       }
 
-      toast.success(`Usuario ${isEditing ? 'actualizado' : 'creado'} exitosamente`)
+      toast({
+        title: isEditing ? "Usuario actualizado" : "Usuario creado",
+        description: `El usuario ha sido ${isEditing ? "actualizado" : "creado"} exitosamente.`,
+      })
+
       router.push('/dashboard/users')
       router.refresh()
     } catch (error) {
       console.error(`Error ${isEditing ? 'updating' : 'creating'} user:`, error)
-      toast.error(error instanceof Error ? error.message : `Error al ${isEditing ? 'actualizar' : 'crear'} usuario`)
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : `Error al ${isEditing ? 'actualizar' : 'crear'} usuario`,
+        variant: "destructive",
+      })
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <Button
-          variant="ghost"
-          onClick={() => router.back()}
-          disabled={loading}
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Volver
-        </Button>
-      </div>
-
+    <div className="max-w-5xl mx-auto space-y-6">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          <div className="grid gap-6 md:grid-cols-2">
-            {/* Basic User Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Información de Usuario</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          {/* Información básica de usuario */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <User className="h-5 w-5" />
+                Información de Usuario
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-4 md:grid-cols-2">
                 <FormField
                   control={form.control}
                   name="email"
@@ -270,43 +271,50 @@ export function UserForm({ initialData, userId }: UserFormProps) {
                   )}
                 />
 
-                {!isEditing && (
-                  <FormField
-                    control={form.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Contraseña</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <Input
-                              {...field}
-                              type={showPassword ? 'text' : 'password'}
-                              placeholder="Dejar vacío para contraseña automática"
-                            />
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                              onClick={() => setShowPassword(!showPassword)}
-                            >
-                              {showPassword ? (
-                                <EyeOff className="h-4 w-4" />
-                              ) : (
-                                <Eye className="h-4 w-4" />
-                              )}
-                            </Button>
-                          </div>
-                        </FormControl>
-                        <FormDescription>
-                          Si no se especifica, se generará una contraseña automática
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Contraseña {!isEditing && '*'}
+                      </FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Input
+                            {...field}
+                            type={showPassword ? 'text' : 'password'}
+                            placeholder={
+                              isEditing
+                                ? "Dejar vacío para no cambiar contraseña"
+                                : "Dejar vacío para contraseña automática"
+                            }
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                            onClick={() => setShowPassword(!showPassword)}
+                          >
+                            {showPassword ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
+                      </FormControl>
+                      <FormDescription>
+                        {isEditing
+                          ? "Dejar vacío para mantener la contraseña actual"
+                          : "Si no se especifica, se generará una contraseña automática"
+                        }
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
                 <FormField
                   control={form.control}
@@ -331,27 +339,6 @@ export function UserForm({ initialData, userId }: UserFormProps) {
                   )}
                 />
 
-                <FormField
-                  control={form.control}
-                  name="status"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Estado *</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecciona un estado" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="ACTIVE">Activo</SelectItem>
-                          <SelectItem value="INACTIVE">Inactivo</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
 
                 {selectedRole !== 'PLAYER' && (
                   <FormField
@@ -377,24 +364,27 @@ export function UserForm({ initialData, userId }: UserFormProps) {
                     )}
                   />
                 )}
-              </CardContent>
-            </Card>
+            </CardContent>
+          </Card>
 
-            {/* Player Information */}
-            {createPlayer && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Información del Jugador</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="p-4 bg-gray-50 rounded-lg border-l-4 border-blue-500">
-                    <p className="text-sm text-gray-700">
-                      <strong>Nombre del jugador:</strong> Se usará automáticamente el nombre completo del usuario "{fullName || 'Sin especificar'}"
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      El nombre se dividirá automáticamente en nombre y apellido cuando sea necesario
-                    </p>
-                  </div>
+          {/* Información del jugador */}
+          {createPlayer && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <UserCheck className="h-5 w-5" />
+                  Información del Jugador
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="grid gap-4 md:grid-cols-2">
+                <div className="md:col-span-2 p-4 bg-gray-50 rounded-lg border-l-4 border-blue-500">
+                  <p className="text-sm text-gray-700">
+                    <strong>Nombre del jugador:</strong> Se usará automáticamente el nombre completo del usuario "{fullName || 'Sin especificar'}"
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    El nombre se dividirá automáticamente en nombre y apellido cuando sea necesario
+                  </p>
+                </div>
 
                   <FormField
                     control={form.control}
@@ -560,13 +550,15 @@ export function UserForm({ initialData, userId }: UserFormProps) {
                 </CardContent>
               </Card>
             )}
-          </div>
 
           {/* Emergency Contact */}
           {createPlayer && (
             <Card>
               <CardHeader>
-                <CardTitle>Contacto de Emergencia (Opcional)</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Phone className="h-5 w-5" />
+                  Contacto de Emergencia (Opcional)
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
@@ -598,7 +590,20 @@ export function UserForm({ initialData, userId }: UserFormProps) {
                     )}
                   />
                 </div>
+              </CardContent>
+            </Card>
+          )}
 
+          {/* Información Médica */}
+          {createPlayer && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Heart className="h-5 w-5" />
+                  Información Médica (Opcional)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
                 <FormField
                   control={form.control}
                   name="medicalNotes"

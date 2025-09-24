@@ -84,9 +84,11 @@ model Player {
   emergencyContactPhone String?
   medicalNotes          String?
   rankingPoints         Int               @default(0)
+  primaryCategoryId     String?
   createdAt             DateTime          @default(now())
   updatedAt             DateTime          @updatedAt
   rankings              PlayerRanking[]
+  primaryCategory       Category?         @relation("PlayerPrimaryCategory", fields: [primaryCategoryId], references: [id])
   user                  User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   team1Memberships      Team[]            @relation("TeamPlayer1")
   team2Memberships      Team[]            @relation("TeamPlayer2")
@@ -160,6 +162,7 @@ model Category {
   logs                 CategoryLog[]
   matches              Match[]
   rankings             PlayerRanking[]
+  primaryPlayers       Player[]            @relation("PlayerPrimaryCategory")
   teams                Team[]
   tournamentCategories TournamentCategory[]
   zones                TournamentZone[]

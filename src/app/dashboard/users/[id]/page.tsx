@@ -15,15 +15,132 @@ export const metadata: Metadata = {
 
 async function getUser(id: string) {
   try {
-    const response = await fetch(`${process.env.NEXTAUTH_URL}/api/users/${id}`, {
-      cache: 'no-store'
-    })
+    const { getServerSession } = await import('next-auth')
+    const { authOptions } = await import('@/lib/auth')
+    const { prisma } = await import('@/lib/prisma')
 
-    if (!response.ok) {
+    const session = await getServerSession(authOptions)
+
+    if (!session) {
       return null
     }
 
-    return response.json()
+    const user = await prisma.user.findUnique({
+      where: { id },
+      include: {
+        player: {
+          include: {
+            primaryCategory: true,
+            rankings: {
+              include: {
+                category: true
+              },
+              orderBy: {
+                currentPoints: 'desc'
+              }
+            },
+            team1Memberships: {
+              include: {
+                tournament: {
+                  select: {
+                    id: true,
+                    name: true,
+                    status: true,
+                    type: true,
+                    tournamentStart: true,
+                    tournamentEnd: true
+                  }
+                },
+                category: {
+                  select: {
+                    id: true,
+                    name: true
+                  }
+                },
+                player2: {
+                  select: {
+                    id: true,
+                    firstName: true,
+                    lastName: true
+                  }
+                }
+              }
+            },
+            team2Memberships: {
+              include: {
+                tournament: {
+                  select: {
+                    id: true,
+                    name: true,
+                    status: true,
+                    type: true,
+                    tournamentStart: true,
+                    tournamentEnd: true
+                  }
+                },
+                category: {
+                  select: {
+                    id: true,
+                    name: true
+                  }
+                },
+                player1: {
+                  select: {
+                    id: true,
+                    firstName: true,
+                    lastName: true
+                  }
+                }
+              }
+            },
+            tournamentStats: {
+              include: {
+                tournament: {
+                  select: {
+                    id: true,
+                    name: true,
+                    status: true
+                  }
+                }
+              }
+            }
+          }
+        },
+        organizerTournaments: {
+          select: {
+            id: true,
+            name: true,
+            status: true,
+            type: true,
+            tournamentStart: true,
+            tournamentEnd: true,
+            _count: {
+              select: {
+                teams: true
+              }
+            }
+          }
+        },
+        notifications: {
+          orderBy: {
+            createdAt: 'desc'
+          },
+          take: 5
+        }
+      }
+    })
+
+    if (!user) {
+      return null
+    }
+
+    // Check permissions - users can only view their own profile unless admin
+    if (session.user.id !== user.id && session.user.role !== 'ADMIN') {
+      return null
+    }
+
+    return user
+
   } catch (error) {
     console.error('Error fetching user:', error)
     return null
@@ -31,7 +148,8 @@ async function getUser(id: string) {
 }
 
 export default async function UserPage({ params }: Props) {
-  const user = await getUser(params.id)
+  const { id } = await params
+  const user = await getUser(id)
 
   if (!user) {
     notFound()
