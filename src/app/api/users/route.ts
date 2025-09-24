@@ -72,7 +72,10 @@ export async function GET(request: NextRequest) {
                 category: true
               },
               where: {
-                seasonYear: new Date().getFullYear()
+                seasonYear: new Date().getFullYear(),
+                category: {
+                  isActive: true
+                }
               }
             },
             team1Memberships: {

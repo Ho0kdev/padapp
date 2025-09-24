@@ -3,10 +3,7 @@
 //CLUBES
 //CATEGORIAS
 //USUARIOS
-probar bien el crud, ver parte de jugadores.
-- categoria principal al editar no funciona
-- mostrar categoria principal en el detalle d user
-- editar y crear usuario deberia ponerlo como activo por default, sin posibilidad de cambiar. se cambia desde el dashboard de usuarios en la tabla.
+ranking por categoria.
 
 //ADMIN
 

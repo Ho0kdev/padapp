@@ -30,6 +30,11 @@ export async function GET(
               include: {
                 category: true
               },
+              where: {
+                category: {
+                  isActive: true
+                }
+              },
               orderBy: {
                 currentPoints: 'desc'
               }
@@ -310,7 +315,9 @@ export async function PUT(
     if (emergencyContactName !== undefined) playerUpdate.emergencyContactName = emergencyContactName
     if (emergencyContactPhone !== undefined) playerUpdate.emergencyContactPhone = emergencyContactPhone
     if (medicalNotes !== undefined) playerUpdate.medicalNotes = medicalNotes
-    if (session.user.role === UserRole.ADMIN && rankingPoints !== undefined) playerUpdate.rankingPoints = rankingPoints
+    if (session.user.role === UserRole.ADMIN && rankingPoints !== undefined) {
+      playerUpdate.rankingPoints = rankingPoints
+    }
 
     // Update user and player info
     const user = await prisma.user.update({
@@ -344,8 +351,10 @@ export async function PUT(
         data: { primaryCategoryId: categoryId }
       })
 
-      // Also ensure player has a ranking in this category
+      // Also ensure player has a ranking in this category and update points
       const currentYear = new Date().getFullYear()
+      const pointsToUse = rankingPoints !== undefined ? rankingPoints : user.player.rankingPoints || 0
+
       const existingRanking = await prisma.playerRanking.findUnique({
         where: {
           playerId_categoryId_seasonYear: {
@@ -356,13 +365,22 @@ export async function PUT(
         }
       })
 
-      if (!existingRanking) {
+      if (existingRanking) {
+        // Update existing ranking with new points
+        await prisma.playerRanking.update({
+          where: { id: existingRanking.id },
+          data: {
+            currentPoints: pointsToUse,
+            lastUpdated: new Date()
+          }
+        })
+      } else {
         // Create new ranking for the category
         await prisma.playerRanking.create({
           data: {
             playerId: user.player.id,
             categoryId: categoryId,
-            currentPoints: user.player.rankingPoints || 0,
+            currentPoints: pointsToUse,
             seasonYear: currentYear
           }
         })

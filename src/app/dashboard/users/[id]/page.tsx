@@ -13,6 +13,8 @@ export const metadata: Metadata = {
   title: 'Perfil de Usuario | PadApp'
 }
 
+export const dynamic = 'force-dynamic'
+
 async function getUser(id: string) {
   try {
     const { getServerSession } = await import('next-auth')
@@ -34,6 +36,11 @@ async function getUser(id: string) {
             rankings: {
               include: {
                 category: true
+              },
+              where: {
+                category: {
+                  isActive: true
+                }
               },
               orderBy: {
                 currentPoints: 'desc'

@@ -389,9 +389,17 @@ export function UserDetail({ user }: UserDetailProps) {
                   <Star className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{user.player.rankingPoints}</div>
+                  <div className="text-2xl font-bold">
+                    {user.player.primaryCategory
+                      ? user.player.rankings.find(r => r.category.id === user.player.primaryCategory?.id)?.currentPoints || 0
+                      : user.player.rankingPoints
+                    }
+                  </div>
                   <p className="text-xs text-muted-foreground">
-                    {user.player.rankings.length} categorías activas
+                    {user.player.primaryCategory
+                      ? `En ${user.player.primaryCategory.name}`
+                      : `${user.player.rankings.length} categorías activas`
+                    }
                   </p>
                 </CardContent>
               </Card>

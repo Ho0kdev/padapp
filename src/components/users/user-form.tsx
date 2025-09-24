@@ -207,7 +207,11 @@ export function UserForm({ initialData, userId }: UserFormProps) {
         description: `El usuario ha sido ${isEditing ? "actualizado" : "creado"} exitosamente.`,
       })
 
-      router.push('/dashboard/users')
+      if (isEditing) {
+        router.push(`/dashboard/users/${userId}`)
+      } else {
+        router.push('/dashboard/users')
+      }
       router.refresh()
     } catch (error) {
       console.error(`Error ${isEditing ? 'updating' : 'creating'} user:`, error)
