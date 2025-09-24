@@ -38,6 +38,7 @@ async function getUser(id: string) {
                 category: true
               },
               where: {
+                seasonYear: new Date().getFullYear(),
                 category: {
                   isActive: true
                 }

@@ -51,6 +51,7 @@ model User {
   categoryLogs         CategoryLog[]
   clubLogs             ClubLog[]
   courtLogs            CourtLog[]
+  rankingLogs          RankingLog[]
   refereeMatches       Match[]         @relation("MatchReferee")
   notifications        Notification[]
   player               Player?
@@ -88,6 +89,7 @@ model Player {
   createdAt             DateTime          @default(now())
   updatedAt             DateTime          @updatedAt
   rankings              PlayerRanking[]
+  rankingLogs           RankingLog[]
   primaryCategory       Category?         @relation("PlayerPrimaryCategory", fields: [primaryCategoryId], references: [id])
   user                  User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   team1Memberships      Team[]            @relation("TeamPlayer1")
@@ -160,6 +162,7 @@ model Category {
   isActive             Boolean              @default(true)
   createdAt            DateTime             @default(now())
   logs                 CategoryLog[]
+  rankingLogs          RankingLog[]
   matches              Match[]
   rankings             PlayerRanking[]
   primaryPlayers       Player[]            @relation("PlayerPrimaryCategory")
@@ -520,6 +523,33 @@ model CategoryLog {
   @@map("category_logs")
 }
 
+model RankingLog {
+  id         String         @id @default(cuid())
+  action     LogAction
+  description String
+  rankingId  String?
+  playerId   String?
+  categoryId String?
+  userId     String
+  ipAddress  String?
+  userAgent  String?
+  oldData    Json?
+  newData    Json?
+  metadata   Json?
+  createdAt  DateTime       @default(now())
+  category   Category?      @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  player     Player?        @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  user       User           @relation(fields: [userId], references: [id])
+
+  @@index([rankingId])
+  @@index([playerId])
+  @@index([categoryId])
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("ranking_logs")
+}
+
 enum UserRole {
   ADMIN
   CLUB_ADMIN
@@ -669,4 +699,11 @@ enum LogAction {
   CATEGORY_UPDATED
   CATEGORY_DELETED
   CATEGORY_STATUS_CHANGED
+  RANKING_CREATED
+  RANKING_UPDATED
+  RANKING_DELETED
+  POINTS_UPDATED
+  POINTS_CALCULATED
+  SEASON_UPDATED
+  MANUAL_ADJUSTMENT
 }

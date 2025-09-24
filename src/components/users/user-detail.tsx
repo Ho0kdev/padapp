@@ -391,7 +391,7 @@ export function UserDetail({ user }: UserDetailProps) {
                 <CardContent>
                   <div className="text-2xl font-bold">
                     {user.player.primaryCategory
-                      ? user.player.rankings.find(r => r.category.id === user.player.primaryCategory?.id)?.currentPoints || 0
+                      ? user.player.rankings.find(r => r.category?.id === user.player.primaryCategory?.id)?.currentPoints || 0
                       : user.player.rankingPoints
                     }
                   </div>
@@ -484,9 +484,9 @@ export function UserDetail({ user }: UserDetailProps) {
                           className="flex items-center justify-between p-4 border rounded-lg"
                         >
                           <div>
-                            <h4 className="font-medium">{ranking.category.name}</h4>
+                            <h4 className="font-medium">{ranking.category?.name || 'No especificada'}</h4>
                             <p className="text-sm text-muted-foreground">
-                              {ranking.category.description}
+                              {ranking.category?.description || 'Sin descripción'}
                             </p>
                           </div>
                           <div className="text-right">
@@ -523,7 +523,7 @@ export function UserDetail({ user }: UserDetailProps) {
                           <div className="space-y-1">
                             <div className="flex items-center space-x-2">
                               <h4 className="font-medium">{team.name}</h4>
-                              <Badge variant="outline">{team.category.name}</Badge>
+                              <Badge variant="outline">{team.category?.name || 'No especificada'}</Badge>
                             </div>
                             <p className="text-sm text-muted-foreground">
                               Compañero: {getTeamPartnername(team)}
@@ -569,7 +569,7 @@ export function UserDetail({ user }: UserDetailProps) {
                             <div>
                               <h4 className="font-medium">{stat.tournament.name}</h4>
                               <p className="text-sm text-muted-foreground">
-                                Categoría: {stat.category.name}
+                                Categoría: {stat.category?.name || 'No especificada'}
                               </p>
                             </div>
                             <Badge variant={getTournamentStatusColor(stat.tournament.status)}>

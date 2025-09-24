@@ -35,7 +35,8 @@ import {
   Filter,
   Building2,
   MapPin,
-  Tag
+  Tag,
+  TrendingUp
 } from "lucide-react"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
@@ -68,20 +69,26 @@ interface SystemLog {
   category?: {
     name: string
   }
+  player?: {
+    firstName: string
+    lastName: string
+  }
 }
 
 const moduleIcons = {
   tournaments: Trophy,
   clubs: Building2,
   courts: MapPin,
-  categories: Tag
+  categories: Tag,
+  rankings: TrendingUp
 }
 
 const moduleLabels = {
   tournaments: "Torneos",
   clubs: "Clubes",
   courts: "Canchas",
-  categories: "Categorías"
+  categories: "Categorías",
+  rankings: "Rankings"
 }
 
 const actionIcons: Record<string, any> = {
@@ -114,6 +121,15 @@ const actionIcons: Record<string, any> = {
   CATEGORY_DELETED: Trash2,
   CATEGORY_STATUS_CHANGED: PlayCircle,
 
+  // Rankings
+  RANKING_CREATED: TrendingUp,
+  RANKING_UPDATED: Edit,
+  RANKING_DELETED: Trash2,
+  POINTS_UPDATED: TrendingUp,
+  POINTS_CALCULATED: Calendar,
+  SEASON_UPDATED: Clock,
+  MANUAL_ADJUSTMENT: Edit,
+
   // General
   USER_ACTION: User,
 }
@@ -124,18 +140,21 @@ const actionColors: Record<string, string> = {
   CLUB_CREATED: "bg-green-100 text-green-800",
   COURT_CREATED: "bg-green-100 text-green-800",
   CATEGORY_CREATED: "bg-green-100 text-green-800",
+  RANKING_CREATED: "bg-green-100 text-green-800",
 
   // Actualizaciones
   TOURNAMENT_UPDATED: "bg-blue-100 text-blue-800",
   CLUB_UPDATED: "bg-blue-100 text-blue-800",
   COURT_UPDATED: "bg-blue-100 text-blue-800",
   CATEGORY_UPDATED: "bg-blue-100 text-blue-800",
+  RANKING_UPDATED: "bg-blue-100 text-blue-800",
 
   // Eliminaciones/Desactivaciones
   TOURNAMENT_DELETED: "bg-red-100 text-red-800",
   CLUB_DELETED: "bg-red-100 text-red-800",
   COURT_DELETED: "bg-red-100 text-red-800",
   CATEGORY_DELETED: "bg-red-100 text-red-800",
+  RANKING_DELETED: "bg-red-100 text-red-800",
 
   // Cambios de estado
   TOURNAMENT_STATUS_CHANGED: "bg-orange-100 text-orange-800",
@@ -152,6 +171,12 @@ const actionColors: Record<string, string> = {
   MATCH_CREATED: "bg-cyan-100 text-cyan-800",
   MATCH_UPDATED: "bg-indigo-100 text-indigo-800",
   MATCH_RESULT_ADDED: "bg-emerald-100 text-emerald-800",
+
+  // Rankings específicos
+  POINTS_UPDATED: "bg-blue-100 text-blue-800",
+  POINTS_CALCULATED: "bg-green-100 text-green-800",
+  SEASON_UPDATED: "bg-orange-100 text-orange-800",
+  MANUAL_ADJUSTMENT: "bg-yellow-100 text-yellow-800",
 }
 
 const actionLabels: Record<string, string> = {
@@ -183,6 +208,15 @@ const actionLabels: Record<string, string> = {
   CATEGORY_UPDATED: "Categoría Actualizada",
   CATEGORY_DELETED: "Categoría Desactivada",
   CATEGORY_STATUS_CHANGED: "Estado de Categoría Cambiado",
+
+  // Rankings
+  RANKING_CREATED: "Ranking Creado",
+  RANKING_UPDATED: "Ranking Actualizado",
+  RANKING_DELETED: "Ranking Eliminado",
+  POINTS_UPDATED: "Puntos Actualizados",
+  POINTS_CALCULATED: "Puntos Calculados",
+  SEASON_UPDATED: "Temporada Actualizada",
+  MANUAL_ADJUSTMENT: "Ajuste Manual",
 
   // General
   USER_ACTION: "Acción de Usuario",
@@ -240,7 +274,8 @@ export function SystemLogs() {
         log.tournament?.name?.toLowerCase().includes(searchLower) ||
         log.club?.name?.toLowerCase().includes(searchLower) ||
         log.court?.name?.toLowerCase().includes(searchLower) ||
-        log.category?.name?.toLowerCase().includes(searchLower)
+        log.category?.name?.toLowerCase().includes(searchLower) ||
+        `${log.player?.firstName} ${log.player?.lastName}`.toLowerCase().includes(searchLower)
       )
     }
 
@@ -285,6 +320,7 @@ export function SystemLogs() {
            log.club?.name ||
            log.court?.name ||
            log.category?.name ||
+           (log.player ? `${log.player.firstName} ${log.player.lastName}` : null) ||
            "-"
   }
 
@@ -313,7 +349,7 @@ export function SystemLogs() {
         <CardContent>
           {/* Tabs por módulo */}
           <Tabs value={activeModule} onValueChange={setActiveModule} className="mb-6">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="all">Todos</TabsTrigger>
               <TabsTrigger value="tournaments" className="flex items-center gap-2">
                 <Trophy className="h-4 w-4" />
@@ -330,6 +366,10 @@ export function SystemLogs() {
               <TabsTrigger value="categories" className="flex items-center gap-2">
                 <Tag className="h-4 w-4" />
                 Categorías
+              </TabsTrigger>
+              <TabsTrigger value="rankings" className="flex items-center gap-2">
+                <TrendingUp className="h-4 w-4" />
+                Rankings
               </TabsTrigger>
             </TabsList>
           </Tabs>

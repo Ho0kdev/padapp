@@ -13,17 +13,27 @@ interface FilterOption {
   label: string
 }
 
+interface SecondaryFilter {
+  label: string
+  options: FilterOption[]
+  paramKey: string
+  defaultValue?: string
+  width?: string
+}
+
 interface DataTableHeaderProps {
   title: string
   description: string
   searchPlaceholder?: string
   createButtonText?: string
   createButtonHref?: string
+  showCreateButton?: boolean
   filterLabel?: string
   filterOptions?: FilterOption[]
   defaultFilterValue?: string
   searchParamKey?: string
   filterParamKey?: string
+  secondaryFilter?: SecondaryFilter
   basePath: string
 }
 
@@ -33,11 +43,13 @@ export function DataTableHeader({
   searchPlaceholder = "Buscar...",
   createButtonText,
   createButtonHref,
+  showCreateButton = true,
   filterLabel,
   filterOptions = [],
   defaultFilterValue = "all",
   searchParamKey = "search",
   filterParamKey = "status",
+  secondaryFilter,
   basePath
 }: DataTableHeaderProps) {
   const router = useRouter()
@@ -57,10 +69,23 @@ export function DataTableHeader({
 
   const handleFilter = (value: string) => {
     const params = new URLSearchParams(searchParams)
-    if (value && value !== "all") {
+    if (value) {
       params.set(filterParamKey, value)
     } else {
       params.delete(filterParamKey)
+    }
+    params.set("page", "1") // Reset to first page
+    router.push(`${basePath}?${params.toString()}`)
+  }
+
+  const handleSecondaryFilter = (value: string) => {
+    if (!secondaryFilter) return
+
+    const params = new URLSearchParams(searchParams)
+    if (value) {
+      params.set(secondaryFilter.paramKey, value)
+    } else {
+      params.delete(secondaryFilter.paramKey)
     }
     params.set("page", "1") // Reset to first page
     router.push(`${basePath}?${params.toString()}`)
@@ -110,9 +135,28 @@ export function DataTableHeader({
               </SelectContent>
             </Select>
           )}
+
+          {secondaryFilter && (
+            <Select
+              value={searchParams.get(secondaryFilter.paramKey) || secondaryFilter.defaultValue || "all"}
+              onValueChange={handleSecondaryFilter}
+            >
+              <SelectTrigger className={secondaryFilter.width || "w-[120px]"}>
+                <SelectValue placeholder={secondaryFilter.label} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                {secondaryFilter.options.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
 
-        {createButtonText && createButtonHref && (
+        {showCreateButton && createButtonText && createButtonHref && (
           <Button asChild>
             <Link href={createButtonHref}>
               <Plus className="mr-2 h-4 w-4" />
