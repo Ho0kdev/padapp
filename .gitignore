@@ -49,3 +49,7 @@ logs
 # Uploads
 /public/uploads/
 /public/images/uploads/
+
+
+# Custom Scripts
+/scripts

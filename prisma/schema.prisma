@@ -185,6 +185,9 @@ model PlayerRanking {
   player        Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
 
   @@unique([playerId, categoryId, seasonYear])
+  @@index([categoryId, seasonYear, currentPoints])
+  @@index([playerId, seasonYear])
+  @@index([currentPoints(sort: Desc)])
   @@map("player_rankings")
 }
 
@@ -250,6 +253,8 @@ model TournamentCategory {
   tournament      Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
 
   @@unique([tournamentId, categoryId])
+  @@index([tournamentId])
+  @@index([categoryId])
   @@map("tournament_categories")
 }
 
@@ -277,6 +282,10 @@ model Team {
   tournament         Tournament         @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
   zoneTeams          ZoneTeam[]
 
+  @@index([tournamentId, categoryId])
+  @@index([player1Id])
+  @@index([player2Id])
+  @@index([registrationStatus])
   @@map("teams")
 }
 
@@ -357,6 +366,11 @@ model Match {
   zone             TournamentZone? @relation(fields: [zoneId], references: [id])
   notifications    Notification[]
 
+  @@index([tournamentId, categoryId])
+  @@index([status])
+  @@index([scheduledAt])
+  @@index([team1Id])
+  @@index([team2Id])
   @@map("matches")
 }
 
@@ -410,6 +424,8 @@ model TournamentStats {
   tournament    Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
 
   @@unique([tournamentId, playerId])
+  @@index([tournamentId])
+  @@index([playerId])
   @@map("tournament_stats")
 }
 

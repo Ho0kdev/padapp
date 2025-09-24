@@ -529,6 +529,54 @@ async function main() {
 
   console.log('📊 Rankings creados para todos los jugadores')
 
+  // 4.1. Crear rankings adicionales para años anteriores (integrado desde seed-rankings.ts)
+  const previousYears = [currentYear - 1, currentYear - 2]
+
+  for (const year of previousYears) {
+    console.log(`📅 Creando algunos rankings para ${year}`)
+
+    // Solo crear rankings para algunas categorías y algunos jugadores
+    const someCategories = categories.slice(0, 3)
+    const somePlayersForPrevYear = allPlayers.slice(0, 5)
+
+    for (const category of someCategories) {
+      for (let i = 0; i < somePlayersForPrevYear.length; i++) {
+        const player = somePlayersForPrevYear[i]
+
+        // Skip admin
+        if (player.firstName === 'Administrador') continue
+
+        // Verificar si ya existe ranking
+        const existingRanking = await prisma.playerRanking.findUnique({
+          where: {
+            playerId_categoryId_seasonYear: {
+              playerId: player.id,
+              categoryId: category.id,
+              seasonYear: year
+            }
+          }
+        })
+
+        if (!existingRanking) {
+          const points = Math.max(50, 800 - (i * 150) + Math.floor(Math.random() * 100))
+
+          await prisma.playerRanking.create({
+            data: {
+              playerId: player.id,
+              categoryId: category.id,
+              currentPoints: points,
+              seasonYear: year
+            }
+          })
+
+          console.log(`  ✅ ${year}: ${player.firstName} ${player.lastName}: ${points} puntos en ${category.name}`)
+        }
+      }
+    }
+  }
+
+  console.log('📊 Rankings históricos creados')
+
   // 5. Crear torneos - basado en datos reales de la DB
   const tournaments = []
 
@@ -698,6 +746,108 @@ async function main() {
   }
 
   console.log(`🏆 Creados ${tournaments.length} torneos con equipos de ejemplo`)
+
+  // 5.1. Crear estadísticas de torneo de ejemplo (integrado desde seed-tournament-stats.ts)
+  if (tournaments.length > 0) {
+    const completedTournaments = tournaments.filter(t => t.status === TournamentStatus.COMPLETED)
+
+    // Si no hay torneos completados, crear uno para las estadísticas
+    if (completedTournaments.length === 0) {
+      console.log('📊 Creando torneo de ejemplo con estadísticas...')
+
+      // Crear torneo completado para estadísticas
+      const statsCategory = categories.find(c => c.name === 'Masculino 5ta')
+      const statsClub = clubs[0] // Usar primer club
+
+      if (statsCategory && statsClub && allPlayers.length >= 8) {
+        const statsTournament = await prisma.tournament.create({
+          data: {
+            name: 'Torneo de Prueba - Estadísticas Automáticas',
+            description: 'Torneo para probar el sistema de cálculo automático de puntos',
+            type: TournamentType.SINGLE_ELIMINATION,
+            status: TournamentStatus.COMPLETED,
+            tournamentStart: new Date('2025-01-15'),
+            tournamentEnd: new Date('2025-01-16'),
+            organizerId: adminUser.id,
+            mainClubId: statsClub.id,
+            categories: {
+              create: {
+                categoryId: statsCategory.id,
+                maxTeams: 8
+              }
+            }
+          }
+        })
+
+        // Crear equipos para este torneo
+        const malePlayersForStats = allPlayers.filter(p =>
+          p.gender === Gender.MALE && p.firstName !== 'Administrador'
+        ).slice(0, 8)
+
+        const teams = []
+        for (let i = 0; i < 8; i += 2) {
+          if (i + 1 < malePlayersForStats.length) {
+            const team = await prisma.team.create({
+              data: {
+                tournamentId: statsTournament.id,
+                categoryId: statsCategory.id,
+                player1Id: malePlayersForStats[i].id,
+                player2Id: malePlayersForStats[i + 1].id,
+                name: `${malePlayersForStats[i].firstName} & ${malePlayersForStats[i + 1].firstName}`,
+                registrationStatus: 'CONFIRMED'
+              }
+            })
+            teams.push(team)
+          }
+        }
+
+        // Crear estadísticas del torneo
+        const positions = [1, 2, 3, 4, 5, 6, 7, 8]
+        const shuffledPositions = positions.sort(() => 0.5 - Math.random())
+
+        let playerIndex = 0
+        for (const team of teams) {
+          for (const playerId of [team.player1Id, team.player2Id]) {
+            const position = shuffledPositions[playerIndex] || playerIndex + 1
+
+            // Generar estadísticas basadas en la posición
+            const matchesPlayed = position <= 2 ? 6 : position <= 4 ? 5 : position <= 8 ? 4 : 3
+            const matchesWon = position <= 2 ? 5 : position <= 4 ? 3 : position <= 8 ? 2 : 1
+            const setsWon = matchesWon * 2 + Math.floor(Math.random() * 3)
+            const setsLost = (matchesPlayed - matchesWon) * 2 + Math.floor(Math.random() * 2)
+            const gamesWon = setsWon * 6 + Math.floor(Math.random() * 20)
+            const gamesLost = setsLost * 6 + Math.floor(Math.random() * 15)
+
+            await prisma.tournamentStats.create({
+              data: {
+                tournamentId: statsTournament.id,
+                playerId,
+                matchesPlayed,
+                matchesWon,
+                setsWon,
+                setsLost,
+                gamesWon,
+                gamesLost,
+                finalPosition: position,
+                pointsEarned: 0 // Se calculará automáticamente
+              }
+            })
+
+            const player = await prisma.player.findUnique({
+              where: { id: playerId },
+              select: { firstName: true, lastName: true }
+            })
+
+            console.log(`  ✅ ${player?.firstName} ${player?.lastName}: Position ${position}, ${matchesWon}W/${matchesPlayed-matchesWon}L`)
+            playerIndex++
+          }
+        }
+
+        tournaments.push(statsTournament)
+        console.log(`📊 Torneo con estadísticas creado: ${statsTournament.name}`)
+      }
+    }
+  }
 
   // 6. Crear notificaciones de ejemplo
   if (tournaments.length > 0) {
