@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,25 +7,20 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ============================================
-// USUARIOS Y AUTENTICACIÓN (NextAuth)
-// ============================================
-
 model Account {
   id                String  @id @default(cuid())
   userId            String
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
   @@map("accounts")
@@ -45,31 +37,26 @@ model Session {
 }
 
 model User {
-  id            String     @id @default(cuid())
-  name          String?
-  email         String     @unique
-  emailVerified DateTime?
-  image         String?
-  password      String?
-  role          UserRole   @default(PLAYER)
-  status        UserStatus @default(ACTIVE)
-  accounts      Account[]
-  sessions      Session[]
-
-  // Relaciones específicas del sistema
-  player               Player?
-  organizerTournaments Tournament[]   @relation("TournamentOrganizer")
-  refereeMatches       Match[]        @relation("MatchReferee")
-  notifications        Notification[]
-
-  // Logs de auditoría
-  tournamentLogs       TournamentLog[]
+  id                   String          @id @default(cuid())
+  name                 String?
+  email                String          @unique
+  emailVerified        DateTime?
+  image                String?
+  password             String?
+  role                 UserRole        @default(PLAYER)
+  status               UserStatus      @default(ACTIVE)
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+  accounts             Account[]
+  categoryLogs         CategoryLog[]
   clubLogs             ClubLog[]
   courtLogs            CourtLog[]
-  categoryLogs         CategoryLog[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  refereeMatches       Match[]         @relation("MatchReferee")
+  notifications        Notification[]
+  player               Player?
+  sessions             Session[]
+  tournamentLogs       TournamentLog[]
+  organizerTournaments Tournament[]    @relation("TournamentOrganizer")
 
   @@map("users")
 }
@@ -83,9 +70,452 @@ model VerificationToken {
   @@map("verificationtokens")
 }
 
-// ============================================
-// ENUMS
-// ============================================
+model Player {
+  id                    String            @id @default(cuid())
+  userId                String            @unique
+  firstName             String
+  lastName              String
+  phone                 String?
+  dateOfBirth           DateTime?
+  gender                Gender?
+  dominantHand          DominantHand?
+  profileImageUrl       String?
+  emergencyContactName  String?
+  emergencyContactPhone String?
+  medicalNotes          String?
+  rankingPoints         Int               @default(0)
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+  rankings              PlayerRanking[]
+  user                  User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team1Memberships      Team[]            @relation("TeamPlayer1")
+  team2Memberships      Team[]            @relation("TeamPlayer2")
+  tournamentStats       TournamentStats[]
+
+  @@map("players")
+}
+
+model Club {
+  id              String           @id @default(cuid())
+  name            String
+  description     String?
+  address         String
+  city            String
+  state           String?
+  country         String
+  postalCode      String?
+  phone           String?
+  email           String?
+  website         String?
+  latitude        Float?
+  longitude       Float?
+  status          ClubStatus       @default(ACTIVE)
+  logoUrl         String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  logs            ClubLog[]
+  courtLogs       CourtLog[]
+  courts          Court[]
+  tournamentClubs TournamentClub[]
+  tournaments     Tournament[]     @relation("TournamentMainClub")
+
+  @@map("clubs")
+}
+
+model Court {
+  id                String       @id @default(cuid())
+  clubId            String
+  name              String
+  surface           CourtSurface
+  hasLighting       Boolean      @default(false)
+  hasRoof           Boolean      @default(false)
+  status            CourtStatus  @default(AVAILABLE)
+  hourlyRate        Float?
+  notes             String?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  hasConcreteWall   Boolean      @default(false)
+  hasNet4m          Boolean      @default(false)
+  hasPanoramicGlass Boolean      @default(false)
+  isOutdoor         Boolean      @default(false)
+  logs              CourtLog[]
+  club              Club         @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  matches           Match[]
+
+  @@map("courts")
+}
+
+model Category {
+  id                   String               @id @default(cuid())
+  name                 String
+  description          String?
+  type                 CategoryType
+  minAge               Int?
+  maxAge               Int?
+  genderRestriction    Gender?
+  minRankingPoints     Int?
+  maxRankingPoints     Int?
+  isActive             Boolean              @default(true)
+  createdAt            DateTime             @default(now())
+  logs                 CategoryLog[]
+  matches              Match[]
+  rankings             PlayerRanking[]
+  teams                Team[]
+  tournamentCategories TournamentCategory[]
+  zones                TournamentZone[]
+
+  @@map("categories")
+}
+
+model PlayerRanking {
+  id            String   @id @default(cuid())
+  playerId      String
+  categoryId    String
+  currentPoints Int      @default(0)
+  position      Int?
+  seasonYear    Int
+  lastUpdated   DateTime @default(now())
+  category      Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  player        Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([playerId, categoryId, seasonYear])
+  @@map("player_rankings")
+}
+
+model Tournament {
+  id                String               @id @default(cuid())
+  name              String
+  description       String?
+  type              TournamentType
+  status            TournamentStatus     @default(DRAFT)
+  visibility        TournamentVisibility @default(PUBLIC)
+  registrationStart DateTime?
+  registrationEnd   DateTime?
+  tournamentStart   DateTime
+  tournamentEnd     DateTime?
+  maxParticipants   Int?
+  minParticipants   Int                  @default(4)
+  registrationFee   Float                @default(0)
+  prizePool         Float                @default(0)
+  setsToWin         Int                  @default(2)
+  gamesToWinSet     Int                  @default(6)
+  tiebreakAt        Int                  @default(6)
+  goldenPoint       Boolean              @default(true)
+  organizerId       String
+  mainClubId        String?
+  rules             String?
+  prizesDescription String?
+  logoUrl           String?
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  matches           Match[]
+  notifications     Notification[]
+  teams             Team[]
+  categories        TournamentCategory[]
+  clubs             TournamentClub[]
+  logs              TournamentLog[]
+  stats             TournamentStats[]
+  zones             TournamentZone[]
+  mainClub          Club?                @relation("TournamentMainClub", fields: [mainClubId], references: [id])
+  organizer         User                 @relation("TournamentOrganizer", fields: [organizerId], references: [id])
+
+  @@map("tournaments")
+}
+
+model TournamentClub {
+  tournamentId String
+  clubId       String
+  club         Club       @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+
+  @@id([tournamentId, clubId])
+  @@map("tournament_clubs")
+}
+
+model TournamentCategory {
+  id              String     @id @default(cuid())
+  tournamentId    String
+  categoryId      String
+  maxTeams        Int?
+  registrationFee Float?
+  prizePool       Float?
+  teams           Team[]
+  category        Category   @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  tournament      Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+
+  @@unique([tournamentId, categoryId])
+  @@map("tournament_categories")
+}
+
+model Team {
+  id                 String             @id @default(cuid())
+  tournamentId       String
+  categoryId         String
+  name               String?
+  player1Id          String
+  player2Id          String
+  registrationStatus RegistrationStatus @default(PENDING)
+  registeredAt       DateTime           @default(now())
+  seed               Int?
+  notes              String?
+  wonGames           MatchGame[]        @relation("GameWinner")
+  wonSets            MatchSet[]         @relation("SetWinner")
+  team1Matches       Match[]            @relation("MatchTeam1")
+  team2Matches       Match[]            @relation("MatchTeam2")
+  wonMatches         Match[]            @relation("MatchWinner")
+  payments           TeamPayment[]
+  category           Category           @relation(fields: [categoryId], references: [id])
+  player1            Player             @relation("TeamPlayer1", fields: [player1Id], references: [id])
+  player2            Player             @relation("TeamPlayer2", fields: [player2Id], references: [id])
+  tournamentCategory TournamentCategory @relation(fields: [tournamentId, categoryId], references: [tournamentId, categoryId])
+  tournament         Tournament         @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  zoneTeams          ZoneTeam[]
+
+  @@map("teams")
+}
+
+model TeamPayment {
+  id            String        @id @default(cuid())
+  teamId        String
+  amount        Float
+  paymentStatus PaymentStatus @default(PENDING)
+  paymentMethod String?
+  transactionId String?
+  paidAt        DateTime?
+  createdAt     DateTime      @default(now())
+  team          Team          @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@map("team_payments")
+}
+
+model TournamentZone {
+  id           String     @id @default(cuid())
+  tournamentId String
+  categoryId   String
+  name         String
+  phaseType    PhaseType  @default(GROUP_STAGE)
+  matches      Match[]
+  category     Category   @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  teams        ZoneTeam[]
+
+  @@map("tournament_zones")
+}
+
+model ZoneTeam {
+  zoneId   String
+  teamId   String
+  position Int?
+  team     Team           @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  zone     TournamentZone @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+
+  @@id([zoneId, teamId])
+  @@map("zone_teams")
+}
+
+model Match {
+  id               String          @id @default(cuid())
+  tournamentId     String
+  categoryId       String
+  zoneId           String?
+  team1Id          String?
+  team2Id          String?
+  winnerTeamId     String?
+  scheduledAt      DateTime?
+  courtId          String?
+  status           MatchStatus     @default(SCHEDULED)
+  phaseType        PhaseType
+  roundNumber      Int?
+  matchNumber      Int?
+  team1SetsWon     Int             @default(0)
+  team2SetsWon     Int             @default(0)
+  durationMinutes  Int?
+  refereeId        String?
+  notes            String?
+  team1FromMatchId String?
+  team2FromMatchId String?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  sets             MatchSet[]
+  category         Category        @relation(fields: [categoryId], references: [id])
+  court            Court?          @relation(fields: [courtId], references: [id])
+  referee          User?           @relation("MatchReferee", fields: [refereeId], references: [id])
+  team1FromMatch   Match?          @relation("MatchProgression1", fields: [team1FromMatchId], references: [id])
+  nextMatchesTeam1 Match[]         @relation("MatchProgression1")
+  team1            Team?           @relation("MatchTeam1", fields: [team1Id], references: [id])
+  team2FromMatch   Match?          @relation("MatchProgression2", fields: [team2FromMatchId], references: [id])
+  nextMatchesTeam2 Match[]         @relation("MatchProgression2")
+  team2            Team?           @relation("MatchTeam2", fields: [team2Id], references: [id])
+  tournament       Tournament      @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  winnerTeam       Team?           @relation("MatchWinner", fields: [winnerTeamId], references: [id])
+  zone             TournamentZone? @relation(fields: [zoneId], references: [id])
+  notifications    Notification[]
+
+  @@map("matches")
+}
+
+model MatchSet {
+  id                  String      @id @default(cuid())
+  matchId             String
+  setNumber           Int
+  team1Games          Int         @default(0)
+  team2Games          Int         @default(0)
+  team1TiebreakPoints Int?
+  team2TiebreakPoints Int?
+  winnerTeamId        String?
+  completedAt         DateTime?
+  games               MatchGame[]
+  match               Match       @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  winnerTeam          Team?       @relation("SetWinner", fields: [winnerTeamId], references: [id])
+
+  @@unique([matchId, setNumber])
+  @@map("match_sets")
+}
+
+model MatchGame {
+  id           String    @id @default(cuid())
+  setId        String
+  gameNumber   Int
+  team1Points  Int       @default(0)
+  team2Points  Int       @default(0)
+  winnerTeamId String?
+  isTiebreak   Boolean   @default(false)
+  completedAt  DateTime?
+  set          MatchSet  @relation(fields: [setId], references: [id], onDelete: Cascade)
+  winnerTeam   Team?     @relation("GameWinner", fields: [winnerTeamId], references: [id])
+
+  @@unique([setId, gameNumber])
+  @@map("match_games")
+}
+
+model TournamentStats {
+  id            String     @id @default(cuid())
+  tournamentId  String
+  playerId      String
+  matchesPlayed Int        @default(0)
+  matchesWon    Int        @default(0)
+  setsWon       Int        @default(0)
+  setsLost      Int        @default(0)
+  gamesWon      Int        @default(0)
+  gamesLost     Int        @default(0)
+  pointsEarned  Int        @default(0)
+  finalPosition Int?
+  player        Player     @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  tournament    Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+
+  @@unique([tournamentId, playerId])
+  @@map("tournament_stats")
+}
+
+model Notification {
+  id           String             @id @default(cuid())
+  userId       String
+  tournamentId String?
+  matchId      String?
+  type         NotificationType
+  title        String
+  message      String
+  status       NotificationStatus @default(PENDING)
+  sentAt       DateTime?
+  readAt       DateTime?
+  createdAt    DateTime           @default(now())
+  match        Match?             @relation(fields: [matchId], references: [id])
+  tournament   Tournament?        @relation(fields: [tournamentId], references: [id])
+  user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+model TournamentLog {
+  id           String      @id @default(cuid())
+  action       LogAction
+  description  String
+  tournamentId String?
+  userId       String
+  ipAddress    String?
+  userAgent    String?
+  oldData      Json?
+  newData      Json?
+  metadata     Json?
+  createdAt    DateTime    @default(now())
+  tournament   Tournament? @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  user         User        @relation(fields: [userId], references: [id])
+
+  @@index([tournamentId])
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("tournament_logs")
+}
+
+model ClubLog {
+  id          String    @id @default(cuid())
+  action      LogAction
+  description String
+  clubId      String?
+  userId      String
+  ipAddress   String?
+  userAgent   String?
+  oldData     Json?
+  newData     Json?
+  metadata    Json?
+  createdAt   DateTime  @default(now())
+  club        Club?     @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id])
+
+  @@index([clubId])
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("club_logs")
+}
+
+model CourtLog {
+  id          String    @id @default(cuid())
+  action      LogAction
+  description String
+  courtId     String?
+  clubId      String?
+  userId      String
+  ipAddress   String?
+  userAgent   String?
+  oldData     Json?
+  newData     Json?
+  metadata    Json?
+  createdAt   DateTime  @default(now())
+  club        Club?     @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  court       Court?    @relation(fields: [courtId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id])
+
+  @@index([courtId])
+  @@index([clubId])
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("court_logs")
+}
+
+model CategoryLog {
+  id          String    @id @default(cuid())
+  action      LogAction
+  description String
+  categoryId  String?
+  userId      String
+  ipAddress   String?
+  userAgent   String?
+  oldData     Json?
+  newData     Json?
+  metadata    Json?
+  createdAt   DateTime  @default(now())
+  category    Category? @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id])
+
+  @@index([categoryId])
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("category_logs")
+}
 
 enum UserRole {
   ADMIN
@@ -213,473 +643,7 @@ enum NotificationStatus {
   FAILED
 }
 
-// ============================================
-// JUGADORES
-// ============================================
-
-model Player {
-  id                    String        @id @default(cuid())
-  userId                String        @unique
-  firstName             String
-  lastName              String
-  phone                 String?
-  dateOfBirth           DateTime?
-  gender                Gender?
-  dominantHand          DominantHand?
-  profileImageUrl       String?
-  emergencyContactName  String?
-  emergencyContactPhone String?
-  medicalNotes          String?
-  rankingPoints         Int           @default(0)
-
-  // Relaciones
-  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  team1Memberships Team[]            @relation("TeamPlayer1")
-  team2Memberships Team[]            @relation("TeamPlayer2")
-  rankings         PlayerRanking[]
-  tournamentStats  TournamentStats[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("players")
-}
-
-// ============================================
-// CLUBES Y CANCHAS
-// ============================================
-
-model Club {
-  id          String     @id @default(cuid())
-  name        String
-  description String?
-  address     String
-  city        String
-  state       String?
-  country     String
-  postalCode  String?
-  phone       String?
-  email       String?
-  website     String?
-  latitude    Float?
-  longitude   Float?
-  status      ClubStatus @default(ACTIVE)
-  logoUrl     String?
-
-  // Relaciones
-  courts          Court[]
-  tournaments     Tournament[]     @relation("TournamentMainClub")
-  tournamentClubs TournamentClub[]
-  logs            ClubLog[]
-  courtLogs       CourtLog[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("clubs")
-}
-
-model Court {
-  id                String       @id @default(cuid())
-  clubId            String
-  name              String
-  surface           CourtSurface
-  hasLighting       Boolean      @default(false)
-  hasRoof           Boolean      @default(false)
-  isOutdoor         Boolean      @default(false)
-  hasPanoramicGlass Boolean      @default(false)
-  hasConcreteWall   Boolean      @default(false)
-  hasNet4m          Boolean      @default(false)
-  status            CourtStatus  @default(AVAILABLE)
-  hourlyRate        Float?
-  notes             String?
-
-  // Relaciones
-  club    Club      @relation(fields: [clubId], references: [id], onDelete: Cascade)
-  matches Match[]
-  logs    CourtLog[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("courts")
-}
-
-// ============================================
-// CATEGORÍAS Y RANKING
-// ============================================
-
-model Category {
-  id                String       @id @default(cuid())
-  name              String
-  description       String?
-  type              CategoryType
-  minAge            Int?
-  maxAge            Int?
-  genderRestriction Gender?
-  minRankingPoints  Int?
-  maxRankingPoints  Int?
-  isActive          Boolean      @default(true)
-
-  // Relaciones
-  tournamentCategories TournamentCategory[]
-  teams                Team[]
-  matches              Match[]
-  zones                TournamentZone[]
-  rankings             PlayerRanking[]
-  logs                 CategoryLog[]
-
-  createdAt DateTime @default(now())
-
-  @@map("categories")
-}
-
-model PlayerRanking {
-  id            String   @id @default(cuid())
-  playerId      String
-  categoryId    String
-  currentPoints Int      @default(0)
-  position      Int?
-  seasonYear    Int
-  lastUpdated   DateTime @default(now())
-
-  // Relaciones
-  player   Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
-  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-
-  @@unique([playerId, categoryId, seasonYear])
-  @@map("player_rankings")
-}
-
-// ============================================
-// TORNEOS
-// ============================================
-
-model Tournament {
-  id          String               @id @default(cuid())
-  name        String
-  description String?
-  type        TournamentType
-  status      TournamentStatus     @default(DRAFT)
-  visibility  TournamentVisibility @default(PUBLIC)
-
-  // Fechas
-  registrationStart DateTime?
-  registrationEnd   DateTime?
-  tournamentStart   DateTime
-  tournamentEnd     DateTime?
-
-  // Configuración
-  maxParticipants Int?
-  minParticipants Int   @default(4)
-  registrationFee Float @default(0)
-  prizePool       Float @default(0)
-
-  // Formato del juego
-  setsToWin     Int     @default(2)
-  gamesToWinSet Int     @default(6)
-  tiebreakAt    Int     @default(6)
-  goldenPoint   Boolean @default(true)
-
-  // Organización
-  organizerId String
-  mainClubId  String?
-
-  // Metadata
-  rules             String?
-  prizesDescription String?
-  logoUrl           String?
-
-  // Relaciones
-  organizer     User                 @relation("TournamentOrganizer", fields: [organizerId], references: [id])
-  mainClub      Club?                @relation("TournamentMainClub", fields: [mainClubId], references: [id])
-  categories    TournamentCategory[]
-  clubs         TournamentClub[]
-  teams         Team[]
-  matches       Match[]
-  zones         TournamentZone[]
-  stats         TournamentStats[]
-  notifications Notification[]
-  logs          TournamentLog[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("tournaments")
-}
-
-model TournamentClub {
-  tournamentId String
-  clubId       String
-
-  // Relaciones
-  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
-  club       Club       @relation(fields: [clubId], references: [id], onDelete: Cascade)
-
-  @@id([tournamentId, clubId])
-  @@map("tournament_clubs")
-}
-
-model TournamentCategory {
-  id              String @id @default(cuid())
-  tournamentId    String
-  categoryId      String
-  maxTeams        Int?
-  registrationFee Float?
-  prizePool       Float?
-
-  // Relaciones
-  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
-  category   Category   @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  teams      Team[]
-
-  @@unique([tournamentId, categoryId])
-  @@map("tournament_categories")
-}
-
-// ============================================
-// EQUIPOS E INSCRIPCIONES
-// ============================================
-
-model Team {
-  id                 String             @id @default(cuid())
-  tournamentId       String
-  categoryId         String
-  name               String?
-  player1Id          String
-  player2Id          String
-  registrationStatus RegistrationStatus @default(PENDING)
-  registeredAt       DateTime           @default(now())
-  seed               Int?
-  notes              String?
-
-  // Relaciones
-  tournament         Tournament         @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
-  category           Category           @relation(fields: [categoryId], references: [id])
-  tournamentCategory TournamentCategory @relation(fields: [tournamentId, categoryId], references: [tournamentId, categoryId])
-  player1            Player             @relation("TeamPlayer1", fields: [player1Id], references: [id])
-  player2            Player             @relation("TeamPlayer2", fields: [player2Id], references: [id])
-  payments           TeamPayment[]
-  zoneTeams          ZoneTeam[]
-
-  // Partidos como team1 y team2
-  team1Matches Match[] @relation("MatchTeam1")
-  team2Matches Match[] @relation("MatchTeam2")
-  wonMatches   Match[] @relation("MatchWinner")
-
-  // Sets ganados
-  wonSets  MatchSet[]  @relation("SetWinner")
-  wonGames MatchGame[] @relation("GameWinner")
-
-  @@map("teams")
-}
-
-model TeamPayment {
-  id            String        @id @default(cuid())
-  teamId        String
-  amount        Float
-  paymentStatus PaymentStatus @default(PENDING)
-  paymentMethod String?
-  transactionId String?
-  paidAt        DateTime?
-
-  // Relaciones
-  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-
-  @@map("team_payments")
-}
-
-// ============================================
-// ZONAS/GRUPOS
-// ============================================
-
-model TournamentZone {
-  id           String    @id @default(cuid())
-  tournamentId String
-  categoryId   String
-  name         String
-  phaseType    PhaseType @default(GROUP_STAGE)
-
-  // Relaciones
-  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
-  category   Category   @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  teams      ZoneTeam[]
-  matches    Match[]
-
-  @@map("tournament_zones")
-}
-
-model ZoneTeam {
-  zoneId   String
-  teamId   String
-  position Int?
-
-  // Relaciones
-  zone TournamentZone @relation(fields: [zoneId], references: [id], onDelete: Cascade)
-  team Team           @relation(fields: [teamId], references: [id], onDelete: Cascade)
-
-  @@id([zoneId, teamId])
-  @@map("zone_teams")
-}
-
-// ============================================
-// PARTIDOS
-// ============================================
-
-model Match {
-  id           String  @id @default(cuid())
-  tournamentId String
-  categoryId   String
-  zoneId       String?
-
-  // Equipos
-  team1Id      String?
-  team2Id      String?
-  winnerTeamId String?
-
-  // Programación
-  scheduledAt DateTime?
-  courtId     String?
-
-  // Estado
-  status      MatchStatus @default(SCHEDULED)
-  phaseType   PhaseType
-  roundNumber Int?
-  matchNumber Int?
-
-  // Resultados
-  team1SetsWon    Int  @default(0)
-  team2SetsWon    Int  @default(0)
-  durationMinutes Int?
-
-  // Árbitros
-  refereeId String?
-  notes     String?
-
-  // Para eliminatorias
-  team1FromMatchId String?
-  team2FromMatchId String?
-
-  // Relaciones
-  tournament Tournament      @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
-  category   Category        @relation(fields: [categoryId], references: [id])
-  zone       TournamentZone? @relation(fields: [zoneId], references: [id])
-  team1      Team?           @relation("MatchTeam1", fields: [team1Id], references: [id])
-  team2      Team?           @relation("MatchTeam2", fields: [team2Id], references: [id])
-  winnerTeam Team?           @relation("MatchWinner", fields: [winnerTeamId], references: [id])
-  court      Court?          @relation(fields: [courtId], references: [id])
-  referee    User?           @relation("MatchReferee", fields: [refereeId], references: [id])
-
-  sets             MatchSet[]
-  team1FromMatch   Match?         @relation("MatchProgression1", fields: [team1FromMatchId], references: [id])
-  team2FromMatch   Match?         @relation("MatchProgression2", fields: [team2FromMatchId], references: [id])
-  nextMatchesTeam1 Match[]        @relation("MatchProgression1")
-  nextMatchesTeam2 Match[]        @relation("MatchProgression2")
-  notifications    Notification[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("matches")
-}
-
-model MatchSet {
-  id                  String    @id @default(cuid())
-  matchId             String
-  setNumber           Int
-  team1Games          Int       @default(0)
-  team2Games          Int       @default(0)
-  team1TiebreakPoints Int?
-  team2TiebreakPoints Int?
-  winnerTeamId        String?
-  completedAt         DateTime?
-
-  // Relaciones
-  match      Match       @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  winnerTeam Team?       @relation("SetWinner", fields: [winnerTeamId], references: [id])
-  games      MatchGame[]
-
-  @@unique([matchId, setNumber])
-  @@map("match_sets")
-}
-
-model MatchGame {
-  id           String    @id @default(cuid())
-  setId        String
-  gameNumber   Int
-  team1Points  Int       @default(0)
-  team2Points  Int       @default(0)
-  winnerTeamId String?
-  isTiebreak   Boolean   @default(false)
-  completedAt  DateTime?
-
-  // Relaciones
-  set        MatchSet @relation(fields: [setId], references: [id], onDelete: Cascade)
-  winnerTeam Team?    @relation("GameWinner", fields: [winnerTeamId], references: [id])
-
-  @@unique([setId, gameNumber])
-  @@map("match_games")
-}
-
-// ============================================
-// ESTADÍSTICAS
-// ============================================
-
-model TournamentStats {
-  id            String @id @default(cuid())
-  tournamentId  String
-  playerId      String
-  matchesPlayed Int    @default(0)
-  matchesWon    Int    @default(0)
-  setsWon       Int    @default(0)
-  setsLost      Int    @default(0)
-  gamesWon      Int    @default(0)
-  gamesLost     Int    @default(0)
-  pointsEarned  Int    @default(0)
-  finalPosition Int?
-
-  // Relaciones
-  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
-  player     Player     @relation(fields: [playerId], references: [id], onDelete: Cascade)
-
-  @@unique([tournamentId, playerId])
-  @@map("tournament_stats")
-}
-
-// ============================================
-// NOTIFICACIONES
-// ============================================
-
-model Notification {
-  id           String             @id @default(cuid())
-  userId       String
-  tournamentId String?
-  matchId      String?
-  type         NotificationType
-  title        String
-  message      String
-  status       NotificationStatus @default(PENDING)
-  sentAt       DateTime?
-  readAt       DateTime?
-
-  // Relaciones
-  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tournament Tournament? @relation(fields: [tournamentId], references: [id])
-  match      Match?      @relation(fields: [matchId], references: [id])
-
-  createdAt DateTime @default(now())
-
-  @@map("notifications")
-}
-
-// ============================================
-// AUDIT LOG / LOGS DE AUDITORIA
-// ============================================
-
 enum LogAction {
-  // Torneos
   TOURNAMENT_CREATED
   TOURNAMENT_UPDATED
   TOURNAMENT_DELETED
@@ -689,156 +653,17 @@ enum LogAction {
   MATCH_CREATED
   MATCH_UPDATED
   MATCH_RESULT_ADDED
-
-  // Clubes
+  USER_ACTION
   CLUB_CREATED
   CLUB_UPDATED
   CLUB_DELETED
   CLUB_STATUS_CHANGED
-
-  // Canchas
   COURT_CREATED
   COURT_UPDATED
   COURT_DELETED
   COURT_STATUS_CHANGED
-
-  // Categorías
   CATEGORY_CREATED
   CATEGORY_UPDATED
   CATEGORY_DELETED
   CATEGORY_STATUS_CHANGED
-
-  // General
-  USER_ACTION
-}
-
-model TournamentLog {
-  id           String    @id @default(cuid())
-
-  // Información del evento
-  action       LogAction
-  description  String    // Descripción human-readable del evento
-
-  // Contexto del evento
-  tournamentId String?
-  userId       String    // Usuario que realizó la acción
-  ipAddress    String?   // IP desde donde se realizó la acción
-  userAgent    String?   // User Agent del navegador
-
-  // Datos del evento
-  oldData      Json?     // Estado anterior (para updates)
-  newData      Json?     // Estado nuevo (para creates/updates)
-  metadata     Json?     // Información adicional contextual
-
-  // Timestamps
-  createdAt    DateTime  @default(now())
-
-  // Relaciones
-  tournament   Tournament? @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
-  user         User        @relation(fields: [userId], references: [id])
-
-  @@index([tournamentId])
-  @@index([userId])
-  @@index([action])
-  @@index([createdAt])
-  @@map("tournament_logs")
-}
-
-model ClubLog {
-  id           String    @id @default(cuid())
-
-  // Información del evento
-  action       LogAction
-  description  String    // Descripción human-readable del evento
-
-  // Contexto del evento
-  clubId       String?
-  userId       String    // Usuario que realizó la acción
-  ipAddress    String?   // IP desde donde se realizó la acción
-  userAgent    String?   // User Agent del navegador
-
-  // Datos del evento
-  oldData      Json?     // Estado anterior (para updates)
-  newData      Json?     // Estado nuevo (para creates/updates)
-  metadata     Json?     // Información adicional contextual
-
-  // Timestamps
-  createdAt    DateTime  @default(now())
-
-  // Relaciones
-  club         Club? @relation(fields: [clubId], references: [id], onDelete: Cascade)
-  user         User  @relation(fields: [userId], references: [id])
-
-  @@index([clubId])
-  @@index([userId])
-  @@index([action])
-  @@index([createdAt])
-  @@map("club_logs")
-}
-
-model CourtLog {
-  id           String    @id @default(cuid())
-
-  // Información del evento
-  action       LogAction
-  description  String    // Descripción human-readable del evento
-
-  // Contexto del evento
-  courtId      String?
-  clubId       String?   // Para contexto adicional
-  userId       String    // Usuario que realizó la acción
-  ipAddress    String?   // IP desde donde se realizó la acción
-  userAgent    String?   // User Agent del navegador
-
-  // Datos del evento
-  oldData      Json?     // Estado anterior (para updates)
-  newData      Json?     // Estado nuevo (para creates/updates)
-  metadata     Json?     // Información adicional contextual
-
-  // Timestamps
-  createdAt    DateTime  @default(now())
-
-  // Relaciones
-  court        Court? @relation(fields: [courtId], references: [id], onDelete: Cascade)
-  club         Club?  @relation(fields: [clubId], references: [id], onDelete: Cascade)
-  user         User   @relation(fields: [userId], references: [id])
-
-  @@index([courtId])
-  @@index([clubId])
-  @@index([userId])
-  @@index([action])
-  @@index([createdAt])
-  @@map("court_logs")
-}
-
-model CategoryLog {
-  id           String    @id @default(cuid())
-
-  // Información del evento
-  action       LogAction
-  description  String    // Descripción human-readable del evento
-
-  // Contexto del evento
-  categoryId   String?
-  userId       String    // Usuario que realizó la acción
-  ipAddress    String?   // IP desde donde se realizó la acción
-  userAgent    String?   // User Agent del navegador
-
-  // Datos del evento
-  oldData      Json?     // Estado anterior (para updates)
-  newData      Json?     // Estado nuevo (para creates/updates)
-  metadata     Json?     // Información adicional contextual
-
-  // Timestamps
-  createdAt    DateTime  @default(now())
-
-  // Relaciones
-  category     Category? @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  user         User      @relation(fields: [userId], references: [id])
-
-  @@index([categoryId])
-  @@index([userId])
-  @@index([action])
-  @@index([createdAt])
-  @@map("category_logs")
 }
