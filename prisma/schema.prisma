@@ -460,7 +460,7 @@ model TournamentLog {
   newData      Json?
   metadata     Json?
   createdAt    DateTime    @default(now())
-  tournament   Tournament? @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  tournament   Tournament? @relation(fields: [tournamentId], references: [id], onDelete: SetNull)
   user         User        @relation(fields: [userId], references: [id])
 
   @@index([tournamentId])

@@ -368,6 +368,20 @@ export async function DELETE(
       data: { status: "INACTIVE" }
     })
 
+    // Log la desactivación del club
+    await ClubLogService.logClubStatusChanged(
+      {
+        userId: session.user.id,
+        clubId: club.id,
+        ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0] ||
+                  request.headers.get('x-real-ip') || 'unknown',
+        userAgent: request.headers.get('user-agent') || 'unknown'
+      },
+      club,
+      existingClub.status,
+      "INACTIVE"
+    )
+
     return NextResponse.json({
       message: "Club desactivado exitosamente",
       club
@@ -435,6 +449,20 @@ export async function PATCH(
       where: { id },
       data: { status: "ACTIVE" }
     })
+
+    // Log la activación del club
+    await ClubLogService.logClubStatusChanged(
+      {
+        userId: session.user.id,
+        clubId: club.id,
+        ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0] ||
+                  request.headers.get('x-real-ip') || 'unknown',
+        userAgent: request.headers.get('user-agent') || 'unknown'
+      },
+      club,
+      existingClub.status,
+      "ACTIVE"
+    )
 
     return NextResponse.json({
       message: "Club activado exitosamente",

@@ -51,5 +51,8 @@ logs
 /public/images/uploads/
 
 
-# Custom Scripts
+# OTHERS
 /scripts
+/.claude/
+POINTS_CALCULATION.md
+TODO.md
