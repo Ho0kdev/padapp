@@ -103,7 +103,7 @@ export class RankingsLogService {
   static async logRankingCreated(context: LogContext, rankingData: any) {
     return this.log(context, {
       action: "RANKING_CREATED",
-      description: `Ranking creado para ${rankingData.player?.firstName} ${rankingData.player?.lastName} en ${rankingData.category?.name}`,
+      description: `${rankingData.player?.firstName} ${rankingData.player?.lastName} en ${rankingData.category?.name}`,
       newData: this.sanitizeRankingData(rankingData),
       metadata: {
         seasonYear: rankingData.seasonYear,
@@ -120,7 +120,7 @@ export class RankingsLogService {
   static async logRankingDeleted(context: LogContext, rankingData: any) {
     return this.log(context, {
       action: "RANKING_DELETED",
-      description: `Ranking eliminado: ${rankingData.player?.firstName} ${rankingData.player?.lastName} removido de ${rankingData.category?.name}`,
+      description: `${rankingData.player?.firstName} ${rankingData.player?.lastName} removido de ${rankingData.category?.name}`,
       oldData: this.sanitizeRankingData(rankingData),
       metadata: {
         seasonYear: rankingData.seasonYear,
@@ -140,7 +140,7 @@ export class RankingsLogService {
 
     return this.log(context, {
       action: "POINTS_UPDATED",
-      description: `Puntos actualizados de ${oldData.currentPoints} a ${newData.currentPoints} (${pointsDifference >= 0 ? '+' : ''}${pointsDifference})`,
+      description: `${oldData.currentPoints} a ${newData.currentPoints} (${pointsDifference >= 0 ? '+' : ''}${pointsDifference})`,
       oldData: this.sanitizeRankingData(oldData),
       newData: this.sanitizeRankingData(newData),
       metadata: {
@@ -164,7 +164,7 @@ export class RankingsLogService {
 
     return this.log(context, {
       action: "POINTS_CALCULATED",
-      description: `Puntos calculados automáticamente para ${playersAffected} jugadores (${totalPointsAwarded} puntos totales)`,
+      description: `${playersAffected} jugadores (${totalPointsAwarded} puntos totales)`,
       metadata: {
         tournamentId,
         playersAffected,
@@ -196,7 +196,7 @@ export class RankingsLogService {
 
     return this.log(context, {
       action: "MANUAL_ADJUSTMENT",
-      description: `Ajuste manual: ${rankingData.player?.firstName} ${rankingData.player?.lastName} de ${oldPoints} a ${newPoints} puntos`,
+      description: `${rankingData.player?.firstName} ${rankingData.player?.lastName} de ${oldPoints} a ${newPoints} puntos`,
       oldData: { currentPoints: oldPoints },
       newData: { currentPoints: newPoints },
       metadata: {
@@ -218,7 +218,7 @@ export class RankingsLogService {
   static async logSeasonUpdated(context: LogContext, playerId: string, categoryId: string, oldSeason: number, newSeason: number) {
     return this.log(context, {
       action: "SEASON_UPDATED",
-      description: `Temporada actualizada de ${oldSeason} a ${newSeason}`,
+      description: `${oldSeason} a ${newSeason}`,
       oldData: { seasonYear: oldSeason },
       newData: { seasonYear: newSeason },
       metadata: {

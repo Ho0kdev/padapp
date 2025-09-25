@@ -97,7 +97,7 @@ export class CourtLogService {
   static async logCourtCreated(context: LogContext, courtData: any) {
     return this.log(context, {
       action: "COURT_CREATED",
-      description: `Cancha "${courtData.name}" creada`,
+      description: `"${courtData.name}" creada`,
       newData: this.sanitizeCourtData(courtData),
       metadata: {
         surface: courtData.surface,
@@ -115,7 +115,7 @@ export class CourtLogService {
 
     return this.log(context, {
       action: "COURT_UPDATED",
-      description: `Cancha "${newData.name}" actualizada`,
+      description: `"${newData.name}" actualizada`,
       oldData: this.sanitizeCourtData(oldData),
       newData: this.sanitizeCourtData(newData),
       metadata: {
@@ -131,7 +131,7 @@ export class CourtLogService {
   static async logCourtDeleted(context: LogContext, courtData: any) {
     return this.log(context, {
       action: "COURT_DELETED",
-      description: `Cancha "${courtData.name}" eliminada`,
+      description: `"${courtData.name}" eliminada`,
       oldData: this.sanitizeCourtData(courtData),
       metadata: {
         surface: courtData.surface,
@@ -152,7 +152,7 @@ export class CourtLogService {
   ) {
     return this.log(context, {
       action: "COURT_STATUS_CHANGED",
-      description: `Estado de la cancha "${courtData.name}" cambió de ${oldStatus} a ${newStatus}`,
+      description: `"${courtData.name}" cambió de ${oldStatus} a ${newStatus}`,
       oldData: { status: oldStatus },
       newData: { status: newStatus },
       metadata: {
