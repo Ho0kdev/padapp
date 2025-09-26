@@ -5,7 +5,11 @@ import { prisma } from "@/lib/prisma"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { ClubForm } from "@/components/clubs/club-form"
 
-async function getClub(id: string) {
+interface EditClubPageProps {
+  params: Promise<{ id: string }>
+}
+
+async function getClub(id: string, userId: string) {
   try {
     const club = await prisma.club.findUnique({
       where: { id },
@@ -22,15 +26,25 @@ async function getClub(id: string) {
       }
     })
 
+    if (!club) {
+      return null
+    }
+
+    // Verificar permisos
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true }
+    })
+
+    if (user?.role !== "ADMIN") {
+      return null
+    }
+
     return club
   } catch (error) {
     console.error('Error fetching club:', error)
     return null
   }
-}
-
-interface EditClubPageProps {
-  params: Promise<{ id: string }>
 }
 
 export default async function EditClubPage({ params }: EditClubPageProps) {
@@ -40,18 +54,8 @@ export default async function EditClubPage({ params }: EditClubPageProps) {
     notFound()
   }
 
-  // Verificar que sea admin
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { role: true }
-  })
-
-  if (user?.role !== "ADMIN") {
-    notFound()
-  }
-
   const { id } = await params
-  const club = await getClub(id)
+  const club = await getClub(id, session.user.id)
 
   if (!club) {
     notFound()

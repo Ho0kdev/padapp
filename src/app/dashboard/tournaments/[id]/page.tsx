@@ -6,7 +6,7 @@ import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { TournamentDetail } from "@/components/tournaments/tournament-detail"
 
 interface TournamentDetailPageProps {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
 async function getTournament(id: string) {

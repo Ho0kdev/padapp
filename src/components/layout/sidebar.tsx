@@ -18,14 +18,16 @@ import {
   Bell,
   Shield,
   Tag,
+  UserPlus,
 } from "lucide-react"
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: Home },
-  { name: "Torneos", href: "/dashboard/tournaments", icon: Trophy },
+  { name: "Usuarios", href: "/dashboard/users", icon: Users },
   { name: "Clubes", href: "/dashboard/clubs", icon: Building },
   { name: "Categorías", href: "/dashboard/categories", icon: Tag },
-  { name: "Usuarios", href: "/dashboard/users", icon: Users },
+  { name: "Torneos", href: "/dashboard/tournaments", icon: Trophy },
+  { name: "Inscripciones", href: "/dashboard/registrations", icon: UserPlus },
   { name: "Rankings", href: "/dashboard/rankings", icon: Medal },
   // { name: "Partidos", href: "/dashboard/matches", icon: Calendar },
   // { name: "Pagos", href: "/dashboard/payments", icon: CreditCard },

@@ -3,9 +3,9 @@ import { redirect } from "next/navigation"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
-import { TournamentForm } from "@/components/tournaments/tournament-form"
+import { RegistrationForm } from "@/components/registrations/registration-form"
 
-export default async function NewTournamentPage() {
+export default async function NewRegistrationPage() {
   const session = await getServerSession(authOptions)
 
   if (!session?.user) {
@@ -26,13 +26,13 @@ export default async function NewTournamentPage() {
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Crear Torneo</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Nueva Inscripción</h1>
           <p className="text-muted-foreground">
-            Configure un nuevo torneo con todas sus características
+            Crear una nueva inscripción de equipo en un torneo
           </p>
         </div>
 
-        <TournamentForm />
+        <RegistrationForm />
       </div>
     </DashboardLayout>
   )
