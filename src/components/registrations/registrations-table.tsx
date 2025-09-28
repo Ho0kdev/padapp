@@ -41,8 +41,8 @@ import Link from "next/link"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import { registrationStatusOptions } from "@/lib/validations/registration"
-import { tournamentStatusOptions } from "@/lib/validations/tournament"
 import { categoryTypeOptions } from "@/lib/validations/category"
+import { tournamentStatusOptions as statusStyles } from "@/lib/utils/status-styles"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/hooks/use-auth"
 import { DataTablePagination } from "@/components/ui/data-table-pagination"
@@ -227,48 +227,11 @@ export function RegistrationsTable() {
 
 
   const getTournamentStatusBadge = (status: string) => {
-    const statusConfig = tournamentStatusOptions.find(opt => opt.value === status)
+    const statusConfig = statusStyles.find(opt => opt.value === status)
     if (!statusConfig) return <Badge variant="outline">{status}</Badge>
 
-    const getVariant = (): "default" | "secondary" | "destructive" | "outline" => {
-      switch (statusConfig.color) {
-        case "green":
-        case "blue":
-          return "default"
-        case "yellow":
-        case "orange":
-          return "outline"
-        case "red":
-          return "destructive"
-        case "gray":
-        case "purple":
-          return "secondary"
-        default:
-          return "outline"
-      }
-    }
-
-    const getClassName = (): string => {
-      switch (statusConfig.color) {
-        case "green":
-          return "bg-green-600 border-green-600"
-        case "blue":
-          return "bg-blue-600 border-blue-600"
-        case "yellow":
-          return "border-yellow-400 text-yellow-700 bg-yellow-50"
-        case "orange":
-          return "border-orange-400 text-orange-700 bg-orange-50"
-        case "purple":
-          return "bg-purple-600 border-purple-600"
-        case "red":
-        case "gray":
-        default:
-          return ""
-      }
-    }
-
     return (
-      <Badge variant={getVariant()} className={`text-xs ${getClassName()}`}>
+      <Badge variant="outline" className={`text-xs ${statusConfig.css}`}>
         {statusConfig.label}
       </Badge>
     )

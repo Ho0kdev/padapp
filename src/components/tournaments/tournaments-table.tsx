@@ -35,6 +35,7 @@ import Link from "next/link"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import { tournamentStatusOptions, tournamentTypeOptions } from "@/lib/validations/tournament"
+import { tournamentStatusOptions as statusStyles } from "@/lib/utils/status-styles"
 import { DataTablePagination } from "@/components/ui/data-table-pagination"
 import { useToast } from "@/hooks/use-toast"
 
@@ -106,21 +107,11 @@ export function TournamentsTable() {
   }
 
   const getStatusBadge = (status: string) => {
-    const statusConfig = tournamentStatusOptions.find(s => s.value === status)
+    const statusConfig = statusStyles.find(s => s.value === status)
     if (!statusConfig) return <Badge variant="secondary">{status}</Badge>
 
-    const variants: Record<string, any> = {
-      gray: "secondary",
-      blue: "default",
-      green: "default",
-      yellow: "secondary",
-      orange: "secondary",
-      purple: "default",
-      red: "destructive",
-    }
-
     return (
-      <Badge variant={variants[statusConfig.color] || "secondary"}>
+      <Badge variant="outline" className={statusConfig.css}>
         {statusConfig.label}
       </Badge>
     )

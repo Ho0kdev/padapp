@@ -43,6 +43,7 @@ import {
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/hooks/use-auth"
 import { CourtsList } from "@/components/courts/courts-list"
+import { getTournamentStatusStyle, getTournamentStatusLabel } from "@/lib/utils/status-styles"
 
 interface Court {
   id: string
@@ -139,7 +140,7 @@ export function ClubDetail({ club, currentUserId }: ClubDetailProps) {
     }
   }
 
-  const getStatusBadge = (status: string) => {
+  const getClubStatusBadge = (status: string) => {
     const variants = {
       ACTIVE: "bg-green-100 text-green-800",
       INACTIVE: "bg-red-100 text-red-800"
@@ -153,6 +154,14 @@ export function ClubDetail({ club, currentUserId }: ClubDetailProps) {
     return (
       <Badge variant="outline" className={variants[status as keyof typeof variants]}>
         {labels[status as keyof typeof labels] || status}
+      </Badge>
+    )
+  }
+
+  const getTournamentStatusBadge = (status: string) => {
+    return (
+      <Badge variant="outline" className={getTournamentStatusStyle(status)}>
+        {getTournamentStatusLabel(status)}
       </Badge>
     )
   }
@@ -175,7 +184,7 @@ export function ClubDetail({ club, currentUserId }: ClubDetailProps) {
               />
             )}
             <h1 className="text-3xl font-bold tracking-tight">{club.name}</h1>
-            {getStatusBadge(club.status)}
+            {getClubStatusBadge(club.status)}
           </div>
           {club.description && (
             <p className="text-muted-foreground max-w-3xl">{club.description}</p>
@@ -252,7 +261,7 @@ export function ClubDetail({ club, currentUserId }: ClubDetailProps) {
 
                 <div>
                   <h4 className="font-medium mb-2">Estado</h4>
-                  {getStatusBadge(club.status)}
+                  {getClubStatusBadge(club.status)}
                 </div>
 
                 <Separator />
@@ -389,7 +398,7 @@ export function ClubDetail({ club, currentUserId }: ClubDetailProps) {
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
-                        {getStatusBadge(tournament.status)}
+                        {getTournamentStatusBadge(tournament.status)}
                         <Link href={`/dashboard/tournaments/${tournament.id}`}>
                           <Button variant="outline" size="sm">
                             Ver torneo
@@ -431,7 +440,7 @@ export function ClubDetail({ club, currentUserId }: ClubDetailProps) {
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
-                        {getStatusBadge(tournament.status)}
+                        {getTournamentStatusBadge(tournament.status)}
                         <Link href={`/dashboard/tournaments/${tournament.id}`}>
                           <Button variant="outline" size="sm">
                             Ver torneo

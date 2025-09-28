@@ -24,6 +24,7 @@ import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { getCategoryTypeStyle, getCategoryTypeLabel, getTournamentStatusStyle, getTournamentStatusLabel } from '@/lib/utils/status-styles'
 
 interface User {
   id: string
@@ -75,6 +76,7 @@ interface User {
       category: {
         id: string
         name: string
+        type: string
       }
       player2: {
         id: string
@@ -97,6 +99,7 @@ interface User {
       category: {
         id: string
         name: string
+        type: string
       }
       player1: {
         id: string
@@ -121,6 +124,7 @@ interface User {
       category: {
         id: string
         name: string
+        type: string
       }
     }>
   }
@@ -215,31 +219,25 @@ export function UserDetail({ user }: UserDetailProps) {
     return 'Sin compañero'
   }
 
-  const getTournamentStatusColor = (status: string) => {
-    const colors = {
-      DRAFT: 'secondary',
-      PUBLISHED: 'outline',
-      REGISTRATION_OPEN: 'default',
-      REGISTRATION_CLOSED: 'secondary',
-      IN_PROGRESS: 'default',
-      COMPLETED: 'secondary',
-      CANCELLED: 'destructive'
-    } as const
 
-    return colors[status as keyof typeof colors] || 'outline'
+
+  // Helper para crear badges con estilos unificados
+  const getTournamentStatusBadge = (status: string) => {
+    return (
+      <Badge variant="outline" className={getTournamentStatusStyle(status)}>
+        {getTournamentStatusLabel(status)}
+      </Badge>
+    )
   }
 
-  const getTournamentStatusLabel = (status: string) => {
-    const labels = {
-      DRAFT: 'Borrador',
-      PUBLISHED: 'Publicado',
-      REGISTRATION_OPEN: 'Inscripción Abierta',
-      REGISTRATION_CLOSED: 'Inscripción Cerrada',
-      IN_PROGRESS: 'En Progreso',
-      COMPLETED: 'Completado',
-      CANCELLED: 'Cancelado'
-    }
-    return labels[status as keyof typeof labels] || status
+  const getCategoryBadge = (category: { id: string, name: string, type: string } | null) => {
+    if (!category) return <Badge variant="outline">No especificada</Badge>
+
+    return (
+      <Badge variant="outline" className={getCategoryTypeStyle(category.type)}>
+        {category.name}
+      </Badge>
+    )
   }
 
   // Calculate overall stats
@@ -523,7 +521,7 @@ export function UserDetail({ user }: UserDetailProps) {
                           <div className="space-y-1">
                             <div className="flex items-center space-x-2">
                               <h4 className="font-medium">{team.name}</h4>
-                              <Badge variant="outline">{team.category?.name || 'No especificada'}</Badge>
+                              {getCategoryBadge(team.category)}
                             </div>
                             <p className="text-sm text-muted-foreground">
                               Compañero: {getTeamPartnername(team)}
@@ -533,9 +531,7 @@ export function UserDetail({ user }: UserDetailProps) {
                             </p>
                           </div>
                           <div className="text-right space-y-1">
-                            <Badge variant={getTournamentStatusColor(team.tournament.status)}>
-                              {getTournamentStatusLabel(team.tournament.status)}
-                            </Badge>
+                            {getTournamentStatusBadge(team.tournament.status)}
                             <div className="text-sm text-muted-foreground">
                               {team.registrationStatus}
                             </div>
@@ -572,9 +568,7 @@ export function UserDetail({ user }: UserDetailProps) {
                                 Categoría: {stat.category?.name || 'No especificada'}
                               </p>
                             </div>
-                            <Badge variant={getTournamentStatusColor(stat.tournament.status)}>
-                              {getTournamentStatusLabel(stat.tournament.status)}
-                            </Badge>
+                            {getTournamentStatusBadge(stat.tournament.status)}
                           </div>
 
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
@@ -643,9 +637,7 @@ export function UserDetail({ user }: UserDetailProps) {
                           </p>
                         )}
                       </div>
-                      <Badge variant={getTournamentStatusColor(tournament.status)}>
-                        {getTournamentStatusLabel(tournament.status)}
-                      </Badge>
+                      {getTournamentStatusBadge(tournament.status)}
                     </div>
                   ))}
                 </div>

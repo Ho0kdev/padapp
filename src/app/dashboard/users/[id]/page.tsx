@@ -62,7 +62,8 @@ async function getUser(id: string) {
                 category: {
                   select: {
                     id: true,
-                    name: true
+                    name: true,
+                    type: true
                   }
                 },
                 player2: {
@@ -89,7 +90,8 @@ async function getUser(id: string) {
                 category: {
                   select: {
                     id: true,
-                    name: true
+                    name: true,
+                    type: true
                   }
                 },
                 player1: {

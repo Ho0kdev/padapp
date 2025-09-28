@@ -32,6 +32,12 @@
 - entidad deberia estar a la izq
 
 
+" lo mismo sucede en http://localhost:3000/dashboard/registrations deberiamos usar status-styles para el estado de los torneos "
+falta unificar badges-torneo en:
+- http://localhost:3000/dashboard/categories/cmfyii94n003bq7nk1f3gn9ld pestaña torneos
+- http://localhost:3000/dashboard/clubs/cmfyii8ky002fq7nkjbpayqtk pestaña torneos
+- http://localhost:3000/dashboard/users/cmfyii85u001yq7nkaxnogcdf pesta{a equipos
+
 
 REGISTRATIONS
 ===============

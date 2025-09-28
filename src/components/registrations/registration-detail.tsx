@@ -41,8 +41,8 @@ import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import { useToast } from "@/hooks/use-toast"
 import { registrationStatusOptions } from "@/lib/validations/registration"
-import { tournamentStatusOptions } from "@/lib/validations/tournament"
 import { categoryTypeOptions } from "@/lib/validations/category"
+import { tournamentStatusOptions as statusStyles } from "@/lib/utils/status-styles"
 
 interface RegistrationWithDetails {
   id: string
@@ -214,51 +214,6 @@ export function RegistrationDetail({ registration }: RegistrationDetailProps) {
   }
 
 
-  const getTournamentStatusVariant = (status: string): "default" | "secondary" | "destructive" | "outline" => {
-    const statusConfig = tournamentStatusOptions.find(opt => opt.value === status)
-    if (!statusConfig) return "outline"
-
-    switch (statusConfig.color) {
-      case "green":
-        return "default"
-      case "blue":
-        return "default"
-      case "yellow":
-      case "orange":
-        return "outline"
-      case "red":
-        return "destructive"
-      case "gray":
-      case "purple":
-        return "secondary"
-      default:
-        return "outline"
-    }
-  }
-
-  const getTournamentStatusClass = (status: string): string => {
-    const statusConfig = tournamentStatusOptions.find(opt => opt.value === status)
-    if (!statusConfig) return ""
-
-    switch (statusConfig.color) {
-      case "green":
-        return "bg-green-600 border-green-600"
-      case "blue":
-        return "bg-blue-600 border-blue-600"
-      case "yellow":
-        return "border-yellow-400 text-yellow-700 bg-yellow-50"
-      case "orange":
-        return "border-orange-400 text-orange-700 bg-orange-50"
-      case "purple":
-        return "bg-purple-600 border-purple-600"
-      case "red":
-        return ""
-      case "gray":
-        return ""
-      default:
-        return ""
-    }
-  }
 
   const canDelete = !['IN_PROGRESS', 'COMPLETED'].includes(registration.tournament.status)
 
@@ -432,10 +387,10 @@ export function RegistrationDetail({ registration }: RegistrationDetailProps) {
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Estado del Torneo</p>
                   <Badge
-                    variant={getTournamentStatusVariant(registration.tournament.status)}
-                    className={getTournamentStatusClass(registration.tournament.status)}
+                    variant="outline"
+                    className={statusStyles.find(opt => opt.value === registration.tournament.status)?.css || "bg-gray-100 text-gray-800 border-gray-200"}
                   >
-                    {tournamentStatusOptions.find(opt => opt.value === registration.tournament.status)?.label || registration.tournament.status}
+                    {statusStyles.find(opt => opt.value === registration.tournament.status)?.label || registration.tournament.status}
                   </Badge>
                 </div>
 

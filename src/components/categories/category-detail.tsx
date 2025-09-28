@@ -42,6 +42,7 @@ import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import { useToast } from "@/hooks/use-toast"
 import { categoryTypeOptions, genderOptions } from "@/lib/validations/category"
+import { getTournamentStatusStyle, getTournamentStatusLabel, getCategoryTypeStyle } from "@/lib/utils/status-styles"
 
 interface CategoryWithDetails {
   id: string
@@ -155,23 +156,9 @@ export function CategoryDetail({ category, currentUserId }: CategoryDetailProps)
   }
 
   const getStatusBadge = (status: string) => {
-    const variants: Record<string, string> = {
-      DRAFT: "bg-gray-100 text-gray-800",
-      UPCOMING: "bg-blue-100 text-blue-800",
-      ACTIVE: "bg-green-100 text-green-800",
-      COMPLETED: "bg-purple-100 text-purple-800",
-      CANCELLED: "bg-red-100 text-red-800",
-    }
-    const labels: Record<string, string> = {
-      DRAFT: "Borrador",
-      UPCOMING: "Próximo",
-      ACTIVE: "Activo",
-      COMPLETED: "Completado",
-      CANCELLED: "Cancelado",
-    }
     return (
-      <Badge variant="outline" className={variants[status] || variants.DRAFT}>
-        {labels[status] || status}
+      <Badge variant="outline" className={getTournamentStatusStyle(status)}>
+        {getTournamentStatusLabel(status)}
       </Badge>
     )
   }
@@ -186,13 +173,7 @@ export function CategoryDetail({ category, currentUserId }: CategoryDetailProps)
             <Badge variant={category.isActive ? "default" : "secondary"}>
               {category.isActive ? "Activa" : "Inactiva"}
             </Badge>
-            <Badge variant="outline" className={
-              typeConfig?.value === "AGE" ? "bg-blue-100 text-blue-800" :
-              typeConfig?.value === "SKILL" ? "bg-green-100 text-green-800" :
-              typeConfig?.value === "RANKING" ? "bg-purple-100 text-purple-800" :
-              typeConfig?.value === "GENDER" ? "bg-pink-100 text-pink-800" :
-              "bg-orange-100 text-orange-800"
-            }>
+            <Badge variant="outline" className={getCategoryTypeStyle(category.type)}>
               {typeConfig?.label}
             </Badge>
           </div>

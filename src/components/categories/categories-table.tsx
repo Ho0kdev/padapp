@@ -44,6 +44,7 @@ import Link from "next/link"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/hooks/use-auth"
 import { DataTablePagination } from "@/components/ui/data-table-pagination"
+import { getCategoryTypeStyle, getCategoryTypeLabel } from "@/lib/utils/status-styles"
 
 interface Category {
   id: string
@@ -179,25 +180,9 @@ export function CategoriesTable() {
   }
 
   const getTypeBadge = (type: string) => {
-    const variants = {
-      AGE: "bg-blue-100 text-blue-800",
-      SKILL: "bg-green-100 text-green-800",
-      RANKING: "bg-purple-100 text-purple-800",
-      GENDER: "bg-pink-100 text-pink-800",
-      MIXED: "bg-orange-100 text-orange-800"
-    }
-
-    const labels = {
-      AGE: "Por Edad",
-      SKILL: "Por Habilidad",
-      RANKING: "Por Ranking",
-      GENDER: "Por Género",
-      MIXED: "Mixta"
-    }
-
     return (
-      <Badge variant="outline" className={variants[type as keyof typeof variants]}>
-        {labels[type as keyof typeof labels] || type}
+      <Badge variant="outline" className={getCategoryTypeStyle(type)}>
+        {getCategoryTypeLabel(type)}
       </Badge>
     )
   }

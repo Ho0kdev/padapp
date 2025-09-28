@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
 import { tournamentStatusOptions } from "@/lib/validations/tournament"
+import { tournamentStatusOptions as statusStyles } from "@/lib/utils/status-styles"
 import { Settings2 } from "lucide-react"
 
 interface TournamentStatusManagerProps {
@@ -51,15 +52,6 @@ const backwardTransitions: Record<string, string[]> = {
   CANCELLED: ["DRAFT", "PUBLISHED"]
 }
 
-const statusColors: Record<string, string> = {
-  DRAFT: "bg-gray-100 text-gray-800 border-gray-200",
-  PUBLISHED: "bg-blue-100 text-blue-800 border-blue-200",
-  REGISTRATION_OPEN: "bg-green-100 text-green-800 border-green-200",
-  REGISTRATION_CLOSED: "bg-yellow-100 text-yellow-800 border-yellow-200",
-  IN_PROGRESS: "bg-orange-100 text-orange-800 border-orange-200",
-  COMPLETED: "bg-purple-100 text-purple-800 border-purple-200",
-  CANCELLED: "bg-red-100 text-red-800 border-red-200",
-}
 
 export function TournamentStatusManager({
   tournamentId,
@@ -137,10 +129,11 @@ export function TournamentStatusManager({
 
   if (!isOwner || availableTransitions.length === 0) {
     // Solo mostrar el badge si no puede cambiar el estado
+    const statusConfig = statusStyles.find(s => s.value === currentStatus)
     return (
       <Badge
         variant="outline"
-        className={statusColors[currentStatus]}
+        className={statusConfig?.css || "bg-gray-100 text-gray-800 border-gray-200"}
       >
         {currentStatusOption?.label || currentStatus}
       </Badge>
@@ -151,7 +144,7 @@ export function TournamentStatusManager({
     <div className="flex items-center gap-2">
       <Badge
         variant="outline"
-        className={statusColors[currentStatus]}
+        className={statusStyles.find(s => s.value === currentStatus)?.css || "bg-gray-100 text-gray-800 border-gray-200"}
       >
         {currentStatusOption?.label || currentStatus}
       </Badge>

@@ -3,21 +3,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Calendar, MapPin, Users } from "lucide-react"
+import { getTournamentStatusStyle, getTournamentStatusLabel } from "@/lib/utils/status-styles"
 
-const statusLabels = {
-  DRAFT: { label: "Borrador", variant: "outline" as const },
-  PUBLISHED: { label: "Publicado", variant: "secondary" as const },
-  REGISTRATION_OPEN: { label: "Inscripciones Abiertas", variant: "default" as const },
-  REGISTRATION_CLOSED: { label: "Inscripciones Cerradas", variant: "secondary" as const },
-  IN_PROGRESS: { label: "En Progreso", variant: "default" as const },
-  COMPLETED: { label: "Completado", variant: "outline" as const },
-  CANCELLED: { label: "Cancelado", variant: "destructive" as const },
+// Helper function to create tournament status badge with unified styles
+const getTournamentStatusBadge = (status: string) => {
+  return (
+    <Badge variant="outline" className={getTournamentStatusStyle(status)}>
+      {getTournamentStatusLabel(status)}
+    </Badge>
+  )
 }
 
 interface Tournament {
   id: string
   name: string
-  status: keyof typeof statusLabels
+  status: string
   startDate: Date
   location: string
   participants: number
@@ -69,9 +69,7 @@ export function RecentTournamentsReal({ tournaments }: RecentTournamentsRealProp
                 </div>
               </div>
               <div className="flex items-center space-x-2">
-                <Badge variant={statusLabels[tournament.status].variant}>
-                  {statusLabels[tournament.status].label}
-                </Badge>
+                {getTournamentStatusBadge(tournament.status)}
                 <Button variant="outline" size="sm">
                   Ver Detalles
                 </Button>
