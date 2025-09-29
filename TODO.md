@@ -1,8 +1,6 @@
 //DASHBOARD
 - menu, sidebar.navigation que ahi se ponga el role que debe tener para visualizar cada opcion del menu.
-- unificar css, badges etc..
 //USUARIOS
-- cuando creo un usuario, si le pongo genero masculino recien ahi deberia aparecer las categorias posibles.
 - en el perfil del usuario no sale lo medico ni emergencia.
 - en lo medico pedir grupo sanguineo opcional.
 - boton volver no va a usuarios
@@ -20,7 +18,8 @@
 
 //EQUIPOS/INSCRIPTIONES
 - email y tel opcional. deberia obtener la info de ambos jugadores, y que el valor sea obligatorio.
-
+- status-style de los diferentes estados.
+- sistema de pagos?
 
 //PARTIDOS/MATCHES
 
@@ -32,11 +31,7 @@
 - entidad deberia estar a la izq
 
 
-" lo mismo sucede en http://localhost:3000/dashboard/registrations deberiamos usar status-styles para el estado de los torneos "
-falta unificar badges-torneo en:
-- http://localhost:3000/dashboard/categories/cmfyii94n003bq7nk1f3gn9ld pestaña torneos
-- http://localhost:3000/dashboard/clubs/cmfyii8ky002fq7nkjbpayqtk pestaña torneos
-- http://localhost:3000/dashboard/users/cmfyii85u001yq7nkaxnogcdf pesta{a equipos
+- users/id/ equipos - femenino a sale en verde, no deberia. y deberiamos ponerlo abajo o arriba de la isncription.
 
 
 REGISTRATIONS

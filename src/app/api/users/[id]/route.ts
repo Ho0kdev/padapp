@@ -188,6 +188,7 @@ export async function PUT(
       profileImageUrl,
       emergencyContactName,
       emergencyContactPhone,
+      bloodType,
       medicalNotes,
       rankingPoints,
       categoryId
@@ -314,6 +315,7 @@ export async function PUT(
     if (profileImageUrl !== undefined) playerUpdate.profileImageUrl = profileImageUrl
     if (emergencyContactName !== undefined) playerUpdate.emergencyContactName = emergencyContactName
     if (emergencyContactPhone !== undefined) playerUpdate.emergencyContactPhone = emergencyContactPhone
+    if (bloodType !== undefined) playerUpdate.bloodType = bloodType
     if (medicalNotes !== undefined) playerUpdate.medicalNotes = medicalNotes
     if (session.user.role === UserRole.ADMIN && rankingPoints !== undefined) {
       playerUpdate.rankingPoints = rankingPoints
@@ -394,7 +396,6 @@ export async function PUT(
     console.error('Error details:', {
       message: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined,
-      userId: id,
       userUpdate,
       body
     })

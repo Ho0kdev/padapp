@@ -47,10 +47,20 @@ const userFormSchema = z.object({
   dominantHand: z.enum(['RIGHT', 'LEFT', 'AMBIDEXTROUS']).optional(),
   emergencyContactName: z.string().optional(),
   emergencyContactPhone: z.string().optional(),
+  bloodType: z.enum(['A_POSITIVE', 'A_NEGATIVE', 'B_POSITIVE', 'B_NEGATIVE', 'AB_POSITIVE', 'AB_NEGATIVE', 'O_POSITIVE', 'O_NEGATIVE']).optional(),
   medicalNotes: z.string().optional(),
   rankingPoints: z.number().min(0).default(0),
   categoryId: z.string().optional(),
   profileImageUrl: z.string().optional()
+}).refine((data) => {
+  // If creating a player, category is required
+  if (data.createPlayer) {
+    return data.categoryId && data.categoryId.length > 0
+  }
+  return true
+}, {
+  message: 'Debe seleccionar una categoría para el jugador',
+  path: ['categoryId']
 })
 
 type UserFormValues = z.infer<typeof userFormSchema>
@@ -99,6 +109,7 @@ export function UserForm({ initialData, userId }: UserFormProps) {
       dominantHand: initialData?.dominantHand,
       emergencyContactName: initialData?.emergencyContactName || '',
       emergencyContactPhone: initialData?.emergencyContactPhone || '',
+      bloodType: initialData?.bloodType,
       medicalNotes: initialData?.medicalNotes || '',
       rankingPoints: initialData?.rankingPoints || 0,
       categoryId: initialData?.categoryId,
@@ -108,6 +119,7 @@ export function UserForm({ initialData, userId }: UserFormProps) {
 
   const createPlayer = form.watch('createPlayer')
   const selectedRole = form.watch('role')
+  const selectedGender = form.watch('gender')
   const fullName = form.watch('name') || ''
 
   // Load categories
@@ -132,6 +144,17 @@ export function UserForm({ initialData, userId }: UserFormProps) {
     fetchCategories()
   }, [createPlayer])
 
+  // Filter categories based on selected gender
+  const filteredCategories = categories.filter(category => {
+    if (!selectedGender) return false // Don't show categories if no gender selected
+
+    // Show mixed categories for all genders
+    if (category.genderRestriction === 'MIXED') return true
+
+    // Show gender-specific categories only for matching gender
+    return category.genderRestriction === selectedGender
+  })
+
   // Auto-enable create player for PLAYER role
   const handleRoleChange = (role: string) => {
     form.setValue('role', role as any)
@@ -155,8 +178,16 @@ export function UserForm({ initialData, userId }: UserFormProps) {
       form.setValue('profileImageUrl', '')
       form.setValue('emergencyContactName', '')
       form.setValue('emergencyContactPhone', '')
+      form.setValue('bloodType', undefined)
       form.setValue('medicalNotes', '')
     }
+  }
+
+  // Handle gender change - clear category selection when gender changes
+  const handleGenderChange = (gender: string) => {
+    form.setValue('gender', gender as any)
+    // Clear category selection since available categories will change
+    form.setValue('categoryId', undefined)
   }
 
   const onSubmit = async (values: UserFormValues) => {
@@ -431,8 +462,8 @@ export function UserForm({ initialData, userId }: UserFormProps) {
                       name="gender"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Género</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormLabel>Género *</FormLabel>
+                          <Select onValueChange={handleGenderChange} defaultValue={field.value}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Selecciona género" />
@@ -441,7 +472,6 @@ export function UserForm({ initialData, userId }: UserFormProps) {
                             <SelectContent>
                               <SelectItem value="MALE">Masculino</SelectItem>
                               <SelectItem value="FEMALE">Femenino</SelectItem>
-                              <SelectItem value="MIXED">Mixto</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -478,21 +508,29 @@ export function UserForm({ initialData, userId }: UserFormProps) {
                     name="categoryId"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Categoría</FormLabel>
+                        <FormLabel>Categoría *</FormLabel>
                         <Select
                           onValueChange={field.onChange}
                           defaultValue={field.value}
-                          disabled={loadingCategories}
+                          disabled={loadingCategories || !selectedGender}
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder={loadingCategories ? "Cargando..." : "Selecciona una categoría"} />
+                              <SelectValue placeholder={
+                                loadingCategories ? "Cargando..." :
+                                !selectedGender ? "Primero selecciona un género" :
+                                filteredCategories.length === 0 ? "No hay categorías disponibles" :
+                                "Selecciona una categoría"
+                              } />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {categories.map((category) => (
+                            {filteredCategories.map((category) => (
                               <SelectItem key={category.id} value={category.id}>
                                 {category.name}
+                                {category.genderRestriction === 'MIXED' && (
+                                  <span className="text-blue-500 ml-2 text-xs">(Mixta)</span>
+                                )}
                                 {category.description && (
                                   <span className="text-muted-foreground ml-2">
                                     - {category.description}
@@ -503,7 +541,10 @@ export function UserForm({ initialData, userId }: UserFormProps) {
                           </SelectContent>
                         </Select>
                         <FormDescription>
-                          Categoría en la que participará el jugador
+                          {!selectedGender ?
+                            "Selecciona género para ver las categorías disponibles." :
+                            "Categoría principal del jugador."
+                          }
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -607,7 +648,38 @@ export function UserForm({ initialData, userId }: UserFormProps) {
                   Información Médica (Opcional)
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="bloodType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Grupo sanguíneo</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecciona grupo sanguíneo" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="A_POSITIVE">A+</SelectItem>
+                          <SelectItem value="A_NEGATIVE">A-</SelectItem>
+                          <SelectItem value="B_POSITIVE">B+</SelectItem>
+                          <SelectItem value="B_NEGATIVE">B-</SelectItem>
+                          <SelectItem value="AB_POSITIVE">AB+</SelectItem>
+                          <SelectItem value="AB_NEGATIVE">AB-</SelectItem>
+                          <SelectItem value="O_POSITIVE">O+</SelectItem>
+                          <SelectItem value="O_NEGATIVE">O-</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        Información importante para emergencias médicas
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
                 <FormField
                   control={form.control}
                   name="medicalNotes"

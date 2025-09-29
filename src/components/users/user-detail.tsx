@@ -44,6 +44,7 @@ interface User {
     profileImageUrl?: string
     emergencyContactName?: string
     emergencyContactPhone?: string
+    bloodType?: string
     medicalNotes?: string
     rankingPoints: number
     primaryCategory?: {
@@ -202,6 +203,20 @@ export function UserDetail({ user }: UserDetailProps) {
     return labels[hand as keyof typeof labels] || 'No especificado'
   }
 
+  const getBloodTypeLabel = (bloodType?: string) => {
+    const labels = {
+      A_POSITIVE: 'A+',
+      A_NEGATIVE: 'A-',
+      B_POSITIVE: 'B+',
+      B_NEGATIVE: 'B-',
+      AB_POSITIVE: 'AB+',
+      AB_NEGATIVE: 'AB-',
+      O_POSITIVE: 'O+',
+      O_NEGATIVE: 'O-'
+    }
+    return labels[bloodType as keyof typeof labels] || bloodType
+  }
+
   const getUserInitials = () => {
     if (user.player) {
       return `${user.player.firstName[0] || ''}${user.player.lastName[0] || ''}`.toUpperCase()
@@ -356,6 +371,33 @@ export function UserDetail({ user }: UserDetailProps) {
                     <span className="text-sm text-muted-foreground">Mano dominante:</span>
                     <span className="text-sm">{getDominantHandLabel(user.player.dominantHand)}</span>
                   </div>
+                  {user.player.bloodType && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Grupo sanguíneo:</span>
+                      <span className="text-sm font-medium text-red-600">{getBloodTypeLabel(user.player.bloodType)}</span>
+                    </div>
+                  )}
+                  {(user.player.emergencyContactName || user.player.emergencyContactPhone) && (
+                    <div className="space-y-1">
+                      <span className="text-sm text-muted-foreground">Contacto de emergencia:</span>
+                      <div className="text-sm">
+                        {user.player.emergencyContactName && (
+                          <div>{user.player.emergencyContactName}</div>
+                        )}
+                        {user.player.emergencyContactPhone && (
+                          <div>{user.player.emergencyContactPhone}</div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  {user.player.medicalNotes && (
+                    <div className="space-y-1">
+                      <span className="text-sm text-muted-foreground">Información médica:</span>
+                      <p className="text-sm bg-yellow-50 p-2 rounded border-l-4 border-yellow-400">
+                        {user.player.medicalNotes}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </>
             )}

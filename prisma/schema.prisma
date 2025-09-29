@@ -83,6 +83,7 @@ model Player {
   profileImageUrl       String?
   emergencyContactName  String?
   emergencyContactPhone String?
+  bloodType             BloodType?
   medicalNotes          String?
   rankingPoints         Int               @default(0)
   primaryCategoryId     String?
@@ -589,6 +590,17 @@ enum DominantHand {
   RIGHT
   LEFT
   AMBIDEXTROUS
+}
+
+enum BloodType {
+  A_POSITIVE
+  A_NEGATIVE
+  B_POSITIVE
+  B_NEGATIVE
+  AB_POSITIVE
+  AB_NEGATIVE
+  O_POSITIVE
+  O_NEGATIVE
 }
 
 enum ClubStatus {
