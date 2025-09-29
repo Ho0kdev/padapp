@@ -94,11 +94,12 @@ export async function PUT(
       validatedData = courtEditSchema.parse(body)
     }
 
-    // Verificar que la cancha existe y pertenece al club
+    // Verificar que la cancha existe y pertenece al club (no eliminada)
     const existingCourt = await prisma.court.findUnique({
       where: {
         id: courtId,
-        clubId
+        clubId,
+        deleted: false
       }
     })
 
@@ -210,7 +211,7 @@ export async function PUT(
   }
 }
 
-// DELETE /api/clubs/[id]/courts/[courtId] - Eliminar cancha
+// DELETE /api/clubs/[id]/courts/[courtId] - Desactivar cancha (cambiar status)
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string; courtId: string }> }
@@ -229,7 +230,7 @@ export async function DELETE(
 
     if (user?.role !== "ADMIN") {
       return NextResponse.json(
-        { error: "Solo los administradores pueden eliminar canchas" },
+        { error: "Solo los administradores pueden desactivar canchas" },
         { status: 403 }
       )
     }
@@ -240,7 +241,8 @@ export async function DELETE(
     const existingCourt = await prisma.court.findUnique({
       where: {
         id: courtId,
-        clubId
+        clubId,
+        deleted: false // Solo canchas no eliminadas
       }
     })
 
@@ -263,12 +265,12 @@ export async function DELETE(
 
     if (activeMatches > 0) {
       return NextResponse.json(
-        { error: "No se puede eliminar una cancha con partidos programados o en progreso" },
+        { error: "No se puede desactivar una cancha con partidos programados o en progreso" },
         { status: 400 }
       )
     }
 
-    // En lugar de eliminar, cambiar status a UNAVAILABLE
+    // Cambiar status a UNAVAILABLE
     const court = await prisma.court.update({
       where: { id: courtId },
       data: { status: "UNAVAILABLE" },
@@ -281,13 +283,21 @@ export async function DELETE(
       }
     })
 
+    // Log cambio de estado de cancha
+    await CourtLogService.logCourtStatusChanged(
+      { userId: session.user.id, courtId, clubId },
+      court,
+      existingCourt.status,
+      "UNAVAILABLE"
+    )
+
     return NextResponse.json({
       message: "Cancha desactivada exitosamente",
       court
     })
 
   } catch (error) {
-    console.error("Error deleting court:", error)
+    console.error("Error deactivating court:", error)
     return NextResponse.json(
       {
         error: "Error interno del servidor",
@@ -324,11 +334,12 @@ export async function PATCH(
 
     const { id: clubId, courtId } = await params
 
-    // Verificar que la cancha existe y pertenece al club
+    // Verificar que la cancha existe y pertenece al club (no eliminada)
     const existingCourt = await prisma.court.findUnique({
       where: {
         id: courtId,
-        clubId
+        clubId,
+        deleted: false
       }
     })
 

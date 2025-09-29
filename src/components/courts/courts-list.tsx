@@ -96,6 +96,8 @@ export function CourtsList({ clubId }: CourtsListProps) {
   const [surfaceFilter, setSurfaceFilter] = useState("all")
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [courtToDelete, setCourtToDelete] = useState<Court | null>(null)
+  const [permanentDeleteDialogOpen, setPermanentDeleteDialogOpen] = useState(false)
+  const [courtToPermanentlyDelete, setCourtToPermanentlyDelete] = useState<Court | null>(null)
   const [activateDialogOpen, setActivateDialogOpen] = useState(false)
   const [courtToActivate, setCourtToActivate] = useState<Court | null>(null)
   const [maintenanceDialogOpen, setMaintenanceDialogOpen] = useState(false)
@@ -262,6 +264,36 @@ export function CourtsList({ clubId }: CourtsListProps) {
     } finally {
       setReserveDialogOpen(false)
       setCourtToReserve(null)
+    }
+  }
+
+  const handlePermanentDelete = async () => {
+    if (!courtToPermanentlyDelete) return
+
+    try {
+      const response = await fetch(`/api/clubs/${clubId}/courts/${courtToPermanentlyDelete.id}/delete`, {
+        method: "POST",
+      })
+
+      if (response.ok) {
+        toast({
+          title: "Cancha eliminada",
+          description: "La cancha ha sido eliminada permanentemente",
+        })
+        fetchCourts()
+      } else {
+        const error = await response.json()
+        throw new Error(error.error || "Error al eliminar cancha")
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Error al eliminar cancha",
+        variant: "destructive",
+      })
+    } finally {
+      setPermanentDeleteDialogOpen(false)
+      setCourtToPermanentlyDelete(null)
     }
   }
 
@@ -571,6 +603,27 @@ export function CourtsList({ clubId }: CourtsListProps) {
                                     <Trash2 className="mr-2 h-4 w-4" />
                                     Desactivar
                                   </DropdownMenuItem>
+                                  {court._count.matches === 0 ? (
+                                    <DropdownMenuItem
+                                      className="text-red-600"
+                                      onClick={() => {
+                                        setCourtToPermanentlyDelete(court)
+                                        setPermanentDeleteDialogOpen(true)
+                                      }}
+                                    >
+                                      <Trash2 className="mr-2 h-4 w-4" />
+                                      Eliminar
+                                    </DropdownMenuItem>
+                                  ) : (
+                                    <DropdownMenuItem
+                                      disabled
+                                      className="text-gray-400 cursor-not-allowed"
+                                    >
+                                      <Trash2 className="mr-2 h-4 w-4" />
+                                      Eliminar
+                                      <span className="ml-1 text-xs">(tiene partidos)</span>
+                                    </DropdownMenuItem>
+                                  )}
                                 </>
                               ) : (
                                 <DropdownMenuItem
@@ -664,6 +717,26 @@ export function CourtsList({ clubId }: CourtsListProps) {
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleReserve} className="bg-blue-600 hover:bg-blue-700">
               Reservar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Dialog de confirmación para eliminación permanente */}
+      <AlertDialog open={permanentDeleteDialogOpen} onOpenChange={setPermanentDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar cancha permanentemente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción eliminará permanentemente la cancha "{courtToPermanentlyDelete?.name}". Esta acción no se puede deshacer.
+              <br /><br />
+              <strong>Esta cancha no tiene partidos asociados, por lo que se puede eliminar de forma segura.</strong>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handlePermanentDelete} className="bg-red-600 hover:bg-red-700">
+              Eliminar
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

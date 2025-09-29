@@ -4,7 +4,7 @@
 - boton volver no va a usuarios
 //CLUBES
   //CANCHAS
-  - permitir ELIMINAR una cancha, siempre y cuando cumpla con todas las condiciones de que no tenga torneos activos.
+  
 //CATEGORIAS
 - esta contabilizando torneos de categoria que ya estan completados o cancelados
 //TORNEOS
@@ -15,7 +15,6 @@
   //calculo automatico de puntos
 
 //EQUIPOS/INSCRIPTIONES
-- email y tel opcional. deberia obtener la info de ambos jugadores, y que el valor sea obligatorio.
 - status-style de los diferentes estados.
 - sistema de pagos?
 
@@ -27,9 +26,6 @@
 - mejorar los mensajes de logs.
 - modulo esta al pedo
 - entidad deberia estar a la izq
-
-
-- users/id/ equipos - femenino a sale en verde, no deberia. y deberiamos ponerlo abajo o arriba de la isncription.
 
 
 REGISTRATIONS

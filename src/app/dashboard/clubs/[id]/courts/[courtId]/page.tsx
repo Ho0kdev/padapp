@@ -17,7 +17,8 @@ async function getCourt(clubId: string, courtId: string) {
     const court = await prisma.court.findUnique({
       where: {
         id: courtId,
-        clubId
+        clubId,
+        deleted: false
       },
       include: {
         club: {

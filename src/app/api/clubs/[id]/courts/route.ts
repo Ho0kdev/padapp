@@ -33,7 +33,10 @@ export async function GET(
     }
 
     const courts = await prisma.court.findMany({
-      where: { clubId },
+      where: {
+        clubId,
+        deleted: false
+      },
       orderBy: { name: "asc" },
       include: {
         _count: {
@@ -97,11 +100,12 @@ export async function POST(
       )
     }
 
-    // Verificar que no exista otra cancha con el mismo nombre en el club
+    // Verificar que no exista otra cancha con el mismo nombre en el club (excluir eliminadas)
     const existingCourt = await prisma.court.findFirst({
       where: {
         clubId,
-        name: validatedData.name
+        name: validatedData.name,
+        deleted: false
       }
     })
 
