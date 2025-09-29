@@ -21,9 +21,9 @@ export default async function DashboardPage() {
               Resumen de la actividad de torneos y gestión del sistema
             </p>
           </div>
-          
+
           <StatsCardsReal stats={stats} />
-          
+
           <div className="grid gap-4 md:grid-cols-4">
             <RecentTournamentsReal tournaments={tournaments} />
             <ActivityFeedReal activities={activities} />

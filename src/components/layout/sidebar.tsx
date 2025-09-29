@@ -5,48 +5,31 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/hooks/use-auth"
-import {
-  Trophy,
-  Users,
-  Calendar,
-  Building,
-  BarChart3,
-  Settings,
-  Home,
-  Medal,
-  CreditCard,
-  Bell,
-  Shield,
-  Tag,
-  UserPlus,
-} from "lucide-react"
-
-const navigation = [
-  { name: "Dashboard", href: "/dashboard", icon: Home },
-  { name: "Usuarios", href: "/dashboard/users", icon: Users },
-  { name: "Clubes", href: "/dashboard/clubs", icon: Building },
-  { name: "Categorías", href: "/dashboard/categories", icon: Tag },
-  { name: "Torneos", href: "/dashboard/tournaments", icon: Trophy },
-  { name: "Inscripciones", href: "/dashboard/registrations", icon: UserPlus },
-  { name: "Rankings", href: "/dashboard/rankings", icon: Medal },
-  // { name: "Partidos", href: "/dashboard/matches", icon: Calendar },
-  // { name: "Pagos", href: "/dashboard/payments", icon: CreditCard },
-  // { name: "Reportes", href: "/dashboard/reports", icon: BarChart3 },
-  // { name: "Notificaciones", href: "/dashboard/notifications", icon: Bell },
-  // { name: "Configuración", href: "/dashboard/settings", icon: Settings },
-]
+import { Trophy } from "lucide-react"
+import { navigation, NavigationItem, UserRole } from "@/lib/navigation"
 
 export function Sidebar() {
   const pathname = usePathname()
   const { user } = useAuth()
 
-  // Agregar enlace de admin si el usuario es administrador
-  const navigationItems = [
-    ...navigation,
-    ...(user?.role === "ADMIN" ? [
-      { name: "Panel de Admin", href: "/dashboard/admin", icon: Shield }
-    ] : [])
-  ]
+  // Función para verificar si el usuario tiene acceso a una opción del menú
+  const hasAccess = (item: NavigationItem): boolean => {
+    // Si no se especifican roles, la opción es visible para todos
+    if (!item.roles || item.roles.length === 0) {
+      return true
+    }
+
+    // Si el usuario no está autenticado, no tiene acceso
+    if (!user?.role) {
+      return false
+    }
+
+    // Verificar si el rol del usuario está en la lista de roles permitidos
+    return item.roles.includes(user.role as UserRole)
+  }
+
+  // Filtrar opciones de navegación según rol del usuario
+  const navigationItems = navigation.filter(hasAccess)
 
   return (
     <div className="flex h-full w-64 flex-col bg-gray-900">

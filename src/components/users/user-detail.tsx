@@ -24,6 +24,7 @@ import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
+import { useAuth } from '@/hooks/use-auth'
 import { getCategoryTypeStyle, getCategoryTypeLabel, getTournamentStatusStyle, getTournamentStatusLabel, getCategoryRestrictionsArray } from '@/lib/utils/status-styles'
 
 interface User {
@@ -166,6 +167,10 @@ interface UserDetailProps {
 
 export function UserDetail({ user }: UserDetailProps) {
   const router = useRouter()
+  const { user: currentUser } = useAuth()
+
+  // Solo los administradores pueden editar perfiles
+  const canEdit = currentUser?.role === 'ADMIN'
 
   const getRoleBadge = (role: string) => {
     const variants = {
@@ -319,10 +324,12 @@ export function UserDetail({ user }: UserDetailProps) {
             <p className="text-muted-foreground">{user.email}</p>
           </div>
         </div>
-        <Button onClick={() => router.push(`/dashboard/users/${user.id}/edit`)}>
-          <Edit className="mr-2 h-4 w-4" />
-          Editar Perfil
-        </Button>
+        {canEdit && (
+          <Button onClick={() => router.push(`/dashboard/users/${user.id}/edit`)}>
+            <Edit className="mr-2 h-4 w-4" />
+            Editar Perfil
+          </Button>
+        )}
       </div>
 
       {/* Profile Overview */}
