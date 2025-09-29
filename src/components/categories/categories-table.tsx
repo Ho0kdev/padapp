@@ -44,7 +44,7 @@ import Link from "next/link"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/hooks/use-auth"
 import { DataTablePagination } from "@/components/ui/data-table-pagination"
-import { getCategoryTypeStyle, getCategoryTypeLabel } from "@/lib/utils/status-styles"
+import { getCategoryTypeStyle, getCategoryTypeLabel, getGenderRestrictionStyle, getGenderRestrictionLabel, formatAgeRange, formatRankingRange } from "@/lib/utils/status-styles"
 
 interface Category {
   id: string
@@ -198,39 +198,11 @@ export function CategoriesTable() {
   const getGenderBadge = (gender?: string) => {
     if (!gender) return null
 
-    const variants = {
-      MALE: "bg-blue-100 text-blue-800",
-      FEMALE: "bg-pink-100 text-pink-800",
-      MIXED: "bg-purple-100 text-purple-800"
-    }
-
-    const labels = {
-      MALE: "Masculino",
-      FEMALE: "Femenino",
-      MIXED: "Mixto"
-    }
-
     return (
-      <Badge variant="outline" className={variants[gender as keyof typeof variants]}>
-        {labels[gender as keyof typeof labels] || gender}
+      <Badge variant="outline" className={getGenderRestrictionStyle(gender)}>
+        {getGenderRestrictionLabel(gender)}
       </Badge>
     )
-  }
-
-  const formatAgeRange = (minAge?: number, maxAge?: number) => {
-    if (!minAge && !maxAge) return null
-    if (minAge && maxAge) return `${minAge}-${maxAge} años`
-    if (minAge) return `+${minAge} años`
-    if (maxAge) return `-${maxAge} años`
-    return null
-  }
-
-  const formatRankingRange = (minPoints?: number, maxPoints?: number) => {
-    if (!minPoints && !maxPoints) return null
-    if (minPoints && maxPoints) return `${minPoints}-${maxPoints} pts`
-    if (minPoints) return `+${minPoints} pts`
-    if (maxPoints) return `-${maxPoints} pts`
-    return null
   }
 
   if (loading) {

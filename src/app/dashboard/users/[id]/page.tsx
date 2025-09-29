@@ -63,7 +63,12 @@ async function getUser(id: string) {
                   select: {
                     id: true,
                     name: true,
-                    type: true
+                    type: true,
+                    genderRestriction: true,
+                    minAge: true,
+                    maxAge: true,
+                    minRankingPoints: true,
+                    maxRankingPoints: true
                   }
                 },
                 player2: {
@@ -91,7 +96,12 @@ async function getUser(id: string) {
                   select: {
                     id: true,
                     name: true,
-                    type: true
+                    type: true,
+                    genderRestriction: true,
+                    minAge: true,
+                    maxAge: true,
+                    minRankingPoints: true,
+                    maxRankingPoints: true
                   }
                 },
                 player1: {

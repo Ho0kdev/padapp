@@ -24,7 +24,7 @@ import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
-import { getCategoryTypeStyle, getCategoryTypeLabel, getTournamentStatusStyle, getTournamentStatusLabel } from '@/lib/utils/status-styles'
+import { getCategoryTypeStyle, getCategoryTypeLabel, getTournamentStatusStyle, getTournamentStatusLabel, getCategoryRestrictionsArray } from '@/lib/utils/status-styles'
 
 interface User {
   id: string
@@ -101,6 +101,11 @@ interface User {
         id: string
         name: string
         type: string
+        genderRestriction?: string | null
+        minAge?: number | null
+        maxAge?: number | null
+        minRankingPoints?: number | null
+        maxRankingPoints?: number | null
       }
       player1: {
         id: string
@@ -126,6 +131,11 @@ interface User {
         id: string
         name: string
         type: string
+        genderRestriction?: string | null
+        minAge?: number | null
+        maxAge?: number | null
+        minRankingPoints?: number | null
+        maxRankingPoints?: number | null
       }
     }>
   }
@@ -245,15 +255,22 @@ export function UserDetail({ user }: UserDetailProps) {
     )
   }
 
-  const getCategoryBadge = (category: { id: string, name: string, type: string } | null) => {
-    if (!category) return <Badge variant="outline">No especificada</Badge>
+  const formatTournamentDates = (start?: string, end?: string) => {
+    if (!start && !end) return ''
 
-    return (
-      <Badge variant="outline" className={getCategoryTypeStyle(category.type)}>
-        {category.name}
-      </Badge>
-    )
+    const startDate = start ? format(new Date(start), 'dd/MM/yyyy', { locale: es }) : ''
+    const endDate = end ? format(new Date(end), 'dd/MM/yyyy', { locale: es }) : ''
+
+    if (startDate && endDate) {
+      return `${startDate} - ${endDate}`
+    } else if (startDate) {
+      return startDate
+    } else if (endDate) {
+      return endDate
+    }
+    return ''
   }
+
 
   // Calculate overall stats
   const overallStats = user.player?.tournamentStats.reduce(
@@ -558,26 +575,43 @@ export function UserDetail({ user }: UserDetailProps) {
                       {allTeams.map((team) => (
                         <div
                           key={team.id}
-                          className="flex items-center justify-between p-4 border rounded-lg"
+                          className="p-4 border rounded-lg space-y-2"
                         >
-                          <div className="space-y-1">
-                            <div className="flex items-center space-x-2">
-                              <h4 className="font-medium">{team.name}</h4>
-                              {getCategoryBadge(team.category)}
+                          {/* Línea 1: Torneo - Categoría | Estado del Torneo */}
+                          <div className="flex items-center justify-between">
+                            <div className="font-medium text-lg">
+                              <span className="font-medium">{team.tournament.name}</span> - {team.category.name}
                             </div>
-                            <p className="text-sm text-muted-foreground">
-                              Compañero: {getTeamPartnername(team)}
-                            </p>
-                            <p className="text-sm">
-                              Torneo: {team.tournament.name}
-                            </p>
-                          </div>
-                          <div className="text-right space-y-1">
                             {getTournamentStatusBadge(team.tournament.status)}
-                            <div className="text-sm text-muted-foreground">
-                              {team.registrationStatus}
-                            </div>
                           </div>
+
+                          {/* Línea 2: Restricciones de la categoría */}
+                          {getCategoryRestrictionsArray(team.category).length > 0 && (
+                            <div className="flex items-center gap-1 flex-wrap">
+                              {getCategoryRestrictionsArray(team.category).map((restriction, index) => (
+                                <Badge
+                                  key={`${restriction.type}-${index}`}
+                                  variant="outline"
+                                  className={restriction.style}
+                                >
+                                  {restriction.label}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Línea 3: Nombre del equipo */}
+                          <h4 className="text-md text-muted-foreground">{team.name}</h4>
+
+                          {/* Línea 4: Compañero */}
+                          <p className="text-sm text-muted-foreground">{getTeamPartnername(team)}</p>
+
+                          {/* Línea 5: Fechas del torneo */}
+                          {formatTournamentDates(team.tournament.tournamentStart, team.tournament.tournamentEnd) && (
+                            <p className="text-sm text-muted-foreground">
+                              {formatTournamentDates(team.tournament.tournamentStart, team.tournament.tournamentEnd)}
+                            </p>
+                          )}
                         </div>
                       ))}
                     </div>
