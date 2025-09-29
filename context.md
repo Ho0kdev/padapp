@@ -173,7 +173,8 @@ src/
 
 🔧 Bugs y Mejoras Técnicas:
 - **Torneos completados**: No deberían poder editarse ni eliminarse
-- **Categorías**: Está contabilizando torneos de categorías que ya están completados o cancelados
+- ✅ **Categorías**: CORREGIDO - Ahora solo contabiliza torneos en curso (PUBLISHED, REGISTRATION_OPEN, REGISTRATION_CLOSED, IN_PROGRESS)
+- ✅ **Botón Volver en detalles de usuario**: CORREGIDO - Ahora navega correctamente a /dashboard/users
 - **Sidebar/Menú**: Implementar control de roles para mostrar opciones según permisos de usuario
 
 🚀 Estado Actual: SISTEMA FUNCIONAL CON BASE SÓLIDA
@@ -196,6 +197,22 @@ El proyecto ha evolucionado significativamente y ahora cuenta con:
 - 4 roles de usuario con permisos
 - 6 formatos de torneos soportados
 - Sistema de puntos con 4 factores de cálculo
+
+🔧 Mejoras Recientes Implementadas (Octubre 2024):
+
+1. **Filtrado Correcto de Torneos en Categorías**:
+   - Problema: El módulo de categorías contabilizaba torneos completados y cancelados
+   - Solución: Filtro actualizado para solo contar torneos en curso
+   - Estados considerados: PUBLISHED, REGISTRATION_OPEN, REGISTRATION_CLOSED, IN_PROGRESS
+   - Archivos modificados: `/api/categories/route.ts`
+   - Impacto: Conteo preciso de torneos activos por categoría
+
+2. **Corrección Botón Volver en Detalle de Usuario**:
+   - Problema: El botón "Volver" no funcionaba en la página de detalle de usuario
+   - Causa: `router.back()` tenía problemas con el historial del navegador
+   - Solución: Cambio a navegación directa `router.push('/dashboard/users')`
+   - Archivo modificado: `src/components/users/user-detail.tsx:307`
+   - Impacto: Navegación confiable y consistente
 
 🎯 Próximo Enfoque Recomendado:
 1. **Inscripciones**: Para que los torneos sean completamente funcionales

@@ -1,6 +1,6 @@
 # 🗺️ ROADMAP - PadApp Sistema de Gestión Integral de Pádel
 
-*Actualizado: Septiembre 2024*
+*Actualizado: Octubre 2024*
 
 ## 🎯 **Visión General**
 
@@ -18,6 +18,7 @@ Convertir PadApp en la plataforma más completa para la gestión integral de tor
 - Panel administrativo con logs de auditoría
 - Base de datos optimizada con 15+ tablas relacionadas
 - Dashboard con estadísticas en tiempo real
+- **Fixes recientes**: Conteo correcto de torneos en categorías y navegación de botón Volver
 
 ### 🎯 **Brecha actual:**
 Los torneos se pueden crear y gestionar, pero falta el flujo completo:
@@ -416,4 +417,4 @@ Semana 6:
 
 **📞 ¿Estás listo para empezar con el Sistema de Inscripciones?**
 
-*Última actualización: Septiembre 2024*
+*Última actualización: Octubre 2024*

@@ -989,6 +989,18 @@ console.log('Tournament created:', {
 })
 ```
 
+## 🔧 Changelog - Mejoras Recientes
+
+### Octubre 2024
+- **✅ Fix: Conteo de torneos en categorías** - Corregido filtro para solo contar torneos en curso (PUBLISHED, REGISTRATION_OPEN, REGISTRATION_CLOSED, IN_PROGRESS)
+- **✅ Fix: Botón Volver en detalle de usuario** - Navegación corregida de `router.back()` a `router.push('/dashboard/users')`
+
+### Septiembre 2024
+- Sistema de puntos automático implementado
+- Rankings y temporadas funcionales
+- Panel administrativo completo
+- Sistema de logs y auditoría
+
 ---
 
 ## 📞 Contacto y Soporte
@@ -1003,4 +1015,4 @@ Para preguntas, sugerencias o reportar problemas:
 
 **🏓 PadApp** - Sistema completo de gestión de torneos de pádel desarrollado con las mejores prácticas y tecnologías modernas.
 
-*Última actualización: Septiembre 2024*
+*Última actualización: Octubre 2024*
