@@ -53,7 +53,10 @@ export async function GET(request: NextRequest) {
                 where: {
                   tournament: {
                     status: {
-                      not: "CANCELLED"
+                      in: [ "PUBLISHED", 
+                            "REGISTRATION_OPEN",
+                            "REGISTRATION_CLOSED", 
+                            "IN_PROGRESS",]
                     }
                   }
                 }
@@ -146,7 +149,10 @@ export async function POST(request: NextRequest) {
               where: {
                 tournament: {
                   status: {
-                    not: "CANCELLED"
+                    in: ["PUBLISHED",
+                         "REGISTRATION_OPEN",
+                         "REGISTRATION_CLOSED",
+                         "IN_PROGRESS"]
                   }
                 }
               }

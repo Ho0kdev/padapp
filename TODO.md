@@ -4,9 +4,9 @@
 - boton volver no va a usuarios
 //CLUBES
   //CANCHAS
-  
+
 //CATEGORIAS
-- esta contabilizando torneos de categoria que ya estan completados o cancelados
+---- esta contabilizando torneos de categoria que ya estan completados o cancelados
 //TORNEOS
 - torneo completado no se podria editar ni eliminar ni nada.
 - especificar categorias que son de tipo main vs categorias que no lo son por ejemplo MASC 7MA vs SUMA 18 o cosas asi. a las main ponele un numero 7ma = 7 y asi.
@@ -15,7 +15,6 @@
   //calculo automatico de puntos
 
 //EQUIPOS/INSCRIPTIONES
-- status-style de los diferentes estados.
 - sistema de pagos?
 
 //PARTIDOS/MATCHES
