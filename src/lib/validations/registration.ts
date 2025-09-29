@@ -65,14 +65,7 @@ export const eligibilityCheckSchema = z.object({
 
 export type EligibilityCheckData = z.infer<typeof eligibilityCheckSchema>
 
-// Opciones para los selects del formulario
-export const registrationStatusOptions = [
-  { value: "PENDING", label: "Pendiente", color: "yellow" },
-  { value: "CONFIRMED", label: "Confirmado", color: "blue" },
-  { value: "PAID", label: "Pagado", color: "green" },
-  { value: "CANCELLED", label: "Cancelado", color: "red" },
-  { value: "WAITLIST", label: "Lista de Espera", color: "gray" },
-] as const
+// Opciones para los selects del formulario - importar desde status-styles.ts para mantener consistencia
 
 export const paymentMethodOptions = [
   { value: "STRIPE", label: "Tarjeta de Crédito/Débito" },

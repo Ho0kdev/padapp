@@ -1,14 +1,7 @@
 "use client"
 
 import { DataTableHeader } from "@/components/ui/data-table-header"
-
-const statusOptions = [
-  { value: "PENDING", label: "Pendiente" },
-  { value: "CONFIRMED", label: "Confirmado" },
-  { value: "PAID", label: "Pagado" },
-  { value: "CANCELLED", label: "Cancelado" },
-  { value: "WAITLIST", label: "En Lista de Espera" }
-]
+import { registrationStatusOptions } from "@/lib/utils/status-styles"
 
 export function RegistrationsHeader() {
   return (
@@ -19,7 +12,7 @@ export function RegistrationsHeader() {
       createButtonText="Nueva Inscripción"
       createButtonHref="/dashboard/registrations/new"
       filterLabel="Estado"
-      filterOptions={statusOptions}
+      filterOptions={registrationStatusOptions}
       // filterParamKey="isActive"
       basePath="/dashboard/registrations"
     />

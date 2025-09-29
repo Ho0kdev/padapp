@@ -40,9 +40,13 @@ import {
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import { useToast } from "@/hooks/use-toast"
-import { registrationStatusOptions } from "@/lib/validations/registration"
 import { categoryTypeOptions } from "@/lib/validations/category"
-import { tournamentStatusOptions as statusStyles } from "@/lib/utils/status-styles"
+import {
+  tournamentStatusOptions as statusStyles,
+  registrationStatusOptions,
+  getRegistrationStatusStyle,
+  getRegistrationStatusLabel
+} from "@/lib/utils/status-styles"
 
 interface RegistrationWithDetails {
   id: string
@@ -179,20 +183,9 @@ export function RegistrationDetail({ registration }: RegistrationDetailProps) {
   }
 
   const getStatusBadge = (status: string) => {
-    const option = registrationStatusOptions.find(option => option.value === status)
-    if (!option) return <Badge variant="outline">{status}</Badge>
-
-    const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-      yellow: "outline",
-      blue: "default",
-      green: "default",
-      red: "destructive",
-      gray: "secondary",
-    }
-
     return (
-      <Badge variant={variants[option.color] || "outline"}>
-        {option.label}
+      <Badge className={getRegistrationStatusStyle(status)}>
+        {getRegistrationStatusLabel(status)}
       </Badge>
     )
   }

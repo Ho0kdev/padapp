@@ -9,6 +9,15 @@ export const tournamentStatusOptions = [
   { value: "CANCELLED", label: "Cancelado", color: "red", css: "bg-red-100 text-red-800 border-red-200" },
 ] as const
 
+// Opciones de estados de inscripción con labels, colores y estilos CSS
+export const registrationStatusOptions = [
+  { value: "PENDING", label: "Pendiente", color: "yellow", css: "bg-yellow-100 text-yellow-800 border-yellow-200" },
+  { value: "CONFIRMED", label: "Confirmado", color: "blue", css: "bg-blue-100 text-blue-800 border-blue-200" },
+  { value: "PAID", label: "Pagado", color: "green", css: "bg-green-100 text-green-800 border-green-200" },
+  { value: "CANCELLED", label: "Cancelado", color: "red", css: "bg-red-100 text-red-800 border-red-200" },
+  { value: "WAITLIST", label: "Lista de Espera", color: "gray", css: "bg-gray-100 text-gray-800 border-gray-200" },
+] as const
+
 // Opciones de tipos de categoría con labels, colores y estilos CSS
 export const categoryTypeStyleOptions = [
   { value: "AGE", label: "Por Edad", color: "blue", css: "bg-blue-100 text-blue-800 border-blue-200" },
@@ -27,6 +36,18 @@ export const getTournamentStatusStyle = (status: string) => {
 // Helper para obtener label de estado de torneo
 export const getTournamentStatusLabel = (status: string) => {
   const option = tournamentStatusOptions.find(opt => opt.value === status)
+  return option ? option.label : status
+}
+
+// Helper para obtener estilos de estado de inscripción
+export const getRegistrationStatusStyle = (status: string) => {
+  const option = registrationStatusOptions.find(opt => opt.value === status)
+  return option ? option.css : registrationStatusOptions[0].css
+}
+
+// Helper para obtener label de estado de inscripción
+export const getRegistrationStatusLabel = (status: string) => {
+  const option = registrationStatusOptions.find(opt => opt.value === status)
   return option ? option.label : status
 }
 
