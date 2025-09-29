@@ -23,7 +23,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useRouter } from 'next/navigation'
-import { toast } from 'sonner'
+import { useToast } from '@/hooks/use-toast'
 import { getCategoryTypeStyle, getCategoryTypeLabel, getTournamentStatusStyle, getTournamentStatusLabel } from '@/lib/utils/status-styles'
 
 interface User {

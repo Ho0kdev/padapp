@@ -1,8 +1,6 @@
 //DASHBOARD
 - menu, sidebar.navigation que ahi se ponga el role que debe tener para visualizar cada opcion del menu.
 //USUARIOS
-- en el perfil del usuario no sale lo medico ni emergencia.
-- en lo medico pedir grupo sanguineo opcional.
 - boton volver no va a usuarios
 //CLUBES
   //CANCHAS

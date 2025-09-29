@@ -140,7 +140,7 @@ export async function GET(request: NextRequest) {
           categories: {
             include: {
               category: {
-                select: { name: true }
+                select: { name: true, type: true, genderRestriction: true, minAge: true, maxAge: true, minRankingPoints: true, maxRankingPoints: true }
               }
             }
           },

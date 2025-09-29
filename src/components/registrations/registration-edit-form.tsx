@@ -37,7 +37,7 @@ interface RegistrationEditFormProps {
 
 export function RegistrationEditForm({ initialData, registrationId }: RegistrationEditFormProps) {
   const [loading, setLoading] = useState(false)
-  const { toast } = useToast()
+  const { error: toastError, success: toastSuccess } = useToast()
   const router = useRouter()
 
   const form = useForm<RegistrationEditData>({
@@ -65,23 +65,25 @@ export function RegistrationEditForm({ initialData, registrationId }: Registrati
 
       if (!response.ok) {
         const errorData = await response.json()
+
+        // Si hay detalles de validación de Zod, mostrar el mensaje específico
+        if (errorData.details && Array.isArray(errorData.details)) {
+          const specificErrors = errorData.details
+            .map((detail: { message: string }) => detail.message)
+            .join(', ')
+          throw new Error(specificErrors)
+        }
+
         throw new Error(errorData.error || "Error al actualizar la inscripción")
       }
 
-      toast({
-        title: "¡Éxito!",
-        description: "Inscripción actualizada correctamente",
-      })
+      toastSuccess("Inscripción actualizada correctamente")
 
       // Redirigir a la página de detalle
       router.push(`/dashboard/registrations/${registrationId}`)
     } catch (error) {
       console.error("Error updating registration:", error)
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Error al actualizar la inscripción",
-        variant: "destructive",
-      })
+      toastError(error instanceof Error ? error.message : "Error al actualizar la inscripción")
     } finally {
       setLoading(false)
     }

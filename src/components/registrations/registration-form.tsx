@@ -11,18 +11,26 @@ import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Badge } from "@/components/ui/badge"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Loader2, AlertTriangle, Users, Trophy } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { getTournamentStatusStyle, getTournamentStatusLabel } from "@/lib/utils/status-styles"
 import { z } from "zod"
 
 const registrationFormSchema = z.object({
-  tournamentCategoryId: z.string().min(1, "Debe seleccionar una categoría del torneo"),
+  tournamentId: z.string().min(1, "Debe seleccionar un torneo"),
+  categoryId: z.string().min(1, "Debe seleccionar una categoría"),
   player1Id: z.string().min(1, "Debe seleccionar el jugador 1"),
   player2Id: z.string().min(1, "Debe seleccionar el jugador 2"),
   teamName: z.string().max(100, "El nombre no puede tener más de 100 caracteres").optional(),
   notes: z.string().max(500, "Las notas no pueden tener más de 500 caracteres").optional(),
   acceptTerms: z.boolean().refine(val => val === true, "Debe aceptar los términos y condiciones")
+}).refine((data) => {
+  return data.player1Id !== data.player2Id
+}, {
+  message: "Los jugadores deben ser diferentes",
+  path: ["player2Id"]
 })
 
 type RegistrationFormData = z.infer<typeof registrationFormSchema>
@@ -31,6 +39,8 @@ interface Tournament {
   id: string
   name: string
   status: string
+  tournamentStart: Date | null
+  tournamentEnd: Date | null
   registrationStart: Date | null
   registrationEnd: Date | null
   categories: Array<{
@@ -70,14 +80,17 @@ export function RegistrationForm({ initialData, registrationId }: RegistrationFo
   const [dataLoading, setDataLoading] = useState(true)
   const [tournaments, setTournaments] = useState<Tournament[]>([])
   const [players, setPlayers] = useState<Player[]>([])
+  const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null)
+  const [availableCategories, setAvailableCategories] = useState<Tournament['categories']>([])
   const [error, setError] = useState<string | null>(null)
-  const { toast } = useToast()
+  const { error: toastError, success: toastSuccess } = useToast()
   const router = useRouter()
 
   const form = useForm<RegistrationFormData>({
     resolver: zodResolver(registrationFormSchema),
     defaultValues: {
-      tournamentCategoryId: initialData?.tournamentCategoryId || "",
+      tournamentId: initialData?.tournamentId || "",
+      categoryId: initialData?.categoryId || "",
       player1Id: initialData?.player1Id || "",
       player2Id: initialData?.player2Id || "",
       teamName: initialData?.teamName || "",
@@ -91,6 +104,16 @@ export function RegistrationForm({ initialData, registrationId }: RegistrationFo
       fetchData()
     }
   }, [registrationId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Manejar cambio de torneo
+  const handleTournamentChange = (tournamentId: string) => {
+    const tournament = tournaments.find(t => t.id === tournamentId)
+    setSelectedTournament(tournament || null)
+    setAvailableCategories(tournament?.categories || [])
+
+    // Resetear categoría cuando cambia el torneo
+    form.setValue('categoryId', '')
+  }
 
   const fetchData = async () => {
     setDataLoading(true)
@@ -139,11 +162,7 @@ export function RegistrationForm({ initialData, registrationId }: RegistrationFo
     } catch (error) {
       console.error("Error fetching data:", error)
       setError("Error al cargar la información necesaria para crear la inscripción")
-      toast({
-        title: "Error",
-        description: "Error al cargar datos",
-        variant: "destructive",
-      })
+      toastError("Error al cargar datos")
     } finally {
       setDataLoading(false)
     }
@@ -153,27 +172,26 @@ export function RegistrationForm({ initialData, registrationId }: RegistrationFo
     try {
       setLoading(true)
 
-      // Encontrar la categoría seleccionada para extraer tournamentId y categoryId
-      const selectedCategory = tournaments
-        .flatMap(tournament =>
-          tournament.categories.map(category => ({
-            ...category,
-            tournamentId: tournament.id
-          }))
-        )
-        .find(category => category.id === data.tournamentCategoryId)
+      // Generar nombre del equipo automáticamente si no se proporciona
+      let teamName = data.teamName
+      if (!teamName || teamName.trim() === '') {
+        const player1 = players.find(p => p.id === data.player1Id)
+        const player2 = players.find(p => p.id === data.player2Id)
 
-      if (!selectedCategory) {
-        throw new Error("Categoría de torneo no encontrada")
+        if (player1 && player2) {
+          teamName = `${player1.firstName} ${player1.lastName}/${player2.firstName} ${player2.lastName}`
+        } else {
+          teamName = "Equipo sin nombre"
+        }
       }
 
       // Transformar los datos para que coincidan con el esquema de la API
       const apiData = {
-        tournamentId: selectedCategory.tournamentId,
-        categoryId: selectedCategory.categoryId,
+        tournamentId: data.tournamentId,
+        categoryId: data.categoryId,
         player1Id: data.player1Id,
         player2Id: data.player2Id,
-        teamName: data.teamName,
+        teamName: teamName,
         notes: data.notes,
         acceptTerms: data.acceptTerms,
         acceptPrivacyPolicy: true
@@ -194,24 +212,26 @@ export function RegistrationForm({ initialData, registrationId }: RegistrationFo
 
       if (!response.ok) {
         const errorData = await response.json()
+
+        // Si hay detalles de validación de Zod, mostrar el mensaje específico
+        if (errorData.details && Array.isArray(errorData.details)) {
+          const specificErrors = errorData.details
+            .map((detail: { message: string }) => detail.message)
+            .join(', ')
+          throw new Error(specificErrors)
+        }
+
         throw new Error(errorData.error || "Error al procesar la inscripción")
       }
 
       const registration = await response.json()
-      toast({
-        title: "¡Éxito!",
-        description: registrationId ? "Inscripción actualizada correctamente" : "Inscripción creada exitosamente",
-      })
+      toastSuccess(registrationId ? "Inscripción actualizada correctamente" : "Inscripción creada exitosamente")
 
       // Redirigir a la página de detalle
       router.push(`/dashboard/registrations/${registration.id}`)
     } catch (error) {
       console.error("Error processing registration:", error)
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Error al procesar la inscripción",
-        variant: "destructive",
-      })
+      toastError(error instanceof Error ? error.message : "Error al procesar la inscripción")
     } finally {
       setLoading(false)
     }
@@ -283,46 +303,116 @@ export function RegistrationForm({ initialData, registrationId }: RegistrationFo
     <div className="space-y-6">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          {/* Selección de Torneo y Categoría */}
+          {/* Selección de Torneo */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Trophy className="h-5 w-5" />
-                Torneo y Categoría
+                Selección de Torneo
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <FormField
                 control={form.control}
-                name="tournamentCategoryId"
+                name="tournamentId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Categoría del Torneo *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormLabel>Torneo *</FormLabel>
+                    <Select
+                      onValueChange={(value) => {
+                        field.onChange(value)
+                        handleTournamentChange(value)
+                      }}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Selecciona una categoría" />
+                          <SelectValue placeholder="Selecciona un torneo" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {tournaments.map((tournament) =>
-                          tournament.categories.map((category) => (
-                            <SelectItem key={category.id} value={category.id}>
-                              {tournament.name} - {category.category.name}
-                              {category.registrationFee && (
-                                <span className="ml-2 text-muted-foreground">
-                                  (${category.registrationFee})
-                                </span>
-                              )}
-                            </SelectItem>
-                          ))
-                        )}
+                        {tournaments.map((tournament) => (
+                          <SelectItem key={tournament.id} value={tournament.id}>
+                            {tournament.name}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
+              {/* Información del Torneo Seleccionado */}
+              {selectedTournament && (
+                <div className="mt-4 p-4 bg-muted rounded-lg">
+                  <h4 className="font-medium mb-2">{selectedTournament.name}</h4>
+                  <div className="text-sm space-y-2">
+                    <div className="flex items-center gap-2">
+                      <strong>Estado:</strong>
+                      <Badge className={getTournamentStatusStyle(selectedTournament.status)}>
+                        {getTournamentStatusLabel(selectedTournament.status)}
+                      </Badge>
+                    </div>
+
+                    <div className="text-muted-foreground space-y-1">
+                      {/* Fechas del Torneo */}
+                      {selectedTournament.tournamentStart && (
+                        <p><strong>Fecha de inicio:</strong> {new Date(selectedTournament.tournamentStart).toLocaleDateString()}</p>
+                      )}
+                      {selectedTournament.tournamentEnd && (
+                        <p><strong>Fecha de fin:</strong> {new Date(selectedTournament.tournamentEnd).toLocaleDateString()}</p>
+                      )}
+
+                      {/* Fechas de Inscripción */}
+                      {selectedTournament.registrationStart && (
+                        <p><strong>Inscripciones desde:</strong> {new Date(selectedTournament.registrationStart).toLocaleDateString()}</p>
+                      )}
+                      {selectedTournament.registrationEnd && (
+                        <p><strong>Inscripciones hasta:</strong> {new Date(selectedTournament.registrationEnd).toLocaleDateString()}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Selección de Categoría */}
+              {availableCategories.length > 0 && (
+                <FormField
+                  control={form.control}
+                  name="categoryId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Categoría *</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecciona una categoría" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {availableCategories.map((category) => (
+                            <SelectItem key={category.id} value={category.categoryId}>
+                              {category.category.name}
+                              {category.registrationFee && (
+                                <span className="ml-2 text-muted-foreground">
+                                  (${category.registrationFee})
+                                </span>
+                              )}
+                              {category.maxTeams && (
+                                <span className="ml-2 text-muted-foreground">
+                                  (Máx: {category.maxTeams} equipos)
+                                </span>
+                              )}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
             </CardContent>
           </Card>
 
