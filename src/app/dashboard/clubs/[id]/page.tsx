@@ -11,6 +11,9 @@ async function getClub(id: string) {
       where: { id },
       include: {
         courts: {
+          where: {
+            deleted: false
+          },
           select: {
             id: true,
             name: true,
@@ -35,7 +38,11 @@ async function getClub(id: string) {
         },
         _count: {
           select: {
-            courts: true,
+            courts: {
+              where: {
+                deleted: false
+              }
+            },
             tournaments: {
               where: {
                 status: {

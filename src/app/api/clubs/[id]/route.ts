@@ -22,6 +22,9 @@ export async function GET(
       where: { id },
       include: {
         courts: {
+          where: {
+            deleted: false
+          },
           select: {
             id: true,
             name: true,
@@ -46,7 +49,11 @@ export async function GET(
         },
         _count: {
           select: {
-            courts: true,
+            courts: {
+              where: {
+                deleted: false
+              }
+            },
             tournaments: {
               where: {
                 status: {
@@ -188,7 +195,11 @@ export async function PUT(
         include: {
           _count: {
             select: {
-              courts: true,
+              courts: {
+                where: {
+                  deleted: false
+                }
+              },
               tournaments: true
             }
           }
@@ -257,7 +268,11 @@ export async function PUT(
       include: {
         _count: {
           select: {
-            courts: true,
+            courts: {
+              where: {
+                deleted: false
+              }
+            },
             tournaments: true
           }
         }

@@ -46,7 +46,11 @@ export async function GET(request: NextRequest) {
         include: {
           _count: {
             select: {
-              courts: true
+              courts: {
+                where: {
+                  deleted: false
+                }
+              }
             }
           }
         }
@@ -172,7 +176,11 @@ export async function POST(request: NextRequest) {
       include: {
         _count: {
           select: {
-            courts: true,
+            courts: {
+              where: {
+                deleted: false
+              }
+            },
             tournaments: true
           }
         }
