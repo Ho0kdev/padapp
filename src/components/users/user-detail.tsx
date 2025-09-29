@@ -304,7 +304,7 @@ export function UserDetail({ user }: UserDetailProps) {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => router.back()}
+            onClick={() => router.push('/dashboard/users')}
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Volver
