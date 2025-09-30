@@ -75,15 +75,20 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get("page") || "1")
     const limit = parseInt(searchParams.get("limit") || "10")
-    const status = searchParams.get("status")
+    const statuses = searchParams.getAll("status")
     const search = searchParams.get("search")
 
     const skip = (page - 1) * limit
 
     const where: any = {}
 
-    if (status) {
-      where.status = status
+    if (statuses.length > 0) {
+      // Si hay múltiples estados, usar 'in'
+      if (statuses.length === 1) {
+        where.status = statuses[0]
+      } else {
+        where.status = { in: statuses }
+      }
     }
 
     if (search) {

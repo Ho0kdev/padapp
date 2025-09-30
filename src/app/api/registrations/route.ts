@@ -55,15 +55,15 @@ export async function GET(request: NextRequest) {
 
     const where: any = {}
 
-    if (status) {
+    if (status && status !== 'all') {
       where.registrationStatus = status
     }
 
-    if (tournamentId) {
+    if (tournamentId && tournamentId !== 'all') {
       where.tournamentId = tournamentId
     }
 
-    if (categoryId) {
+    if (categoryId && categoryId !== 'all') {
       where.categoryId = categoryId
     }
 

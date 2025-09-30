@@ -14,8 +14,6 @@
   //calculo automatico de puntos
 
 //EQUIPOS/INSCRIPTIONES
-- un jugador puede tener 2 inscripciones a un torneo a una categoria? a mas de una categoria que onda?
-- inscribo 2 veces al mismo equipo y me permite, deberia tirar error.
 - filtrar por torneos.
 - sistema de pagos?
 
