@@ -87,9 +87,7 @@ export function CategoriesTable() {
   const [activateDialogOpen, setActivateDialogOpen] = useState(false)
   const [categoryToActivate, setCategoryToActivate] = useState<Category | null>(null)
   const { toast } = useToast()
-  const { user } = useAuth()
-
-  const isAdmin = user?.role === "ADMIN"
+  const { isAdminOrClubAdmin } = useAuth()
 
   useEffect(() => {
     fetchCategories()
@@ -293,7 +291,7 @@ export function CategoriesTable() {
                               Ver detalle
                             </Link>
                           </DropdownMenuItem>
-                          {isAdmin && (
+                          {isAdminOrClubAdmin && (
                             <>
                               <DropdownMenuItem asChild>
                                 <Link href={`/dashboard/categories/${category.id}/edit`}>

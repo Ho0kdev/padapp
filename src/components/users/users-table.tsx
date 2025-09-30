@@ -62,8 +62,8 @@ interface User {
   id: string
   name: string
   email: string
-  role: 'ADMIN' | 'ORGANIZER' | 'PLAYER'
-  status: 'ACTIVE' | 'INACTIVE'
+  role: 'ADMIN' | 'CLUB_ADMIN' | 'PLAYER' | 'REFEREE'
+  status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED'
   createdAt: string
   player?: {
     id: string
@@ -145,9 +145,7 @@ export function UsersTable() {
   const [activateDialogOpen, setActivateDialogOpen] = useState(false)
   const [userToActivate, setUserToActivate] = useState<User | null>(null)
   const { toast } = useToast()
-  const { user } = useAuth()
-
-  const isAdmin = user?.role === "ADMIN"
+  const { isAdmin } = useAuth()
 
   useEffect(() => {
     fetchUsers()
@@ -181,13 +179,15 @@ export function UsersTable() {
   const getRoleBadge = (role: string) => {
     const variants = {
       ADMIN: 'destructive',
-      ORGANIZER: 'secondary',
+      CLUB_ADMIN: 'secondary',
+      REFEREE: 'outline',
       PLAYER: 'default'
     } as const
 
     const labels = {
       ADMIN: 'Admin',
-      ORGANIZER: 'Organizador',
+      CLUB_ADMIN: 'Admin Club',
+      REFEREE: 'Árbitro',
       PLAYER: 'Jugador'
     }
 

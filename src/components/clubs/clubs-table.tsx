@@ -96,9 +96,7 @@ export function ClubsTable() {
   const [maintenanceDialogOpen, setMaintenanceDialogOpen] = useState(false)
   const [clubToMaintenance, setClubToMaintenance] = useState<Club | null>(null)
   const { toast } = useToast()
-  const { user } = useAuth()
-
-  const isAdmin = user?.role === "ADMIN"
+  const { isAdminOrClubAdmin } = useAuth()
 
   useEffect(() => {
     fetchClubs()
@@ -369,7 +367,7 @@ export function ClubsTable() {
                               Ver detalles
                             </DropdownMenuItem>
                           </Link>
-                          {isAdmin && (
+                          {isAdminOrClubAdmin && (
                             <>
                               <Link href={`/dashboard/clubs/${club.id}/edit`}>
                                 <DropdownMenuItem>

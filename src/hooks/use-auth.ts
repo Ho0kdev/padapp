@@ -46,6 +46,12 @@ export function useAuth(requireAuth = true) {
     [session]
   )
 
+  // Helper combinado para Admin o ClubAdmin (para permisos de gestión)
+  const isAdminOrClubAdmin = useMemo(
+    () => isAdmin || isClubAdmin,
+    [isAdmin, isClubAdmin]
+  )
+
   return {
     user: session?.user,
     loading: status === "loading",
@@ -55,6 +61,7 @@ export function useAuth(requireAuth = true) {
     isClubAdmin,
     isPlayer,
     isReferee,
+    isAdminOrClubAdmin,
     hasRole,
   }
 }

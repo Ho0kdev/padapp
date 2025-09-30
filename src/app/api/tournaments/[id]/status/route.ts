@@ -79,7 +79,10 @@ export async function PATCH(
       select: { role: true }
     })
 
-    if (existingTournament.organizerId !== session.user.id && user?.role !== "ADMIN") {
+    const isOwner = existingTournament.organizerId === session.user.id
+    const isAdminOrClubAdmin = user?.role === "ADMIN" || user?.role === "CLUB_ADMIN"
+
+    if (!isOwner && !isAdminOrClubAdmin) {
       return NextResponse.json(
         { error: "No tienes permisos para cambiar el estado de este torneo" },
         { status: 403 }
@@ -124,8 +127,8 @@ export async function PATCH(
           break
 
         case "COMPLETED":
-          // Solo admins pueden retroceder torneos completados
-          if (user?.role !== "ADMIN") {
+          // Solo admins y club admins pueden retroceder torneos completados
+          if (user?.role !== "ADMIN" && user?.role !== "CLUB_ADMIN") {
             return NextResponse.json(
               { error: "Solo los administradores pueden retroceder torneos completados" },
               { status: 403 }

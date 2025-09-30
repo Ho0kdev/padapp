@@ -114,12 +114,10 @@ interface RankingDetailProps {
 export function RankingDetail({ ranking, currentUserId }: RankingDetailProps) {
   const router = useRouter()
   const { toast } = useToast()
-  const { user } = useAuth()
+  const { isAdminOrClubAdmin } = useAuth()
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [newPoints, setNewPoints] = useState(ranking.currentPoints.toString())
   const [updating, setUpdating] = useState(false)
-
-  const isAdmin = user?.role === "ADMIN"
 
   const getTypeBadge = (type: string) => {
     const variants = {
@@ -314,7 +312,7 @@ export function RankingDetail({ ranking, currentUserId }: RankingDetailProps) {
                   Ver perfil completo
                 </Link>
               </DropdownMenuItem>
-              {isAdmin && (
+              {isAdminOrClubAdmin && (
                 <>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem

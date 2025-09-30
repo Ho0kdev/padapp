@@ -36,7 +36,10 @@ async function getTournament(id: string, userId: string) {
     select: { role: true }
   })
 
-  if (tournament.organizerId !== userId && user?.role !== "ADMIN") {
+  const isOwner = tournament.organizerId === userId
+  const isAdminOrClubAdmin = user?.role === "ADMIN" || user?.role === "CLUB_ADMIN"
+
+  if (!isOwner && !isAdminOrClubAdmin) {
     return null
   }
 

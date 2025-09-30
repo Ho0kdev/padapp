@@ -98,9 +98,7 @@ export function RankingsTable() {
   const [rankingToDelete, setRankingToDelete] = useState<Ranking | null>(null)
   const [deleting, setDeleting] = useState(false)
   const { toast } = useToast()
-  const { user } = useAuth()
-
-  const isAdmin = user?.role === "ADMIN"
+  const { isAdminOrClubAdmin } = useAuth()
   const currentCategoryId = searchParams.get("categoryId")
 
   useEffect(() => {
@@ -394,7 +392,7 @@ export function RankingsTable() {
                             Ver jugador
                           </Link>
                         </DropdownMenuItem>
-                        {isAdmin && (
+                        {isAdminOrClubAdmin && (
                           <>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem

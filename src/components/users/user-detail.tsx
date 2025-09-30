@@ -31,8 +31,8 @@ interface User {
   id: string
   name: string
   email: string
-  role: 'ADMIN' | 'ORGANIZER' | 'PLAYER'
-  status: 'ACTIVE' | 'INACTIVE'
+  role: 'ADMIN' | 'CLUB_ADMIN' | 'PLAYER' | 'REFEREE'
+  status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED'
   createdAt: string
   player?: {
     id: string
@@ -175,13 +175,15 @@ export function UserDetail({ user }: UserDetailProps) {
   const getRoleBadge = (role: string) => {
     const variants = {
       ADMIN: 'destructive',
-      ORGANIZER: 'secondary',
+      CLUB_ADMIN: 'secondary',
+      REFEREE: 'outline',
       PLAYER: 'default'
     } as const
 
     const labels = {
       ADMIN: 'Administrador',
-      ORGANIZER: 'Organizador',
+      CLUB_ADMIN: 'Admin de Club',
+      REFEREE: 'Árbitro',
       PLAYER: 'Jugador'
     }
 
