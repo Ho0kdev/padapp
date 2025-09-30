@@ -107,6 +107,16 @@ export function RegistrationForm({ initialData, registrationId }: RegistrationFo
     }
   }, [registrationId]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Verificar jugadores inscritos cuando cambian tournament o category
+  useEffect(() => {
+    const tournamentId = form.watch('tournamentId')
+    const categoryId = form.watch('categoryId')
+
+    if (tournamentId && categoryId) {
+      checkRegisteredPlayers(tournamentId, categoryId)
+    }
+  }, [form.watch('tournamentId'), form.watch('categoryId')]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // Manejar cambio de torneo
   const handleTournamentChange = (tournamentId: string) => {
     const tournament = tournaments.find(t => t.id === tournamentId)
@@ -127,24 +137,20 @@ export function RegistrationForm({ initialData, registrationId }: RegistrationFo
 
     try {
       setCheckingPlayers(true)
-      const response = await fetch(
-        `/api/registrations?tournamentId=${tournamentId}&categoryId=${categoryId}&limit=1000`
-      )
+      const url = `/api/registrations/check-players?tournamentId=${tournamentId}&categoryId=${categoryId}`
+      const response = await fetch(url)
 
       if (response.ok) {
         const data = await response.json()
-        const playerIds = new Set<string>()
-
-        // Agregar todos los jugadores que ya están inscritos
-        data.registrations?.forEach((registration: any) => {
-          if (registration.player1Id) playerIds.add(registration.player1Id)
-          if (registration.player2Id) playerIds.add(registration.player2Id)
-        })
-
+        const playerIds = new Set<string>(data.playerIds || [])
         setRegisteredPlayerIds(playerIds)
+      } else {
+        console.error('Failed to fetch registered players:', response.status)
+        setRegisteredPlayerIds(new Set())
       }
     } catch (error) {
       console.error("Error checking registered players:", error)
+      setRegisteredPlayerIds(new Set())
     } finally {
       setCheckingPlayers(false)
     }
