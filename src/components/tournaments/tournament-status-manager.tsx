@@ -111,6 +111,7 @@ export function TournamentStatusManager({
       toast({
         title: "Estado actualizado",
         description: `El torneo ahora está en estado: ${tournamentStatusOptions.find(s => s.value === selectedStatus)?.label}`,
+        variant: "success",
       })
 
       setIsOpen(false)

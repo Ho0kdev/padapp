@@ -236,6 +236,7 @@ export function UserForm({ initialData, userId }: UserFormProps) {
       toast({
         title: isEditing ? "Usuario actualizado" : "Usuario creado",
         description: `El usuario ha sido ${isEditing ? "actualizado" : "creado"} exitosamente.`,
+        variant: "success",
       })
 
       if (isEditing) {

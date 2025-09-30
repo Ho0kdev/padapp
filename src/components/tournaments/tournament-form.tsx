@@ -245,6 +245,7 @@ export function TournamentForm({
       toast({
         title: "Éxito",
         description: tournamentId ? "Torneo actualizado correctamente" : "Torneo creado correctamente",
+        variant: "success",
       })
 
       router.push(`/dashboard/tournaments/${tournament.id}`)

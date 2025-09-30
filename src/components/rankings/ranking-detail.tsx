@@ -207,6 +207,7 @@ export function RankingDetail({ ranking, currentUserId }: RankingDetailProps) {
         toast({
           title: "Puntos actualizados",
           description: "Los puntos del ranking han sido actualizados exitosamente",
+          variant: "success",
         })
         router.refresh()
         setEditDialogOpen(false)
@@ -231,6 +232,7 @@ export function RankingDetail({ ranking, currentUserId }: RankingDetailProps) {
       toast({
         title: "Enlace copiado",
         description: "El enlace del ranking ha sido copiado al portapapeles",
+        variant: "success",
       })
     } catch (error) {
       toast({

@@ -92,6 +92,7 @@ export function TournamentsTable() {
       toast({
         title: "Éxito",
         description: "Torneo eliminado correctamente",
+        variant: "success",
       })
 
       fetchTournaments()

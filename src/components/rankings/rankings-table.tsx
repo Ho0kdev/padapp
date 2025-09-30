@@ -167,6 +167,7 @@ export function RankingsTable() {
         toast({
           title: "Puntos actualizados",
           description: "Los puntos del ranking han sido actualizados exitosamente",
+          variant: "success",
         })
         fetchRankings()
         setEditDialogOpen(false)
@@ -201,6 +202,7 @@ export function RankingsTable() {
         toast({
           title: "Ranking eliminado",
           description: `${data.deletedRanking.playerName} ha sido eliminado del ranking de ${data.deletedRanking.categoryName}`,
+          variant: "success",
         })
         fetchRankings()
         setDeleteDialogOpen(false)

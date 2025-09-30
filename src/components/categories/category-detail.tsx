@@ -124,6 +124,7 @@ export function CategoryDetail({ category, currentUserId }: CategoryDetailProps)
       toast({
         title: "Éxito",
         description: "Categoría desactivada correctamente",
+        variant: "success",
       })
 
       router.push("/dashboard/categories")
@@ -145,6 +146,7 @@ export function CategoryDetail({ category, currentUserId }: CategoryDetailProps)
       toast({
         title: "Enlace copiado",
         description: "El enlace de la categoría ha sido copiado al portapapeles",
+        variant: "success",
       })
     } catch (error) {
       toast({

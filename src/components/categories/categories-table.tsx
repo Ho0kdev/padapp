@@ -131,6 +131,7 @@ export function CategoriesTable() {
         toast({
           title: "Categoría desactivada",
           description: "La categoría ha sido desactivada exitosamente",
+          variant: "success",
         })
         fetchCategories()
       } else {
@@ -161,6 +162,7 @@ export function CategoriesTable() {
         toast({
           title: "Categoría activada",
           description: "La categoría ha sido activada exitosamente",
+          variant: "success",
         })
         fetchCategories()
       } else {

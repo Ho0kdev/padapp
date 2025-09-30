@@ -125,6 +125,7 @@ export function ClubDetail({ club, currentUserId }: ClubDetailProps) {
       toast({
         title: "Club desactivado",
         description: "El club ha sido desactivado exitosamente",
+        variant: "success",
       })
 
       router.push("/dashboard/clubs")

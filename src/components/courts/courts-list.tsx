@@ -147,6 +147,7 @@ export function CourtsList({ clubId }: CourtsListProps) {
         toast({
           title: "Cancha desactivada",
           description: "La cancha ha sido desactivada exitosamente",
+          variant: "success",
         })
         fetchCourts()
       } else {
@@ -181,6 +182,7 @@ export function CourtsList({ clubId }: CourtsListProps) {
         toast({
           title: "Cancha activada",
           description: "La cancha ha sido puesta como disponible exitosamente",
+          variant: "success",
         })
         fetchCourts()
       } else {
@@ -215,6 +217,7 @@ export function CourtsList({ clubId }: CourtsListProps) {
         toast({
           title: "Cancha en mantenimiento",
           description: "La cancha ha sido puesta en mantenimiento exitosamente",
+          variant: "success",
         })
         fetchCourts()
       } else {
@@ -249,6 +252,7 @@ export function CourtsList({ clubId }: CourtsListProps) {
         toast({
           title: "Cancha reservada",
           description: "La cancha ha sido reservada exitosamente",
+          variant: "success",
         })
         fetchCourts()
       } else {
@@ -279,6 +283,7 @@ export function CourtsList({ clubId }: CourtsListProps) {
         toast({
           title: "Cancha eliminada",
           description: "La cancha ha sido eliminada permanentemente",
+          variant: "success",
         })
         fetchCourts()
       } else {

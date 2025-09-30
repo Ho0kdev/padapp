@@ -281,6 +281,7 @@ export function UsersTable() {
         toast({
           title: "Usuario desactivado",
           description: "El usuario ha sido desactivado exitosamente",
+          variant: "success",
         })
         fetchUsers()
       } else {
@@ -311,6 +312,7 @@ export function UsersTable() {
         toast({
           title: "Usuario activado",
           description: "El usuario ha sido activado exitosamente",
+          variant: "success",
         })
         fetchUsers()
       } else {

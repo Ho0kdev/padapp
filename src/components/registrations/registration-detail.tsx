@@ -151,6 +151,7 @@ export function RegistrationDetail({ registration }: RegistrationDetailProps) {
       toast({
         title: "Éxito",
         description: "Inscripción eliminada correctamente",
+        variant: "success",
       })
 
       router.push("/dashboard/registrations")
@@ -172,6 +173,7 @@ export function RegistrationDetail({ registration }: RegistrationDetailProps) {
       toast({
         title: "Enlace copiado",
         description: "El enlace de la inscripción ha sido copiado al portapapeles",
+        variant: "success",
       })
     } catch {
       toast({

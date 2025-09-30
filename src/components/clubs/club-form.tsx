@@ -91,6 +91,7 @@ export function ClubForm({ initialData, clubId }: ClubFormProps) {
       toast({
         title: clubId ? "Club actualizado" : "Club creado",
         description: `El club "${club.name}" ha sido ${clubId ? "actualizado" : "creado"} exitosamente.`,
+        variant: "success",
       })
 
       router.push("/dashboard/clubs")

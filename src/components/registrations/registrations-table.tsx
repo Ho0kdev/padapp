@@ -163,6 +163,7 @@ export function RegistrationsTable() {
         toast({
           title: "Inscripción eliminada",
           description: "La inscripción ha sido eliminada exitosamente",
+          variant: "success",
         })
         fetchRegistrations()
       } else {

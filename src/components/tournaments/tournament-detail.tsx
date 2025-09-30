@@ -77,6 +77,7 @@ export function TournamentDetail({ tournament, currentUserId }: TournamentDetail
       toast({
         title: "Éxito",
         description: "Torneo eliminado correctamente",
+        variant: "success",
       })
 
       router.push("/dashboard/tournaments")
@@ -98,6 +99,7 @@ export function TournamentDetail({ tournament, currentUserId }: TournamentDetail
       toast({
         title: "Enlace copiado",
         description: "El enlace del torneo ha sido copiado al portapapeles",
+        variant: "success",
       })
     } catch (error) {
       toast({

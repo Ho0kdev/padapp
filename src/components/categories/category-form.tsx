@@ -95,6 +95,7 @@ export function CategoryForm({ initialData, categoryId }: CategoryFormProps) {
       toast({
         title: categoryId ? "Categoría actualizada" : "Categoría creada",
         description: `La categoría "${category.name}" ha sido ${categoryId ? "actualizada" : "creada"} exitosamente.`,
+        variant: "success",
       })
 
       router.push(`/dashboard/categories`)
