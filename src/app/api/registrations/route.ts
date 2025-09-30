@@ -304,10 +304,63 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // TODO: Aquí se implementarán las validaciones de elegibilidad más complejas
+    // Verificar que ningún jugador esté ya inscrito en esta categoría del torneo
+    const existingTeamWithPlayers = await prisma.team.findFirst({
+      where: {
+        tournamentId: validatedData.tournamentId,
+        categoryId: validatedData.categoryId,
+        registrationStatus: {
+          in: ['PENDING', 'CONFIRMED', 'PAID', 'WAITLIST']
+        },
+        OR: [
+          { player1Id: validatedData.player1Id },
+          { player1Id: validatedData.player2Id },
+          { player2Id: validatedData.player1Id },
+          { player2Id: validatedData.player2Id },
+        ]
+      },
+      include: {
+        player1: {
+          select: {
+            firstName: true,
+            lastName: true
+          }
+        },
+        player2: {
+          select: {
+            firstName: true,
+            lastName: true
+          }
+        }
+      }
+    })
+
+    if (existingTeamWithPlayers) {
+      // Determinar qué jugador(es) ya están inscritos
+      const player1AlreadyRegistered =
+        existingTeamWithPlayers.player1Id === validatedData.player1Id ||
+        existingTeamWithPlayers.player2Id === validatedData.player1Id
+      const player2AlreadyRegistered =
+        existingTeamWithPlayers.player1Id === validatedData.player2Id ||
+        existingTeamWithPlayers.player2Id === validatedData.player2Id
+
+      let errorMessage = ""
+      if (player1AlreadyRegistered && player2AlreadyRegistered) {
+        errorMessage = `Ambos jugadores ya están inscritos en esta categoría del torneo (Equipo: ${existingTeamWithPlayers.player1.firstName} ${existingTeamWithPlayers.player1.lastName} / ${existingTeamWithPlayers.player2.firstName} ${existingTeamWithPlayers.player2.lastName})`
+      } else if (player1AlreadyRegistered) {
+        errorMessage = `${player1.firstName} ${player1.lastName} ya está inscrito en esta categoría del torneo (Equipo: ${existingTeamWithPlayers.player1.firstName} ${existingTeamWithPlayers.player1.lastName} / ${existingTeamWithPlayers.player2.firstName} ${existingTeamWithPlayers.player2.lastName})`
+      } else {
+        errorMessage = `${player2.firstName} ${player2.lastName} ya está inscrito en esta categoría del torneo (Equipo: ${existingTeamWithPlayers.player1.firstName} ${existingTeamWithPlayers.player1.lastName} / ${existingTeamWithPlayers.player2.firstName} ${existingTeamWithPlayers.player2.lastName})`
+      }
+
+      return NextResponse.json(
+        { error: errorMessage },
+        { status: 400 }
+      )
+    }
+
+    // TODO: Aquí se implementarán más validaciones de elegibilidad
     // - Verificar categoría por edad, género, ranking, etc.
-    // - Verificar que no estén ya inscritos en esta categoría
-    // - Verificar límites de equipos
 
     // Verificar si hay cupo disponible
     const currentTeamsCount = await prisma.team.count({

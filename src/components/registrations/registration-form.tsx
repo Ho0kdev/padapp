@@ -83,6 +83,8 @@ export function RegistrationForm({ initialData, registrationId }: RegistrationFo
   const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null)
   const [availableCategories, setAvailableCategories] = useState<Tournament['categories']>([])
   const [error, setError] = useState<string | null>(null)
+  const [registeredPlayerIds, setRegisteredPlayerIds] = useState<Set<string>>(new Set())
+  const [checkingPlayers, setCheckingPlayers] = useState(false)
   const { error: toastError, success: toastSuccess } = useToast()
   const router = useRouter()
 
@@ -113,6 +115,48 @@ export function RegistrationForm({ initialData, registrationId }: RegistrationFo
 
     // Resetear categoría cuando cambia el torneo
     form.setValue('categoryId', '')
+    setRegisteredPlayerIds(new Set())
+  }
+
+  // Verificar jugadores ya inscritos en la categoría
+  const checkRegisteredPlayers = async (tournamentId: string, categoryId: string) => {
+    if (!tournamentId || !categoryId) {
+      setRegisteredPlayerIds(new Set())
+      return
+    }
+
+    try {
+      setCheckingPlayers(true)
+      const response = await fetch(
+        `/api/registrations?tournamentId=${tournamentId}&categoryId=${categoryId}&limit=1000`
+      )
+
+      if (response.ok) {
+        const data = await response.json()
+        const playerIds = new Set<string>()
+
+        // Agregar todos los jugadores que ya están inscritos
+        data.registrations?.forEach((registration: any) => {
+          if (registration.player1Id) playerIds.add(registration.player1Id)
+          if (registration.player2Id) playerIds.add(registration.player2Id)
+        })
+
+        setRegisteredPlayerIds(playerIds)
+      }
+    } catch (error) {
+      console.error("Error checking registered players:", error)
+    } finally {
+      setCheckingPlayers(false)
+    }
+  }
+
+  // Manejar cambio de categoría
+  const handleCategoryChange = (categoryId: string) => {
+    form.setValue('categoryId', categoryId)
+    const tournamentId = form.getValues('tournamentId')
+    if (tournamentId && categoryId) {
+      checkRegisteredPlayers(tournamentId, categoryId)
+    }
   }
 
   const fetchData = async () => {
@@ -323,7 +367,7 @@ export function RegistrationForm({ initialData, registrationId }: RegistrationFo
                         field.onChange(value)
                         handleTournamentChange(value)
                       }}
-                      defaultValue={field.value}
+                      value={field.value}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -384,7 +428,10 @@ export function RegistrationForm({ initialData, registrationId }: RegistrationFo
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Categoría *</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={(value) => {
+                        field.onChange(value)
+                        handleCategoryChange(value)
+                      }} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Selecciona una categoría" />
@@ -432,21 +479,23 @@ export function RegistrationForm({ initialData, registrationId }: RegistrationFo
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Jugador 1 *</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Selecciona jugador 1" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {players.map((player) => (
-                            <SelectItem key={player.id} value={player.id}>
-                              {player.firstName} {player.lastName}
-                              <span className="ml-2 text-muted-foreground">
-                                ({player.rankingPoints} pts)
-                              </span>
-                            </SelectItem>
-                          ))}
+                          {players
+                            .filter(player => !registeredPlayerIds.has(player.id))
+                            .map((player) => (
+                              <SelectItem key={player.id} value={player.id}>
+                                {player.firstName} {player.lastName}
+                                <span className="ml-2 text-muted-foreground">
+                                  ({player.rankingPoints} pts)
+                                </span>
+                              </SelectItem>
+                            ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -460,21 +509,23 @@ export function RegistrationForm({ initialData, registrationId }: RegistrationFo
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Jugador 2 *</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Selecciona jugador 2" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {players.map((player) => (
-                            <SelectItem key={player.id} value={player.id}>
-                              {player.firstName} {player.lastName}
-                              <span className="ml-2 text-muted-foreground">
-                                ({player.rankingPoints} pts)
-                              </span>
-                            </SelectItem>
-                          ))}
+                          {players
+                            .filter(player => !registeredPlayerIds.has(player.id))
+                            .map((player) => (
+                              <SelectItem key={player.id} value={player.id}>
+                                {player.firstName} {player.lastName}
+                                <span className="ml-2 text-muted-foreground">
+                                  ({player.rankingPoints} pts)
+                                </span>
+                              </SelectItem>
+                            ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />
