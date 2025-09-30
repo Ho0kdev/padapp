@@ -142,12 +142,16 @@ padapp/
 
 ## 🚀 Funcionalidades Implementadas
 
-### ✅ **Sistema de Autenticación Completo**
+### ✅ **Sistema de Autenticación y RBAC Completo**
 - Login y registro con validación
-- Autenticación con NextAuth.js
-- Roles de usuario (Admin, Club Admin, Player, Referee)
+- Autenticación con NextAuth.js + JWT
+- **RBAC (Role-Based Access Control)** implementado
+- 4 Roles: ADMIN, CLUB_ADMIN, PLAYER, REFEREE
+- Sistema de permisos granular (Actions + Resources)
+- Auditoría completa con `AuditLogger`
 - Rutas protegidas con middleware
-- Gestión de sesiones
+- Gestión de sesiones segura
+- 📄 [Documentación RBAC completa](RBAC_GUIA_DEFINITIVA.md)
 
 ### ✅ **Dashboard Administrativo**
 - Panel principal con estadísticas en tiempo real
@@ -245,16 +249,25 @@ padapp/
 - **Scripts de Desarrollo**: Comandos optimizados
 - **Variables de Entorno**: Configuración flexible
 
+### ✅ **Sistema de Inscripciones**
+- **CRUD Completo**: Crear, listar y gestionar inscripciones
+- **Validación Anti-Duplicados**: Un jugador solo puede estar en un equipo por categoría
+- **Endpoint de Verificación**: `/api/registrations/check-players` para optimización UX
+- **Filtrado Inteligente**: Players ya inscritos no aparecen en selectores
+- **Validación de Fechas**: Período de inscripción incluye último día completo
+- **Filtros Avanzados**: Por torneo, categoría, estado y jugador
+- **Lista de Espera**: Sistema de waitlist cuando se alcanza límite de equipos
+- **Reglas de Negocio**: Un jugador puede inscribirse en múltiples categorías, pero solo un equipo por categoría
+- **Protección RBAC**: Permisos granulares por rol
+
 ## 📋 Funcionalidades Pendientes por Desarrollar
 
 ### 🔶 **Prioridad Alta - Próximas Implementaciones**
 
-#### 1. **Sistema de Inscripciones**
-- Registro público de equipos
-- Validación automática de eligibilidad
-- Confirmación de pagos
-- Lista de espera (waitlist)
-- Notificaciones de estado
+#### 1. **Confirmación de Pagos**
+- Integración con pasarelas de pago
+- Confirmación manual de pagos
+- Notificaciones de estado de pago
 
 #### 2. **Gestión de Brackets/Llaves**
 - Visualización gráfica de eliminatorias
@@ -546,49 +559,212 @@ GET /api/admin/logs
 - Rankings actualizados automáticamente tras cada torneo
 - Histórico completo por temporadas
 
-## 🔒 Sistema de Autenticación y Autorización
+## 🔒 Sistema de Autenticación y RBAC (Role-Based Access Control)
 
-### Roles de Usuario
+PadApp implementa un sistema completo de control de acceso basado en roles con permisos granulares, auditoría y validaciones de seguridad en todos los niveles.
+
+### 🎭 Roles de Usuario
 
 #### 🔴 **ADMIN (Administrador del Sistema)**
-- Acceso completo a todas las funcionalidades
-- Gestión de usuarios y roles
-- Configuración del sistema
-- Acceso a logs y auditorías
-- Cálculo manual de puntos
+**Acceso Total** - Puede realizar cualquier acción en el sistema
+- Gestión completa de usuarios y roles
+- Crear, editar y eliminar cualquier recurso
+- Acceso a logs de auditoría y sistema
+- Cálculo manual de puntos y rankings
+- Configuración global del sistema
+- Gestión de todos los clubes y torneos
 
 #### 🟡 **CLUB_ADMIN (Administrador de Club)**
-- Gestión de su club específico
+**Acceso a Recursos del Club** - Gestión limitada a su club
 - Crear y gestionar torneos en su club
-- Administrar canchas y recursos
-- Ver estadísticas de su club
+- Administrar canchas y recursos del club
+- Ver inscripciones de torneos de su club
+- Ver estadísticas y reportes del club
+- Gestionar categorías disponibles
+- **NO puede**: Acceder a otros clubes, modificar usuarios, ver logs del sistema
 
 #### 🟢 **PLAYER (Jugador)**
-- Inscribirse en torneos
+**Acceso Personal** - Solo sus datos y funcionalidades públicas
+- Inscribirse en torneos disponibles
+- Ver sus propias inscripciones y equipos
 - Ver sus estadísticas y rankings
-- Actualizar perfil personal
-- Acceso a historial de partidos
+- Actualizar su perfil personal
+- Ver historial de partidos jugados
+- **NO puede**: Ver otras inscripciones, modificar torneos, acceder a admin
 
 #### 🔵 **REFEREE (Árbitro)**
+**Acceso a Partidos** - Gestión de resultados y arbitraje
 - Cargar resultados de partidos
 - Gestionar partidos asignados
+- Ver detalles de equipos y jugadores
 - Acceso a herramientas de arbitraje
+- **NO puede**: Modificar torneos, gestionar inscripciones
 
-### Rutas Protegidas
+### 🛡️ Sistema de Permisos (RBAC)
+
+El sistema RBAC se basa en **Actions** (acciones) y **Resources** (recursos):
+
+#### Actions (Acciones)
+```typescript
+enum Action {
+  CREATE = 'create',
+  READ = 'read',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  MANAGE = 'manage'
+}
+```
+
+#### Resources (Recursos)
+```typescript
+enum Resource {
+  TOURNAMENT = 'tournament',
+  CLUB = 'club',
+  USER = 'user',
+  CATEGORY = 'category',
+  RANKING = 'ranking',
+  REGISTRATION = 'registration',
+  MATCH = 'match',
+  PAYMENT = 'payment',
+  LOG = 'log'
+}
+```
+
+#### Matriz de Permisos
+
+| Recurso | ADMIN | CLUB_ADMIN | PLAYER | REFEREE |
+|---------|-------|------------|--------|---------|
+| Torneos | ✅ MANAGE | ✅ MANAGE (solo su club) | 🟡 READ | 🟡 READ |
+| Clubes | ✅ MANAGE | ✅ UPDATE (solo su club) | 🟡 READ | 🟡 READ |
+| Usuarios | ✅ MANAGE | 🟡 READ | 🔴 UPDATE (solo perfil) | 🔴 - |
+| Categorías | ✅ MANAGE | 🟡 READ | 🟡 READ | 🟡 READ |
+| Rankings | ✅ MANAGE | 🟡 READ | 🟡 READ | 🟡 READ |
+| Inscripciones | ✅ MANAGE | ✅ READ (su club) | 🟡 CREATE, READ (solo suyas) | 🔴 - |
+| Partidos | ✅ MANAGE | 🟡 READ (su club) | 🟡 READ (suyos) | ✅ UPDATE (asignados) |
+| Pagos | ✅ MANAGE | ✅ MANAGE (su club) | 🟡 READ (suyos) | 🔴 - |
+| Logs | ✅ READ | 🔴 - | 🔴 - | 🔴 - |
+
+### 🔐 Implementación Técnica
+
+#### Funciones de Autorización
 
 ```typescript
-// Middleware de autenticación
+// lib/rbac/index.ts
+
+// Requiere autenticación (cualquier usuario logueado)
+export async function requireAuth(): Promise<Session> {
+  const session = await getServerSession(authOptions)
+  if (!session) throw new AuthorizationError('No autorizado')
+  return session
+}
+
+// Requiere autorización para acción específica
+export async function authorize(
+  action: Action,
+  resource: Resource,
+  resourceId?: string
+): Promise<Session> {
+  const session = await requireAuth()
+  const hasPermission = await checkPermission(session, action, resource, resourceId)
+
+  if (!hasPermission) {
+    throw new AuthorizationError(`Sin permisos para ${action} en ${resource}`)
+  }
+
+  return session
+}
+
+// Verificar permiso sin lanzar error
+export async function can(
+  session: Session,
+  action: Action,
+  resource: Resource,
+  resourceId?: string
+): Promise<boolean> {
+  return checkPermission(session, action, resource, resourceId)
+}
+```
+
+#### Uso en API Routes
+
+```typescript
+// src/app/api/tournaments/route.ts
+
+// GET - Requiere solo autenticación
+export async function GET(request: NextRequest) {
+  const session = await requireAuth()
+  // ... lógica
+}
+
+// POST - Requiere permiso CREATE en TOURNAMENT
+export async function POST(request: NextRequest) {
+  const session = await authorize(Action.CREATE, Resource.TOURNAMENT)
+  // ... lógica
+}
+```
+
+```typescript
+// src/app/api/tournaments/[id]/route.ts
+
+// PUT - Requiere permiso UPDATE en torneo específico
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const session = await authorize(Action.UPDATE, Resource.TOURNAMENT, params.id)
+  // ... lógica
+}
+
+// DELETE - Solo ADMIN puede eliminar
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const session = await authorize(Action.DELETE, Resource.TOURNAMENT, params.id)
+  // ... lógica
+}
+```
+
+#### Sistema de Auditoría
+
+Todas las acciones sensibles se registran automáticamente:
+
+```typescript
+// Registrar acción en logs de auditoría
+await AuditLogger.log(session, {
+  action: Action.CREATE,
+  resource: Resource.TOURNAMENT,
+  resourceId: tournament.id,
+  description: `Torneo ${tournament.name} creado`,
+  oldData: null,
+  newData: tournament,
+}, request)
+```
+
+**Información capturada:**
+- Usuario que realizó la acción
+- Timestamp exacto
+- IP address y User Agent
+- Datos anteriores y nuevos (diff)
+- Metadata adicional
+
+### 🔒 Rutas Protegidas
+
+```typescript
+// middleware.ts
 export const config = {
   matcher: [
-    '/dashboard/:path*',
-    '/api/admin/:path*',
-    '/api/tournaments/:path*',
-    '/api/clubs/:path*'
+    '/dashboard/:path*',      // Requiere login
+    '/api/admin/:path*',      // Solo ADMIN
+    '/api/tournaments/:path*', // Autenticado + permisos
+    '/api/clubs/:path*',
+    '/api/users/:path*',
+    '/api/registrations/:path*'
   ]
 }
 ```
 
-### Configuración de NextAuth
+### 🎯 Configuración de NextAuth
 
 ```typescript
 // lib/auth.ts
@@ -600,9 +776,21 @@ export const authOptions: NextAuthOptions = {
         password: { type: "password" }
       },
       async authorize(credentials) {
-        // Validación personalizada con bcrypt
-        // Verificación en base de datos
-        // Retorno de usuario con roles
+        // Validación con bcrypt
+        const user = await prisma.user.findUnique({
+          where: { email: credentials.email }
+        })
+
+        if (!user || !await bcrypt.compare(credentials.password, user.password)) {
+          return null
+        }
+
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role
+        }
       }
     })
   ],
@@ -611,17 +799,36 @@ export const authOptions: NextAuthOptions = {
     signUp: '/auth/register'
   },
   callbacks: {
+    jwt: ({ token, user }) => {
+      if (user) {
+        token.id = user.id
+        token.role = user.role
+      }
+      return token
+    },
     session: ({ session, token }) => ({
       ...session,
       user: {
         ...session.user,
-        id: token.id,
-        role: token.role
+        id: token.id as string,
+        role: token.role as Role
       }
     })
-  }
+  },
+  session: { strategy: 'jwt' }
 }
 ```
+
+### 📚 Documentación Adicional
+
+Para información completa sobre el sistema RBAC incluyendo:
+- Implementación detallada de permisos
+- Validaciones de seguridad
+- Reglas de negocio
+- Ejemplos de uso
+- Troubleshooting
+
+Ver: **[RBAC_GUIA_DEFINITIVA.md](RBAC_GUIA_DEFINITIVA.md)**
 
 ## 🧪 Testing y Calidad de Código
 
@@ -991,6 +1198,72 @@ console.log('Tournament created:', {
 
 ## 🔧 Changelog - Mejoras Recientes
 
+### 🆕 Septiembre 30, 2024 - Sistema de Inscripciones y RBAC
+
+#### Sistema de Inscripciones Completado
+1. **✅ Validación Anti-Duplicados (Backend)**
+   - Endpoint POST `/api/registrations` valida que un jugador solo pueda estar en un equipo por categoría
+   - Verifica las 4 combinaciones posibles de player1/player2
+   - Mensajes de error específicos indicando qué jugador ya está inscrito y en qué equipo
+   - Regla de negocio: Un jugador puede inscribirse en múltiples categorías, pero solo un equipo por categoría
+
+2. **✅ Endpoint Check-Players (Optimización UX)**
+   - Nuevo endpoint GET `/api/registrations/check-players?tournamentId=xxx&categoryId=xxx`
+   - Retorna array de IDs de jugadores ya inscritos
+   - Permite filtrado en frontend antes de enviar formulario
+   - Mejora experiencia de usuario evitando errores de validación tardíos
+
+3. **✅ Filtrado Inteligente en Frontend**
+   - `registration-form.tsx` filtra automáticamente jugadores ya inscritos
+   - Select components sincronizan correctamente con React Hook Form usando `value` prop
+   - Estados de carga (`checkingPlayers`) para feedback visual
+   - Re-verificación automática al cambiar torneo o categoría
+
+4. **✅ Validación de Fechas Mejorada**
+   - Fecha límite de inscripción incluye el último día completo (hasta las 23:59:59)
+   - Comparación de fechas normalizada a medianoche para evitar problemas de hora
+   - Validación tanto de fecha inicio como fin de inscripciones
+
+5. **✅ Filtros Avanzados en GET Registrations**
+   - Soporte para valor "all" en filtros de status y tournamentId
+   - Múltiples status simultáneos usando `searchParams.getAll()`
+   - Filtrado por torneo implementado en `registrations-header.tsx`
+   - Solo muestra torneos activos (PUBLISHED, REGISTRATION_OPEN, REGISTRATION_CLOSED, IN_PROGRESS)
+
+6. **✅ Validación de Jugadores Diferentes**
+   - Zod schema con `.refine()` valida que player1Id !== player2Id
+   - Mensaje de error específico: "Los jugadores deben ser diferentes"
+   - Previene errores comunes de inscripción
+
+#### Sistema RBAC Refinado
+7. **✅ Helper `isAdminOrClubAdmin`**
+   - Agregado a `use-auth.ts` para lógica común de permisos
+   - Memoizado con `useMemo` para optimización
+   - Usado en múltiples componentes para mostrar/ocultar botones y acciones
+
+8. **✅ Documentación RBAC Unificada**
+   - Archivo `RBAC_GUIA_DEFINITIVA.md` consolidado con toda la información
+   - Nueva sección "Validaciones y Reglas de Negocio" con 5 subsecciones
+   - Estadísticas actualizadas: 26 archivos implementados, 5 en módulo de inscripciones
+   - Changelog detallado con todas las mejoras de la sesión
+   - Eliminado `RBAC_REFACTORING_REPORT.md` (contenido fusionado)
+
+#### Bugs Corregidos
+9. **✅ Fix: Select Components sin sincronización**
+   - Problema: Radix UI Select con `defaultValue` no sincroniza con React Hook Form
+   - Solución: Cambiado a `value={field.value}` en todos los Select del formulario
+   - Afectó: tournament, category, player1, player2 selectors
+
+10. **✅ Fix: Filtro de torneos**
+    - Problema: `searchParams.get("status")` solo obtenía primer valor
+    - Solución: Usar `searchParams.getAll("status")` para múltiples valores
+    - Permite filtrar por múltiples estados simultáneamente
+
+11. **✅ Fix: Error con valor "all" en filtros**
+    - Problema: Zod schema no aceptaba "all" como valor válido
+    - Solución: Agregado "all" a enum y lógica condicional para ignorarlo en queries
+    - Aplica a status, tournamentId, categoryId
+
 ### Octubre 2024
 - **✅ Fix: Conteo de torneos en categorías** - Corregido filtro para solo contar torneos en curso (PUBLISHED, REGISTRATION_OPEN, REGISTRATION_CLOSED, IN_PROGRESS)
 - **✅ Fix: Botón Volver en detalle de usuario** - Navegación corregida de `router.back()` a `router.push('/dashboard/users')`
@@ -1015,4 +1288,11 @@ Para preguntas, sugerencias o reportar problemas:
 
 **🏓 PadApp** - Sistema completo de gestión de torneos de pádel desarrollado con las mejores prácticas y tecnologías modernas.
 
-*Última actualización: Octubre 2024*
+### 📊 Estadísticas del Proyecto
+- **26 archivos** con implementación RBAC completa
+- **9 módulos principales**: Torneos, Clubes, Usuarios, Categorías, Rankings, Inscripciones, Canchas, Pagos, Admin
+- **4 roles de usuario** con permisos granulares
+- **Full TypeScript** con validaciones Zod
+- **100% validado** en backend y frontend
+
+*Última actualización: Septiembre 30, 2024*

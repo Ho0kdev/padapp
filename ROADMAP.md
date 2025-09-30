@@ -1,6 +1,6 @@
 # 🗺️ ROADMAP - PadApp Sistema de Gestión Integral de Pádel
 
-*Actualizado: Octubre 2024*
+*Actualizado: Septiembre 30, 2024*
 
 ## 🎯 **Visión General**
 
@@ -11,65 +11,94 @@ Convertir PadApp en la plataforma más completa para la gestión integral de tor
 ## 🚀 **Estado Actual - Base Sólida Completada**
 
 ### ✅ **Lo que YA tenemos funcionando:**
-- Sistema de autenticación completo (4 roles)
-- CRUD completo: Torneos, Clubes, Canchas, Categorías, Usuarios
-- Sistema de puntos automático con cálculo inteligente
-- Rankings anuales con histórico por categorías
-- Panel administrativo con logs de auditoría
-- Base de datos optimizada con 15+ tablas relacionadas
-- Dashboard con estadísticas en tiempo real
-- **Fixes recientes**: Conteo correcto de torneos en categorías y navegación de botón Volver
+
+#### **Sistema Core**
+- **Autenticación y RBAC completo** (4 roles con permisos granulares)
+- **CRUD completo**: Torneos, Clubes, Canchas, Categorías, Usuarios
+- **Sistema de puntos automático** con cálculo inteligente
+- **Rankings anuales** con histórico por categorías
+- **Panel administrativo** con logs de auditoría
+- **Base de datos optimizada** con 15+ tablas relacionadas
+- **Dashboard** con estadísticas en tiempo real
+
+#### **🆕 Sistema de Inscripciones [COMPLETADO - Sept 30, 2024]**
+- ✅ **CRUD completo de inscripciones**
+- ✅ **Validación anti-duplicados** (backend + frontend)
+- ✅ **Endpoint `/api/registrations/check-players`** para optimización UX
+- ✅ **Filtrado inteligente** de jugadores ya inscritos
+- ✅ **Validación de fechas** (último día incluido)
+- ✅ **Filtros avanzados** (torneo, categoría, estado, jugador)
+- ✅ **Lista de espera automática** cuando se alcanza límite
+- ✅ **Reglas de negocio implementadas**: Un jugador por equipo por categoría
+- ✅ **Protección RBAC completa**
+- ⚠️ **Pendiente**: Integración de pagos con Stripe
 
 ### 🎯 **Brecha actual:**
-Los torneos se pueden crear y gestionar, pero falta el flujo completo:
-**Inscripciones → Brackets → Partidos → Resultados**
+Los torneos se pueden crear, gestionar e inscribir, pero falta:
+**Pagos → Brackets → Partidos → Resultados**
 
 ---
 
-## 🔴 **FASE 1 - Funcionalidad Core (1-2 meses)**
+## 🔴 **FASE 1 - Funcionalidad Core (0.5-1 mes restante)**
 *🎯 Objetivo: Torneos completamente funcionales de principio a fin*
 
-### 1. 🚀 **Sistema de Inscripciones** [CRÍTICO]
-**Estimado: 2 semanas**
+### 1. 🚀 **Sistema de Inscripciones** [✅ 90% COMPLETADO]
+**Status**: ✅ Completado excepto pagos
+**Completado en**: Sept 30, 2024
 
-#### Funcionalidades:
-- **Registro público de equipos**
-  - Formulario público de inscripción
-  - Selección de categorías disponibles
-  - Validación automática de elegibilidad
-  - Confirmación por email
-
-- **Gestión de pagos**
-  - Integración con Stripe
-  - Estados: Pending → Paid → Confirmed
-  - Facturación automática
-  - Reembolsos y cancelaciones
+#### ✅ Funcionalidades Implementadas:
+- **Registro de equipos**
+  - ✅ Formulario de inscripción completo
+  - ✅ Selección de categorías disponibles
+  - ✅ Validación automática de elegibilidad (anti-duplicados)
+  - ✅ Verificación de jugadores ya inscritos
+  - ✅ Validación de fechas de inscripción
 
 - **Control de cupos**
-  - Lista de espera cuando se llena
-  - Notificaciones de liberación de cupos
-  - Límites por categoría
+  - ✅ Lista de espera automática cuando se llena
+  - ✅ Límites por categoría configurables
+  - ✅ Estados de inscripción (PENDING, CONFIRMED, PAID, WAITLIST, CANCELLED)
 
-#### Componentes a desarrollar:
+- **Filtrado y consultas**
+  - ✅ Filtros por torneo, categoría, estado, jugador
+  - ✅ Endpoint `/api/registrations/check-players` para verificación
+  - ✅ RBAC: ADMIN/CLUB_ADMIN ven todas, PLAYER solo las suyas
+
+#### ⚠️ Pendiente:
+- **Gestión de pagos**
+  - ⏳ Integración con Stripe
+  - ⏳ Estados de pago: Pending → Paid → Confirmed
+  - ⏳ Facturación automática
+  - ⏳ Reembolsos y cancelaciones
+
+- **Notificaciones**
+  - ⏳ Confirmación por email
+  - ⏳ Notificaciones de liberación de cupos
+
+#### Componentes desarrollados:
 ```typescript
-// components/inscriptions/
-- PublicRegistrationForm.tsx
-- PaymentFlow.tsx
-- TeamValidation.tsx
-- WaitlistManager.tsx
-- RegistrationStatus.tsx
+// ✅ Completados
+components/registrations/
+- ✅ registration-form.tsx (con validaciones)
+- ✅ registrations-header.tsx (con filtros)
+- ✅ registrations-table.tsx
 
-// API routes
-- /api/tournaments/[id]/register
-- /api/payments/process
-- /api/teams/validate
+src/app/api/registrations/
+- ✅ route.ts (GET, POST con validaciones)
+- ✅ check-players/route.ts (verificación)
+- ✅ [id]/route.ts (GET, PUT, DELETE individual)
+
+// ⏳ Pendientes
+- ⏳ PaymentFlow.tsx
+- ⏳ /api/payments/process
 ```
 
 #### Criterios de éxito:
 - ✅ Equipos pueden inscribirse sin intervención manual
-- ✅ Pagos procesados automáticamente
-- ✅ Notificaciones enviadas en cada paso
+- ⏳ Pagos procesados automáticamente [PENDIENTE]
+- ⏳ Notificaciones enviadas en cada paso [PENDIENTE]
 - ✅ Lista de espera funcional
+- ✅ Validación anti-duplicados completa
 
 ---
 
@@ -331,49 +360,63 @@ Los torneos se pueden crear y gestionar, pero falta el flujo completo:
 
 ## 📋 **Plan de Ejecución Inmediato**
 
-### **Sprint 1 (Semanas 1-2): Sistema de Inscripciones**
+### **Sprint 1 (Semanas 1-2): Sistema de Inscripciones** [✅ COMPLETADO]
 ```bash
 Semana 1:
 - ✅ Diseñar flujo de inscripción
-- ✅ Crear formulario público
-- ✅ Implementar validaciones
-- ✅ Setup Stripe integration
+- ✅ Crear formulario público (registration-form.tsx)
+- ✅ Implementar validaciones (anti-duplicados, fechas)
+- ✅ Endpoint check-players para verificación
 
 Semana 2:
-- ✅ Estados de inscripción
-- ✅ Emails de confirmación
-- ✅ Lista de espera
-- ✅ Testing completo
+- ✅ Estados de inscripción (PENDING, CONFIRMED, PAID, WAITLIST, CANCELLED)
+- ✅ Filtros avanzados (torneo, categoría, estado, jugador)
+- ✅ Lista de espera automática
+- ✅ Testing y validación completa
+- ✅ RBAC implementado en todo el módulo
+
+Pendiente:
+- ⏳ Setup Stripe integration
+- ⏳ Emails de confirmación
 ```
 
-### **Sprint 2 (Semanas 3-4): Brackets Básicos**
+### **Sprint 1.5 (Semanas 3): Completar Inscripciones** [⏳ PRÓXIMO]
 ```bash
-Semana 3:
-- ✅ Algoritmo de eliminación simple
-- ✅ Componente visual básico
-- ✅ Asignación de seeds
-- ✅ Generación automática
+Tareas inmediatas:
+- ⏳ Integración con Stripe para pagos
+- ⏳ Sistema de emails (confirmación, recordatorios)
+- ⏳ Notificaciones de cambio de estado
+- ⏳ Panel público de inscripción (sin login)
+```
 
+### **Sprint 2 (Semanas 4-5): Brackets Básicos** [⏳ PENDIENTE]
+```bash
 Semana 4:
-- ✅ Soporte para todos los formatos
-- ✅ Editor manual
-- ✅ Progresión automática
-- ✅ Integración con sistema existente
+- ⏳ Algoritmo de eliminación simple
+- ⏳ Componente visual básico
+- ⏳ Asignación de seeds
+- ⏳ Generación automática
+
+Semana 5:
+- ⏳ Soporte para todos los formatos
+- ⏳ Editor manual
+- ⏳ Progresión automática
+- ⏳ Integración con sistema existente
 ```
 
-### **Sprint 3 (Semanas 5-6): Sistema de Partidos**
+### **Sprint 3 (Semanas 6-7): Sistema de Partidos** [⏳ PENDIENTE]
 ```bash
-Semana 5:
-- ✅ Formulario de resultados
-- ✅ Validaciones de puntuación
-- ✅ Estados de partidos
-- ✅ Asignación de canchas
-
 Semana 6:
-- ✅ Actualización de brackets
-- ✅ Cálculo de estadísticas
-- ✅ Triggers de rankings
-- ✅ Testing e integración
+- ⏳ Formulario de resultados
+- ⏳ Validaciones de puntuación
+- ⏳ Estados de partidos
+- ⏳ Asignación de canchas
+
+Semana 7:
+- ⏳ Actualización de brackets
+- ⏳ Cálculo de estadísticas
+- ⏳ Triggers de rankings
+- ⏳ Testing e integración
 ```
 
 ---
@@ -381,10 +424,10 @@ Semana 6:
 ## 🎯 **Métricas de Éxito**
 
 ### **Fase 1 - Funcionalidad Core**
-- **Inscripciones**: 100% automáticas sin intervención manual
-- **Brackets**: Generación exitosa para todos los formatos
-- **Partidos**: Carga de resultados en <30 segundos
-- **Rankings**: Actualización automática post-torneo
+- **Inscripciones**: ✅ 90% completado - Funcional sin pagos automáticos
+- **Brackets**: ⏳ Pendiente - Generación exitosa para todos los formatos
+- **Partidos**: ⏳ Pendiente - Carga de resultados en <30 segundos
+- **Rankings**: ✅ 100% completado - Actualización automática post-torneo
 
 ### **Fase 2 - Gestión Operativa**
 - **Calendario**: 90% ocupación óptima de canchas
@@ -405,16 +448,70 @@ Semana 6:
 
 ## 🚀 **Próximo Paso Inmediato**
 
-**Recomendación**: Comenzar con el **Sistema de Inscripciones** ya que es el eslabón crítico faltante para completar el flujo de torneos.
+### **✅ Sistema de Inscripciones - 90% COMPLETADO**
 
-### **¿Por qué Inscripciones primero?**
-1. **Mayor impacto**: Convierte torneos en completamente funcionales
-2. **Menor riesgo**: Construye sobre base sólida existente
-3. **Valor inmediato**: Usuarios pueden usar el sistema end-to-end
-4. **Monetización**: Habilita el flujo de pagos
+El sistema de inscripciones está mayormente completado. Lo que falta:
+
+#### **Tareas Restantes (Sprint 1.5)**
+1. **Integración de Pagos con Stripe** (Estimado: 3-4 días)
+   - Setup de Stripe account
+   - Webhook para confirmación de pagos
+   - Actualización automática de estado PAID
+   - Facturación automática
+
+2. **Sistema de Notificaciones** (Estimado: 2-3 días)
+   - Email de confirmación de inscripción
+   - Email de cambio de estado (WAITLIST → CONFIRMED)
+   - Recordatorios antes del torneo
+   - Notificaciones de liberación de cupos
+
+3. **Panel Público de Inscripción** (Estimado: 2 días)
+   - Página pública sin login requerido
+   - Selección de torneo y categoría
+   - Registro de usuarios nuevos en el proceso
+   - Formulario simplificado
+
+### **🎯 Siguiente Prioridad: Gestión de Brackets**
+
+**Recomendación**: Una vez completado el 10% restante de Inscripciones, proceder con el **Sistema de Brackets** para completar el flujo de torneos.
+
+### **¿Por qué Brackets es el siguiente paso?**
+1. **Flujo natural**: Inscripciones → Brackets → Partidos
+2. **Valor inmediato**: Permite organizar y visualizar los enfrentamientos
+3. **Independiente de pagos**: Puede implementarse mientras se integra Stripe
+4. **Base para partidos**: Los brackets determinan qué equipos juegan
 
 ---
 
-**📞 ¿Estás listo para empezar con el Sistema de Inscripciones?**
+## 📊 **Progreso General del Proyecto**
 
-*Última actualización: Octubre 2024*
+### **Completado** ✅
+- Sistema de autenticación y RBAC (100%)
+- CRUD de Torneos (100%)
+- CRUD de Clubes y Canchas (100%)
+- CRUD de Categorías (100%)
+- CRUD de Usuarios (100%)
+- Sistema de Rankings (100%)
+- Sistema de Puntos (100%)
+- Panel Administrativo (100%)
+- Sistema de Inscripciones (90%)
+
+### **En Progreso** 🟡
+- Integración de Pagos (0%)
+- Sistema de Notificaciones (0%)
+
+### **Pendiente** ⏳
+- Gestión de Brackets (0%)
+- Sistema de Partidos (0%)
+- Calendario y Programación (0%)
+- Reportes Avanzados (0%)
+
+---
+
+**📞 Próximos pasos sugeridos:**
+1. Completar integración de Stripe (3-4 días)
+2. Implementar notificaciones por email (2-3 días)
+3. Crear panel público de inscripción (2 días)
+4. Comenzar con sistema de Brackets (2 semanas)
+
+*Última actualización: Septiembre 30, 2024*

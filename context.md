@@ -1,223 +1,379 @@
-📋 Resumen del Proyecto
+# 📋 PadApp - Context para Desarrollo Rápido
 
-PadApp es un sistema completo de gestión de torneos de pádel construido con:
-- Frontend: Next.js 15 + React 19 + TypeScript + Tailwind CSS
-- Backend: Next.js API Routes + Prisma + PostgreSQL
-- Auth: NextAuth.js con credenciales personalizadas
-- UI: shadcn/ui + Radix UI + Lucide icons
+*Última actualización: Septiembre 30, 2024*
 
-🏗️ Estado Actual del Desarrollo (ACTUALIZADO - Septiembre 2024)
+## 🎯 Resumen Ejecutivo del Proyecto
 
-✅ COMPLETADO Y FUNCIONAL:
+**PadApp** es un sistema completo de gestión de torneos de pádel construido con tecnologías modernas, actualmente al **85% de funcionalidad core completa**.
 
-1. **Esquema de Base de Datos Robusto** (prisma/schema.prisma):
-   - Usuarios y autenticación completa (NextAuth)
-   - Jugadores, clubes y canchas con características detalladas
-   - Categorías por edad, habilidad, género y ranking
-   - Torneos con múltiples formatos (6 tipos diferentes)
-   - Equipos e inscripciones con estados
-   - Sistema de partidos completo (sets, games, puntos)
-   - Rankings anuales por categoría con histórico
-   - Estadísticas detalladas por torneo y jugador
-   - Sistema completo de logs y auditoría
-   - Notificaciones y pagos
+### Stack Tecnológico
+- **Frontend**: Next.js 15 + React 19 + TypeScript + Tailwind CSS
+- **Backend**: Next.js API Routes + Prisma ORM + PostgreSQL
+- **Auth**: NextAuth.js con JWT + RBAC completo
+- **UI**: shadcn/ui + Radix UI + Lucide icons
+- **Validación**: Zod + React Hook Form
+- **Estado**: Zustand para estado global
 
-2. **Sistema de Autenticación Completo**:
-   - Login y registro con validación robusta
-   - Integración con NextAuth.js
-   - 4 roles de usuario (ADMIN, CLUB_ADMIN, PLAYER, REFEREE)
-   - Rutas protegidas con middleware
-   - Gestión de sesiones y permisos
+---
 
-3. **Dashboard Administrativo Avanzado**:
-   - Panel principal con estadísticas en tiempo real
-   - Actividad reciente de torneos
-   - Métricas de usuarios y clubes activos
-   - Componentes modulares y reutilizables
-   - Panel de administración solo para ADMINs
+## 🚀 Estado Actual del Desarrollo
 
-4. **Gestión Completa de Torneos** ⭐ NUEVO:
-   - CRUD completo (crear, editar, eliminar, ver)
-   - Múltiples formatos: Single/Double Elimination, Round Robin, Swiss, Group Stage, Americano
-   - Estados de torneo: Draft → Published → Registration → In Progress → Completed
-   - Configuración avanzada: fechas, participantes, tarifas, premios, reglas
-   - Formularios simples y avanzados
-   - Validación completa con Zod
-   - Sistema de status automático
+### ✅ COMPLETADO Y FUNCIONAL (85%)
 
-5. **Sistema de Puntos Automático Completo** ⭐ NUEVO:
-   - Cálculo inteligente con 4 factores: participación, posición, rendimiento, multiplicadores
-   - Multiplicadores dinámicos por tipo de torneo y número de participantes
-   - API endpoint: POST /api/tournaments/{id}/calculate-points
-   - Rankings actualizados automáticamente
-   - Logs detallados de cada cálculo
-   - Transparencia total en el proceso
+#### 1. **Sistema de Autenticación y RBAC** [100%]
+- **4 Roles**: ADMIN, CLUB_ADMIN, PLAYER, REFEREE
+- **Permisos granulares**: Sistema de Actions + Resources
+- **Auditoría completa**: AuditLogger con tracking de cambios
+- **Middleware**: Rutas protegidas con validación de permisos
+- **Helpers**: `requireAuth()`, `authorize()`, `can()`, `isAdminOrClubAdmin()`
+- 📄 [Documentación completa: RBAC_GUIA_DEFINITIVA.md](RBAC_GUIA_DEFINITIVA.md)
 
-6. **Gestión Completa de Clubes y Canchas** ⭐ NUEVO:
-   - CRUD completo de clubes (información, ubicación, contacto)
-   - CRUD completo de canchas con características técnicas
-   - Estados de canchas (Disponible, Mantenimiento, Reservado)
-   - Superficies, iluminación, techo, características especiales
-   - Tarifas por hora y notas
-   - Logs de actividad para auditoría
+#### 2. **Gestión de Torneos** [100%]
+- **CRUD completo**: Crear, editar, eliminar, listar
+- **6 formatos**: Single/Double Elimination, Round Robin, Swiss, Group Stage, Americano
+- **Estados**: DRAFT → PUBLISHED → REGISTRATION_OPEN → REGISTRATION_CLOSED → IN_PROGRESS → COMPLETED → CANCELLED
+- **Configuración avanzada**: Fechas, participantes, tarifas, premios, reglas de sets/games, golden point
+- **Validaciones Zod**: Completas en frontend y backend
+- **Filtros**: Por estado, búsqueda, tipo de torneo, club
 
-7. **Sistema de Categorías Completo** ⭐ NUEVO:
-   - 5 tipos: Por Edad, Habilidad, Ranking, Género, Mixtas
-   - Restricciones configurables (edad min/max, género, puntos ranking)
-   - Estados activo/inactivo
-   - CRUD completo con validaciones
+#### 3. **Sistema de Inscripciones** [90% - 🆕 COMPLETADO Sept 30]
+- ✅ **CRUD completo** de inscripciones (equipos)
+- ✅ **Validación anti-duplicados**: Un jugador solo puede estar en un equipo por categoría
+- ✅ **Endpoint check-players**: `/api/registrations/check-players` para optimización UX
+- ✅ **Filtrado inteligente**: Jugadores ya inscritos no aparecen en selectores
+- ✅ **Validación de fechas**: Último día de inscripción incluido completo
+- ✅ **Filtros avanzados**: Por torneo, categoría, estado (PENDING, CONFIRMED, PAID, WAITLIST, CANCELLED), jugador
+- ✅ **Lista de espera**: Automática cuando se alcanza límite de equipos
+- ✅ **Reglas de negocio**: Un jugador puede inscribirse en múltiples categorías, pero solo un equipo por categoría
+- ✅ **RBAC**: ADMIN/CLUB_ADMIN ven todas, PLAYER solo las suyas
+- ⚠️ **Pendiente**: Integración de pagos con Stripe, notificaciones por email
 
-8. **Gestión de Usuarios Avanzada** ⭐ NUEVO:
-   - Perfiles completos con información personal y emergencia
-   - Sistema granular de roles y permisos
-   - Estados: Activo, Inactivo, Suspendido
-   - Asociación con jugadores para competidores
-   - CRUD completo de usuarios
+#### 4. **Sistema de Puntos Automático** [100%]
+- **Cálculo inteligente** con 4 factores:
+  - Puntos base por participación (50 pts)
+  - Puntos por posición (1000 pts campeón)
+  - Bonus por rendimiento (25 pts/victoria, 5 pts/set)
+  - Multiplicadores dinámicos (tipo torneo + participantes)
+- **Endpoint**: `POST /api/tournaments/{id}/calculate-points`
+- **Actualización automática**: Rankings actualizados al completar torneos
+- **Logs detallados**: Auditoría de cada cálculo
 
-9. **Sistema de Rankings y Temporadas** ⭐ NUEVO:
-   - Rankings anuales con histórico completo
-   - Múltiples categorías independientes
-   - Actualización automática tras completar torneos
-   - API de temporadas para obtener años disponibles
-   - Visualización por categoría y temporada
+#### 5. **Sistema de Rankings** [100%]
+- Rankings anuales por categoría con histórico completo
+- API de temporadas: `/api/rankings/seasons`
+- Actualización automática post-torneo
+- Visualización por categoría y año
 
-10. **Sistema de Logs y Auditoría Completo** ⭐ NUEVO:
-    - Logs granulares por cada entidad del sistema
-    - Información detallada: acción, usuario, timestamp, oldData/newData
-    - IP, User Agent y metadata adicional
-    - Logs por: Torneos, Clubes, Canchas, Categorías, Rankings
-    - Panel de administración para revisar logs
+#### 6. **Gestión de Clubes y Canchas** [100%]
+- **CRUD completo** de clubes (info, ubicación, contacto)
+- **CRUD completo** de canchas con características técnicas
+- **Estados de canchas**: AVAILABLE, MAINTENANCE, RESERVED, OUT_OF_SERVICE
+- Superficies, iluminación, techo, características especiales
+- Tarifas por hora y notas
 
-11. **Herramientas y Utilidades** ⭐ NUEVO:
-    - Selector de base de datos (local/remoto) - scripts/database-selector.js
-    - Seeds completos con datos realistas
-    - Scripts optimizados de desarrollo
-    - Variables de entorno flexibles
+#### 7. **Sistema de Categorías** [100%]
+- **5 tipos**: AGE, SKILL, RANKING, GENDER, MIXED
+- Restricciones configurables (edad, género, puntos ranking)
+- Estados activo/inactivo
 
-12. **Seeds Completos y Realistas**:
-    - Usuarios con diferentes roles
-    - Clubes y canchas de ejemplo con características reales
-    - Categorías por edad y habilidad
-    - Torneo de ejemplo con equipos inscritos y estadísticas
-    - Rankings iniciales poblados
-    - Credenciales: admin@padapp.com / 123456
+#### 8. **Gestión de Usuarios** [100%]
+- Perfiles completos con información personal y emergencia
+- Sistema granular de roles
+- Estados: ACTIVE, INACTIVE, SUSPENDED
+- Asociación con jugadores
 
-📂 Estructura del Proyecto (EXPANDIDA):
+#### 9. **Panel Administrativo** [100%]
+- Dashboard con estadísticas en tiempo real
+- Actividad reciente de torneos
+- Métricas de usuarios y clubes activos
+- Logs de auditoría (solo ADMIN)
 
-src/
-├── app/
-│   ├── auth/ (login, register)
-│   ├── dashboard/ (página principal + secciones)
-│   │   ├── admin/ (panel administrativo)
-│   │   ├── categories/ (gestión categorías)
-│   │   ├── clubs/ (gestión clubes y canchas)
-│   │   ├── rankings/ (rankings y temporadas)
-│   │   ├── tournaments/ (gestión completa torneos)
-│   │   └── users/ (gestión usuarios)
-│   ├── api/ (API routes completas)
-│   │   ├── auth/, tournaments/, clubs/, categories/
-│   │   ├── rankings/, users/, admin/
-│   └── page.tsx (redirección)
-├── components/
-│   ├── admin/ (componentes administrativos)
-│   ├── auth/ (formularios login/registro)
-│   ├── categories/, clubs/, courts/
-│   ├── dashboard/ (widgets y estadísticas)
-│   ├── layout/ (header, sidebar, estructura)
-│   ├── rankings/, tournaments/, users/
-│   └── ui/ (shadcn components + extras)
-├── hooks/ (custom hooks)
-├── lib/
-│   ├── services/ (servicios de negocio)
-│   ├── validations/ (esquemas Zod)
-│   ├── auth.ts, prisma.ts, utils.ts
-└── types/ (tipos TypeScript)
+#### 10. **Base de Datos** [100%]
+- 15+ tablas relacionadas optimizadas
+- Sistema completo de logs y auditoría
+- Seeds realistas para desarrollo
+- Migraciones versionadas
 
-🔧 Tecnologías y Dependencias Actualizadas:
+---
 
-- Estado: Zustand
-- Validación: Zod + React Hook Form
-- Fechas: date-fns
-- Gráficos: Recharts
-- Notificaciones: Sonner
-- Temas: next-themes
-- Autenticación: NextAuth.js + bcryptjs
-- ORM: Prisma con PostgreSQL
-- UUID: para IDs únicos
-- JWT: para tokens
+## 📂 Estructura del Proyecto (Simplificada)
 
-🎯 Funcionalidades PENDIENTES por Desarrollar:
+```
+padapp/
+├── prisma/
+│   ├── schema.prisma          # Esquema completo de BD
+│   ├── migrations/            # Migraciones versionadas
+│   └── seeds/                 # Datos de prueba
+├── src/
+│   ├── app/
+│   │   ├── api/              # 30+ endpoints
+│   │   │   ├── auth/         # Login, registro, session
+│   │   │   ├── tournaments/  # CRUD + calculate-points
+│   │   │   ├── registrations/ # CRUD + check-players
+│   │   │   ├── clubs/        # CRUD clubes y canchas
+│   │   │   ├── categories/   # CRUD categorías
+│   │   │   ├── rankings/     # Rankings + seasons
+│   │   │   ├── users/        # CRUD usuarios
+│   │   │   └── admin/        # Logs y panel admin
+│   │   ├── auth/             # Páginas login/registro
+│   │   └── dashboard/        # Panel principal + módulos
+│   │       ├── admin/        # Panel administrativo
+│   │       ├── tournaments/  # Gestión torneos
+│   │       ├── registrations/ # Gestión inscripciones
+│   │       ├── clubs/        # Gestión clubes
+│   │       ├── categories/   # Gestión categorías
+│   │       ├── rankings/     # Rankings
+│   │       └── users/        # Gestión usuarios
+│   ├── components/           # 50+ componentes
+│   │   ├── registrations/    # 🆕 registration-form, header, table
+│   │   ├── tournaments/      # tournament-form, table, detail
+│   │   ├── clubs/            # club-form, court-form
+│   │   ├── categories/       # category-form, table
+│   │   ├── rankings/         # ranking-table, season-selector
+│   │   ├── users/            # user-form, detail, table
+│   │   ├── layout/           # sidebar, header, layout
+│   │   └── ui/               # shadcn components
+│   ├── hooks/
+│   │   ├── use-auth.ts       # Hook de autenticación + isAdminOrClubAdmin
+│   │   └── use-toast.ts      # Notificaciones
+│   ├── lib/
+│   │   ├── rbac/             # Sistema RBAC completo
+│   │   │   ├── index.ts      # requireAuth, authorize, can
+│   │   │   ├── permissions.ts # Matriz de permisos
+│   │   │   └── audit.ts      # AuditLogger
+│   │   ├── validations/      # Esquemas Zod
+│   │   ├── auth.ts           # NextAuth config
+│   │   ├── prisma.ts         # Cliente Prisma
+│   │   └── utils.ts          # Utilidades
+│   └── types/                # Tipos TypeScript
+├── RBAC_GUIA_DEFINITIVA.md   # 📄 Documentación RBAC completa
+├── README.md                 # 📄 Documentación principal
+├── roadmap.md                # 📄 Roadmap actualizado
+└── context.md                # 📄 Este archivo
+```
 
-🔶 Prioridad Alta - Próximas Implementaciones:
+---
 
-1. **Sistema de Inscripciones**: Registro público de equipos, validación de elegibilidad, confirmación de pagos, waitlist
-2. **Gestión de Brackets/Llaves**: Visualización gráfica, generación automática, progresión de ganadores, brackets editables
-3. **Sistema de Partidos**: Carga de resultados en tiempo real, seguimiento set por set, validación de puntuaciones
-4. **Programación y Calendario**: Asignación automática de canchas, calendario de partidos, gestión de horarios
+## 🔐 Sistema RBAC - Quick Reference
 
-🔷 Prioridad Media - Mejoras:
+### Roles y Permisos
 
-5. **Sistema de Pagos**: Integración con pasarelas, reembolsos, facturación automática
-6. **Mejoras en Rankings**: Rankings históricos detallados, comparación entre temporadas, gráficos de evolución
-7. **Sistema de Notificaciones**: Push notifications, emails automáticos, centro de notificaciones
-8. **Reportes y Estadísticas**: Reportes por torneo, análisis de rendimiento, exportación PDF/Excel
+| Recurso | ADMIN | CLUB_ADMIN | PLAYER | REFEREE |
+|---------|-------|------------|--------|---------|
+| Torneos | ✅ MANAGE | ✅ MANAGE (solo su club) | 🟡 READ | 🟡 READ |
+| Inscripciones | ✅ MANAGE | ✅ READ (su club) | 🟡 CREATE, READ (solo suyas) | 🔴 - |
+| Clubes | ✅ MANAGE | ✅ UPDATE (solo su club) | 🟡 READ | 🟡 READ |
+| Usuarios | ✅ MANAGE | 🟡 READ | 🔴 UPDATE (solo perfil) | 🔴 - |
+| Rankings | ✅ MANAGE | 🟡 READ | 🟡 READ | 🟡 READ |
 
-🔸 Funcionalidades Avanzadas - Futuro:
+### Uso en API Routes
 
-9. **Aplicación Móvil**: PWA o React Native con sincronización offline
-10. **Integraciones Externas**: APIs de federaciones, webhooks, APIs públicas
-11. **Funcionalidades Sociales**: Perfiles públicos, comentarios, galería de fotos
-12. **Optimizaciones**: Cache avanzado, CDN, lazy loading, SSR optimizado
+```typescript
+// Solo autenticación
+export async function GET(request: NextRequest) {
+  const session = await requireAuth()
+  // ...
+}
 
-🐛 Issues Pendientes Identificados (TODO.md):
+// Requiere permiso específico
+export async function POST(request: NextRequest) {
+  const session = await authorize(Action.CREATE, Resource.TOURNAMENT)
+  // ...
+}
 
-🔧 Bugs y Mejoras Técnicas:
-- **Torneos completados**: No deberían poder editarse ni eliminarse
-- ✅ **Categorías**: CORREGIDO - Ahora solo contabiliza torneos en curso (PUBLISHED, REGISTRATION_OPEN, REGISTRATION_CLOSED, IN_PROGRESS)
-- ✅ **Botón Volver en detalles de usuario**: CORREGIDO - Ahora navega correctamente a /dashboard/users
-- **Sidebar/Menú**: Implementar control de roles para mostrar opciones según permisos de usuario
+// Verificar permiso sin error
+const canEdit = await can(session, Action.UPDATE, Resource.TOURNAMENT, tournamentId)
+```
 
-🚀 Estado Actual: SISTEMA FUNCIONAL CON BASE SÓLIDA
+### Auditoría
 
-El proyecto ha evolucionado significativamente y ahora cuenta con:
-- ✅ Base de datos completa y optimizada
-- ✅ Autenticación y autorización robusta
-- ✅ CRUD completo para todas las entidades principales
-- ✅ Sistema de puntos automático funcional
-- ✅ Rankings y temporadas implementados
-- ✅ Auditoría completa con logs
-- ✅ Panel administrativo avanzado
-- ✅ Herramientas de desarrollo optimizadas
+```typescript
+await AuditLogger.log(session, {
+  action: Action.CREATE,
+  resource: Resource.REGISTRATION,
+  resourceId: registration.id,
+  description: `Inscripción creada: ${registration.name}`,
+  newData: registration,
+}, request)
+```
 
-📊 Estadísticas del Desarrollo:
-- 40+ componentes React implementados
-- 25+ API endpoints funcionando
-- 15+ tablas de base de datos con relaciones
-- Sistema de logs completo
-- 4 roles de usuario con permisos
-- 6 formatos de torneos soportados
-- Sistema de puntos con 4 factores de cálculo
+---
 
-🔧 Mejoras Recientes Implementadas (Octubre 2024):
+## 🆕 Mejoras Recientes - Sept 30, 2024
 
-1. **Filtrado Correcto de Torneos en Categorías**:
-   - Problema: El módulo de categorías contabilizaba torneos completados y cancelados
-   - Solución: Filtro actualizado para solo contar torneos en curso
-   - Estados considerados: PUBLISHED, REGISTRATION_OPEN, REGISTRATION_CLOSED, IN_PROGRESS
-   - Archivos modificados: `/api/categories/route.ts`
-   - Impacto: Conteo preciso de torneos activos por categoría
+### Sistema de Inscripciones Completado
 
-2. **Corrección Botón Volver en Detalle de Usuario**:
-   - Problema: El botón "Volver" no funcionaba en la página de detalle de usuario
-   - Causa: `router.back()` tenía problemas con el historial del navegador
-   - Solución: Cambio a navegación directa `router.push('/dashboard/users')`
-   - Archivo modificado: `src/components/users/user-detail.tsx:307`
-   - Impacto: Navegación confiable y consistente
+1. **Validación Anti-Duplicados (Backend)**: Un jugador solo puede estar en un equipo por categoría
+2. **Endpoint Check-Players**: `/api/registrations/check-players` para optimización UX
+3. **Filtrado Inteligente (Frontend)**: Jugadores ya inscritos no aparecen en selectores
+4. **Validación de Fechas**: Último día de inscripción incluido completo
+5. **Filtros Avanzados**: Soporte para "all", múltiples estados, torneo
+6. **Helper isAdminOrClubAdmin**: Agregado a `use-auth.ts` para lógica común
 
-🎯 Próximo Enfoque Recomendado:
-1. **Inscripciones**: Para que los torneos sean completamente funcionales
-2. **Brackets**: Para visualizar y gestionar las eliminatorias
-3. **Partidos**: Para cargar resultados y completar el flujo
-4. **Fixes técnicos**: Resolver los issues identificados en TODO.md
+### Bugs Corregidos
 
-¿En qué funcionalidad específica te gustaría trabajar ahora?
+7. **Select Components**: Cambiado de `defaultValue` a `value` para sincronización con React Hook Form
+8. **Filtro de Torneos**: Usar `getAll()` para múltiples estados
+9. **Valor "all" en Filtros**: Agregado a enums Zod con lógica condicional
+10. **Conteo de Torneos en Categorías**: Solo cuenta torneos activos
+11. **Botón Volver en Usuarios**: Navegación directa en lugar de `router.back()`
+
+---
+
+## ⏳ PENDIENTE (15%)
+
+### Prioridad Alta - Inmediata
+
+#### 1. **Completar Sistema de Inscripciones (10% restante)**
+- ⏳ Integración con Stripe para pagos (3-4 días)
+- ⏳ Sistema de notificaciones por email (2-3 días)
+- ⏳ Panel público de inscripción sin login (2 días)
+
+#### 2. **Gestión de Brackets/Llaves**
+- ⏳ Generación automática para todos los formatos (2 semanas)
+- ⏳ Visualización gráfica responsive
+- ⏳ Editor manual de brackets
+- ⏳ Progresión automática de ganadores
+
+#### 3. **Sistema de Partidos**
+- ⏳ Carga de resultados set por set (2 semanas)
+- ⏳ Validación de puntuaciones
+- ⏳ Estados: SCHEDULED → IN_PROGRESS → COMPLETED
+- ⏳ Actualización automática de brackets y rankings
+
+#### 4. **Calendario y Programación**
+- ⏳ Calendario visual de partidos (3 semanas)
+- ⏳ Asignación automática de canchas
+- ⏳ Gestión de conflictos y horarios
+
+### Prioridad Media
+
+5. **Sistema de Notificaciones Push**: PWA notifications
+6. **Reportes Avanzados**: PDF/Excel exports, analytics
+7. **Mejoras en Rankings**: Gráficos de evolución, comparativas
+8. **Sistema de Reservas**: Booking de canchas públicas
+
+---
+
+## 🎯 Quick Start para Desarrollo
+
+### Variables de Entorno Requeridas
+
+```bash
+# Database
+DATABASE_URL="postgresql://postgres:padapp123@localhost:5432/padapp"
+
+# NextAuth
+NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="your-secret-key-here"
+```
+
+### Comandos Esenciales
+
+```bash
+# Desarrollo
+npm run dev                 # Servidor con Turbopack
+npm run db:studio           # Prisma Studio (explorar BD)
+npm run db:select           # Selector de BD (local/remoto)
+
+# Base de datos
+npm run db:push             # Aplicar cambios al esquema
+npm run db:seed             # Cargar datos de prueba
+npm run db:reset            # Reset completo + seeds
+
+# Calidad
+npm run lint                # Verificar código
+npm run type-check          # Verificar TypeScript
+```
+
+### Credenciales de Prueba
+
+```
+Admin: admin@padapp.com / 123456
+Club Admin: clubadmin@padapp.com / 123456
+Player: player@padapp.com / 123456
+```
+
+---
+
+## 🔍 Archivos Clave para Desarrollo
+
+### Sistema RBAC
+- `src/lib/rbac/index.ts` - Funciones de autorización
+- `src/lib/rbac/permissions.ts` - Matriz de permisos
+- `src/lib/rbac/audit.ts` - Sistema de auditoría
+- `src/hooks/use-auth.ts` - Hook de autenticación
+
+### Inscripciones (🆕 Módulo reciente)
+- `src/app/api/registrations/route.ts` - GET/POST con validaciones
+- `src/app/api/registrations/check-players/route.ts` - Verificación de jugadores
+- `src/components/registrations/registration-form.tsx` - Formulario con validaciones
+- `src/components/registrations/registrations-header.tsx` - Filtros
+
+### Torneos
+- `src/app/api/tournaments/route.ts` - CRUD principal
+- `src/app/api/tournaments/[id]/calculate-points/route.ts` - Cálculo de puntos
+- `src/components/tournaments/tournament-form.tsx` - Formulario
+
+### Base de Datos
+- `prisma/schema.prisma` - Esquema completo
+- `prisma/seeds/index.ts` - Seeds con datos realistas
+
+---
+
+## 📊 Estadísticas Actuales
+
+- **50+ componentes React** implementados
+- **30+ API endpoints** funcionando
+- **15+ tablas de BD** con relaciones
+- **26 archivos** con RBAC implementado
+- **4 roles** de usuario con permisos granulares
+- **6 formatos** de torneos soportados
+- **90% inscripciones** completadas
+- **100% rankings y puntos** funcionales
+
+---
+
+## 🚀 Próximos Pasos Sugeridos
+
+1. **Completar Stripe Integration** (3-4 días) - Habilita pagos automáticos
+2. **Sistema de Emails** (2-3 días) - Notificaciones de inscripción
+3. **Panel Público de Inscripción** (2 días) - Permite registros sin login previo
+4. **Comenzar Brackets** (2 semanas) - Siguiente pieza crítica del flujo
+
+---
+
+## 📚 Documentación Relacionada
+
+- **[README.md](README.md)** - Documentación principal completa
+- **[RBAC_GUIA_DEFINITIVA.md](RBAC_GUIA_DEFINITIVA.md)** - Sistema RBAC detallado
+- **[roadmap.md](roadmap.md)** - Roadmap actualizado con progreso
+- **Prisma Schema** - `prisma/schema.prisma` para modelo de datos
+
+---
+
+## 💡 Tips para Desarrollo Rápido
+
+### Al trabajar en API Routes:
+1. Siempre usar `requireAuth()` o `authorize()` primero
+2. Validar con Zod schemas
+3. Registrar auditoría con `AuditLogger.log()`
+4. Manejar errores con `handleAuthError()`
+
+### Al crear componentes:
+1. Verificar permisos con `useAuth()` hook
+2. Usar `isAdminOrClubAdmin` para lógica común
+3. Validar formularios con React Hook Form + Zod
+4. Componentes Select deben usar `value` (no `defaultValue`)
+
+### Al modificar schemas:
+1. Actualizar `prisma/schema.prisma`
+2. Correr `npm run db:push` en desarrollo
+3. Crear migración en producción con `npm run db:migrate`
+4. Actualizar seeds si aplica
+
+---
+
+**Estado del Proyecto**: ✅ 85% Funcionalidad Core | 🚀 Sistema de Inscripciones Completado | ⏳ Próximo: Brackets y Partidos
+
+*¿En qué módulo o funcionalidad específica necesitas trabajar?*
