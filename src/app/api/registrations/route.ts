@@ -275,11 +275,30 @@ export async function POST(request: NextRequest) {
 
     // Verificar fechas de inscripción
     const now = new Date()
-    if (now < tournament.registrationStart! || now > tournament.registrationEnd!) {
-      return NextResponse.json(
-        { error: "Fuera del período de inscripciones" },
-        { status: 400 }
-      )
+    const registrationStart = tournament.registrationStart ? new Date(tournament.registrationStart) : null
+    const registrationEnd = tournament.registrationEnd ? new Date(tournament.registrationEnd) : null
+
+    // Comparar solo fechas (sin hora) - el último día debe incluirse completo
+    if (registrationStart) {
+      const startDate = new Date(registrationStart.getFullYear(), registrationStart.getMonth(), registrationStart.getDate())
+      const currentDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      if (currentDate < startDate) {
+        return NextResponse.json(
+          { error: "Las inscripciones aún no han comenzado" },
+          { status: 400 }
+        )
+      }
+    }
+
+    if (registrationEnd) {
+      const endDate = new Date(registrationEnd.getFullYear(), registrationEnd.getMonth(), registrationEnd.getDate())
+      const currentDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      if (currentDate > endDate) {
+        return NextResponse.json(
+          { error: "Las inscripciones ya han finalizado" },
+          { status: 400 }
+        )
+      }
     }
 
     // Verificar que la categoría existe en el torneo
