@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import { UserRole, UserStatus, Gender } from '@prisma/client'
+import { requireAuth, authorize, handleAuthError, Action, Resource, AuditLogger } from '@/lib/rbac'
 
 interface RouteContext {
   params: Promise<{ id: string }>
@@ -13,7 +12,7 @@ export async function GET(
   { params }: RouteContext
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await requireAuth()
 
     if (!session) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
@@ -143,19 +142,13 @@ export async function GET(
       )
     }
 
-    // Check permissions - users can only view their own profile unless admin
-    if (session.user.id !== user.id && session.user.role !== UserRole.ADMIN) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
-    }
+    // Verificar permisos usando el nuevo sistema RBAC
+    await authorize(Action.READ, Resource.USER, user)
 
     return NextResponse.json(user)
 
   } catch (error) {
-    console.error('Error fetching user:', error)
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    )
+    return handleAuthError(error)
   }
 }
 
@@ -164,7 +157,7 @@ export async function PUT(
   { params }: RouteContext
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await requireAuth()
 
     if (!session) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
@@ -241,12 +234,8 @@ export async function PUT(
       )
     }
 
-    // Check permissions
-    const canEdit = session.user.id === id || session.user.role === UserRole.ADMIN
-
-    if (!canEdit) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
-    }
+    // Verificar permisos usando el nuevo sistema RBAC
+    await authorize(Action.UPDATE, Resource.USER, existingUser)
 
     // Check if user is being deactivated and has active tournaments
     if (status === 'INACTIVE' && existingUser.status === 'ACTIVE') {
@@ -389,20 +378,24 @@ export async function PUT(
       }
     }
 
+    // Registrar auditoría
+    await AuditLogger.log(
+      session,
+      {
+        action: Action.UPDATE,
+        resource: Resource.USER,
+        resourceId: id,
+        description: `Usuario ${user.email} actualizado`,
+        oldData: existingUser,
+        newData: user,
+      },
+      request
+    )
+
     return NextResponse.json(user)
 
   } catch (error) {
-    console.error('Error updating user:', error)
-    console.error('Error details:', {
-      message: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
-      userUpdate,
-      body
-    })
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Error interno del servidor' },
-      { status: 500 }
-    )
+    return handleAuthError(error)
   }
 }
 
@@ -411,11 +404,8 @@ export async function DELETE(
   { params }: RouteContext
 ) {
   try {
-    const session = await getServerSession(authOptions)
-
-    if (!session || session.user.role !== UserRole.ADMIN) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
-    }
+    // Verificar que sea ADMIN
+    const session = await authorize(Action.DELETE, Resource.USER)
 
     const { id } = await params
 
@@ -466,7 +456,7 @@ export async function DELETE(
     }
 
     // Soft delete - change status instead of actual deletion
-    await prisma.user.update({
+    const updatedUser = await prisma.user.update({
       where: { id },
       data: {
         status: UserStatus.INACTIVE,
@@ -474,14 +464,24 @@ export async function DELETE(
       }
     })
 
+    // Registrar auditoría
+    await AuditLogger.log(
+      session,
+      {
+        action: Action.DELETE,
+        resource: Resource.USER,
+        resourceId: id,
+        description: `Usuario ${user.email} desactivado`,
+        oldData: user,
+        newData: updatedUser,
+      },
+      request
+    )
+
     return NextResponse.json({ message: 'Usuario desactivado exitosamente' })
 
   } catch (error) {
-    console.error('Error deleting user:', error)
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    )
+    return handleAuthError(error)
   }
 }
 
@@ -491,23 +491,8 @@ export async function PATCH(
   { params }: RouteContext
 ) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-    }
-
-    // Verificar que sea admin
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { role: true }
-    })
-
-    if (user?.role !== UserRole.ADMIN) {
-      return NextResponse.json(
-        { error: "Solo los administradores pueden activar usuarios" },
-        { status: 403 }
-      )
-    }
+    // Verificar que sea ADMIN
+    const session = await authorize(Action.UPDATE, Resource.USER)
 
     const { id } = await params
 
@@ -542,13 +527,23 @@ export async function PATCH(
       }
     })
 
+    // Registrar auditoría
+    await AuditLogger.log(
+      session,
+      {
+        action: Action.UPDATE,
+        resource: Resource.USER,
+        resourceId: id,
+        description: `Usuario ${existingUser.email} activado`,
+        oldData: existingUser,
+        newData: updatedUser,
+      },
+      request
+    )
+
     return NextResponse.json(updatedUser)
 
   } catch (error) {
-    console.error("Error activating user:", error)
-    return NextResponse.json(
-      { error: "Error interno del servidor" },
-      { status: 500 }
-    )
+    return handleAuthError(error)
   }
 }

@@ -1,16 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { requireAuth, authorize, handleAuthError, Action, Resource, AuditLogger } from "@/lib/rbac"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
 
 // GET /api/rankings - Obtener lista de rankings
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-    }
+    await requireAuth()
 
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get("page") || "1")
@@ -126,21 +122,14 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error("Error fetching rankings:", error)
-    return NextResponse.json(
-      { error: "Error interno del servidor" },
-      { status: 500 }
-    )
+    return handleAuthError(error)
   }
 }
 
 // PUT /api/rankings - Actualizar puntos de ranking (solo admins)
 export async function PUT(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user || session.user.role !== "ADMIN") {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-    }
+    const session = await authorize(Action.UPDATE, Resource.RANKING)
 
     const body = await request.json()
     const { playerId, categoryId, currentPoints, seasonYear } = body
@@ -204,13 +193,19 @@ export async function PUT(request: NextRequest) {
       }
     })
 
+    // Auditoría
+    await AuditLogger.log(session, {
+      action: Action.UPDATE,
+      resource: Resource.RANKING,
+      resourceId: updatedRanking.id,
+      description: `Puntos de ranking actualizados para ${updatedRanking.player.firstName} ${updatedRanking.player.lastName}`,
+      oldData: { currentPoints: existingRanking.currentPoints },
+      newData: { currentPoints: updatedRanking.currentPoints },
+    }, request)
+
     return NextResponse.json(updatedRanking)
 
   } catch (error) {
-    console.error("Error updating ranking:", error)
-    return NextResponse.json(
-      { error: "Error interno del servidor" },
-      { status: 500 }
-    )
+    return handleAuthError(error)
   }
 }

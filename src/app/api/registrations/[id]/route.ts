@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { requireAuth, authorize, handleAuthError, Action, Resource, AuditLogger } from "@/lib/rbac"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
 
@@ -25,13 +24,7 @@ interface RouteParams {
 
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json(
-        { error: "No autorizado" },
-        { status: 401 }
-      )
-    }
+    const session = await requireAuth()
 
     const registration = await prisma.team.findUnique({
       where: { id: params.id },
@@ -157,43 +150,19 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       )
     }
 
-    // Verificar permisos: solo el admin, organizador del torneo o los jugadores pueden ver la inscripción
-    const userPlayer = await prisma.player.findUnique({
-      where: { userId: session.user.id }
-    })
-
-    const hasPermission =
-      session.user.role === 'ADMIN' ||
-      registration.tournament.organizerId === session.user.id ||
-      (userPlayer && (registration.player1Id === userPlayer.id || registration.player2Id === userPlayer.id))
-
-    if (!hasPermission) {
-      return NextResponse.json(
-        { error: "No tienes permisos para ver esta inscripción" },
-        { status: 403 }
-      )
-    }
+    // Verificar permisos contextuales: RBAC verifica automáticamente ownership
+    await authorize(Action.READ, Resource.REGISTRATION, registration)
 
     return NextResponse.json(registration)
 
   } catch (error) {
-    console.error('Error fetching registration:', error)
-    return NextResponse.json(
-      { error: "Error interno del servidor" },
-      { status: 500 }
-    )
+    return handleAuthError(error)
   }
 }
 
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json(
-        { error: "No autorizado" },
-        { status: 401 }
-      )
-    }
+    const session = await requireAuth()
 
     const body = await request.json()
     const validatedData = updateRegistrationSchema.parse(body)
@@ -218,39 +187,14 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       )
     }
 
-    // Verificar permisos
-    const userPlayer = await prisma.player.findUnique({
-      where: { userId: session.user.id }
-    })
-
-    const hasPermission =
-      session.user.role === 'ADMIN' ||
-      currentRegistration.tournament.organizerId === session.user.id ||
-      (userPlayer && (currentRegistration.player1Id === userPlayer.id || currentRegistration.player2Id === userPlayer.id))
-
-    if (!hasPermission) {
-      return NextResponse.json(
-        { error: "No tienes permisos para modificar esta inscripción" },
-        { status: 403 }
-      )
-    }
+    // Verificar permisos contextuales
+    await authorize(Action.UPDATE, Resource.REGISTRATION, currentRegistration)
 
     // Restricciones según el estado del torneo
     if (currentRegistration.tournament.status === 'COMPLETED') {
       return NextResponse.json(
         { error: "No se pueden modificar inscripciones de torneos completados" },
         { status: 400 }
-      )
-    }
-
-    // Solo admins y organizadores pueden cambiar ciertos campos
-    const restrictedFields = ['registrationStatus', 'seed']
-    const isRestrictedUpdate = restrictedFields.some(field => field in validatedData)
-
-    if (isRestrictedUpdate && session.user.role !== 'ADMIN' && currentRegistration.tournament.organizerId !== session.user.id) {
-      return NextResponse.json(
-        { error: "No tienes permisos para cambiar el estado o seed" },
-        { status: 403 }
       )
     }
 
@@ -287,14 +231,19 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       }
     })
 
-    // TODO: Crear log de cambios
-    // TODO: Enviar notificaciones si cambió el estado
+    // Auditoría
+    await AuditLogger.log(session, {
+      action: Action.UPDATE,
+      resource: Resource.REGISTRATION,
+      resourceId: params.id,
+      description: `Inscripción actualizada: ${updatedRegistration.name || 'Sin nombre'}`,
+      oldData: currentRegistration,
+      newData: updatedRegistration,
+    }, request)
 
     return NextResponse.json(updatedRegistration)
 
   } catch (error) {
-    console.error('Error updating registration:', error)
-
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Datos inválidos", details: error.errors },
@@ -302,22 +251,13 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       )
     }
 
-    return NextResponse.json(
-      { error: "Error interno del servidor" },
-      { status: 500 }
-    )
+    return handleAuthError(error)
   }
 }
 
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json(
-        { error: "No autorizado" },
-        { status: 401 }
-      )
-    }
+    const session = await requireAuth()
 
     // Buscar la inscripción
     const registration = await prisma.team.findUnique({
@@ -339,22 +279,8 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       )
     }
 
-    // Verificar permisos
-    const userPlayer = await prisma.player.findUnique({
-      where: { userId: session.user.id }
-    })
-
-    const hasPermission =
-      session.user.role === 'ADMIN' ||
-      registration.tournament.organizerId === session.user.id ||
-      (userPlayer && (registration.player1Id === userPlayer.id || registration.player2Id === userPlayer.id))
-
-    if (!hasPermission) {
-      return NextResponse.json(
-        { error: "No tienes permisos para eliminar esta inscripción" },
-        { status: 403 }
-      )
-    }
+    // Verificar permisos contextuales
+    await authorize(Action.DELETE, Resource.REGISTRATION, registration)
 
     // No permitir eliminar si el torneo ya está en progreso
     if (['IN_PROGRESS', 'COMPLETED'].includes(registration.tournament.status)) {
@@ -386,7 +312,15 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       where: { id: params.id }
     })
 
-    // TODO: Crear log de eliminación
+    // Auditoría
+    await AuditLogger.log(session, {
+      action: Action.DELETE,
+      resource: Resource.REGISTRATION,
+      resourceId: params.id,
+      description: `Inscripción eliminada: ${registration.name || 'Sin nombre'}`,
+      oldData: registration,
+    }, request)
+
     // TODO: Mover equipos de lista de espera si corresponde
     // TODO: Procesar reembolsos si hay pagos
 
@@ -395,10 +329,6 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     })
 
   } catch (error) {
-    console.error('Error deleting registration:', error)
-    return NextResponse.json(
-      { error: "Error interno del servidor" },
-      { status: 500 }
-    )
+    return handleAuthError(error)
   }
 }

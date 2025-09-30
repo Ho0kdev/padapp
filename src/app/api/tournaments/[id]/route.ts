@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
-import { TournamentLogService } from "@/lib/services/tournament-log-service"
+import { requireAuth, authorize, handleAuthError, Action, Resource, AuditLogger } from "@/lib/rbac"
 import { z } from "zod"
 
 const updateTournamentSchema = z.object({
@@ -84,10 +82,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-    }
+    await requireAuth()
 
     const { id } = await params
     const tournament = await prisma.tournament.findUnique({
@@ -172,11 +167,7 @@ export async function GET(
     return NextResponse.json(tournament)
 
   } catch (error) {
-    console.error("Error fetching tournament:", error)
-    return NextResponse.json(
-      { error: "Error interno del servidor" },
-      { status: 500 }
-    )
+    return handleAuthError(error)
   }
 }
 
@@ -186,10 +177,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-    }
+    const session = await requireAuth()
 
     // Verificar que el torneo existe y obtener datos para logging
     const { id } = await params
@@ -329,17 +317,18 @@ export async function PUT(
       }
     })
 
-    // Registrar en el log
-    await TournamentLogService.logTournamentUpdated(
+    // Registrar auditoría
+    await AuditLogger.log(
+      session,
       {
-        userId: session.user.id,
-        tournamentId: tournament.id,
-        ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0] ||
-                  request.headers.get('x-real-ip') || 'unknown',
-        userAgent: request.headers.get('user-agent') || 'unknown'
+        action: Action.UPDATE,
+        resource: Resource.TOURNAMENT,
+        resourceId: tournament.id,
+        description: `Torneo ${tournament.name} actualizado`,
+        oldData: existingTournament,
+        newData: tournament,
       },
-      existingTournament,
-      tournament
+      request
     )
 
     return NextResponse.json(tournament)
@@ -352,11 +341,7 @@ export async function PUT(
       )
     }
 
-    console.error("Error updating tournament:", error)
-    return NextResponse.json(
-      { error: "Error interno del servidor" },
-      { status: 500 }
-    )
+    return handleAuthError(error)
   }
 }
 
@@ -366,12 +351,8 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-    }
+    const session = await authorize(Action.DELETE, Resource.TOURNAMENT)
 
-    // Verificar que el torneo existe y obtener datos para logging
     const { id } = await params
     const existingTournament = await prisma.tournament.findUnique({
       where: { id },
@@ -387,7 +368,7 @@ export async function DELETE(
       )
     }
 
-    // Verificar permisos
+    // Verificar permisos contextuales
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
       select: { role: true }
@@ -409,28 +390,26 @@ export async function DELETE(
     }
 
     // Registrar en el log antes de eliminar
-    await TournamentLogService.logTournamentDeleted(
-      {
-        userId: session.user.id,
-        tournamentId: existingTournament.id,
-        ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0] ||
-                  request.headers.get('x-real-ip') || 'unknown',
-        userAgent: request.headers.get('user-agent') || 'unknown'
-      },
-      existingTournament
-    )
-
     await prisma.tournament.delete({
       where: { id }
     })
 
+    // Registrar auditoría
+    await AuditLogger.log(
+      session,
+      {
+        action: Action.DELETE,
+        resource: Resource.TOURNAMENT,
+        resourceId: id,
+        description: `Torneo ${existingTournament.name} eliminado`,
+        oldData: existingTournament,
+      },
+      request
+    )
+
     return NextResponse.json({ message: "Torneo eliminado exitosamente" })
 
   } catch (error) {
-    console.error("Error deleting tournament:", error)
-    return NextResponse.json(
-      { error: "Error interno del servidor" },
-      { status: 500 }
-    )
+    return handleAuthError(error)
   }
 }

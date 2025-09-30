@@ -1,18 +1,13 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { clubFormSchema } from "@/lib/validations/club"
-import { ClubLogService } from "@/lib/services/club-log-service"
+import { requireAuth, authorize, handleAuthError, Action, Resource, AuditLogger } from "@/lib/rbac"
 import { z } from "zod"
 
 // GET /api/clubs - Obtener lista de clubes
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-    }
+    await requireAuth()
 
     // Obtener parámetros de query
     const { searchParams } = new URL(request.url)
@@ -108,34 +103,14 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error("Error fetching clubs:", error)
-    return NextResponse.json(
-      { error: "Error interno del servidor" },
-      { status: 500 }
-    )
+    return handleAuthError(error)
   }
 }
 
 // POST /api/clubs - Crear nuevo club
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-    }
-
-    // Verificar que sea admin (solo admins pueden crear clubes)
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { role: true }
-    })
-
-    if (user?.role !== "ADMIN") {
-      return NextResponse.json(
-        { error: "Solo los administradores pueden crear clubes" },
-        { status: 403 }
-      )
-    }
+    const session = await authorize(Action.CREATE, Resource.CLUB)
 
     const body = await request.json()
     const validatedData = clubFormSchema.parse(body)
@@ -187,10 +162,17 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    // Log la creación del club
-    await ClubLogService.logClubCreated(
-      { userId: session.user.id, clubId: club.id },
-      club
+    // Auditoría
+    await AuditLogger.log(
+      session,
+      {
+        action: Action.CREATE,
+        resource: Resource.CLUB,
+        resourceId: club.id,
+        description: `Club ${club.name} creado`,
+        newData: club,
+      },
+      request
     )
 
     return NextResponse.json(club, { status: 201 })
@@ -203,10 +185,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.error("Error creating club:", error)
-    return NextResponse.json(
-      { error: "Error interno del servidor" },
-      { status: 500 }
-    )
+    return handleAuthError(error)
   }
 }

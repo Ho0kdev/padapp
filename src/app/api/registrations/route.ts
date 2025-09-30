@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { requireAuth, authorize, handleAuthError, Action, Resource, AuditLogger } from "@/lib/rbac"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
 
@@ -44,13 +43,7 @@ const getRegistrationsSchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json(
-        { error: "No autorizado" },
-        { status: 401 }
-      )
-    }
+    const session = await requireAuth()
 
     const { searchParams } = new URL(request.url)
     const params = Object.fromEntries(searchParams.entries())
@@ -129,14 +122,16 @@ export async function GET(request: NextRequest) {
       ]
     }
 
-    // Solo admins pueden ver todas las inscripciones
+    // Filtrado basado en permisos RBAC
+    // Solo ADMIN y CLUB_ADMIN pueden ver todas las inscripciones
     // Otros usuarios solo ven sus propias inscripciones
-    if (session.user.role !== 'ADMIN') {
+    if (session.user.role !== 'ADMIN' && session.user.role !== 'CLUB_ADMIN') {
       const userPlayer = await prisma.player.findUnique({
         where: { userId: session.user.id }
       })
 
       if (userPlayer) {
+        // Filtrar solo inscripciones donde el usuario es player1 o player2
         where.OR = [
           { player1Id: userPlayer.id },
           { player2Id: userPlayer.id }
@@ -233,8 +228,6 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Error fetching registrations:', error)
-
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Parámetros inválidos", details: error.errors },
@@ -242,22 +235,13 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    return NextResponse.json(
-      { error: "Error interno del servidor" },
-      { status: 500 }
-    )
+    return handleAuthError(error)
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json(
-        { error: "No autorizado" },
-        { status: 401 }
-      )
-    }
+    const session = await authorize(Action.CREATE, Resource.REGISTRATION)
 
     const body = await request.json()
     const validatedData = createRegistrationSchema.parse(body)
@@ -388,11 +372,18 @@ export async function POST(request: NextRequest) {
     // TODO: Enviar notificación por email
     // TODO: Si hay tarifa de inscripción, crear el registro de pago pendiente
 
+    // Auditoría
+    await AuditLogger.log(session, {
+      action: Action.CREATE,
+      resource: Resource.REGISTRATION,
+      resourceId: registration.id,
+      description: `Inscripción creada: ${registration.name} - ${registration.tournament.name}`,
+      newData: registration,
+    }, request)
+
     return NextResponse.json(registration, { status: 201 })
 
   } catch (error) {
-    console.error('Error creating registration:', error)
-
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Datos inválidos", details: error.errors },
@@ -400,9 +391,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    return NextResponse.json(
-      { error: "Error interno del servidor" },
-      { status: 500 }
-    )
+    return handleAuthError(error)
   }
 }

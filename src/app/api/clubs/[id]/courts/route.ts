@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { requireAuth, authorize, handleAuthError, Action, Resource, AuditLogger } from "@/lib/rbac"
 import { prisma } from "@/lib/prisma"
 import { courtFormSchema } from "@/lib/validations/court"
-import { CourtLogService } from "@/lib/services/court-log-service"
 import { z } from "zod"
 
 // GET /api/clubs/[id]/courts - Obtener canchas de un club
@@ -12,11 +10,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-    }
-
+    await requireAuth()
     const { id: clubId } = await params
 
     // Verificar que el club existe
@@ -50,11 +44,7 @@ export async function GET(
     return NextResponse.json({ courts, club })
 
   } catch (error) {
-    console.error("Error fetching courts:", error)
-    return NextResponse.json(
-      { error: "Error interno del servidor" },
-      { status: 500 }
-    )
+    return handleAuthError(error)
   }
 }
 
@@ -64,24 +54,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-    }
-
-    // Verificar que sea admin o tenga permisos sobre el club
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { role: true }
-    })
-
-    if (user?.role !== "ADMIN") {
-      return NextResponse.json(
-        { error: "Solo los administradores pueden crear canchas" },
-        { status: 403 }
-      )
-    }
-
+    const session = await authorize(Action.CREATE, Resource.COURT)
     const { id: clubId } = await params
     const body = await request.json()
 
@@ -145,11 +118,14 @@ export async function POST(
       }
     })
 
-    // Log la creación de la cancha
-    await CourtLogService.logCourtCreated(
-      { userId: session.user.id, courtId: court.id, clubId },
-      court
-    )
+    // Auditoría
+    await AuditLogger.log(session, {
+      action: Action.CREATE,
+      resource: Resource.COURT,
+      resourceId: court.id,
+      description: `Cancha ${court.name} creada en club ${club.name}`,
+      newData: court,
+    }, request)
 
     return NextResponse.json(court, { status: 201 })
 
@@ -161,10 +137,6 @@ export async function POST(
       )
     }
 
-    console.error("Error creating court:", error)
-    return NextResponse.json(
-      { error: "Error interno del servidor" },
-      { status: 500 }
-    )
+    return handleAuthError(error)
   }
 }

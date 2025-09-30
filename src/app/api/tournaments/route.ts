@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
-import { TournamentLogService } from "@/lib/services/tournament-log-service"
+import { requireAuth, authorize, handleAuthError, Action, Resource, AuditLogger } from "@/lib/rbac"
 import { z } from "zod"
 
 const createTournamentSchema = z.object({
@@ -72,10 +70,7 @@ const createTournamentSchema = z.object({
 // GET /api/tournaments - Obtener lista de torneos
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-    }
+    await requireAuth()
 
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get("page") || "1")
@@ -166,30 +161,15 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error("Error fetching tournaments:", error)
-    return NextResponse.json(
-      { error: "Error interno del servidor" },
-      { status: 500 }
-    )
+    return handleAuthError(error)
   }
 }
 
 // POST /api/tournaments - Crear nuevo torneo
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    console.log("Full session:", JSON.stringify(session, null, 2))
-
-    if (!session?.user) {
-      console.log("No session or user found")
-      return NextResponse.json({
-        error: "No autorizado",
-        details: "Session not found or invalid"
-      }, { status: 401 })
-    }
-
-    console.log("Session user:", session.user)
-    console.log("Session user id:", session.user.id)
+    // Verificar que el usuario puede crear torneos
+    const session = await authorize(Action.CREATE, Resource.TOURNAMENT)
 
     // Verificar que el usuario existe en la base de datos
     const user = await prisma.user.findUnique({
@@ -197,14 +177,10 @@ export async function POST(request: NextRequest) {
     })
 
     if (!user) {
-      console.error("User not found in database:", session.user.id)
       return NextResponse.json({
-        error: "Usuario no encontrado",
-        details: `User ID ${session.user.id} does not exist in database`
+        error: "Usuario no encontrado"
       }, { status: 404 })
     }
-
-    console.log("User found:", user)
 
     const body = await request.json()
     const validatedData = createTournamentSchema.parse(body)
@@ -319,16 +295,17 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    // Registrar en el log
-    await TournamentLogService.logTournamentCreated(
+    // Registrar auditoría
+    await AuditLogger.log(
+      session,
       {
-        userId: session.user.id,
-        tournamentId: tournament.id,
-        ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0] ||
-                  request.headers.get('x-real-ip') || 'unknown',
-        userAgent: request.headers.get('user-agent') || 'unknown'
+        action: Action.CREATE,
+        resource: Resource.TOURNAMENT,
+        resourceId: tournament.id,
+        description: `Torneo ${tournament.name} creado`,
+        newData: tournament,
       },
-      tournament
+      request
     )
 
     return NextResponse.json(tournament, { status: 201 })
@@ -341,10 +318,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.error("Error creating tournament:", error)
-    return NextResponse.json(
-      { error: "Error interno del servidor" },
-      { status: 500 }
-    )
+    return handleAuthError(error)
   }
 }

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { requireAuth, authorize, handleAuthError, Action, Resource, AuditLogger } from "@/lib/rbac"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
 
@@ -19,13 +18,7 @@ interface RouteParams {
 
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json(
-        { error: "No autorizado" },
-        { status: 401 }
-      )
-    }
+    const session = await requireAuth()
 
     const body = await request.json()
     const validatedData = createPaymentSchema.parse(body)
@@ -62,22 +55,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       )
     }
 
-    // Verificar permisos
-    const userPlayer = await prisma.player.findUnique({
-      where: { userId: session.user.id }
-    })
-
-    const hasPermission =
-      session.user.role === 'ADMIN' ||
-      registration.tournament.organizerId === session.user.id ||
-      (userPlayer && (registration.player1Id === userPlayer.id || registration.player2Id === userPlayer.id))
-
-    if (!hasPermission) {
-      return NextResponse.json(
-        { error: "No tienes permisos para procesar pagos de esta inscripción" },
-        { status: 403 }
-      )
-    }
+    // Verificar permisos contextuales para pagos
+    await authorize(Action.CREATE, Resource.PAYMENT, registration)
 
     // Verificar que no esté ya pagado
     const totalPaid = registration.payments.reduce((sum, payment) => sum + payment.amount, 0)
@@ -129,11 +108,18 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       }
     }
 
+    // Auditoría
+    await AuditLogger.log(session, {
+      action: Action.CREATE,
+      resource: Resource.PAYMENT,
+      resourceId: payment.id,
+      description: `Pago creado para inscripción ${params.id}: ${validatedData.amount}`,
+      newData: payment,
+    }, request)
+
     return NextResponse.json(payment, { status: 201 })
 
   } catch (error) {
-    console.error('Error creating payment:', error)
-
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Datos inválidos", details: error.errors },
@@ -141,33 +127,17 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       )
     }
 
-    return NextResponse.json(
-      { error: "Error interno del servidor" },
-      { status: 500 }
-    )
+    return handleAuthError(error)
   }
 }
 
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json(
-        { error: "No autorizado" },
-        { status: 401 }
-      )
-    }
+    await requireAuth()
 
-    // Verificar que la inscripción existe y el usuario tiene permisos
+    // Verificar que la inscripción existe
     const registration = await prisma.team.findUnique({
       where: { id: params.id },
-      include: {
-        tournament: {
-          select: {
-            organizerId: true,
-          }
-        }
-      }
     })
 
     if (!registration) {
@@ -177,22 +147,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       )
     }
 
-    // Verificar permisos
-    const userPlayer = await prisma.player.findUnique({
-      where: { userId: session.user.id }
-    })
-
-    const hasPermission =
-      session.user.role === 'ADMIN' ||
-      registration.tournament.organizerId === session.user.id ||
-      (userPlayer && (registration.player1Id === userPlayer.id || registration.player2Id === userPlayer.id))
-
-    if (!hasPermission) {
-      return NextResponse.json(
-        { error: "No tienes permisos para ver los pagos de esta inscripción" },
-        { status: 403 }
-      )
-    }
+    // Verificar permisos contextuales
+    await authorize(Action.READ, Resource.PAYMENT, registration)
 
     // Obtener todos los pagos de la inscripción
     const payments = await prisma.teamPayment.findMany({
@@ -203,10 +159,6 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json(payments)
 
   } catch (error) {
-    console.error('Error fetching payments:', error)
-    return NextResponse.json(
-      { error: "Error interno del servidor" },
-      { status: 500 }
-    )
+    return handleAuthError(error)
   }
 }

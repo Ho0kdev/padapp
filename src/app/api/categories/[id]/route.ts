@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { requireAuth, authorize, handleAuthError, Action, Resource, AuditLogger } from "@/lib/rbac"
 import { prisma } from "@/lib/prisma"
 import { categoryEditSchema } from "@/lib/validations/category"
-import { CategoryLogService } from "@/lib/services/category-log-service"
 import { z } from "zod"
 
 // GET /api/categories/[id] - Obtener categoría por ID
@@ -12,11 +10,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-    }
-
+    await requireAuth()
     const { id } = await params
 
     const category = await prisma.category.findUnique({
@@ -48,11 +42,7 @@ export async function GET(
     return NextResponse.json(category)
 
   } catch (error) {
-    console.error("Error fetching category:", error)
-    return NextResponse.json(
-      { error: "Error interno del servidor" },
-      { status: 500 }
-    )
+    return handleAuthError(error)
   }
 }
 
@@ -62,24 +52,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-    }
-
-    // Verificar que sea admin
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { role: true }
-    })
-
-    if (user?.role !== "ADMIN") {
-      return NextResponse.json(
-        { error: "Solo los administradores pueden editar categorías" },
-        { status: 403 }
-      )
-    }
-
+    const session = await authorize(Action.UPDATE, Resource.CATEGORY)
     const { id } = await params
     const body = await request.json()
     const validatedData = categoryEditSchema.parse(body)
@@ -144,12 +117,15 @@ export async function PUT(
       }
     })
 
-    // Log la actualización
-    await CategoryLogService.logCategoryUpdated(
-      { userId: session.user.id, categoryId: category.id },
-      existingCategory,
-      category
-    )
+    // Auditoría
+    await AuditLogger.log(session, {
+      action: Action.UPDATE,
+      resource: Resource.CATEGORY,
+      resourceId: category.id,
+      description: `Categoría ${category.name} actualizada`,
+      oldData: existingCategory,
+      newData: category,
+    }, request)
 
     return NextResponse.json(category)
 
@@ -161,11 +137,7 @@ export async function PUT(
       )
     }
 
-    console.error("Error updating category:", error)
-    return NextResponse.json(
-      { error: "Error interno del servidor" },
-      { status: 500 }
-    )
+    return handleAuthError(error)
   }
 }
 
@@ -175,24 +147,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-    }
-
-    // Verificar que sea admin
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { role: true }
-    })
-
-    if (user?.role !== "ADMIN") {
-      return NextResponse.json(
-        { error: "Solo los administradores pueden eliminar categorías" },
-        { status: 403 }
-      )
-    }
-
+    const session = await authorize(Action.DELETE, Resource.CATEGORY)
     const { id } = await params
 
     // Verificar que la categoría existe
@@ -247,13 +202,15 @@ export async function DELETE(
       }
     })
 
-    // Log la desactivación
-    await CategoryLogService.logCategoryStatusChanged(
-      { userId: session.user.id, categoryId: category.id },
-      { ...existingCategory, isActive: true },
-      true,
-      false
-    )
+    // Auditoría
+    await AuditLogger.log(session, {
+      action: Action.DELETE,
+      resource: Resource.CATEGORY,
+      resourceId: category.id,
+      description: `Categoría ${category.name} desactivada`,
+      oldData: existingCategory,
+      newData: category,
+    }, request)
 
     return NextResponse.json({
       message: "Categoría desactivada exitosamente",
@@ -261,14 +218,7 @@ export async function DELETE(
     })
 
   } catch (error) {
-    console.error("Error deleting category:", error)
-    return NextResponse.json(
-      {
-        error: "Error interno del servidor",
-        details: error instanceof Error ? error.message : "Error desconocido"
-      },
-      { status: 500 }
-    )
+    return handleAuthError(error)
   }
 }
 
@@ -278,24 +228,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-    }
-
-    // Verificar que sea admin
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { role: true }
-    })
-
-    if (user?.role !== "ADMIN") {
-      return NextResponse.json(
-        { error: "Solo los administradores pueden activar categorías" },
-        { status: 403 }
-      )
-    }
-
+    const session = await authorize(Action.UPDATE, Resource.CATEGORY)
     const { id } = await params
 
     // Verificar que la categoría existe
@@ -338,13 +271,15 @@ export async function PATCH(
       }
     })
 
-    // Log la activación
-    await CategoryLogService.logCategoryStatusChanged(
-      { userId: session.user.id, categoryId: category.id },
-      existingCategory,
-      false,
-      true
-    )
+    // Auditoría
+    await AuditLogger.log(session, {
+      action: Action.UPDATE,
+      resource: Resource.CATEGORY,
+      resourceId: category.id,
+      description: `Categoría ${category.name} activada`,
+      oldData: { isActive: existingCategory.isActive },
+      newData: { isActive: true },
+    }, request)
 
     return NextResponse.json({
       message: "Categoría activada exitosamente",
@@ -352,13 +287,6 @@ export async function PATCH(
     })
 
   } catch (error) {
-    console.error("Error activating category:", error)
-    return NextResponse.json(
-      {
-        error: "Error interno del servidor",
-        details: error instanceof Error ? error.message : "Error desconocido"
-      },
-      { status: 500 }
-    )
+    return handleAuthError(error)
   }
 }

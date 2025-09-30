@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { requireAuth, authorize, handleAuthError, Action, Resource, AuditLogger } from "@/lib/rbac"
 import { prisma } from "@/lib/prisma"
 import { courtEditSchema, courtStatusSchema } from "@/lib/validations/court"
-import { CourtLogService } from "@/lib/services/court-log-service"
 import { z } from "zod"
 
 // GET /api/clubs/[id]/courts/[courtId] - Obtener una cancha específica
@@ -12,11 +10,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string; courtId: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-    }
-
+    await requireAuth()
     const { id: clubId, courtId } = await params
 
     const court = await prisma.court.findUnique({
@@ -49,11 +43,7 @@ export async function GET(
     return NextResponse.json(court)
 
   } catch (error) {
-    console.error("Error fetching court:", error)
-    return NextResponse.json(
-      { error: "Error interno del servidor" },
-      { status: 500 }
-    )
+    return handleAuthError(error)
   }
 }
 
@@ -63,24 +53,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string; courtId: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-    }
-
-    // Verificar que sea admin
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { role: true }
-    })
-
-    if (user?.role !== "ADMIN") {
-      return NextResponse.json(
-        { error: "Solo los administradores pueden editar canchas" },
-        { status: 403 }
-      )
-    }
-
+    const session = await authorize(Action.UPDATE, Resource.COURT)
     const { id: clubId, courtId } = await params
     const body = await request.json()
 
@@ -132,13 +105,15 @@ export async function PUT(
         }
       })
 
-      // Log cambio de estado de cancha
-      await CourtLogService.logCourtStatusChanged(
-        { userId: session.user.id, courtId, clubId },
-        court,
-        existingCourt.status,
-        validatedData.status
-      )
+      // Auditoría
+      await AuditLogger.log(session, {
+        action: Action.UPDATE,
+        resource: Resource.COURT,
+        resourceId: courtId,
+        description: `Estado de cancha ${court.name} cambiado de ${existingCourt.status} a ${validatedData.status}`,
+        oldData: { status: existingCourt.status },
+        newData: { status: validatedData.status },
+      }, request)
     } else {
       // Edición completa - verificar nombre duplicado
       const duplicateCourt = await prisma.court.findFirst({
@@ -185,12 +160,15 @@ export async function PUT(
         }
       })
 
-      // Log actualización de cancha
-      await CourtLogService.logCourtUpdated(
-        { userId: session.user.id, courtId, clubId },
-        existingCourt,
-        court
-      )
+      // Auditoría
+      await AuditLogger.log(session, {
+        action: Action.UPDATE,
+        resource: Resource.COURT,
+        resourceId: courtId,
+        description: `Cancha ${court.name} actualizada en club ${court.club.name}`,
+        oldData: existingCourt,
+        newData: court,
+      }, request)
     }
 
     return NextResponse.json(court)
@@ -203,11 +181,7 @@ export async function PUT(
       )
     }
 
-    console.error("Error updating court:", error)
-    return NextResponse.json(
-      { error: "Error interno del servidor" },
-      { status: 500 }
-    )
+    return handleAuthError(error)
   }
 }
 
@@ -217,24 +191,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string; courtId: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-    }
-
-    // Verificar que sea admin
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { role: true }
-    })
-
-    if (user?.role !== "ADMIN") {
-      return NextResponse.json(
-        { error: "Solo los administradores pueden desactivar canchas" },
-        { status: 403 }
-      )
-    }
-
+    const session = await authorize(Action.DELETE, Resource.COURT)
     const { id: clubId, courtId } = await params
 
     // Verificar que la cancha existe y pertenece al club
@@ -283,13 +240,15 @@ export async function DELETE(
       }
     })
 
-    // Log cambio de estado de cancha
-    await CourtLogService.logCourtStatusChanged(
-      { userId: session.user.id, courtId, clubId },
-      court,
-      existingCourt.status,
-      "UNAVAILABLE"
-    )
+    // Auditoría
+    await AuditLogger.log(session, {
+      action: Action.DELETE,
+      resource: Resource.COURT,
+      resourceId: courtId,
+      description: `Cancha ${court.name} desactivada (status: ${existingCourt.status} → UNAVAILABLE)`,
+      oldData: { status: existingCourt.status },
+      newData: { status: "UNAVAILABLE" },
+    }, request)
 
     return NextResponse.json({
       message: "Cancha desactivada exitosamente",
@@ -297,14 +256,7 @@ export async function DELETE(
     })
 
   } catch (error) {
-    console.error("Error deactivating court:", error)
-    return NextResponse.json(
-      {
-        error: "Error interno del servidor",
-        details: error instanceof Error ? error.message : "Error desconocido"
-      },
-      { status: 500 }
-    )
+    return handleAuthError(error)
   }
 }
 
@@ -314,24 +266,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string; courtId: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-    }
-
-    // Verificar que sea admin
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { role: true }
-    })
-
-    if (user?.role !== "ADMIN") {
-      return NextResponse.json(
-        { error: "Solo los administradores pueden activar canchas" },
-        { status: 403 }
-      )
-    }
-
+    const session = await authorize(Action.UPDATE, Resource.COURT)
     const { id: clubId, courtId } = await params
 
     // Verificar que la cancha existe y pertenece al club (no eliminada)
@@ -375,19 +310,22 @@ export async function PATCH(
       }
     })
 
+    // Auditoría
+    await AuditLogger.log(session, {
+      action: Action.UPDATE,
+      resource: Resource.COURT,
+      resourceId: courtId,
+      description: `Cancha ${court.name} activada (status: ${existingCourt.status} → AVAILABLE)`,
+      oldData: { status: existingCourt.status },
+      newData: { status: "AVAILABLE" },
+    }, request)
+
     return NextResponse.json({
       message: "Cancha activada exitosamente",
       court
     })
 
   } catch (error) {
-    console.error("Error activating court:", error)
-    return NextResponse.json(
-      {
-        error: "Error interno del servidor",
-        details: error instanceof Error ? error.message : "Error desconocido"
-      },
-      { status: 500 }
-    )
+    return handleAuthError(error)
   }
 }

@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { authorize, handleAuthError, Action, Resource, AuditLogger } from "@/lib/rbac"
 import { prisma } from "@/lib/prisma"
-import { CourtLogService } from "@/lib/services/court-log-service"
 
 // POST /api/clubs/[id]/courts/[courtId]/delete - Eliminar cancha lógicamente
 export async function POST(
@@ -10,24 +8,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string; courtId: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-    }
-
-    // Verificar que sea admin
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { role: true }
-    })
-
-    if (user?.role !== "ADMIN") {
-      return NextResponse.json(
-        { error: "Solo los administradores pueden eliminar canchas" },
-        { status: 403 }
-      )
-    }
-
+    const session = await authorize(Action.DELETE, Resource.COURT)
     const { id: clubId, courtId } = await params
 
     // Verificar que la cancha existe y pertenece al club
@@ -82,11 +63,15 @@ export async function POST(
       }
     })
 
-    // Log de eliminación de cancha
-    await CourtLogService.logCourtDeleted(
-      { userId: session.user.id, courtId, clubId },
-      existingCourt
-    )
+    // Auditoría
+    await AuditLogger.log(session, {
+      action: Action.DELETE,
+      resource: Resource.COURT,
+      resourceId: courtId,
+      description: `Cancha ${existingCourt.name} eliminada lógicamente del club ${court.club.name}`,
+      oldData: existingCourt,
+      newData: { deleted: true, deletedAt: court.deletedAt, status: "UNAVAILABLE" },
+    }, request)
 
     return NextResponse.json({
       message: "Cancha eliminada exitosamente",
@@ -99,13 +84,6 @@ export async function POST(
     })
 
   } catch (error) {
-    console.error("Error deleting court:", error)
-    return NextResponse.json(
-      {
-        error: "Error interno del servidor",
-        details: error instanceof Error ? error.message : "Error desconocido"
-      },
-      { status: 500 }
-    )
+    return handleAuthError(error)
   }
 }

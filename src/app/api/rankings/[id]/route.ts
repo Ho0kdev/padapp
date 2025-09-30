@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { requireAuth, authorize, handleAuthError, Action, Resource, AuditLogger } from "@/lib/rbac"
 import { prisma } from "@/lib/prisma"
-import { RankingsLogService } from "@/lib/services/rankings-log-service"
 
 // GET /api/rankings/[id] - Obtener ranking específico
 export async function GET(
@@ -10,11 +8,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-    }
-
+    await requireAuth()
     const { id } = await params
 
     const ranking = await prisma.playerRanking.findUnique({
@@ -51,11 +45,7 @@ export async function GET(
     return NextResponse.json({ ranking })
 
   } catch (error) {
-    console.error("Error fetching ranking:", error)
-    return NextResponse.json(
-      { error: "Error interno del servidor" },
-      { status: 500 }
-    )
+    return handleAuthError(error)
   }
 }
 
@@ -65,24 +55,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-    }
-
-    // Verificar que sea admin
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { role: true }
-    })
-
-    if (user?.role !== "ADMIN") {
-      return NextResponse.json(
-        { error: "Solo los administradores pueden eliminar rankings" },
-        { status: 403 }
-      )
-    }
-
+    const session = await authorize(Action.DELETE, Resource.RANKING)
     const { id } = await params
 
     // Obtener el ranking antes de eliminarlo para el log
@@ -112,16 +85,14 @@ export async function DELETE(
       where: { id }
     })
 
-    // Registrar en el log
-    await RankingsLogService.logRankingDeleted(
-      {
-        userId: session.user.id,
-        rankingId: id,
-        playerId: ranking.playerId,
-        categoryId: ranking.categoryId
-      },
-      ranking
-    )
+    // Auditoría
+    await AuditLogger.log(session, {
+      action: Action.DELETE,
+      resource: Resource.RANKING,
+      resourceId: id,
+      description: `Ranking eliminado: ${ranking.player.firstName} ${ranking.player.lastName} - ${ranking.category.name}`,
+      oldData: ranking,
+    }, request)
 
     return NextResponse.json({
       message: "Ranking eliminado exitosamente",
@@ -133,11 +104,7 @@ export async function DELETE(
     })
 
   } catch (error) {
-    console.error("Error deleting ranking:", error)
-    return NextResponse.json(
-      { error: "Error interno del servidor" },
-      { status: 500 }
-    )
+    return handleAuthError(error)
   }
 }
 
@@ -147,24 +114,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-    }
-
-    // Verificar que sea admin
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { role: true }
-    })
-
-    if (user?.role !== "ADMIN") {
-      return NextResponse.json(
-        { error: "Solo los administradores pueden actualizar rankings" },
-        { status: 403 }
-      )
-    }
-
+    const session = await authorize(Action.UPDATE, Resource.RANKING)
     const { id } = await params
     const { currentPoints, reason } = await request.json()
 
@@ -223,19 +173,15 @@ export async function PUT(
       }
     })
 
-    // Registrar en el log
-    await RankingsLogService.logManualAdjustment(
-      {
-        userId: session.user.id,
-        rankingId: id,
-        playerId: updatedRanking.playerId,
-        categoryId: updatedRanking.categoryId
-      },
-      updatedRanking,
-      oldPoints,
-      currentPoints,
-      reason || "Ajuste manual desde dashboard"
-    )
+    // Auditoría
+    await AuditLogger.log(session, {
+      action: Action.UPDATE,
+      resource: Resource.RANKING,
+      resourceId: id,
+      description: reason || `Ajuste manual de puntos para ${updatedRanking.player.firstName} ${updatedRanking.player.lastName}`,
+      oldData: { currentPoints: oldPoints },
+      newData: { currentPoints },
+    }, request)
 
     return NextResponse.json({
       ranking: updatedRanking,
@@ -243,10 +189,6 @@ export async function PUT(
     })
 
   } catch (error) {
-    console.error("Error updating ranking:", error)
-    return NextResponse.json(
-      { error: "Error interno del servidor" },
-      { status: 500 }
-    )
+    return handleAuthError(error)
   }
 }

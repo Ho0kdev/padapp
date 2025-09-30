@@ -1,10 +1,15 @@
 //DASHBOARD
+!!!!!!!!!- los toast no tienen color ni verde ni rojo ni nada
 //USUARIOS
+!!!!!!!!! - si creo como organizador tira error. jugador y admin funciona de diez.
 //CLUBES
+- club desactivo en el log figura como badge club eliminado
   //CANCHAS
 
 //CATEGORIAS
 //TORNEOS
+- torneo eliminado no loguea.
+!!!!!!!!! - editar torneo ERROR
 - torneo completado no se podria editar ni eliminar ni nada.
 - especificar categorias que son de tipo main vs categorias que no lo son por ejemplo MASC 7MA vs SUMA 18 o cosas asi. a las main ponele un numero 7ma = 7 y asi.
 - torneo completo no se deberia poder editar en absoluto.
@@ -12,6 +17,9 @@
   //calculo automatico de puntos
 
 //EQUIPOS/INSCRIPTIONES
+- un jugador puede tener 2 inscripciones a un torneo a una categoria? a mas de una categoria que onda?
+- inscribo 2 veces al mismo equipo y me permite, deberia tirar error.
+- filtrar por torneos.
 - sistema de pagos?
 
 //PARTIDOS/MATCHES

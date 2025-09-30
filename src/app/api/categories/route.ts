@@ -1,18 +1,13 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { requireAuth, authorize, handleAuthError, Action, Resource, AuditLogger } from "@/lib/rbac"
 import { prisma } from "@/lib/prisma"
 import { categoryFormSchema } from "@/lib/validations/category"
-import { CategoryLogService } from "@/lib/services/category-log-service"
 import { z } from "zod"
 
 // GET /api/categories - Obtener lista de categorías
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-    }
+    await requireAuth()
 
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get("page") || "1")
@@ -81,34 +76,14 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error("Error fetching categories:", error)
-    return NextResponse.json(
-      { error: "Error interno del servidor" },
-      { status: 500 }
-    )
+    return handleAuthError(error)
   }
 }
 
 // POST /api/categories - Crear nueva categoría
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-    }
-
-    // Verificar que sea admin
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { role: true }
-    })
-
-    if (user?.role !== "ADMIN") {
-      return NextResponse.json(
-        { error: "Solo los administradores pueden crear categorías" },
-        { status: 403 }
-      )
-    }
+    const session = await authorize(Action.CREATE, Resource.CATEGORY)
 
     const body = await request.json()
     const validatedData = categoryFormSchema.parse(body)
@@ -162,11 +137,14 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    // Log la creación
-    await CategoryLogService.logCategoryCreated(
-      { userId: session.user.id, categoryId: category.id },
-      category
-    )
+    // Auditoría
+    await AuditLogger.log(session, {
+      action: Action.CREATE,
+      resource: Resource.CATEGORY,
+      resourceId: category.id,
+      description: `Categoría ${category.name} creada`,
+      newData: category,
+    }, request)
 
     return NextResponse.json(category, { status: 201 })
 
@@ -178,10 +156,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.error("Error creating category:", error)
-    return NextResponse.json(
-      { error: "Error interno del servidor" },
-      { status: 500 }
-    )
+    return handleAuthError(error)
   }
 }

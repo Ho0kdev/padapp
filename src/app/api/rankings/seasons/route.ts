@@ -1,15 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { requireAuth, handleAuthError } from "@/lib/rbac"
 import { prisma } from "@/lib/prisma"
 
 // GET /api/rankings/seasons - Obtener años disponibles en rankings
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-    }
+    await requireAuth()
 
     const { searchParams } = new URL(request.url)
     const categoryId = searchParams.get("categoryId")
@@ -44,10 +40,6 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error("Error fetching available seasons:", error)
-    return NextResponse.json(
-      { error: "Error interno del servidor" },
-      { status: 500 }
-    )
+    return handleAuthError(error)
   }
 }

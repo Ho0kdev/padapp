@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { UserRole, UserStatus, Gender } from '@prisma/client'
+import { requireAuth, handleAuthError } from '@/lib/rbac'
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await requireAuth()
 
     if (!session?.user) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
@@ -147,21 +146,14 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Error fetching users:', error)
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    )
+    return handleAuthError(error)
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-
-    if (!session || session.user.role !== UserRole.ADMIN) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
-    }
+    // Verificar que el usuario puede crear usuarios
+    const session = await authorize(Action.CREATE, Resource.USER)
 
     const body = await request.json()
     const {
@@ -259,10 +251,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(user, { status: 201 })
 
   } catch (error) {
-    console.error('Error creating user:', error)
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    )
+    return handleAuthError(error)
   }
 }

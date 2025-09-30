@@ -1,9 +1,7 @@
+import { requireAuth, authorize, handleAuthError, Action, Resource, AuditLogger } from "@/lib/rbac"
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { clubEditSchema } from "@/lib/validations/club"
-import { ClubLogService } from "@/lib/services/club-log-service"
 import { z } from "zod"
 
 // GET /api/clubs/[id] - Obtener un club específico
@@ -12,10 +10,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-    }
+    await requireAuth()
 
     const { id } = await params
     const club = await prisma.club.findUnique({
@@ -133,11 +128,7 @@ export async function GET(
     return NextResponse.json(clubWithAuxiliaryTournaments)
 
   } catch (error) {
-    console.error("Error fetching club:", error)
-    return NextResponse.json(
-      { error: "Error interno del servidor" },
-      { status: 500 }
-    )
+    return handleAuthError(error)
   }
 }
 
@@ -147,23 +138,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-    }
-
-    // Verificar que sea admin
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { role: true }
-    })
-
-    if (user?.role !== "ADMIN") {
-      return NextResponse.json(
-        { error: "Solo los administradores pueden editar clubes" },
-        { status: 403 }
-      )
-    }
+    const session = await authorize(Action.UPDATE, Resource.CLUB)
 
     const { id } = await params
     const body = await request.json()
@@ -207,12 +182,14 @@ export async function PUT(
       })
 
 
-      await ClubLogService.logClubStatusChanged(
-        { userId: session.user.id, clubId: club.id },
-        club,
-        existingClub.status,
-        body.status
-      )
+      await AuditLogger.log(session, {
+        action: Action.UPDATE,
+        resource: Resource.CLUB,
+        resourceId: club.id,
+        description: `Estado del club ${club.name} cambiado de ${existingClub.status} a ${body.status}`,
+        oldData: { status: existingClub.status },
+        newData: { status: body.status },
+      }, request)
 
       return NextResponse.json(club)
     }
@@ -280,11 +257,14 @@ export async function PUT(
     })
 
     // Log la actualización del club
-    await ClubLogService.logClubUpdated(
-      { userId: session.user.id, clubId: club.id },
-      existingClub,
-      club
-    )
+    await AuditLogger.log(session, {
+      action: Action.UPDATE,
+      resource: Resource.CLUB,
+      resourceId: club.id,
+      description: `Club ${club.name} actualizado`,
+      oldData: existingClub,
+      newData: club,
+    }, request)
 
     return NextResponse.json(club)
 
@@ -296,11 +276,7 @@ export async function PUT(
       )
     }
 
-    console.error("Error updating club:", error)
-    return NextResponse.json(
-      { error: "Error interno del servidor" },
-      { status: 500 }
-    )
+    return handleAuthError(error)
   }
 }
 
@@ -310,24 +286,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-    }
-
-    // Verificar que sea admin
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { role: true }
-    })
-
-    if (user?.role !== "ADMIN") {
-      return NextResponse.json(
-        { error: "Solo los administradores pueden eliminar clubes" },
-        { status: 403 }
-      )
-    }
-
+    const session = await authorize(Action.DELETE, Resource.CLUB)
     const { id } = await params
 
     // Verificar que el club existe
@@ -384,18 +343,14 @@ export async function DELETE(
     })
 
     // Log la desactivación del club
-    await ClubLogService.logClubStatusChanged(
-      {
-        userId: session.user.id,
-        clubId: club.id,
-        ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0] ||
-                  request.headers.get('x-real-ip') || 'unknown',
-        userAgent: request.headers.get('user-agent') || 'unknown'
-      },
-      club,
-      existingClub.status,
-      "INACTIVE"
-    )
+    await AuditLogger.log(session, {
+      action: Action.DELETE,
+      resource: Resource.CLUB,
+      resourceId: club.id,
+      description: `Club ${club.name} desactivado`,
+      oldData: existingClub,
+      newData: club,
+    }, request)
 
     return NextResponse.json({
       message: "Club desactivado exitosamente",
@@ -403,14 +358,7 @@ export async function DELETE(
     })
 
   } catch (error) {
-    console.error("Error deleting club:", error)
-    return NextResponse.json(
-      {
-        error: "Error interno del servidor",
-        details: error instanceof Error ? error.message : "Error desconocido"
-      },
-      { status: 500 }
-    )
+    return handleAuthError(error)
   }
 }
 
@@ -420,24 +368,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-    }
-
-    // Verificar que sea admin
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { role: true }
-    })
-
-    if (user?.role !== "ADMIN") {
-      return NextResponse.json(
-        { error: "Solo los administradores pueden activar clubes" },
-        { status: 403 }
-      )
-    }
-
+    const session = await authorize(Action.UPDATE, Resource.CLUB)
     const { id } = await params
 
     // Verificar que el club existe y está inactivo
@@ -466,18 +397,14 @@ export async function PATCH(
     })
 
     // Log la activación del club
-    await ClubLogService.logClubStatusChanged(
-      {
-        userId: session.user.id,
-        clubId: club.id,
-        ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0] ||
-                  request.headers.get('x-real-ip') || 'unknown',
-        userAgent: request.headers.get('user-agent') || 'unknown'
-      },
-      club,
-      existingClub.status,
-      "ACTIVE"
-    )
+    await AuditLogger.log(session, {
+      action: Action.UPDATE,
+      resource: Resource.CLUB,
+      resourceId: club.id,
+      description: `Club ${club.name} activado`,
+      oldData: { status: existingClub.status },
+      newData: { status: "ACTIVE" },
+    }, request)
 
     return NextResponse.json({
       message: "Club activado exitosamente",
@@ -485,13 +412,6 @@ export async function PATCH(
     })
 
   } catch (error) {
-    console.error("Error activating club:", error)
-    return NextResponse.json(
-      {
-        error: "Error interno del servidor",
-        details: error instanceof Error ? error.message : "Error desconocido"
-      },
-      { status: 500 }
-    )
+    return handleAuthError(error)
   }
 }
