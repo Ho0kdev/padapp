@@ -15,7 +15,7 @@ Convertir PadApp en la plataforma más completa para la gestión integral de tor
 #### **Sistema Core**
 - **Autenticación y RBAC completo** (4 roles con permisos granulares)
 - **CRUD completo**: Torneos, Clubes, Canchas, Categorías, Usuarios
-- **Sistema de puntos automático** con cálculo inteligente
+- **Sistema de puntos automático** con cálculo inteligente y **puntos configurables por torneo** ⭐
 - **Rankings anuales** con histórico por categorías
 - **Panel administrativo** con logs de auditoría
 - **Base de datos optimizada** con 15+ tablas relacionadas
@@ -492,7 +492,7 @@ El sistema de inscripciones está mayormente completado. Lo que falta:
 - CRUD de Categorías (100%)
 - CRUD de Usuarios (100%)
 - Sistema de Rankings (100%)
-- Sistema de Puntos (100%)
+- Sistema de Puntos con Configuración Flexible (100%) ⭐
 - Panel Administrativo (100%)
 - Sistema de Inscripciones (90%)
 
@@ -513,5 +513,22 @@ El sistema de inscripciones está mayormente completado. Lo que falta:
 2. Implementar notificaciones por email (2-3 días)
 3. Crear panel público de inscripción (2 días)
 4. Comenzar con sistema de Brackets (2 semanas)
+
+---
+
+## 📝 **Changelog Reciente**
+
+### **Septiembre 30, 2024**
+- ✅ **Sistema de Puntos Configurables**: Cada torneo ahora define su nivel de importancia (100-10,000 pts)
+  - Puntos por posición proporcionales al `rankingPoints` del torneo
+  - Bonus de victorias y sets proporcionales: `(rankingPoints/1000) × valor_base`
+  - Niveles sugeridos: Premium (1000-1500), Regional (400-900), Local (100-300)
+  - Campo `rankingPoints` agregado al formulario de torneos
+  - Documentación completa actualizada (POINTS_CALCULATION.md, README.md, context.md)
+- ✅ **Sistema de Inscripciones**: CRUD completo con validaciones anti-duplicados
+  - Lista de espera automática
+  - Filtrado inteligente de jugadores ya inscritos
+  - Validación de fechas y reglas de negocio
+  - RBAC completo implementado
 
 *Última actualización: Septiembre 30, 2024*

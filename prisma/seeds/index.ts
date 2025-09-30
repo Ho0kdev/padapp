@@ -190,7 +190,7 @@ async function main() {
               hasLighting: true,
               hasRoof: true,
               hasPanoramicGlass: false,
-              hourlyRate: 10000,
+              hourlyRate: 9999,
             }
           ]
         }
@@ -246,7 +246,7 @@ async function main() {
               hasLighting: true,
               hasRoof: true,
               hasPanoramicGlass: false,
-              hourlyRate: 10000,
+              hourlyRate: 9999,
               status: CourtStatus.UNAVAILABLE,
             },
             {
@@ -255,7 +255,7 @@ async function main() {
               hasLighting: true,
               hasRoof: true,
               hasPanoramicGlass: false,
-              hourlyRate: 10000,
+              hourlyRate: 9999,
             }
           ]
         }
@@ -599,6 +599,7 @@ async function main() {
         maxParticipants: 60,
         registrationFee: 30000,
         prizePool: 80000,
+        rankingPoints: 1000,
         organizerId: adminUser.id,
         mainClubId: ciudadPadelClub.id,
         categories: {
@@ -635,6 +636,7 @@ async function main() {
         maxParticipants: 10,
         registrationFee: 3000,
         prizePool: 12000,
+        rankingPoints: 500,
         organizerId: adminUser.id,
         mainClubId: padelNoaClub.id,
         categories: {
@@ -668,6 +670,7 @@ async function main() {
         tournamentStart: new Date('2025-09-27T03:00:00.000Z'),
         tournamentEnd: new Date('2025-09-27T03:00:00.000Z'),
         registrationFee: 20000,
+        rankingPoints: 250,
         organizerId: adminUser.id,
         mainClubId: pipoPadelClub.id,
         categories: {
@@ -768,6 +771,7 @@ async function main() {
             status: TournamentStatus.COMPLETED,
             tournamentStart: new Date('2025-01-15'),
             tournamentEnd: new Date('2025-01-16'),
+            rankingPoints: 750,
             organizerId: adminUser.id,
             mainClubId: statsClub.id,
             categories: {

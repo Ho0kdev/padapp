@@ -91,6 +91,7 @@ export function TournamentForm({
       minParticipants: undefined,
       registrationFee: 0,
       prizePool: 0,
+      rankingPoints: 1000,
       setsToWin: 2,
       gamesToWinSet: 6,
       tiebreakAt: 6,
@@ -675,6 +676,33 @@ export function TournamentForm({
                           }}
                         />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="rankingPoints"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Puntos de Ranking</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="100"
+                          max="5000"
+                          step="50"
+                          value={field.value || 1000}
+                          onChange={(e) => {
+                            const value = e.target.value
+                            field.onChange(value === "" ? 1000 : parseInt(value))
+                          }}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Puntos base del torneo (100-5000).
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}

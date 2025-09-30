@@ -13,6 +13,8 @@
 //RANKINGS
   //calculo automatico de puntos
 
+- hay un registro de como se calcularon los puntos de cada usuario?
+
 //EQUIPOS/INSCRIPTIONES
 - sistema de pagos?
 - validar el genero y la main category del usuario.

@@ -177,17 +177,29 @@ padapp/
   - Reglas de sets y games
   - Golden Point opcional
 
-### ✅ **Sistema de Puntos Automático**
-- **Cálculo Inteligente** basado en:
-  - **Puntos Base**: 50 puntos por participación
-  - **Puntos por Posición**: 1000 pts (1°), 700 pts (2°), 500 pts (3°), etc.
-  - **Bonus por Rendimiento**: 25 pts por victoria, 5 pts por set ganado
+### ✅ **Sistema de Puntos Automático** ⭐ MEJORADO
+- **🆕 Puntos Base Configurables por Torneo**: Cada torneo define su nivel de importancia (100-5,000 pts)
+- **Cálculo Inteligente Proporcional** basado en:
+  - **Puntos Base**: 50 puntos por participación (fijo)
+  - **Puntos por Posición**: Proporcionales al `rankingPoints` del torneo
+    - 1° lugar: 100% del rankingPoints (ej: 1000 pts en torneo Premium)
+    - 2° lugar: 70% del rankingPoints (ej: 500 pts en torneo Regional)
+    - 3° lugar: 50% del rankingPoints, etc.
+  - **Bonus por Rendimiento**: Proporcionales al rankingPoints
+    - Victoria: (rankingPoints/1000) × 25 pts
+    - Set ganado: (rankingPoints/1000) × 5 pts
   - **Multiplicadores Dinámicos**:
     - Por tipo de torneo (1.0x - 1.4x)
     - Por número de participantes (1.0x - 1.5x)
+- **Niveles de Torneos Sugeridos**:
+  - Premium/Nacional: 1000-1500 pts
+  - Regional Alto: 600-900 pts
+  - Regional: 400-600 pts
+  - Local/Club: 100-300 pts
 - **API Endpoint**: `POST /api/tournaments/{id}/calculate-points`
 - **Actualización Automática**: Rankings actualizados al completar torneos
 - **Transparencia Total**: Logs detallados de cada cálculo
+- 📄 [Documentación completa del sistema de puntos](POINTS_CALCULATION.md)
 
 ### ✅ **Gestión de Clubes y Canchas**
 - **CRUD de Clubes**: Información completa, ubicación, contacto
@@ -1198,7 +1210,36 @@ console.log('Tournament created:', {
 
 ## 🔧 Changelog - Mejoras Recientes
 
-### 🆕 Septiembre 30, 2024 - Sistema de Inscripciones y RBAC
+### 🆕 Septiembre 30, 2024 - Sistema de Inscripciones, RBAC y Puntos Configurables
+
+#### 🎯 Sistema de Puntos Configurables por Torneo [NUEVO]
+1. **✅ Campo rankingPoints en Tournament**
+   - Cada torneo define su nivel de importancia (100-5,000 pts)
+   - Default: 1000 puntos (equivalente a sistema anterior)
+   - Permite diferenciar torneos Premium, Regional, Local
+
+2. **✅ Cálculo Proporcional de Puntos**
+   - Puntos por posición basados en porcentajes del rankingPoints
+   - Campeón recibe 100% del rankingPoints configurado
+   - Bonus de victorias y sets también proporcionales
+   - Mantiene multiplicadores por tipo y participantes
+
+3. **✅ Formulario Actualizado**
+   - Campo "Puntos de Ranking" en formulario de torneos
+   - Validaciones: mínimo 100, máximo 5,000 pts
+   - Descripción con ejemplos de niveles sugeridos
+   - Valor por defecto: 1000 pts
+
+4. **✅ Seeds con Diferentes Niveles**
+   - Torneo Premium (1000 pts): We Need Padel OCT-25
+   - Torneo Regional Alto (750 pts): Torneo de Estadísticas
+   - Torneo Regional (500 pts): Padel Noa OCT-25
+   - Torneo Local (250 pts): Encuentro de Padel
+
+5. **✅ Documentación Completa**
+   - POINTS_CALCULATION.md completamente actualizado
+   - Ejemplos prácticos con diferentes niveles de torneo
+   - Estrategias para jugadores y organizadores
 
 #### Sistema de Inscripciones Completado
 1. **✅ Validación Anti-Duplicados (Backend)**

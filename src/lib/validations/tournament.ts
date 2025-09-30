@@ -37,6 +37,7 @@ export const tournamentFormSchema = z.object({
   minParticipants: z.number().int().positive("Debe ser un número positivo").min(2, "Mínimo 2 participantes"),
   registrationFee: z.number().min(0, "La tarifa no puede ser negativa").default(0),
   prizePool: z.number().min(0, "El premio no puede ser negativo").default(0),
+  rankingPoints: z.number().int().positive("Debe ser un número positivo").min(100, "Mínimo 100 puntos").max(5000, "Máximo 5000 puntos").default(1000),
   setsToWin: z.number().int().positive("Debe ser un número positivo").default(2),
   gamesToWinSet: z.number().int().positive("Debe ser un número positivo").default(6),
   tiebreakAt: z.number().int().positive("Debe ser un número positivo").default(6),

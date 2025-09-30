@@ -1,257 +1,375 @@
-✅ SISTEMA DE CÁLCULO AUTOMÁTICO DE PUNTOS COMPLETADO!
+# 📊 SISTEMA DE CÁLCULO DE PUNTOS - GUÍA COMPLETA
 
-  🏆 Funcionalidades Implementadas:
+*Última actualización: Septiembre 30, 2024*
 
-  1. Sistema de Puntos Inteligente:
+## ✅ SISTEMA DE CÁLCULO AUTOMÁTICO DE PUNTOS COMPLETADO!
 
-  - Puntos base por participación: 50 puntos
-  - Puntos por posición final: 1000 pts (1°), 700 pts (2°), 500 pts (3°), etc.
-  - Bonus por victorias: 25 puntos por partida ganada
-  - Bonus por sets: 5 puntos por set ganado
-  - Multiplicadores dinámicos:
-    - Por tipo de torneo (Single Elimination: 1.2x, Double Elimination: 1.3x, etc.)
-    - Por número de participantes (32+: 1.5x, 16+: 1.3x, 8+: 1.1x)
+### 🎯 RESUMEN EJECUTIVO
 
-  2. Proceso Automático Completo:
+El sistema otorga puntos basándose en **4 factores principales**:
 
-  - Cálculo por torneo: Analiza estadísticas y calcula puntos para cada jugador
-  - Actualización de rankings: Suma todos los puntos del año por categoría
-  - Proceso transparente: Logs detallados de cada paso
+1. **Participación** - Puntos base por jugar
+2. **Posición final** - Puntos por clasificación (proporcionales a rankingPoints del torneo)
+3. **Rendimiento** - Puntos por victorias y sets ganados (proporcionales a rankingPoints)
+4. **Multiplicadores** - Bonificaciones por tipo de torneo y número de participantes
 
-  3. Resultado del Ejemplo:
+## 🆕 NOVEDAD: Puntos Base Configurables por Torneo
 
-  🏅 CAMPEÓN: Administrador Sistema - 1617 puntos
-  🥈 2° Lugar: Carlos López - 1228 puntos
-  🥉 3° Lugar: Sebastián Ruiz - 865 puntos
-  📊 Total puntos otorgados: 6,686 puntos
+A partir del 30 de septiembre de 2024, **cada torneo puede tener su propio valor base de puntos de ranking** (`rankingPoints`), lo que permite diferenciar torneos por nivel:
 
-  4. API Endpoint:
+- **Torneo Premium/Nacional**: 1000-1500 pts
+- **Torneo Regional Alto**: 600-900 pts
+- **Torneo Regional**: 400-600 pts
+- **Torneo Local/Club**: 100-300 pts
 
-  - POST /api/tournaments/{id}/calculate-points
-  - Solo admins pueden ejecutarlo
-  - Valida que el torneo esté completado
-  - Retorna resumen detallado de puntos otorgados
+### ¿Cómo funciona?
 
-  5. Sistema en Producción:
+**Antes:** Todos los torneos otorgaban 1000 pts al campeón (fijo)
 
-  - Automatización completa: Del torneo completado → puntos calculados → rankings actualizados
-  - Escalable: Funciona con cualquier número de jugadores/torneos
-  - Consistente: Aplica las mismas reglas a todos los torneos
+**Ahora:** El campeón recibe el **100% del `rankingPoints`** configurado en el torneo:
+- Torneo Premium (1000 pts) → Campeón recibe 1000 pts
+- Torneo Regional (500 pts) → Campeón recibe 500 pts
+- Torneo Local (250 pts) → Campeón recibe 250 pts
 
-  🚀 ¿Cómo Usar el Sistema?
+**Todo el sistema escala proporcionalmente** basándose en este valor.
 
-  1. Completar torneo con estadísticas en TournamentStats
-  2. Ejecutar: POST /api/tournaments/{id}/calculate-points
-  3. Verificar: Los rankings se actualizan automáticamente
-  4. Visualizar: En /dashboard/rankings por categoría
+---
 
-  ¡El sistema de puntos automático está 100% funcional y listo para producción! 🎯
+## 📋 TABLA COMPLETA DE PUNTOS
 
+### 1. PUNTOS BASE POR PARTICIPACIÓN
 
-======================================================================================
+| Concepto | Puntos |
+|----------|--------|
+| Participar en cualquier torneo | 50 pts |
 
-  📊 SISTEMA DE CÁLCULO DE PUNTOS - GUÍA COMPLETA
+Solo por inscribirse y jugar, ya obtienes puntos base (independiente del rankingPoints del torneo).
 
-  🎯 RESUMEN EJECUTIVO
+---
 
-  El sistema otorga puntos basándose en 4 factores principales:
-  1. Participación (puntos base por jugar)
-  2. Posición final (puntos por clasificación en el torneo)
-  3. Rendimiento (puntos por victorias y sets ganados)
-  4. Multiplicadores (bonificaciones por tipo de torneo y participantes)
+### 2. PUNTOS POR POSICIÓN FINAL (Sistema Proporcional)
 
-  ---
-  📋 TABLA COMPLETA DE PUNTOS
+Los puntos por posición son **porcentajes del `rankingPoints` del torneo**:
 
-  1. PUNTOS BASE POR PARTICIPACIÓN
+| Posición | Porcentaje | Ejemplo (1000 pts) | Ejemplo (500 pts) | Ejemplo (250 pts) |
+|----------|------------|-------------------|------------------|------------------|
+| 🥇 1er Lugar | 100% | 1,000 pts | 500 pts | 250 pts |
+| 🥈 2do Lugar | 70% | 700 pts | 350 pts | 175 pts |
+| 🥉 3er Lugar | 50% | 500 pts | 250 pts | 125 pts |
+| 4to Lugar | 40% | 400 pts | 200 pts | 100 pts |
+| 5to-8vo Lugar | 30% | 300 pts | 150 pts | 75 pts |
+| 9no-16vo Lugar | 20% | 200 pts | 100 pts | 50 pts |
+| 17+ Lugar | 10% | 100 pts | 50 pts | 25 pts |
 
-  | Concepto                       | Puntos |
-  |--------------------------------|--------|
-  | Participar en cualquier torneo | 50 pts |
+**Mientras mejor termines y más importante sea el torneo, más puntos obtienes.**
 
-  Solo por inscribirse y jugar, ya obtienes puntos base.
+---
 
-  ---
-  2. PUNTOS POR POSICIÓN FINAL
+### 3. PUNTOS POR RENDIMIENTO (Proporcionales)
 
-  | Posición       | Puntos    | Descripción        |
-  |----------------|-----------|--------------------|
-  | 🥇 1er Lugar   | 1,000 pts | Campeón del torneo |
-  | 🥈 2do Lugar   | 700 pts   | Subcampeón         |
-  | 🥉 3er Lugar   | 500 pts   | Tercer puesto      |
-  | 4to Lugar      | 400 pts   | Cuarto puesto      |
-  | 5to-8vo Lugar  | 300 pts   | Cuartos de final   |
-  | 9no-16vo Lugar | 200 pts   | Octavos de final   |
-  | 17+ Lugar      | 100 pts   | Primera ronda      |
+Los bonus también son proporcionales al `rankingPoints` del torneo:
 
-  Mientras mejor termines, más puntos obtienes.
+| Concepto | Fórmula | Ejemplo (1000 pts) | Ejemplo (500 pts) | Ejemplo (250 pts) |
+|----------|---------|-------------------|------------------|------------------|
+| Partida ganada | (rankingPoints / 1000) × 25 | 25 pts | 12.5 pts | 6.25 pts |
+| Set ganado | (rankingPoints / 1000) × 5 | 5 pts | 2.5 pts | 1.25 pts |
 
-  ---
-  3. PUNTOS POR RENDIMIENTO
+**Ejemplos prácticos:**
+- **Torneo 1000 pts**: 3 victorias + 8 sets = (3×25) + (8×5) = 115 pts
+- **Torneo 500 pts**: 3 victorias + 8 sets = (3×12.5) + (8×2.5) = 57.5 pts
+- **Torneo 250 pts**: 3 victorias + 8 sets = (3×6.25) + (8×1.25) = 28.75 pts
 
-  | Concepto       | Puntos por Unidad |
-  |----------------|-------------------|
-  | Partida ganada | +25 pts           |
-  | Set ganado     | +5 pts            |
+---
 
-  Ejemplos prácticos:
-  - Si ganas 3 partidas: 3 × 25 = 75 pts extra
-  - Si ganas 8 sets: 8 × 5 = 40 pts extra
+### 4. MULTIPLICADORES POR TIPO DE TORNEO
 
-  ---
-  4. MULTIPLICADORES POR TIPO DE TORNEO
-
-  | Tipo de Torneo               | Multiplicador | Razón                                    |
-  |------------------------------|---------------|------------------------------------------|
-  | Eliminación Doble            | ×1.3          | Más complejo, das segundas oportunidades |
-  | Eliminación Simple           | ×1.2          | Formato estándar competitivo             |
-  | Fase de Grupos + Eliminación | ×1.4          | Más partidas, más exigente               |
-  | Round Robin                  | ×1.1          | Todos juegan contra todos                |
-  | Suizo                        | ×1.1          | Emparejamientos balanceados              |
-  | Americano                    | ×1.0          | Formato básico                           |
+| Tipo de Torneo | Multiplicador | Razón |
+|----------------|---------------|-------|
+| Eliminación Doble | ×1.3 | Más complejo, das segundas oportunidades |
+| Eliminación Simple | ×1.2 | Formato estándar competitivo |
+| Fase de Grupos + Eliminación | ×1.4 | Más partidas, más exigente |
+| Round Robin | ×1.1 | Todos juegan contra todos |
+| Suizo | ×1.1 | Emparejamientos balanceados |
+| Americano | ×1.0 | Formato básico |
 
-  ---
-  5. MULTIPLICADORES POR PARTICIPANTES
+---
 
-  | Número de Jugadores | Multiplicador | Razón                              |
-  |---------------------|---------------|------------------------------------|
-  | 32+ jugadores       | ×1.5          | Torneo muy grande, más competitivo |
-  | 16-31 jugadores     | ×1.3          | Torneo grande                      |
-  | 8-15 jugadores      | ×1.1          | Torneo mediano                     |
-  | Menos de 8          | ×1.0          | Torneo pequeño                     |
+### 5. MULTIPLICADORES POR PARTICIPANTES
 
-  ---
-  🧮 FÓRMULA COMPLETA DE CÁLCULO
+| Número de Jugadores | Multiplicador | Razón |
+|---------------------|---------------|-------|
+| 32+ jugadores | ×1.5 | Torneo muy grande, más competitivo |
+| 16-31 jugadores | ×1.3 | Torneo grande |
+| 8-15 jugadores | ×1.1 | Torneo mediano |
+| Menos de 8 | ×1.0 | Torneo pequeño |
 
-  PUNTOS FINALES = [
-      (PARTICIPACIÓN + POSICIÓN + VICTORIAS + SETS)
-      × MULTIPLICADOR_TORNEO
-      × MULTIPLICADOR_PARTICIPANTES
-  ] redondeado
+---
 
-  Donde:
-  • PARTICIPACIÓN = 50 pts
-  • POSICIÓN = según tabla de posiciones
-  • VICTORIAS = partidas_ganadas × 25
-  • SETS = sets_ganados × 5
+## 🧮 FÓRMULA COMPLETA DE CÁLCULO
 
-  ---
-  📈 EJEMPLOS PRÁCTICOS DETALLADOS
+```
+PUNTOS FINALES = [
+    (PARTICIPACIÓN + POSICIÓN_PROPORCIONAL + VICTORIAS_PROPORCIONALES + SETS_PROPORCIONALES)
+    × MULTIPLICADOR_TORNEO
+    × MULTIPLICADOR_PARTICIPANTES
+] redondeado
+```
 
-  EJEMPLO 1: Campeón de Torneo Grande
+**Donde:**
+- `PARTICIPACIÓN` = 50 pts (fijo)
+- `POSICIÓN_PROPORCIONAL` = porcentaje × rankingPoints del torneo
+- `VICTORIAS_PROPORCIONALES` = partidas_ganadas × (rankingPoints / 1000) × 25
+- `SETS_PROPORCIONALES` = sets_ganados × (rankingPoints / 1000) × 5
 
-  Jugador: Juan PérezTorneo: Eliminación Simple, 24 jugadoresResultado: 1er lugar, 5 victorias, 10 sets ganados
+---
 
-  Cálculo paso a paso:
-  1. Participación: 50 pts
-  2. Posición (1°): 1,000 pts
-  3. Victorias: 5 × 25 = 125 pts
-  4. Sets: 10 × 5 = 50 pts
-  5. Subtotal: 50 + 1,000 + 125 + 50 = 1,225 pts
+## 📈 EJEMPLOS PRÁCTICOS DETALLADOS
 
-  Multiplicadores:
-  6. Eliminación Simple: ×1.2
-  7. 16-31 jugadores: ×1.3
-  8. Multiplicador total: 1.2 × 1.3 = 1.56
+### EJEMPLO 1: Campeón de Torneo Premium (1000 pts)
 
-  PUNTOS FINALES: 1,225 × 1.56 = 1,911 pts
+**Jugador:** Juan Pérez
+**Torneo:** Eliminación Simple, 24 jugadores, **rankingPoints: 1000**
+**Resultado:** 1er lugar, 5 victorias, 10 sets ganados
 
-  EJEMPLO 2: Semifinalista de Torneo Mediano
+**Cálculo paso a paso:**
+1. Participación: 50 pts
+2. Posición (1° = 100%): 1000 × 1.0 = 1,000 pts
+3. Victorias: 5 × (1000/1000) × 25 = 5 × 25 = 125 pts
+4. Sets: 10 × (1000/1000) × 5 = 10 × 5 = 50 pts
+5. **Subtotal**: 50 + 1,000 + 125 + 50 = **1,225 pts**
 
-  Jugador: María GarcíaTorneo: Round Robin, 12 jugadoresResultado: 4to lugar, 3 victorias, 7 sets ganados
+**Multiplicadores:**
+6. Eliminación Simple: ×1.2
+7. 16-31 jugadores: ×1.3
+8. **Multiplicador total**: 1.2 × 1.3 = 1.56
 
-  Cálculo paso a paso:
-  1. Participación: 50 pts
-  2. Posición (4°): 400 pts
-  3. Victorias: 3 × 25 = 75 pts
-  4. Sets: 7 × 5 = 35 pts
-  5. Subtotal: 50 + 400 + 75 + 35 = 560 pts
+**PUNTOS FINALES:** 1,225 × 1.56 = **1,911 pts**
 
-  Multiplicadores:
-  6. Round Robin: ×1.1
-  7. 8-15 jugadores: ×1.1
-  8. Multiplicador total: 1.1 × 1.1 = 1.21
+---
 
-  PUNTOS FINALES: 560 × 1.21 = 678 pts
+### EJEMPLO 2: Campeón de Torneo Regional (500 pts)
 
-  EJEMPLO 3: Primera Ronda de Torneo Pequeño
+**Jugador:** María García
+**Torneo:** Eliminación Simple, 24 jugadores, **rankingPoints: 500**
+**Resultado:** 1er lugar, 5 victorias, 10 sets ganados
 
-  Jugador: Carlos LópezTorneo: Americano, 6 jugadoresResultado: 6to lugar, 0 victorias, 1 set ganado
+**Cálculo paso a paso:**
+1. Participación: 50 pts
+2. Posición (1° = 100%): 500 × 1.0 = 500 pts
+3. Victorias: 5 × (500/1000) × 25 = 5 × 12.5 = 62.5 pts
+4. Sets: 10 × (500/1000) × 5 = 10 × 2.5 = 25 pts
+5. **Subtotal**: 50 + 500 + 62.5 + 25 = **637.5 pts**
 
-  Cálculo paso a paso:
-  1. Participación: 50 pts
-  2. Posición (6°): 100 pts
-  3. Victorias: 0 × 25 = 0 pts
-  4. Sets: 1 × 5 = 5 pts
-  5. Subtotal: 50 + 100 + 0 + 5 = 155 pts
+**Multiplicadores:**
+6. Eliminación Simple: ×1.2
+7. 16-31 jugadores: ×1.3
+8. **Multiplicador total**: 1.2 × 1.3 = 1.56
 
-  Multiplicadores:
-  6. Americano: ×1.0
-  7. Menos de 8 jugadores: ×1.0
-  8. Multiplicador total: 1.0 × 1.0 = 1.0
+**PUNTOS FINALES:** 637.5 × 1.56 = **995 pts**
 
-  PUNTOS FINALES: 155 × 1.0 = 155 pts
+---
 
-  ---
-  🏆 SISTEMA DE RANKINGS ANUAL
+### EJEMPLO 3: Campeón de Torneo Local (250 pts)
 
-  ¿Cómo se acumulan los puntos?
+**Jugador:** Carlos López
+**Torneo:** Americano, 12 jugadores, **rankingPoints: 250**
+**Resultado:** 1er lugar, 3 victorias, 6 sets ganados
 
-  - Los puntos se suman por categoría durante toda la temporada (año calendario)
-  - Cada torneo completado aporta puntos a tu ranking de esa categoría específica
-  - No hay límite en el número de torneos que puedes jugar
+**Cálculo paso a paso:**
+1. Participación: 50 pts
+2. Posición (1° = 100%): 250 × 1.0 = 250 pts
+3. Victorias: 3 × (250/1000) × 25 = 3 × 6.25 = 18.75 pts
+4. Sets: 6 × (250/1000) × 5 = 6 × 1.25 = 7.5 pts
+5. **Subtotal**: 50 + 250 + 18.75 + 7.5 = **326.25 pts**
 
-  ¿Qué determina mi posición en el ranking?
+**Multiplicadores:**
+6. Americano: ×1.0
+7. 8-15 jugadores: ×1.1
+8. **Multiplicador total**: 1.0 × 1.1 = 1.1
 
-  - Total de puntos acumulados en la categoría durante el año
-  - Los rankings se actualizan automáticamente después de cada torneo
-  - Se ordenan de mayor a menor puntuación
+**PUNTOS FINALES:** 326.25 × 1.1 = **359 pts**
 
-  ---
-  🎯 ESTRATEGIAS PARA MAXIMIZAR PUNTOS
+---
 
-  Para Jugadores Competitivos:
+### EJEMPLO 4: Semifinalista de Torneo Regional (500 pts)
 
-  1. Juega torneos grandes (más multiplicadores)
-  2. Prefiere eliminación doble (más oportunidades y multiplicador)
-  3. Enfócate en ganar sets (puntos adicionales constantes)
+**Jugador:** Ana Martínez
+**Torneo:** Round Robin, 16 jugadores, **rankingPoints: 500**
+**Resultado:** 4to lugar, 3 victorias, 7 sets ganados
 
-  Para Jugadores Recreativos:
+**Cálculo paso a paso:**
+1. Participación: 50 pts
+2. Posición (4° = 40%): 500 × 0.4 = 200 pts
+3. Victorias: 3 × (500/1000) × 25 = 3 × 12.5 = 37.5 pts
+4. Sets: 7 × (500/1000) × 5 = 7 × 2.5 = 17.5 pts
+5. **Subtotal**: 50 + 200 + 37.5 + 17.5 = **305 pts**
 
-  1. Participa regularmente (50 pts seguros por torneo)
-  2. Juega en tu categoría (mejores posibilidades de avanzar)
-  3. Cada set cuenta (5 pts por set ganado)
+**Multiplicadores:**
+6. Round Robin: ×1.1
+7. 16-31 jugadores: ×1.3
+8. **Multiplicador total**: 1.1 × 1.3 = 1.43
 
-  ---
-  ⚖️ PRINCIPIOS DEL SISTEMA
+**PUNTOS FINALES:** 305 × 1.43 = **436 pts**
 
-  Justo:
+---
 
-  - Todos obtienen puntos por participar
-  - Más puntos por mejor rendimiento
-  - Ajustado por dificultad del torneo
+## 🏆 SISTEMA DE RANKINGS ANUAL
 
-  Transparente:
+### ¿Cómo se acumulan los puntos?
 
-  - Fórmula pública y clara
-  - Cálculos automáticos y auditables
-  - Sin intervención manual
+- Los puntos se **suman por categoría** durante toda la temporada (año calendario)
+- Cada torneo completado aporta puntos a tu ranking de esa categoría específica
+- **No hay límite** en el número de torneos que puedes jugar
+- Puedes jugar torneos de diferentes niveles (Premium, Regional, Local)
 
-  Motivador:
+### ¿Qué determina mi posición en el ranking?
 
-  - Recompensa participación constante
-  - Incentiva mejorar rendimiento
-  - Valora torneos más exigentes
+- **Total de puntos acumulados** en la categoría durante el año
+- Los rankings se actualizan **automáticamente** después de cada torneo
+- Se ordenan de **mayor a menor** puntuación
 
-  ---
-  📋 TABLA RESUMEN RÁPIDA
+### Estrategia de Puntos
 
-  | Concepto            | Valor     | Nota                          |
-  |---------------------|-----------|-------------------------------|
-  | Base por participar | 50 pts    | Automático                    |
-  | Campeón             | 1,000 pts | + participación + rendimiento |
-  | Subcampeón          | 700 pts   | + participación + rendimiento |
-  | Por partida ganada  | +25 pts   | Sin límite                    |
-  | Por set ganado      | +5 pts    | Sin límite                    |
-  | Torneo grande (32+) | ×1.5      | Muy competitivo               |
-  | Eliminación doble   | ×1.3      | Más oportunidades             |
+Puedes combinar torneos de diferentes niveles para maximizar puntos:
+- **Torneos Premium (1000 pts)**: Mayor recompensa, más competitivo
+- **Torneos Regionales (500 pts)**: Balance entre competencia y accesibilidad
+- **Torneos Locales (250 pts)**: Más accesibles, buenos para sumar constante
+
+---
+
+## 🎯 ESTRATEGIAS PARA MAXIMIZAR PUNTOS
+
+### Para Jugadores Competitivos:
+
+1. **Prioriza torneos grandes** (32+ jugadores = ×1.5)
+2. **Elige torneos Premium** (rankingPoints: 1000+)
+3. **Prefiere eliminación doble** (×1.3 + más oportunidades)
+4. **Enfócate en ganar sets** (puntos adicionales constantes)
+
+### Para Jugadores Recreativos:
+
+1. **Participa regularmente** (50 pts seguros por torneo)
+2. **Comienza con torneos locales** (menos presión, más accesible)
+3. **Juega en tu categoría** (mejores posibilidades de avanzar)
+4. **Cada set cuenta** (puntos proporcionales garantizados)
+
+### Para Clubes/Organizadores:
+
+1. **Torneos Premium (1000 pts)**: Atrae jugadores de nivel alto
+2. **Torneos Regionales (500-750 pts)**: Balance ideal para mayoría de jugadores
+3. **Torneos Locales (250 pts)**: Fomenta participación local constante
+
+---
+
+## ⚖️ PRINCIPIOS DEL SISTEMA
+
+### Justo:
+- Todos obtienen puntos por participar
+- Más puntos por mejor rendimiento
+- Ajustado por dificultad del torneo
+- **Proporcional al nivel del torneo**
+
+### Transparente:
+- Fórmula pública y clara
+- Cálculos automáticos y auditables
+- Sin intervención manual
+- **rankingPoints visible en cada torneo**
+
+### Motivador:
+- Recompensa participación constante
+- Incentiva mejorar rendimiento
+- Valora torneos más exigentes
+- **Permite estrategias personalizadas**
+
+### Flexible:
+- Cada torneo define su nivel de importancia
+- Organizadores controlan el valor de sus torneos
+- Jugadores eligen qué torneos jugar según objetivos
+
+---
+
+## 🔧 FUNCIONALIDADES IMPLEMENTADAS
+
+### 1. Sistema de Puntos Inteligente:
+- ✅ Puntos base por participación: 50 puntos (fijo)
+- ✅ **Puntos por posición proporcionales a rankingPoints del torneo**
+- ✅ **Bonus por victorias proporcionales (rankingPoints / 1000) × 25**
+- ✅ **Bonus por sets proporcionales (rankingPoints / 1000) × 5**
+- ✅ Multiplicadores dinámicos por tipo y participantes
+
+### 2. Configuración por Torneo:
+- ✅ Campo `rankingPoints` en modelo Tournament (default: 1000)
+- ✅ Rango: 100 - 5,000 puntos
+- ✅ Formulario de creación/edición actualizado
+- ✅ Validaciones Zod en frontend y backend
+
+### 3. Proceso Automático Completo:
+- ✅ Cálculo por torneo usando rankingPoints específico
+- ✅ Actualización de rankings: Suma todos los puntos del año
+- ✅ Proceso transparente: Logs detallados de cada paso
+
+### 4. API Endpoint:
+- ✅ `POST /api/tournaments/{id}/calculate-points`
+- ✅ Solo admins pueden ejecutarlo
+- ✅ Valida que el torneo esté completado
+- ✅ Retorna resumen detallado de puntos otorgados
+
+---
+
+## 🚀 ¿CÓMO USAR EL SISTEMA?
+
+### Para Organizadores:
+
+1. **Crear torneo** con campo "Puntos de Ranking"
+   - Premium/Nacional: 1000-1500 pts
+   - Regional: 400-900 pts
+   - Local: 100-300 pts
+
+2. **Inscribir equipos** normalmente
+
+3. **Completar torneo** con estadísticas en TournamentStats
+
+4. **Ejecutar cálculo**: `POST /api/tournaments/{id}/calculate-points`
+
+5. **Verificar**: Rankings actualizados automáticamente
+
+### Para Jugadores:
+
+1. **Ver torneos disponibles** con sus rankingPoints
+2. **Elegir torneos** según objetivos (Premium, Regional, Local)
+3. **Jugar y competir**
+4. **Ver puntos acumulados** en `/dashboard/rankings`
+
+---
+
+## 📊 TABLA RESUMEN RÁPIDA
+
+| Concepto | Valor | Nota |
+|----------|-------|------|
+| Base por participar | 50 pts | Automático (fijo) |
+| Campeón | 100% rankingPoints | Proporcional al torneo |
+| Subcampeón | 70% rankingPoints | Proporcional al torneo |
+| Por partida ganada | (rankingPoints/1000) × 25 | Proporcional |
+| Por set ganado | (rankingPoints/1000) × 5 | Proporcional |
+| Torneo grande (32+) | ×1.5 | Muy competitivo |
+| Eliminación doble | ×1.3 | Más oportunidades |
+| **Torneo Premium** | **1000 pts** | **Nivel más alto** |
+| **Torneo Regional** | **500 pts** | **Nivel medio** |
+| **Torneo Local** | **250 pts** | **Nivel club** |
+
+---
+
+## 📝 CHANGELOG
+
+### Septiembre 30, 2024 - Sistema de Puntos Configurables
+- ✅ Agregado campo `rankingPoints` al modelo Tournament
+- ✅ Sistema de porcentajes para posiciones (proporcionales a rankingPoints)
+- ✅ Bonus de victorias y sets proporcionales
+- ✅ Formulario actualizado con campo "Puntos de Ranking"
+- ✅ Validaciones: rango 100-5,000 puntos
+- ✅ Seeds actualizados con torneos de diferentes niveles
+- ✅ Documentación completa actualizada
+
+---
+
+**¡El sistema de puntos automático con configuración flexible está 100% funcional y listo para producción!** 🎯

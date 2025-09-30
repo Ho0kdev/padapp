@@ -48,15 +48,23 @@
 - ✅ **RBAC**: ADMIN/CLUB_ADMIN ven todas, PLAYER solo las suyas
 - ⚠️ **Pendiente**: Integración de pagos con Stripe, notificaciones por email
 
-#### 4. **Sistema de Puntos Automático** [100%]
-- **Cálculo inteligente** con 4 factores:
-  - Puntos base por participación (50 pts)
-  - Puntos por posición (1000 pts campeón)
-  - Bonus por rendimiento (25 pts/victoria, 5 pts/set)
+#### 4. **Sistema de Puntos Automático** [100%] ⭐ MEJORADO
+- **🆕 Puntos Base Configurables**: Cada torneo define su nivel (100-5,000 pts)
+- **Cálculo inteligente proporcional** con 4 factores:
+  - Puntos base por participación (50 pts fijo)
+  - Puntos por posición (porcentaje del rankingPoints del torneo)
+    - 1° lugar: 100% del rankingPoints (ej: 1000 pts Premium, 500 pts Regional)
+    - 2° lugar: 70% del rankingPoints
+    - 3° lugar: 50% del rankingPoints, etc.
+  - Bonus por rendimiento proporcional al rankingPoints
+    - Victoria: (rankingPoints/1000) × 25 pts
+    - Set: (rankingPoints/1000) × 5 pts
   - Multiplicadores dinámicos (tipo torneo + participantes)
+- **Niveles sugeridos**: Premium (1000), Regional (500), Local (250)
 - **Endpoint**: `POST /api/tournaments/{id}/calculate-points`
 - **Actualización automática**: Rankings actualizados al completar torneos
 - **Logs detallados**: Auditoría de cada cálculo
+- 📄 [POINTS_CALCULATION.md](POINTS_CALCULATION.md)
 
 #### 5. **Sistema de Rankings** [100%]
 - Rankings anuales por categoría con histórico completo
@@ -201,22 +209,31 @@ await AuditLogger.log(session, {
 
 ## 🆕 Mejoras Recientes - Sept 30, 2024
 
+### 🎯 Sistema de Puntos Configurables por Torneo [NUEVO]
+
+1. **Campo rankingPoints en Tournament**: Cada torneo define su nivel (100-5,000 pts)
+2. **Cálculo Proporcional**: Puntos por posición y rendimiento proporcionales al rankingPoints
+3. **Formulario Actualizado**: Campo "Puntos de Ranking" en creación/edición de torneos
+4. **Validaciones**: Min 100, max 5,000 con valor default 1000
+5. **Seeds Actualizados**: Torneos de diferentes niveles (Premium 1000, Regional 500, Local 250)
+6. **Documentación**: POINTS_CALCULATION.md completamente actualizado con ejemplos
+
 ### Sistema de Inscripciones Completado
 
-1. **Validación Anti-Duplicados (Backend)**: Un jugador solo puede estar en un equipo por categoría
-2. **Endpoint Check-Players**: `/api/registrations/check-players` para optimización UX
-3. **Filtrado Inteligente (Frontend)**: Jugadores ya inscritos no aparecen en selectores
-4. **Validación de Fechas**: Último día de inscripción incluido completo
-5. **Filtros Avanzados**: Soporte para "all", múltiples estados, torneo
-6. **Helper isAdminOrClubAdmin**: Agregado a `use-auth.ts` para lógica común
+7. **Validación Anti-Duplicados (Backend)**: Un jugador solo puede estar en un equipo por categoría
+8. **Endpoint Check-Players**: `/api/registrations/check-players` para optimización UX
+9. **Filtrado Inteligente (Frontend)**: Jugadores ya inscritos no aparecen en selectores
+10. **Validación de Fechas**: Último día de inscripción incluido completo
+11. **Filtros Avanzados**: Soporte para "all", múltiples estados, torneo
+12. **Helper isAdminOrClubAdmin**: Agregado a `use-auth.ts` para lógica común
 
 ### Bugs Corregidos
 
-7. **Select Components**: Cambiado de `defaultValue` a `value` para sincronización con React Hook Form
-8. **Filtro de Torneos**: Usar `getAll()` para múltiples estados
-9. **Valor "all" en Filtros**: Agregado a enums Zod con lógica condicional
-10. **Conteo de Torneos en Categorías**: Solo cuenta torneos activos
-11. **Botón Volver en Usuarios**: Navegación directa en lugar de `router.back()`
+13. **Select Components**: Cambiado de `defaultValue` a `value` para sincronización con React Hook Form
+14. **Filtro de Torneos**: Usar `getAll()` para múltiples estados
+15. **Valor "all" en Filtros**: Agregado a enums Zod con lógica condicional
+16. **Conteo de Torneos en Categorías**: Solo cuenta torneos activos
+17. **Botón Volver en Usuarios**: Navegación directa en lugar de `router.back()`
 
 ---
 

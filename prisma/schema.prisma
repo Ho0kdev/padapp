@@ -209,6 +209,7 @@ model Tournament {
   minParticipants   Int                  @default(4)
   registrationFee   Float                @default(0)
   prizePool         Float                @default(0)
+  rankingPoints     Int                  @default(1000)
   setsToWin         Int                  @default(2)
   gamesToWinSet     Int                  @default(6)
   tiebreakAt        Int                  @default(6)

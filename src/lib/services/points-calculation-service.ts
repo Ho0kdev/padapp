@@ -2,26 +2,35 @@ import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
-// Sistema de puntos por posición en torneo
-const POSITION_POINTS = {
-  1: 1000,  // 1er lugar
-  2: 700,   // 2do lugar
-  3: 500,   // 3er lugar
-  4: 400,   // 4to lugar
-  5: 300,   // Cuartos de final
-  6: 300,
-  7: 300,
-  8: 300,
-  9: 200,   // Octavos de final
-  10: 200,
-  11: 200,
-  12: 200,
-  13: 200,
-  14: 200,
-  15: 200,
-  16: 200,
-  17: 100,  // Primera ronda
+// Sistema de puntos por posición en torneo (proporciones basadas en 1000 pts)
+// Estos son porcentajes que se aplicarán a rankingPoints del torneo
+const POSITION_PERCENTAGES = {
+  1: 1.00,   // 100% - 1er lugar
+  2: 0.70,   // 70% - 2do lugar
+  3: 0.50,   // 50% - 3er lugar
+  4: 0.40,   // 40% - 4to lugar
+  5: 0.30,   // 30% - Cuartos de final
+  6: 0.30,
+  7: 0.30,
+  8: 0.30,
+  9: 0.20,   // 20% - Octavos de final
+  10: 0.20,
+  11: 0.20,
+  12: 0.20,
+  13: 0.20,
+  14: 0.20,
+  15: 0.20,
+  16: 0.20,
+  17: 0.10,  // 10% - Primera ronda
 } as const
+
+/**
+ * Calcular puntos por posición basados en rankingPoints del torneo
+ */
+function calculatePositionPoints(position: number, tournamentRankingPoints: number): number {
+  const percentage = POSITION_PERCENTAGES[position as keyof typeof POSITION_PERCENTAGES] || 0
+  return Math.round(tournamentRankingPoints * percentage)
+}
 
 // Puntos por participación base
 const PARTICIPATION_POINTS = 50
@@ -55,6 +64,7 @@ interface TournamentResult {
   setsLost: number
   participantCount: number
   tournamentType: string
+  tournamentRankingPoints: number
 }
 
 export class PointsCalculationService {
@@ -64,17 +74,19 @@ export class PointsCalculationService {
   static calculatePlayerTournamentPoints(result: TournamentResult): number {
     let points = PARTICIPATION_POINTS
 
-    // Puntos por posición final
+    // Puntos por posición final (basados en rankingPoints del torneo)
     if (result.finalPosition && result.finalPosition <= 17) {
-      const positionPoints = POSITION_POINTS[result.finalPosition as keyof typeof POSITION_POINTS] || 0
+      const positionPoints = calculatePositionPoints(result.finalPosition, result.tournamentRankingPoints)
       points += positionPoints
     }
 
-    // Bonus por victorias
-    points += result.matchesWon * 25
+    // Bonus por victorias (proporcional a rankingPoints)
+    const victoryBonus = Math.round((result.tournamentRankingPoints / 1000) * 25)
+    points += result.matchesWon * victoryBonus
 
-    // Bonus por sets ganados
-    points += result.setsWon * 5
+    // Bonus por sets ganados (proporcional a rankingPoints)
+    const setBonus = Math.round((result.tournamentRankingPoints / 1000) * 5)
+    points += result.setsWon * setBonus
 
     // Aplicar multiplicador por tipo de torneo
     const tournamentMultiplier = TOURNAMENT_TYPE_MULTIPLIER[result.tournamentType as keyof typeof TOURNAMENT_TYPE_MULTIPLIER] || 1.0
@@ -153,7 +165,8 @@ export class PointsCalculationService {
           setsWon: stat.setsWon,
           setsLost: stat.setsLost,
           participantCount,
-          tournamentType: tournament.type
+          tournamentType: tournament.type,
+          tournamentRankingPoints: tournament.rankingPoints
         }
 
         const calculatedPoints = this.calculatePlayerTournamentPoints(result)
