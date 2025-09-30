@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { UserRole, UserStatus, Gender } from '@prisma/client'
 import { requireAuth, authorize, handleAuthError, Action, Resource, AuditLogger } from '@/lib/rbac'
+import { invalidateUserCache } from '@/lib/rbac/cache'
+import { rateLimit, RateLimitPresets } from '@/lib/rbac/rate-limit'
 
 interface RouteContext {
   params: Promise<{ id: string }>
@@ -145,6 +147,20 @@ export async function GET(
     // Verificar permisos usando el nuevo sistema RBAC
     await authorize(Action.READ, Resource.USER, user)
 
+    // Auditar acceso a perfil de otro usuario (solo si no es el mismo)
+    if (session.user.id !== id) {
+      await AuditLogger.log(
+        session,
+        {
+          action: Action.READ,
+          resource: Resource.USER,
+          resourceId: id,
+          description: `Usuario ${session.user.email} consultó perfil de ${user.email}`,
+        },
+        request
+      )
+    }
+
     return NextResponse.json(user)
 
   } catch (error) {
@@ -157,6 +173,10 @@ export async function PUT(
   { params }: RouteContext
 ) {
   try {
+    // Rate limiting moderado: 20 intentos por minuto
+    const rateLimitResponse = await rateLimit(request, RateLimitPresets.MODERATE)
+    if (rateLimitResponse) return rateLimitResponse
+
     const session = await requireAuth()
 
     if (!session) {
@@ -274,12 +294,19 @@ export async function PUT(
 
     // Only admins can change role and status
     const userUpdate: any = {}
+    let roleOrStatusChanged = false
 
     if (session.user.role === UserRole.ADMIN) {
       if (name !== undefined) userUpdate.name = name
       if (email !== undefined) userUpdate.email = email
-      if (role !== undefined) userUpdate.role = role
-      if (status !== undefined) userUpdate.status = status
+      if (role !== undefined) {
+        userUpdate.role = role
+        roleOrStatusChanged = existingUser.role !== role
+      }
+      if (status !== undefined) {
+        userUpdate.status = status
+        roleOrStatusChanged = roleOrStatusChanged || existingUser.status !== status
+      }
     } else {
       // Regular users can only update their name
       if (name !== undefined) userUpdate.name = name
@@ -378,6 +405,11 @@ export async function PUT(
       }
     }
 
+    // Invalidar caché si cambió role o status
+    if (roleOrStatusChanged) {
+      invalidateUserCache(id)
+    }
+
     // Registrar auditoría
     await AuditLogger.log(
       session,
@@ -404,6 +436,10 @@ export async function DELETE(
   { params }: RouteContext
 ) {
   try {
+    // Rate limiting estricto para DELETE: 5 intentos por minuto
+    const rateLimitResponse = await rateLimit(request, RateLimitPresets.STRICT)
+    if (rateLimitResponse) return rateLimitResponse
+
     // Verificar que sea ADMIN
     const session = await authorize(Action.DELETE, Resource.USER)
 
@@ -463,6 +499,9 @@ export async function DELETE(
         email: `deleted_${Date.now()}_${user.email}`
       }
     })
+
+    // Invalidar caché porque cambió el status
+    invalidateUserCache(id)
 
     // Registrar auditoría
     await AuditLogger.log(
@@ -526,6 +565,9 @@ export async function PATCH(
         }
       }
     })
+
+    // Invalidar caché porque cambió el status
+    invalidateUserCache(id)
 
     // Registrar auditoría
     await AuditLogger.log(

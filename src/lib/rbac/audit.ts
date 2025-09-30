@@ -11,6 +11,7 @@ import { Action, Resource } from './types'
 const ACTION_TO_LOG_ACTION: Record<string, LogAction> = {
   // Users
   'create:User': LogAction.USER_ACTION,
+  'read:User': LogAction.USER_ACTION,
   'update:User': LogAction.USER_ACTION,
   'delete:User': LogAction.USER_ACTION,
 
@@ -190,7 +191,12 @@ class RankingLogStrategy implements LogStrategy {
 
 class DefaultLogStrategy implements LogStrategy {
   async createLog(data: LogData): Promise<void> {
-    console.log(`Audit log created:`, data)
+    console.log(`[AUDIT] ${data.logAction}:`, {
+      userId: data.userId,
+      resourceId: data.resourceId,
+      description: data.description,
+      timestamp: new Date().toISOString(),
+    })
   }
 }
 

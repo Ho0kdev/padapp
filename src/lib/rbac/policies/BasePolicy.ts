@@ -21,7 +21,7 @@ export abstract class BasePolicy {
    */
   authorize(action: Action, resource: Resource, subject?: any): void {
     if (!this.can(action, resource, subject)) {
-      throw new UnauthorizedError(
+      throw new ForbiddenError(
         `No tienes permiso para ${action} en ${resource}`
       )
     }
@@ -52,13 +52,25 @@ export abstract class BasePolicy {
 }
 
 /**
- * Error de autorización personalizado
+ * Error de autenticación (401) - Usuario no autenticado
  */
 export class UnauthorizedError extends Error {
-  statusCode: number = 403
+  statusCode: number = 401
 
-  constructor(message: string = 'No autorizado') {
+  constructor(message: string = 'Debes iniciar sesión para acceder a este recurso') {
     super(message)
     this.name = 'UnauthorizedError'
+  }
+}
+
+/**
+ * Error de autorización (403) - Usuario autenticado pero sin permisos
+ */
+export class ForbiddenError extends Error {
+  statusCode: number = 403
+
+  constructor(message: string = 'No tienes permiso para realizar esta acción') {
+    super(message)
+    this.name = 'ForbiddenError'
   }
 }

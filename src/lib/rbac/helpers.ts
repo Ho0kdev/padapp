@@ -2,9 +2,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession, Session } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { defineAbilitiesFor } from './ability'
+import { getCachedAbility } from './cache'
 import { Action, Resource, AuthorizationContext } from './types'
-import { UnauthorizedError } from './policies/BasePolicy'
+import { UnauthorizedError, ForbiddenError } from './policies/BasePolicy'
 import { UserPolicy } from './policies/UserPolicy'
 import { TournamentPolicy } from './policies/TournamentPolicy'
 
@@ -50,7 +50,7 @@ export async function authorize(
   const session = await requireAuth()
 
   if (!(await checkPermission(session, action, resource, subject))) {
-    throw new UnauthorizedError(
+    throw new ForbiddenError(
       `No tienes permiso para realizar esta acción`
     )
   }
@@ -68,7 +68,7 @@ async function checkPermission(
   subject?: any
 ): Promise<boolean> {
   const context = createAuthContext(session)
-  const ability = defineAbilitiesFor(context)
+  const ability = getCachedAbility(context)
   return ability.check(action, resource, subject)
 }
 
@@ -78,7 +78,7 @@ async function checkPermission(
 export async function getCurrentAbility() {
   const session = await requireAuth()
   const context = createAuthContext(session)
-  return defineAbilitiesFor(context)
+  return getCachedAbility(context)
 }
 
 /**
@@ -140,6 +140,7 @@ export function withPermission<T = any>(
 export function handleAuthError(error: unknown): NextResponse {
   console.error('Authorization error:', error)
 
+  // Error 401 - No autenticado
   if (error instanceof UnauthorizedError) {
     return NextResponse.json(
       { error: error.message },
@@ -147,6 +148,15 @@ export function handleAuthError(error: unknown): NextResponse {
     )
   }
 
+  // Error 403 - Sin permisos
+  if (error instanceof ForbiddenError) {
+    return NextResponse.json(
+      { error: error.message },
+      { status: error.statusCode }
+    )
+  }
+
+  // Otros errores - 500
   if (error instanceof Error) {
     return NextResponse.json(
       { error: error.message },

@@ -1,6 +1,13 @@
 // src/lib/rbac/ability.ts
 import { UserRole } from '@prisma/client'
 import { Action, Resource, PermissionRule, AuthorizationContext } from './types'
+import {
+  ownsUser,
+  ownsTeam,
+  ownsRegistration,
+  ownsMatch,
+  ownsNotification,
+} from './ownership'
 
 /**
  * Motor de habilidades (Ability) - inspirado en CASL
@@ -161,7 +168,15 @@ export class Ability {
  */
 export function defineAbilitiesFor(context: AuthorizationContext): Ability {
   const ability = new Ability(context)
-  const { userRole, userId } = context
+  const { userRole, userId, userStatus } = context
+
+  // Si el usuario está SUSPENDED o INACTIVE, no tiene permisos (excepto leer su propio perfil)
+  if (userStatus === 'SUSPENDED' || userStatus === 'INACTIVE') {
+    // Solo puede leer su propio perfil de usuario
+    ability.can(Action.READ, Resource.USER, ownsUser(userId))
+    // Denegar todo lo demás
+    return ability
+  }
 
   switch (userRole) {
     case UserRole.ADMIN:
@@ -187,9 +202,7 @@ export function defineAbilitiesFor(context: AuthorizationContext): Ability {
     case UserRole.CLUB_ADMIN:
       // CLUB_ADMIN puede gestionar su club y sus recursos
       ability.can([Action.READ, Action.LIST], Resource.USER)
-      ability.can([Action.READ, Action.UPDATE], Resource.USER, {
-        id: userId
-      })
+      ability.can([Action.READ, Action.UPDATE], Resource.USER, ownsUser(userId))
 
       ability.can(Action.MANAGE, [
         Resource.CLUB,
@@ -209,12 +222,8 @@ export function defineAbilitiesFor(context: AuthorizationContext): Ability {
 
     case UserRole.PLAYER:
       // PLAYER solo puede ver su perfil y participar en torneos
-      ability.can(Action.READ, Resource.USER, {
-        id: userId
-      })
-      ability.can(Action.UPDATE, Resource.USER, {
-        id: userId
-      })
+      ability.can(Action.READ, Resource.USER, ownsUser(userId))
+      ability.can(Action.UPDATE, Resource.USER, ownsUser(userId))
 
       ability.can([Action.READ, Action.LIST], [
         Resource.TOURNAMENT,
@@ -224,22 +233,15 @@ export function defineAbilitiesFor(context: AuthorizationContext): Ability {
         Resource.RANKING,
       ])
 
+      // Puede crear inscripciones y ver las propias
       ability.can([Action.CREATE, Action.READ, Action.LIST], Resource.REGISTRATION)
-      ability.can(Action.READ, Resource.REGISTRATION, {
-        'team.player1Id': userId
-      })
-      ability.can(Action.READ, Resource.REGISTRATION, {
-        'team.player2Id': userId
-      })
+      ability.can([Action.READ, Action.UPDATE, Action.DELETE], Resource.REGISTRATION, ownsRegistration(userId))
 
-      ability.can([Action.READ, Action.LIST], Resource.TEAM, (team: any) => {
-        return team.player1Id === userId || team.player2Id === userId
-      })
+      // Puede ver equipos donde es miembro
+      ability.can([Action.READ, Action.LIST], Resource.TEAM, ownsTeam(userId))
 
       ability.can([Action.READ, Action.LIST], Resource.MATCH)
-      ability.can([Action.READ, Action.LIST], Resource.NOTIFICATION, {
-        userId: userId
-      })
+      ability.can([Action.READ, Action.LIST], Resource.NOTIFICATION, ownsNotification(userId))
 
       // No puede acceder al dashboard general
       ability.cannot(Action.READ, Resource.DASHBOARD)
@@ -247,12 +249,8 @@ export function defineAbilitiesFor(context: AuthorizationContext): Ability {
 
     case UserRole.REFEREE:
       // REFEREE puede gestionar partidos asignados
-      ability.can(Action.READ, Resource.USER, {
-        id: userId
-      })
-      ability.can(Action.UPDATE, Resource.USER, {
-        id: userId
-      })
+      ability.can(Action.READ, Resource.USER, ownsUser(userId))
+      ability.can(Action.UPDATE, Resource.USER, ownsUser(userId))
 
       ability.can([Action.READ, Action.LIST], [
         Resource.TOURNAMENT,
@@ -262,13 +260,10 @@ export function defineAbilitiesFor(context: AuthorizationContext): Ability {
         Resource.TEAM,
       ])
 
-      ability.can([Action.READ, Action.LIST, Action.UPDATE], Resource.MATCH, {
-        refereeId: userId
-      })
+      // Solo puede actualizar partidos asignados a él
+      ability.can([Action.READ, Action.LIST, Action.UPDATE], Resource.MATCH, ownsMatch(userId))
 
-      ability.can([Action.READ, Action.LIST], Resource.NOTIFICATION, {
-        userId: userId
-      })
+      ability.can([Action.READ, Action.LIST], Resource.NOTIFICATION, ownsNotification(userId))
 
       ability.can(Action.READ, Resource.DASHBOARD)
       break
