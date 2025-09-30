@@ -39,7 +39,8 @@ import {
   Trash2,
   Download,
   Copy,
-  Share2
+  Share2,
+  GitBranch
 } from "lucide-react"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
@@ -144,6 +145,15 @@ export function TournamentDetail({ tournament, currentUserId }: TournamentDetail
         </div>
 
         <div className="flex items-center gap-2">
+          {isOwner && (
+            <Link href={`/dashboard/tournaments/${tournament.id}/brackets`}>
+              <Button variant="default">
+                <GitBranch className="mr-2 h-4 w-4" />
+                Gestionar Brackets
+              </Button>
+            </Link>
+          )}
+
           <Button variant="outline" onClick={handleCopyLink}>
             <Copy className="mr-2 h-4 w-4" />
             Copiar enlace

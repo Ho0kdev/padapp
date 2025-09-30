@@ -11,21 +11,22 @@ const createPaymentSchema = z.object({
 })
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await requireAuth()
+    const { id } = await params
 
     const body = await request.json()
     const validatedData = createPaymentSchema.parse(body)
 
     // Verificar que la inscripción existe
     const registration = await prisma.team.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         tournament: {
           select: {
@@ -134,10 +135,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     await requireAuth()
+    const { id } = await params
 
     // Verificar que la inscripción existe
     const registration = await prisma.team.findUnique({
-      where: { id: params.id },
+      where: { id },
     })
 
     if (!registration) {
@@ -152,7 +154,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     // Obtener todos los pagos de la inscripción
     const payments = await prisma.teamPayment.findMany({
-      where: { teamId: params.id },
+      where: { teamId: id },
       orderBy: { createdAt: 'desc' }
     })
 

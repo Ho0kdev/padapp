@@ -1,0 +1,290 @@
+"use client"
+
+import { useEffect, useState } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Trophy, Calendar, MapPin, AlertCircle } from "lucide-react"
+import { cn } from "@/lib/utils"
+
+interface Team {
+  id: string
+  name?: string | null
+  player1: {
+    firstName: string
+    lastName: string
+  }
+  player2: {
+    firstName: string
+    lastName: string
+  }
+}
+
+interface Match {
+  id: string
+  roundNumber: number | null
+  matchNumber: number | null
+  phaseType: string
+  status: string
+  team1?: Team | null
+  team2?: Team | null
+  winnerTeam?: {
+    id: string
+  } | null
+  team1SetsWon: number
+  team2SetsWon: number
+  scheduledAt?: Date | null
+  court?: {
+    name: string
+    club: {
+      name: string
+    }
+  } | null
+}
+
+interface BracketData {
+  matches: Match[]
+  rounds: Record<number, Match[]>
+  totalRounds: number
+  totalMatches: number
+}
+
+interface BracketVisualizationProps {
+  tournamentId: string
+  categoryId: string
+  refreshTrigger?: number
+}
+
+export function BracketVisualization({
+  tournamentId,
+  categoryId,
+  refreshTrigger
+}: BracketVisualizationProps) {
+  const [bracket, setBracket] = useState<BracketData | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const fetchBracket = async () => {
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const response = await fetch(
+        `/api/tournaments/${tournamentId}/bracket?categoryId=${categoryId}`
+      )
+
+      if (!response.ok) {
+        throw new Error("Error al cargar el bracket")
+      }
+
+      const data = await response.json()
+      setBracket(data)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error desconocido")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchBracket()
+  }, [tournamentId, categoryId, refreshTrigger])
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-32 w-full" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
+    )
+  }
+
+  if (!bracket || bracket.totalMatches === 0) {
+    return (
+      <Alert>
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          No se ha generado el bracket para esta categoría aún.
+        </AlertDescription>
+      </Alert>
+    )
+  }
+
+  const getPhaseLabel = (phaseType: string): string => {
+    const labels: Record<string, string> = {
+      FINAL: "Final",
+      SEMIFINALS: "Semifinales",
+      QUARTERFINALS: "Cuartos de Final",
+      ROUND_OF_16: "Octavos de Final",
+      ROUND_OF_32: "1/16 de Final",
+      GROUP_STAGE: "Fase de Grupos",
+      THIRD_PLACE: "Tercer Lugar"
+    }
+    return labels[phaseType] || `Ronda ${phaseType}`
+  }
+
+  const getStatusBadge = (status: string) => {
+    const variants: Record<string, "default" | "secondary" | "success" | "warning"> = {
+      SCHEDULED: "default",
+      IN_PROGRESS: "warning",
+      COMPLETED: "success",
+      CANCELLED: "secondary",
+      WALKOVER: "secondary"
+    }
+
+    const labels: Record<string, string> = {
+      SCHEDULED: "Programado",
+      IN_PROGRESS: "En Curso",
+      COMPLETED: "Finalizado",
+      CANCELLED: "Cancelado",
+      WALKOVER: "WO"
+    }
+
+    return (
+      <Badge variant={variants[status] || "default"} className="text-xs">
+        {labels[status] || status}
+      </Badge>
+    )
+  }
+
+  const getTeamDisplay = (team?: Team | null): string => {
+    if (!team) return "Por definir"
+
+    if (team.name) return team.name
+
+    return `${team.player1.firstName} ${team.player1.lastName} / ${team.player2.firstName} ${team.player2.lastName}`
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Trophy className="h-5 w-5" />
+          <h3 className="text-lg font-semibold">
+            Bracket - {bracket.totalRounds} Rondas
+          </h3>
+        </div>
+        <Badge variant="outline">
+          {bracket.totalMatches} Partidos
+        </Badge>
+      </div>
+
+      {Object.entries(bracket.rounds)
+        .sort(([a], [b]) => Number(a) - Number(b))
+        .map(([roundNum, matches]) => {
+          const firstMatch = matches[0]
+          const phaseLabel = firstMatch
+            ? getPhaseLabel(firstMatch.phaseType)
+            : `Ronda ${roundNum}`
+
+          return (
+            <div key={roundNum} className="space-y-3">
+              <h4 className="font-medium text-sm text-muted-foreground">
+                {phaseLabel}
+              </h4>
+              <div className="grid gap-3">
+                {matches.map((match) => (
+                  <MatchCard
+                    key={match.id}
+                    match={match}
+                    getTeamDisplay={getTeamDisplay}
+                    getStatusBadge={getStatusBadge}
+                  />
+                ))}
+              </div>
+            </div>
+          )
+        })}
+    </div>
+  )
+}
+
+interface MatchCardProps {
+  match: Match
+  getTeamDisplay: (team?: Team | null) => string
+  getStatusBadge: (status: string) => React.ReactNode
+}
+
+function MatchCard({ match, getTeamDisplay, getStatusBadge }: MatchCardProps) {
+  const isCompleted = match.status === "COMPLETED"
+  const team1Won = match.winnerTeam?.id === match.team1?.id
+  const team2Won = match.winnerTeam?.id === match.team2?.id
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-sm font-medium">
+            Partido {match.matchNumber}
+          </CardTitle>
+          {getStatusBadge(match.status)}
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        <div className="space-y-1">
+          <div
+            className={cn(
+              "flex items-center justify-between p-2 rounded-md",
+              team1Won && "bg-green-50 dark:bg-green-950"
+            )}
+          >
+            <span className={cn("text-sm", team1Won && "font-semibold")}>
+              {getTeamDisplay(match.team1)}
+            </span>
+            {isCompleted && (
+              <span className="font-mono text-sm">
+                {match.team1SetsWon}
+              </span>
+            )}
+          </div>
+
+          <div
+            className={cn(
+              "flex items-center justify-between p-2 rounded-md",
+              team2Won && "bg-green-50 dark:bg-green-950"
+            )}
+          >
+            <span className={cn("text-sm", team2Won && "font-semibold")}>
+              {getTeamDisplay(match.team2)}
+            </span>
+            {isCompleted && (
+              <span className="font-mono text-sm">
+                {match.team2SetsWon}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {match.scheduledAt && (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Calendar className="h-3 w-3" />
+            {new Date(match.scheduledAt).toLocaleDateString("es-AR", {
+              day: "2-digit",
+              month: "short",
+              hour: "2-digit",
+              minute: "2-digit"
+            })}
+          </div>
+        )}
+
+        {match.court && (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <MapPin className="h-3 w-3" />
+            {match.court.name} - {match.court.club.name}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
