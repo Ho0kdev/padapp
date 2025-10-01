@@ -152,7 +152,7 @@ export class CourtLogService {
   ) {
     return this.log(context, {
       action: "COURT_STATUS_CHANGED",
-      description: `"${courtData.name}" (${oldStatus} -> ${newStatus})`,
+      description: `"${courtData.name}" (${oldStatus} → ${newStatus})`,
       oldData: { status: oldStatus },
       newData: { status: newStatus },
       metadata: {

@@ -143,7 +143,7 @@ export class ClubLogService {
 
     return this.log(context, {
       action: "CLUB_STATUS_CHANGED",
-      description: `"${clubData.name}" (${oldStatus} -> ${newStatus})`,
+      description: `"${clubData.name}" (${oldStatus} → ${newStatus})`,
       oldData: { status: oldStatus },
       newData: { status: newStatus },
       metadata: {

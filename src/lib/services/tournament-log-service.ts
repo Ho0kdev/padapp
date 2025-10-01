@@ -150,7 +150,7 @@ export class TournamentLogService {
   ) {
     return this.log(context, {
       action: "TOURNAMENT_STATUS_CHANGED",
-      description: `"${tournamentData.name}" (${oldStatus} -> ${newStatus})`,
+      description: `"${tournamentData.name}" (${oldStatus} → ${newStatus})`,
       oldData: { status: oldStatus },
       newData: { status: newStatus },
       metadata: {

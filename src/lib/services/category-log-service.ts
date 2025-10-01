@@ -149,7 +149,7 @@ export class CategoryLogService {
 
     return this.log(context, {
       action: "CATEGORY_STATUS_CHANGED",
-      description: `"${categoryData.name}" (${statusText(oldStatus)} -> ${statusText(newStatus)})`,
+      description: `"${categoryData.name}" (${statusText(oldStatus)} → ${statusText(newStatus)})`,
       oldData: { isActive: oldStatus },
       newData: { isActive: newStatus },
       metadata: {
