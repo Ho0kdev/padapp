@@ -110,6 +110,7 @@ export async function POST(request: NextRequest) {
         name: validatedData.name,
         description: validatedData.description,
         type: validatedData.type,
+        level: validatedData.level,
         minAge: validatedData.minAge,
         maxAge: validatedData.maxAge,
         genderRestriction: validatedData.genderRestriction as any,

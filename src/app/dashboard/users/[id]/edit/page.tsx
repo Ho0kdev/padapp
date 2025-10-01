@@ -67,14 +67,18 @@ export default async function EditUserPage({ params }: Props) {
   }
 
   // Transformar datos para el formulario
+  // Dividir el nombre completo en firstName y lastName si el jugador no tiene valores
+  const nameParts = user.name.split(' ')
+  const userFirstName = user.player?.firstName || nameParts[0] || ''
+  const userLastName = user.player?.lastName || nameParts.slice(1).join(' ') || ''
+
   const initialData = {
     email: user.email,
-    name: user.name,
+    firstName: userFirstName,
+    lastName: userLastName,
     role: user.role,
     status: user.status,
-    createPlayer: !!user.player,
-    firstName: user.player?.firstName || '',
-    lastName: user.player?.lastName || '',
+    createPlayer: user.player ? user.player.isActive : false,
     phone: user.player?.phone || '',
     dateOfBirth: user.player?.dateOfBirth ?
       new Date(user.player.dateOfBirth).toLocaleDateString('en-GB').replace(/\//g, '/') : '',
@@ -82,6 +86,7 @@ export default async function EditUserPage({ params }: Props) {
     dominantHand: user.player?.dominantHand,
     emergencyContactName: user.player?.emergencyContactName || '',
     emergencyContactPhone: user.player?.emergencyContactPhone || '',
+    bloodType: user.player?.bloodType || '',
     medicalNotes: user.player?.medicalNotes || '',
     rankingPoints: user.player?.rankingPoints || 0,
     categoryId: user.player?.primaryCategoryId || user.player?.rankings?.[0]?.category?.id,

@@ -165,3 +165,21 @@ export const getCategoryRestrictionsArray = (category: {
 
   return restrictions
 }
+
+// Opciones de estado de jugador (activo/inactivo)
+export const playerStatusOptions = [
+  { value: true, label: "Activo", color: "green", css: "bg-green-100 text-green-800 border-green-200" },
+  { value: false, label: "Inactivo", color: "gray", css: "bg-red-100 text-red-800 border-red-200" },
+] as const
+
+// Helper para obtener estilos de estado de jugador
+export const getPlayerStatusStyle = (isActive: boolean) => {
+  const option = playerStatusOptions.find(opt => opt.value === isActive)
+  return option ? option.css : playerStatusOptions[1].css
+}
+
+// Helper para obtener label de estado de jugador
+export const getPlayerStatusLabel = (isActive: boolean) => {
+  const option = playerStatusOptions.find(opt => opt.value === isActive)
+  return option ? option.label : "Desconocido"
+}

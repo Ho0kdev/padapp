@@ -49,6 +49,7 @@ interface CategoryWithDetails {
   name: string
   description: string | null
   type: "AGE" | "SKILL" | "RANKING" | "GENDER" | "MIXED"
+  level: number | null
   minAge: number | null
   maxAge: number | null
   genderRestriction: "MALE" | "FEMALE" | null
@@ -75,13 +76,17 @@ interface CategoryWithDetails {
     teams: {
       id: string
       name: string | null
-      player1: {
-        firstName: string
-        lastName: string
+      registration1: {
+        player: {
+          firstName: string
+          lastName: string
+        }
       }
-      player2: {
-        firstName: string
-        lastName: string
+      registration2: {
+        player: {
+          firstName: string
+          lastName: string
+        }
       }
     }[]
   }[]
@@ -303,6 +308,13 @@ export function CategoryDetail({ category, currentUserId }: CategoryDetailProps)
                   <p>{typeConfig?.label}</p>
                 </div>
 
+                {category.level && (
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Nivel</p>
+                    <p>Nivel {category.level}</p>
+                  </div>
+                )}
+
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Estado</p>
                   <p>{category.isActive ? "Activa" : "Inactiva"}</p>
@@ -451,10 +463,10 @@ export function CategoryDetail({ category, currentUserId }: CategoryDetailProps)
                           {tournamentCategory.teams.map((team) => (
                             <div key={team.id} className="border rounded-lg p-3">
                               <p className="font-medium">
-                                {team.name || `${team.player1.firstName} ${team.player1.lastName} / ${team.player2.firstName} ${team.player2.lastName}`}
+                                {team.name || `${team.registration1.player.firstName} ${team.registration1.player.lastName} / ${team.registration2.player.firstName} ${team.registration2.player.lastName}`}
                               </p>
                               <p className="text-sm text-muted-foreground">
-                                {team.player1.firstName} {team.player1.lastName} - {team.player2.firstName} {team.player2.lastName}
+                                {team.registration1.player.firstName} {team.registration1.player.lastName} - {team.registration2.player.firstName} {team.registration2.player.lastName}
                               </p>
                             </div>
                           ))}

@@ -11,7 +11,11 @@ export async function GET(request: NextRequest) {
     const categoryId = searchParams.get("categoryId")
 
     // Construir where clause
-    const where: any = {}
+    const where: any = {
+      player: {
+        isActive: true
+      }
+    }
     if (categoryId) {
       where.categoryId = categoryId
     }

@@ -1,35 +1,43 @@
 import { z } from "zod"
 
-export const registrationFormSchema = z.object({
+// Schema para crear una inscripción individual
+export const createRegistrationSchema = z.object({
   tournamentId: z.string().min(1, "El torneo es requerido"),
   categoryId: z.string().min(1, "La categoría es requerida"),
-  player1Id: z.string().min(1, "El jugador 1 es requerido"),
-  player2Id: z.string().min(1, "El jugador 2 es requerido"),
-  teamName: z.string().min(1, "El nombre del equipo es requerido").max(100, "El nombre no puede tener más de 100 caracteres").optional(),
+  playerId: z.string().min(1, "El jugador es requerido"),
   notes: z.string().max(500, "Las notas no pueden tener más de 500 caracteres").optional(),
-  // Datos de contacto para inscripciones públicas
-  contactEmail: z.string().email("Email inválido").optional(),
-  contactPhone: z.string().min(10, "Teléfono debe tener al menos 10 dígitos").optional(),
-  // Términos y condiciones
-  acceptTerms: z.boolean().refine(val => val === true, {
-    message: "Debe aceptar los términos y condiciones"
-  }),
-  acceptPrivacyPolicy: z.boolean().refine(val => val === true, {
-    message: "Debe aceptar la política de privacidad"
-  }),
-}).refine((data) => {
-  return data.player1Id !== data.player2Id
-}, {
-  message: "Los jugadores deben ser diferentes",
-  path: ["player2Id"]
 })
 
-export type RegistrationFormData = z.infer<typeof registrationFormSchema>
+// Schema para actualizar una inscripción
+export const updateRegistrationSchema = z.object({
+  notes: z.string().max(500, "Las notas no pueden tener más de 500 caracteres").optional(),
+  registrationStatus: z.enum([
+    "PENDING",
+    "CONFIRMED",
+    "PAID",
+    "CANCELLED",
+    "WAITLIST"
+  ]).optional(),
+})
 
-export const registrationFilterSchema = z.object({
-  page: z.number().int().positive().default(1),
-  limit: z.number().int().positive().max(100).default(10),
+// Schema para cambiar el estado de una inscripción
+export const updateRegistrationStatusSchema = z.object({
   status: z.enum([
+    "PENDING",
+    "CONFIRMED",
+    "PAID",
+    "CANCELLED",
+    "WAITLIST"
+  ]),
+  notes: z.string().optional(),
+})
+
+// Schema para obtener inscripciones (query params)
+export const getRegistrationsSchema = z.object({
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().positive().max(100).default(10),
+  status: z.enum([
+    "all",
     "PENDING",
     "CONFIRMED",
     "PAID",
@@ -42,38 +50,53 @@ export const registrationFilterSchema = z.object({
   playerId: z.string().optional(),
 })
 
-export type RegistrationFilters = z.infer<typeof registrationFilterSchema>
-
-// Esquema para el pago de inscripción
-export const paymentSchema = z.object({
-  registrationId: z.string().min(1, "ID de inscripción requerido"),
-  amount: z.number().positive("El monto debe ser positivo"),
-  paymentMethod: z.enum(["STRIPE", "CASH", "TRANSFER", "OTHER"]).default("STRIPE"),
-  transactionId: z.string().optional(),
-  metadata: z.record(z.string()).optional(),
+// Schema para crear un pago de inscripción
+export const createRegistrationPaymentSchema = z.object({
+  amount: z.number().min(0, "El monto no puede ser negativo"),
+  paymentMethod: z.string().min(1, "El método de pago es requerido").max(50),
+  transactionId: z.string().max(100).optional(),
 })
 
-export type PaymentData = z.infer<typeof paymentSchema>
-
-// Esquema para validación de elegibilidad
-export const eligibilityCheckSchema = z.object({
-  tournamentId: z.string().min(1, "ID del torneo requerido"),
-  categoryId: z.string().min(1, "ID de categoría requerido"),
-  player1Id: z.string().min(1, "ID del jugador 1 requerido"),
-  player2Id: z.string().min(1, "ID del jugador 2 requerido"),
+// Schema para actualizar un pago de inscripción
+export const updateRegistrationPaymentSchema = z.object({
+  paymentStatus: z.enum([
+    "PENDING",
+    "PAID",
+    "FAILED",
+    "REFUNDED"
+  ]),
+  transactionId: z.string().max(100).optional(),
+  paidAt: z.date().optional(),
 })
 
-export type EligibilityCheckData = z.infer<typeof eligibilityCheckSchema>
+// Tipos TypeScript derivados de los schemas
+export type CreateRegistrationInput = z.infer<typeof createRegistrationSchema>
+export type UpdateRegistrationInput = z.infer<typeof updateRegistrationSchema>
+export type UpdateRegistrationStatusInput = z.infer<typeof updateRegistrationStatusSchema>
+export type GetRegistrationsInput = z.infer<typeof getRegistrationsSchema>
+export type CreateRegistrationPaymentInput = z.infer<typeof createRegistrationPaymentSchema>
+export type UpdateRegistrationPaymentInput = z.infer<typeof updateRegistrationPaymentSchema>
 
-// Opciones para los selects del formulario - importar desde status-styles.ts para mantener consistencia
+// Opciones para selects de estado
+export const registrationStatusOptions = [
+  { value: "PENDING", label: "Pendiente" },
+  { value: "CONFIRMED", label: "Confirmada" },
+  { value: "PAID", label: "Pagada" },
+  { value: "CANCELLED", label: "Cancelada" },
+  { value: "WAITLIST", label: "Lista de Espera" },
+] as const
 
+// Opciones para métodos de pago
 export const paymentMethodOptions = [
-  { value: "STRIPE", label: "Tarjeta de Crédito/Débito" },
   { value: "CASH", label: "Efectivo" },
   { value: "TRANSFER", label: "Transferencia Bancaria" },
+  { value: "CREDIT_CARD", label: "Tarjeta de Crédito" },
+  { value: "DEBIT_CARD", label: "Tarjeta de Débito" },
+  { value: "MERCADOPAGO", label: "Mercado Pago" },
   { value: "OTHER", label: "Otro" },
 ] as const
 
+// Opciones para estado de pago
 export const paymentStatusOptions = [
   { value: "PENDING", label: "Pendiente", color: "yellow" },
   { value: "PAID", label: "Pagado", color: "green" },

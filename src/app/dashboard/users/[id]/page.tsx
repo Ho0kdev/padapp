@@ -47,7 +47,7 @@ async function getUser(id: string) {
                 currentPoints: 'desc'
               }
             },
-            team1Memberships: {
+            registrations: {
               include: {
                 tournament: {
                   select: {
@@ -71,44 +71,12 @@ async function getUser(id: string) {
                     maxRankingPoints: true
                   }
                 },
-                player2: {
+                payment: {
                   select: {
                     id: true,
-                    firstName: true,
-                    lastName: true
-                  }
-                }
-              }
-            },
-            team2Memberships: {
-              include: {
-                tournament: {
-                  select: {
-                    id: true,
-                    name: true,
-                    status: true,
-                    type: true,
-                    tournamentStart: true,
-                    tournamentEnd: true
-                  }
-                },
-                category: {
-                  select: {
-                    id: true,
-                    name: true,
-                    type: true,
-                    genderRestriction: true,
-                    minAge: true,
-                    maxAge: true,
-                    minRankingPoints: true,
-                    maxRankingPoints: true
-                  }
-                },
-                player1: {
-                  select: {
-                    id: true,
-                    firstName: true,
-                    lastName: true
+                    amount: true,
+                    paymentStatus: true,
+                    paidAt: true
                   }
                 }
               }

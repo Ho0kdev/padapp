@@ -31,7 +31,8 @@ import { useToast } from '@/hooks/use-toast'
 
 const userFormSchema = z.object({
   email: z.string().email('Email inválido'),
-  name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres'),
+  firstName: z.string().min(2, 'El nombre debe tener al menos 2 caracteres'),
+  lastName: z.string().min(2, 'El apellido debe tener al menos 2 caracteres'),
   password: z.string().optional().refine((val) => !val || val.length >= 6, {
     message: 'La contraseña debe tener al menos 6 caracteres'
   }),
@@ -39,15 +40,13 @@ const userFormSchema = z.object({
   status: z.enum(['ACTIVE', 'INACTIVE']).default('ACTIVE'),
   createPlayer: z.boolean().default(true),
   // Player fields
-  firstName: z.string().optional(),
-  lastName: z.string().optional(),
   phone: z.string().optional(),
   dateOfBirth: z.string().regex(/^\d{2}\/\d{2}\/\d{4}$/, 'Formato debe ser DD/MM/YYYY').optional().or(z.literal('')),
   gender: z.enum(['MALE', 'FEMALE', 'MIXED']).optional(),
   dominantHand: z.enum(['RIGHT', 'LEFT', 'AMBIDEXTROUS']).optional(),
   emergencyContactName: z.string().optional(),
   emergencyContactPhone: z.string().optional(),
-  bloodType: z.enum(['A_POSITIVE', 'A_NEGATIVE', 'B_POSITIVE', 'B_NEGATIVE', 'AB_POSITIVE', 'AB_NEGATIVE', 'O_POSITIVE', 'O_NEGATIVE']).optional(),
+  bloodType: z.enum(['A_POSITIVE', 'A_NEGATIVE', 'B_POSITIVE', 'B_NEGATIVE', 'AB_POSITIVE', 'AB_NEGATIVE', 'O_POSITIVE', 'O_NEGATIVE']).optional().or(z.literal('')),
   medicalNotes: z.string().optional(),
   rankingPoints: z.number().min(0).default(0),
   categoryId: z.string().optional(),
@@ -120,7 +119,6 @@ export function UserForm({ initialData, userId }: UserFormProps) {
   const createPlayer = form.watch('createPlayer')
   const selectedRole = form.watch('role')
   const selectedGender = form.watch('gender')
-  const fullName = form.watch('name') || ''
 
   // Load categories
   useEffect(() => {
@@ -194,14 +192,7 @@ export function UserForm({ initialData, userId }: UserFormProps) {
     try {
       setLoading(true)
 
-      // Auto-divide the full name into first and last name for player creation
       let submissionData = { ...values }
-
-      if (values.createPlayer && values.name && values.name.trim()) {
-        const nameParts = values.name.trim().split(' ')
-        submissionData.firstName = nameParts[0] || ''
-        submissionData.lastName = nameParts.slice(1).join(' ') || ''
-      }
 
       // Convert date format from DD/MM/YYYY to ISO string if provided
       if (submissionData.dateOfBirth && submissionData.dateOfBirth.trim()) {
@@ -215,6 +206,11 @@ export function UserForm({ initialData, userId }: UserFormProps) {
       // For editing, don't send password if empty
       if (isEditing && !submissionData.password) {
         delete submissionData.password
+      }
+
+      // Clean up empty bloodType
+      if (submissionData.bloodType === '') {
+        submissionData.bloodType = undefined
       }
 
       const url = isEditing ? `/api/users/${userId}` : '/api/users'
@@ -289,26 +285,6 @@ export function UserForm({ initialData, userId }: UserFormProps) {
 
                 <FormField
                   control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nombre completo *</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          placeholder="Juan Pérez"
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        {createPlayer && 'Se usará automáticamente como nombre del jugador (se dividirá en nombre y apellido)'}
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
                   name="password"
                   render={({ field }) => (
                     <FormItem>
@@ -354,6 +330,40 @@ export function UserForm({ initialData, userId }: UserFormProps) {
 
                 <FormField
                   control={form.control}
+                  name="firstName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nombre *</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          placeholder="Juan"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="lastName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Apellido *</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          placeholder="Pérez"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
                   name="role"
                   render={({ field }) => (
                     <FormItem>
@@ -376,31 +386,28 @@ export function UserForm({ initialData, userId }: UserFormProps) {
                   )}
                 />
 
-
-                {selectedRole !== 'PLAYER' && (
-                  <FormField
-                    control={form.control}
-                    name="createPlayer"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                        <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={handleCreatePlayerChange}
-                          />
-                        </FormControl>
-                        <div className="space-y-1 leading-none">
-                          <FormLabel>
-                            Crear perfil de jugador
-                          </FormLabel>
-                          <FormDescription>
-                            Permite que este usuario también participe como jugador
-                          </FormDescription>
-                        </div>
-                      </FormItem>
-                    )}
-                  />
-                )}
+                <FormField
+                  control={form.control}
+                  name="createPlayer"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={handleCreatePlayerChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>
+                          Es jugador
+                        </FormLabel>
+                        <FormDescription>
+                          Solo Usuarios ACTIVOS pueden ser jugadores
+                        </FormDescription>
+                      </div>
+                    </FormItem>
+                  )}
+                />
             </CardContent>
           </Card>
 
@@ -414,15 +421,6 @@ export function UserForm({ initialData, userId }: UserFormProps) {
                 </CardTitle>
               </CardHeader>
               <CardContent className="grid gap-4 md:grid-cols-2">
-                <div className="md:col-span-2 p-4 bg-gray-50 rounded-lg border-l-4 border-blue-500">
-                  <p className="text-sm text-gray-700">
-                    <strong>Nombre del jugador:</strong> Se usará automáticamente el nombre completo del usuario "{fullName || 'Sin especificar'}"
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    El nombre se dividirá automáticamente en nombre y apellido cuando sea necesario
-                  </p>
-                </div>
-
                   <FormField
                     control={form.control}
                     name="phone"

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { UserRole, UserStatus, Gender } from '@prisma/client'
-import { requireAuth, handleAuthError } from '@/lib/rbac'
+import { requireAuth, authorize, handleAuthError, Action, Resource, AuditLogger } from '@/lib/rbac'
 import { rateLimit, RateLimitPresets } from '@/lib/rbac/rate-limit'
 
 export async function GET(request: NextRequest) {
@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
                 }
               }
             },
-            team1Memberships: {
+            registrations: {
               include: {
                 tournament: {
                   select: {
@@ -86,16 +86,11 @@ export async function GET(request: NextRequest) {
                     name: true,
                     status: true
                   }
-                }
-              }
-            },
-            team2Memberships: {
-              include: {
-                tournament: {
+                },
+                category: {
                   select: {
                     id: true,
-                    name: true,
-                    status: true
+                    name: true
                   }
                 }
               }
@@ -163,14 +158,13 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const {
       email,
-      name,
+      firstName,
+      lastName,
       password,
       role = UserRole.PLAYER,
       status = UserStatus.ACTIVE,
       createPlayer = true,
       // Player info
-      firstName,
-      lastName,
       phone,
       dateOfBirth,
       gender,
@@ -184,12 +178,15 @@ export async function POST(request: NextRequest) {
       profileImageUrl
     } = body
 
-    if (!email || !name) {
+    if (!email || !firstName || !lastName) {
       return NextResponse.json(
-        { error: 'Email y nombre son requeridos' },
+        { error: 'Email, nombre y apellido son requeridos' },
         { status: 400 }
       )
     }
+
+    // Generar nombre completo
+    const name = `${firstName} ${lastName}`
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
@@ -220,8 +217,8 @@ export async function POST(request: NextRequest) {
         status,
         player: createPlayer ? {
           create: {
-            firstName: firstName || name.split(' ')[0] || name,
-            lastName: lastName || name.split(' ').slice(1).join(' ') || '',
+            firstName,
+            lastName,
             phone,
             dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
             gender,

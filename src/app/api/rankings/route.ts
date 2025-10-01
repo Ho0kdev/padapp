@@ -20,6 +20,9 @@ export async function GET(request: NextRequest) {
     const where: any = {
       category: {
         isActive: true
+      },
+      player: {
+        isActive: true
       }
     }
 
@@ -98,7 +101,8 @@ export async function GET(request: NextRequest) {
             categoryId: ranking.categoryId,
             seasonYear: ranking.seasonYear,
             currentPoints: { gt: ranking.currentPoints },
-            category: { isActive: true }
+            category: { isActive: true },
+            player: { isActive: true }
           }
         })
 

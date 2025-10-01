@@ -93,6 +93,7 @@ export async function PUT(
         name: validatedData.name,
         description: validatedData.description,
         type: validatedData.type,
+        level: validatedData.level ?? null,
         minAge: validatedData.minAge ?? null,
         maxAge: validatedData.maxAge ?? null,
         genderRestriction: validatedData.genderRestriction as any ?? null,

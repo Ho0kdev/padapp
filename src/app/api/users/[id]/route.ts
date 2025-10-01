@@ -187,13 +187,13 @@ export async function PUT(
     const body = await request.json()
 
     const {
-      name,
+      firstName,
+      lastName,
       email,
       role,
       status,
+      createPlayer,
       // Player info
-      firstName,
-      lastName,
       phone,
       dateOfBirth,
       gender,
@@ -207,24 +207,16 @@ export async function PUT(
       categoryId
     } = body
 
+    // Generar nombre completo si se proporcionan firstName y lastName
+    const name = (firstName && lastName) ? `${firstName} ${lastName}` : undefined
+
     // Get existing user
     const existingUser = await prisma.user.findUnique({
       where: { id },
       include: {
         player: {
           include: {
-            team1Memberships: {
-              include: {
-                tournament: {
-                  select: {
-                    id: true,
-                    name: true,
-                    status: true
-                  }
-                }
-              }
-            },
-            team2Memberships: {
+            registrations: {
               include: {
                 tournament: {
                   select: {
@@ -261,16 +253,11 @@ export async function PUT(
     if (status === 'INACTIVE' && existingUser.status === 'ACTIVE') {
       const activeTournaments = []
 
-      // Check player memberships
+      // Check player registrations
       if (existingUser.player) {
-        existingUser.player.team1Memberships?.forEach(membership => {
-          if (membership.tournament.status !== 'COMPLETED' && membership.tournament.status !== 'CANCELLED') {
-            activeTournaments.push(membership.tournament.name)
-          }
-        })
-        existingUser.player.team2Memberships?.forEach(membership => {
-          if (membership.tournament.status !== 'COMPLETED' && membership.tournament.status !== 'CANCELLED') {
-            activeTournaments.push(membership.tournament.name)
+        existingUser.player.registrations?.forEach(registration => {
+          if (registration.tournament.status !== 'COMPLETED' && registration.tournament.status !== 'CANCELLED') {
+            activeTournaments.push(registration.tournament.name)
           }
         })
       }
@@ -322,6 +309,31 @@ export async function PUT(
 
     // Build player update data
     const playerUpdate: any = {}
+
+    // Handle player activation/deactivation
+    if (createPlayer !== undefined && existingUser.player) {
+      // Solo permitir activar jugador si el usuario está activo
+      if (createPlayer && status === UserStatus.INACTIVE) {
+        return NextResponse.json(
+          { error: 'No se puede activar un jugador mientras el usuario esté inactivo' },
+          { status: 400 }
+        )
+      }
+      // Si el usuario actual está inactivo, no permitir activar jugador
+      if (createPlayer && existingUser.status === UserStatus.INACTIVE && status !== UserStatus.ACTIVE) {
+        return NextResponse.json(
+          { error: 'No se puede activar un jugador mientras el usuario esté inactivo. Active primero el usuario.' },
+          { status: 400 }
+        )
+      }
+      playerUpdate.isActive = createPlayer
+    }
+
+    // Si el usuario se está desactivando, desactivar también al jugador
+    if (status === UserStatus.INACTIVE && existingUser.player && existingUser.player.isActive) {
+      playerUpdate.isActive = false
+    }
+
     if (firstName !== undefined) playerUpdate.firstName = firstName
     if (lastName !== undefined) playerUpdate.lastName = lastName
     if (phone !== undefined) playerUpdate.phone = phone

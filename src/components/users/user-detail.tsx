@@ -25,7 +25,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
 import { useAuth } from '@/hooks/use-auth'
-import { getCategoryTypeStyle, getCategoryTypeLabel, getTournamentStatusStyle, getTournamentStatusLabel, getCategoryRestrictionsArray } from '@/lib/utils/status-styles'
+import { getCategoryTypeStyle, getCategoryTypeLabel, getTournamentStatusStyle, getTournamentStatusLabel, getCategoryRestrictionsArray, getPlayerStatusStyle, getPlayerStatusLabel } from '@/lib/utils/status-styles'
 
 interface User {
   id: string
@@ -48,9 +48,11 @@ interface User {
     bloodType?: string
     medicalNotes?: string
     rankingPoints: number
+    isActive: boolean
     primaryCategory?: {
       id: string
       name: string
+      level?: number | null
     }
     rankings: Array<{
       id: string
@@ -381,6 +383,12 @@ export function UserDetail({ user }: UserDetailProps) {
                 <Separator />
                 <div className="space-y-3">
                   <h4 className="font-semibold">Información del Jugador</h4>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Estado del jugador:</span>
+                    <Badge variant="outline" className={getPlayerStatusStyle(user.player.isActive)}>
+                      {getPlayerStatusLabel(user.player.isActive)}
+                    </Badge>
+                  </div>
                   {user.player.dateOfBirth && (
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-muted-foreground">Fecha de nacimiento:</span>
@@ -444,7 +452,9 @@ export function UserDetail({ user }: UserDetailProps) {
                     {user.player.primaryCategory ? user.player.primaryCategory.name : '-'}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Categoría principal del jugador
+                    {user.player.primaryCategory?.level
+                      ? `Nivel ${user.player.primaryCategory.level}`
+                      : 'Categoría principal del jugador'}
                   </p>
                 </CardContent>
               </Card>

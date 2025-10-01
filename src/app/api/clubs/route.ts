@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
 
     // Construir filtro de where basado en parámetros
     const whereClause: any = {}
-    if (statusFilter) {
+    if (statusFilter && statusFilter !== 'all') {
       whereClause.status = statusFilter
     }
 

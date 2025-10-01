@@ -87,14 +87,14 @@ model Player {
   medicalNotes          String?
   rankingPoints         Int               @default(0)
   primaryCategoryId     String?
+  isActive              Boolean           @default(true)
   createdAt             DateTime          @default(now())
   updatedAt             DateTime          @updatedAt
   rankings              PlayerRanking[]
   rankingLogs           RankingLog[]
   primaryCategory       Category?         @relation("PlayerPrimaryCategory", fields: [primaryCategoryId], references: [id])
   user                  User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  team1Memberships      Team[]            @relation("TeamPlayer1")
-  team2Memberships      Team[]            @relation("TeamPlayer2")
+  registrations         Registration[]
   tournamentStats       TournamentStats[]
 
   @@map("players")
@@ -157,6 +157,7 @@ model Category {
   name                 String
   description          String?
   type                 CategoryType
+  level                Int?                 // Nivel numérico de la categoría (ej: 7ma=7, 4ta=4, B=6)
   minAge               Int?
   maxAge               Int?
   genderRestriction    Gender?
@@ -168,7 +169,8 @@ model Category {
   rankingLogs          RankingLog[]
   matches              Match[]
   rankings             PlayerRanking[]
-  primaryPlayers       Player[]            @relation("PlayerPrimaryCategory")
+  primaryPlayers       Player[]             @relation("PlayerPrimaryCategory")
+  registrations        Registration[]
   teams                Team[]
   tournamentCategories TournamentCategory[]
   zones                TournamentZone[]
@@ -223,6 +225,7 @@ model Tournament {
   updatedAt         DateTime             @updatedAt
   matches           Match[]
   notifications     Notification[]
+  registrations     Registration[]
   teams             Team[]
   categories        TournamentCategory[]
   clubs             TournamentClub[]
@@ -246,15 +249,16 @@ model TournamentClub {
 }
 
 model TournamentCategory {
-  id              String     @id @default(cuid())
+  id              String         @id @default(cuid())
   tournamentId    String
   categoryId      String
   maxTeams        Int?
   registrationFee Float?
   prizePool       Float?
+  registrations   Registration[]
   teams           Team[]
-  category        Category   @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  tournament      Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  category        Category       @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  tournament      Tournament     @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
 
   @@unique([tournamentId, categoryId])
   @@index([tournamentId])
@@ -262,49 +266,81 @@ model TournamentCategory {
   @@map("tournament_categories")
 }
 
+// INSCRIPCIONES INDIVIDUALES DE JUGADORES
+model Registration {
+  id                 String               @id @default(cuid())
+  tournamentId       String
+  categoryId         String
+  playerId           String
+  registrationStatus RegistrationStatus   @default(PENDING)
+  registeredAt       DateTime             @default(now())
+  notes              String?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  category           Category             @relation(fields: [categoryId], references: [id])
+  player             Player               @relation(fields: [playerId], references: [id])
+  tournament         Tournament           @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  tournamentCategory TournamentCategory   @relation(fields: [tournamentId, categoryId], references: [tournamentId, categoryId])
+  payment            RegistrationPayment?
+  teamAsPlayer1      Team[]               @relation("TeamRegistration1")
+  teamAsPlayer2      Team[]               @relation("TeamRegistration2")
+
+  @@unique([tournamentId, categoryId, playerId])
+  @@index([tournamentId])
+  @@index([categoryId])
+  @@index([playerId])
+  @@index([registrationStatus])
+  @@map("registrations")
+}
+
+// PAGOS DE INSCRIPCIONES INDIVIDUALES
+model RegistrationPayment {
+  id             String        @id @default(cuid())
+  registrationId String        @unique
+  amount         Float
+  paymentStatus  PaymentStatus @default(PENDING)
+  paymentMethod  String?
+  transactionId  String?
+  paidAt         DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  registration   Registration  @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+
+  @@map("registration_payments")
+}
+
+// EQUIPOS (PAREJAS)
 model Team {
   id                 String             @id @default(cuid())
   tournamentId       String
   categoryId         String
   name               String?
-  player1Id          String
-  player2Id          String
-  registrationStatus RegistrationStatus @default(PENDING)
-  registeredAt       DateTime           @default(now())
+  registration1Id    String
+  registration2Id    String
+  status             TeamStatus         @default(DRAFT)
+  confirmedAt        DateTime?
   seed               Int?
   notes              String?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
   wonGames           MatchGame[]        @relation("GameWinner")
   wonSets            MatchSet[]         @relation("SetWinner")
   team1Matches       Match[]            @relation("MatchTeam1")
   team2Matches       Match[]            @relation("MatchTeam2")
   wonMatches         Match[]            @relation("MatchWinner")
-  payments           TeamPayment[]
   category           Category           @relation(fields: [categoryId], references: [id])
-  player1            Player             @relation("TeamPlayer1", fields: [player1Id], references: [id])
-  player2            Player             @relation("TeamPlayer2", fields: [player2Id], references: [id])
+  registration1      Registration       @relation("TeamRegistration1", fields: [registration1Id], references: [id])
+  registration2      Registration       @relation("TeamRegistration2", fields: [registration2Id], references: [id])
   tournamentCategory TournamentCategory @relation(fields: [tournamentId, categoryId], references: [tournamentId, categoryId])
   tournament         Tournament         @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
   zoneTeams          ZoneTeam[]
 
+  @@unique([tournamentId, categoryId, registration1Id, registration2Id])
   @@index([tournamentId, categoryId])
-  @@index([player1Id])
-  @@index([player2Id])
-  @@index([registrationStatus])
+  @@index([registration1Id])
+  @@index([registration2Id])
+  @@index([status])
   @@map("teams")
-}
-
-model TeamPayment {
-  id            String        @id @default(cuid())
-  teamId        String
-  amount        Float
-  paymentStatus PaymentStatus @default(PENDING)
-  paymentMethod String?
-  transactionId String?
-  paidAt        DateTime?
-  createdAt     DateTime      @default(now())
-  team          Team          @relation(fields: [teamId], references: [id], onDelete: Cascade)
-
-  @@map("team_payments")
 }
 
 model TournamentZone {
@@ -544,22 +580,22 @@ model CategoryLog {
 }
 
 model RankingLog {
-  id         String         @id @default(cuid())
-  action     LogAction
+  id          String    @id @default(cuid())
+  action      LogAction
   description String
-  rankingId  String?
-  playerId   String?
-  categoryId String?
-  userId     String
-  ipAddress  String?
-  userAgent  String?
-  oldData    Json?
-  newData    Json?
-  metadata   Json?
-  createdAt  DateTime       @default(now())
-  category   Category?      @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  player     Player?        @relation(fields: [playerId], references: [id], onDelete: Cascade)
-  user       User           @relation(fields: [userId], references: [id])
+  rankingId   String?
+  playerId    String?
+  categoryId  String?
+  userId      String
+  ipAddress   String?
+  userAgent   String?
+  oldData     Json?
+  newData     Json?
+  metadata    Json?
+  createdAt   DateTime  @default(now())
+  category    Category? @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  player      Player?   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id])
 
   @@index([rankingId])
   @@index([playerId])
@@ -672,6 +708,12 @@ enum PaymentStatus {
   PAID
   FAILED
   REFUNDED
+}
+
+enum TeamStatus {
+  DRAFT
+  CONFIRMED
+  CANCELLED
 }
 
 enum PhaseType {

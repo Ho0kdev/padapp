@@ -91,7 +91,7 @@ export async function getDashboardStats() {
     currentMonth.setDate(1)
     currentMonth.setHours(0, 0, 0, 0)
 
-    const monthlyRevenue = await prisma.teamPayment.aggregate({
+    const monthlyRevenue = await prisma.registrationPayment.aggregate({
       where: {
         paymentStatus: 'PAID',
         paidAt: {
@@ -103,7 +103,7 @@ export async function getDashboardStats() {
       }
     })
 
-    const pendingPayments = await prisma.teamPayment.aggregate({
+    const pendingPayments = await prisma.registrationPayment.aggregate({
       where: {
         paymentStatus: 'PENDING'
       },
@@ -185,10 +185,18 @@ export async function getRecentActivity() {
       // Equipos registrados recientemente
       prisma.team.findMany({
         take: 3,
-        orderBy: { registeredAt: 'desc' },
+        orderBy: { createdAt: 'desc' },
         include: {
-          player1: true,
-          player2: true,
+          registration1: {
+            include: {
+              player: true
+            }
+          },
+          registration2: {
+            include: {
+              player: true
+            }
+          },
           tournament: true,
         }
       }),
@@ -209,23 +217,29 @@ export async function getRecentActivity() {
         orderBy: { updatedAt: 'desc' },
         include: {
           team1: {
-            include: { player1: true, player2: true }
+            include: {
+              registration1: { include: { player: true } },
+              registration2: { include: { player: true } }
+            }
           },
           team2: {
-            include: { player1: true, player2: true }
+            include: {
+              registration1: { include: { player: true } },
+              registration2: { include: { player: true } }
+            }
           },
           winnerTeam: true,
         }
       }),
       // Pagos recientes
-      prisma.teamPayment.findMany({
+      prisma.registrationPayment.findMany({
         take: 2,
         where: { paymentStatus: 'PAID' },
         orderBy: { paidAt: 'desc' },
         include: {
-          team: {
+          registration: {
             include: {
-              player1: true,
+              player: true,
               tournament: true,
             }
           }
@@ -240,13 +254,13 @@ export async function getRecentActivity() {
       activities.push({
         id: `team-${team.id}`,
         user: {
-          name: `${team.player1.firstName} ${team.player1.lastName}`,
-          initials: `${team.player1.firstName[0]}${team.player1.lastName[0]}`
+          name: `${team.registration1.player.firstName} ${team.registration1.player.lastName}`,
+          initials: `${team.registration1.player.firstName[0]}${team.registration1.player.lastName[0]}`
         },
-        action: 'se registró en',
+        action: 'formó equipo en',
         target: team.tournament.name,
-        time: formatRelativeTime(team.registeredAt),
-        timestamp: team.registeredAt,
+        time: formatRelativeTime(team.createdAt),
+        timestamp: team.createdAt,
       })
     })
 
@@ -271,9 +285,9 @@ export async function getRecentActivity() {
     // Procesar partidos completados
     recentMatches.forEach(match => {
       if (match.team1 && match.team2 && match.winnerTeam) {
-        const winnerName = match.winnerTeam.name || 
-          `${match.winnerTeam === match.team1 ? match.team1.player1.firstName : match.team2!.player1.firstName} & ${match.winnerTeam === match.team1 ? match.team1.player2.firstName : match.team2!.player2.firstName}`
-        
+        const winnerName = match.winnerTeam.name ||
+          `${match.winnerTeam === match.team1 ? match.team1.registration1.player.firstName : match.team2!.registration1.player.firstName} & ${match.winnerTeam === match.team1 ? match.team1.registration2.player.firstName : match.team2!.registration2.player.firstName}`
+
         activities.push({
           id: `match-${match.id}`,
           user: {
@@ -281,9 +295,9 @@ export async function getRecentActivity() {
             initials: winnerName.split(' & ')[0].split(' ').map((n: string) => n[0]).join('')
           },
           action: 'ganó el partido contra',
-          target: match.winnerTeam === match.team1 ? 
-            (match.team2.name || `${match.team2.player1.firstName} & ${match.team2.player2.firstName}`) :
-            (match.team1.name || `${match.team1.player1.firstName} & ${match.team1.player2.firstName}`),
+          target: match.winnerTeam === match.team1 ?
+            (match.team2.name || `${match.team2.registration1.player.firstName} & ${match.team2.registration2.player.firstName}`) :
+            (match.team1.name || `${match.team1.registration1.player.firstName} & ${match.team1.registration2.player.firstName}`),
           time: formatRelativeTime(match.updatedAt),
           timestamp: match.updatedAt,
         })
@@ -296,11 +310,11 @@ export async function getRecentActivity() {
         activities.push({
           id: `payment-${payment.id}`,
           user: {
-            name: `${payment.team.player1.firstName} ${payment.team.player1.lastName}`,
-            initials: `${payment.team.player1.firstName[0]}${payment.team.player1.lastName[0]}`
+            name: `${payment.registration.player.firstName} ${payment.registration.player.lastName}`,
+            initials: `${payment.registration.player.firstName[0]}${payment.registration.player.lastName[0]}`
           },
           action: 'pagó la inscripción para',
-          target: payment.team.tournament.name,
+          target: payment.registration.tournament.name,
           time: formatRelativeTime(payment.paidAt),
           timestamp: payment.paidAt,
         })

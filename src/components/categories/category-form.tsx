@@ -58,6 +58,7 @@ export function CategoryForm({ initialData, categoryId }: CategoryFormProps) {
       name: initialData?.name || "",
       description: initialData?.description || "",
       type: initialData?.type || "AGE",
+      level: initialData?.level?.toString() ?? "",
       minAge: initialData?.minAge?.toString() ?? "",
       maxAge: initialData?.maxAge?.toString() ?? "",
       genderRestriction: initialData?.genderRestriction || "NONE",
@@ -152,6 +153,29 @@ export function CategoryForm({ initialData, categoryId }: CategoryFormProps) {
                     </FormControl>
                     <FormDescription>
                       Información adicional sobre la categoría (opcional)
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="level"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nivel de Categoría</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min="1"
+                        max="10"
+                        placeholder="Ej: 7 para 7ma, 4 para 4ta, 6 para B..."
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Valor numérico del nivel (1-10). Usado para validar elegibilidad de jugadores. Niveles bajos = más avanzados
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

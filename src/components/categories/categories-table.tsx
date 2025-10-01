@@ -51,6 +51,7 @@ interface Category {
   name: string
   description?: string
   type: string
+  level?: number
   minAge?: number
   maxAge?: number
   genderRestriction?: string
@@ -217,6 +218,7 @@ export function CategoriesTable() {
             <TableRow>
               <TableHead>Nombre</TableHead>
               <TableHead>Tipo</TableHead>
+              <TableHead>Nivel</TableHead>
               <TableHead>Restricciones</TableHead>
               <TableHead>Torneos</TableHead>
               <TableHead>Estado</TableHead>
@@ -226,7 +228,7 @@ export function CategoriesTable() {
             <TableBody>
               {categories.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                     No se encontraron categorías
                   </TableCell>
                 </TableRow>
@@ -245,6 +247,15 @@ export function CategoriesTable() {
                     </TableCell>
                     <TableCell>
                       {getTypeBadge(category.type)}
+                    </TableCell>
+                    <TableCell>
+                      {category.level ? (
+                        <Badge variant="secondary" className="font-mono">
+                          Nivel {category.level}
+                        </Badge>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">-</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <div className="space-y-1">

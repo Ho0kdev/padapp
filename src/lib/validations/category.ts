@@ -12,6 +12,11 @@ export const categoryFormSchema = z.object({
   ], {
     required_error: "El tipo de categoría es requerido"
   }),
+  level: z.union([
+    z.string().transform((val) => val === "" ? undefined : parseInt(val, 10)),
+    z.number(),
+    z.undefined()
+  ]).refine((val) => val === undefined || (val >= 1 && val <= 20), "El nivel debe estar entre 1 y 20").optional(),
   minAge: z.union([
     z.string().transform((val) => val === "" ? undefined : parseInt(val, 10)),
     z.number(),
