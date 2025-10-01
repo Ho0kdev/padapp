@@ -47,6 +47,7 @@ import {
   getRegistrationStatusStyle,
   getRegistrationStatusLabel
 } from "@/lib/utils/status-styles"
+import { RegistrationStatusManager } from "./registration-status-manager"
 
 interface RegistrationWithDetails {
   id: string
@@ -219,7 +220,11 @@ export function RegistrationDetail({ registration }: RegistrationDetailProps) {
         <div className="space-y-1">
           <div className="flex items-center gap-3">
             <h1 className="text-3xl font-bold tracking-tight">{getTeamName()}</h1>
-            {getStatusBadge(registration.registrationStatus)}
+            <RegistrationStatusManager
+              registrationId={registration.id}
+              currentStatus={registration.registrationStatus}
+              tournamentStatus={registration.tournament.status}
+            />
             {getPaymentStatusBadge()}
           </div>
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
