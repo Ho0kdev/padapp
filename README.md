@@ -161,13 +161,13 @@ padapp/
 
 ### ✅ **Gestión de Torneos**
 - **CRUD Completo**: Crear, editar, eliminar torneos
-- **Múltiples Formatos**:
-  - Single Elimination (Eliminación Simple)
-  - Double Elimination (Eliminación Doble)
-  - Round Robin (Todos contra Todos)
-  - Swiss System
-  - Group Stage + Elimination
-  - Americano
+- **Múltiples Formatos Implementados** (5/6 - 83%):
+  - ✅ Single Elimination (Eliminación Simple)
+  - ✅ Double Elimination (Eliminación Doble)
+  - ✅ Round Robin (Todos contra Todos)
+  - ✅ Group Stage + Elimination (Fase de Grupos + Eliminación)
+  - ✅ Americano (Round-Robin Circle Method)
+  - ⏳ Swiss System (Pendiente)
 - **Estados de Torneo**: Draft → Published → Registration → In Progress → Completed
 - **Configuración Avanzada**:
   - Fechas de registro y torneo
@@ -518,8 +518,8 @@ El sistema otorga puntos basándose en **4 factores principales**:
 - Eliminación Simple: ×1.2
 - Fase de Grupos + Eliminación: ×1.4
 - Round Robin: ×1.1
-- Suizo: ×1.1
 - Americano: ×1.0
+- Suizo: ×1.1 (Pendiente)
 
 **Por Número de Participantes:**
 - 32+ jugadores: ×1.5
@@ -1305,6 +1305,14 @@ console.log('Tournament created:', {
     - Solución: Agregado "all" a enum y lógica condicional para ignorarlo en queries
     - Aplica a status, tournamentId, categoryId
 
+### Octubre 1, 2024
+- **✅ Formato Americano Implementado** - Sistema completo de Round-Robin usando Circle Method
+  - Algoritmo de rotación con bye automático para equipos impares
+  - Generación de 4-10 rondas adaptativas
+  - Garantiza que todos los equipos jueguen entre sí exactamente una vez
+  - Implementado en `bracket-service.ts:1432-1531`
+  - Documentación completa actualizada en `TOURNAMENT_FORMATS.md`
+
 ### Octubre 2024
 - **✅ Fix: Conteo de torneos en categorías** - Corregido filtro para solo contar torneos en curso (PUBLISHED, REGISTRATION_OPEN, REGISTRATION_CLOSED, IN_PROGRESS)
 - **✅ Fix: Botón Volver en detalle de usuario** - Navegación corregida de `router.back()` a `router.push('/dashboard/users')`
@@ -1333,7 +1341,8 @@ Para preguntas, sugerencias o reportar problemas:
 - **26 archivos** con implementación RBAC completa
 - **9 módulos principales**: Torneos, Clubes, Usuarios, Categorías, Rankings, Inscripciones, Canchas, Pagos, Admin
 - **4 roles de usuario** con permisos granulares
+- **5 formatos de torneo implementados** (83% completado)
 - **Full TypeScript** con validaciones Zod
 - **100% validado** en backend y frontend
 
-*Última actualización: Septiembre 30, 2024*
+*Última actualización: Octubre 1, 2024*

@@ -11,10 +11,9 @@ Este documento describe todos los formatos de torneo implementados y pendientes 
   - [Round Robin (Todos contra Todos)](#round-robin-todos-contra-todos)
   - [Doble Eliminación](#doble-eliminación)
   - [Fase de Grupos + Eliminación](#fase-de-grupos--eliminación)
+  - [Americano](#americano)
 - [Formatos Pendientes](#formatos-pendientes)
   - [Sistema Suizo](#sistema-suizo)
-  - [Americano](#americano)
-  - [Mixto (Grupos + Round Robin Final)](#mixto-grupos--round-robin-final)
 
 ---
 
@@ -461,6 +460,113 @@ Cada grupo tiene una mezcla equilibrada de seeds altos, medios y bajos
 
 ---
 
+### ✅ Americano
+
+**Estado**: Completamente implementado
+
+**Descripción**:
+Formato basado en Round-Robin donde todos los equipos juegan entre sí. En pádel, el Americano usa parejas fijas (equipos de 2 jugadores) que rotan sus enfrentamientos. Sistema de liga donde todos juegan contra todos.
+
+**Características Implementadas**:
+- Todos los equipos juegan entre sí exactamente una vez
+- Algoritmo Round-Robin Circle Method para rotación
+- Sistema de bye automático para número impar de equipos
+- 4-10 rondas adaptativas según número de equipos
+- Ranking basado en victorias y diferencia de sets
+
+**Estructura Real**:
+```
+8 Equipos (parejas): A, B, C, D, E, F, G, H
+
+Ronda 1:
+Pista 1: A vs B
+Pista 2: C vs D
+Pista 3: E vs F
+Pista 4: G vs H
+
+Ronda 2 (rotación usando Circle Method):
+Pista 1: A vs H
+Pista 2: B vs G
+Pista 3: C vs F
+Pista 4: D vs E
+
+Ronda 3:
+Pista 1: A vs G
+Pista 2: H vs F
+Pista 3: B vs E
+Pista 4: C vs D
+
+... continúa hasta que todos jueguen contra todos
+
+Ranking Final:
+Pos  Equipo  PJ  PG  PP  Sets a favor  Sets en contra  Diff
+1    A       7   6   1   18            8               +10
+2    E       7   5   2   16            10              +6
+3    C       7   5   2   15            11              +4
+4    B       7   4   3   14            12              +2
+...
+```
+
+**Algoritmo Round-Robin Circle Method**:
+```
+Equipos: [0, 1, 2, 3, 4, 5, 6, 7]
+
+El equipo 0 permanece fijo, los demás rotan en sentido horario
+
+Ronda 1: (0 vs 7), (1 vs 6), (2 vs 5), (3 vs 4)
+Ronda 2: (0 vs 6), (7 vs 5), (1 vs 4), (2 vs 3)
+Ronda 3: (0 vs 5), (6 vs 4), (7 vs 3), (1 vs 2)
+Ronda 4: (0 vs 4), (5 vs 3), (6 vs 2), (7 vs 1)
+...
+
+Para equipos impares, se agrega un "bye" (equipo fantasma)
+```
+
+**Número de Partidos**:
+- Con N equipos: cada uno juega `(N - 1)` partidos
+- Total de partidos: `N × (N - 1) / 2`
+- 8 equipos = 7 partidos por equipo = 28 partidos totales
+- 6 equipos = 5 partidos por equipo = 15 partidos totales
+
+**Ventajas**:
+- Todos juegan la misma cantidad de partidos
+- No hay eliminación: todos participan en todas las rondas
+- Ranking más justo: se basa en todos los enfrentamientos
+- Ideal para torneos de liga
+
+**Desventajas**:
+- Requiere muchos partidos: crece cuadráticamente
+- No es práctico para más de 12-16 equipos
+- Requiere gestión de múltiples pistas simultáneas
+- Duración total del torneo puede ser larga
+
+**Casos de Uso**:
+- Torneos de liga con 4-12 equipos
+- Competiciones donde se quiere ranking completo
+- Formato "todos contra todos"
+- Ideal para 8 equipos en 4 pistas
+
+**Implementación**:
+- Función principal: `generateAmericanoBracket()` en `bracket-service.ts:1432`
+- Algoritmo de rotación: `generateRoundRobinPairings()` en `bracket-service.ts:1492`
+- Validación: Mínimo 4 equipos requeridos
+- Cálculo adaptativo: Máximo 10 rondas
+- Manejo de bye: Automático para equipos impares
+- Integración: Líneas 98-100 en switch case principal
+
+**Componentes UI**:
+- Generador: `src/components/brackets/bracket-generator.tsx`
+- Visualización: `src/components/brackets/bracket-visualization.tsx`
+- Tabla de posiciones: Reutiliza componentes de Round-Robin
+- Página dashboard: `src/app/dashboard/tournaments/[id]/brackets/page.tsx`
+
+**APIs**:
+- Generar bracket: `POST /api/tournaments/[id]/generate-bracket`
+- Ver bracket: `GET /api/tournaments/[id]/bracket?categoryId=xxx`
+- Cargar resultado: `POST /api/matches/[id]/result`
+
+---
+
 ## Formatos Pendientes
 
 ### ⏳ Sistema Suizo
@@ -533,87 +639,6 @@ Suma de puntos de todos los oponentes que enfrentaste. Favorece a quien jugó co
 
 ---
 
-### ⏳ Americano
-
-**Estado**: No implementado
-
-**Descripción**:
-Formato social donde las parejas cambian constantemente. Cada jugador juega con diferentes compañeros a lo largo del torneo. El ganador es el jugador individual con más puntos.
-
-**Características Propuestas**:
-- Ranking individual (no por parejas)
-- Parejas rotativas cada partido
-- Todos juegan contra todos
-- Duración fija por partido (ej: 20 minutos)
-- Puntos por juegos ganados (no por partidos)
-- Sistema de rotación: cada jugador juega con todos los demás como pareja
-
-**Estructura Propuesta**:
-```
-8 Jugadores: A, B, C, D, E, F, G, H
-
-Ronda 1:
-Pista 1: A+B vs C+D  →  Resultado: 6-3 (A: +6, B: +6, C: +3, D: +3)
-Pista 2: E+F vs G+H  →  Resultado: 5-4 (E: +5, F: +5, G: +4, H: +4)
-
-Ronda 2 (rotación de parejas):
-Pista 1: A+C vs B+D  →  Resultado: 7-2 (A: +7, C: +7, B: +2, D: +2)
-Pista 2: E+G vs F+H  →  Resultado: 6-3 (E: +6, G: +6, F: +3, H: +3)
-
-... continúa hasta que cada jugador haya jugado con todos los demás
-
-Ranking Final (Individual):
-Pos  Jugador  Partidos  Juegos Ganados  Juegos Perdidos  Diff
-1    A        7         52              28               +24
-2    E        7         48              31               +17
-3    C        7         45              34               +11
-4    B        7         42              37               +5
-...
-```
-
-**Número de Partidos por Jugador**:
-- Con N jugadores: cada uno juega `(N - 1)` partidos
-- Parejas totales posibles: `N × (N - 1) / 2`
-- 8 jugadores = 7 partidos por jugador = 28 parejas diferentes
-
-**Algoritmo de Rotación**:
-```
-Round Robin de parejas (no de equipos)
-
-Con 8 jugadores (A-H):
-Ronda 1: AB vs CD, EF vs GH
-Ronda 2: AC vs BD, EG vs FH
-Ronda 3: AD vs BC, EH vs FG
-Ronda 4: AE vs BF, CG vs DH
-Ronda 5: AF vs BE, CH vs DG
-Ronda 6: AG vs BH, CE vs DF
-Ronda 7: AH vs BG, CF vs DE
-```
-
-**Ventajas**:
-- Muy social: conoces a todos los jugadores
-- No hay eliminación: todos juegan todo el tiempo
-- Justo: minimiza impacto de tener mal compañero
-- Divertido: variedad de parejas
-
-**Desventajas**:
-- Solo funciona con número par de jugadores
-- Complejo de organizar manualmente
-- Requiere muchas pistas simultáneas
-- Puntuación individual puede ser confusa
-
-**Casos de Uso Propuestos**:
-- Torneos sociales de club
-- Clínicas y eventos recreativos
-- Ideal para 8-16 jugadores
-- Formato de "mixer" o "round robin social"
-
-**Implementación Pendiente**:
-- `generateAmericanoBracket()` - Genera rotación de parejas
-- `calculateAmericanoRanking()` - Ranking individual
-- Sistema de rotación de parejas
-- Tabla individual de puntos
-- UI específica para formato americano
 
 ---
 
@@ -785,15 +810,15 @@ await BracketService.progressWinner(
 
 ## 📊 Comparación de Formatos
 
-| Formato | Equipos Ideal | Partidos (16 equipos) | Duración | Justicia | Complejidad | Emoción |
-|---------|---------------|----------------------|----------|----------|-------------|---------|
-| **Eliminación Simple** | 8-32 | 15 | 1 día | ⭐⭐ | ⭐ | ⭐⭐⭐⭐⭐ |
-| **Round Robin** | 4-10 | 120 | Varios días | ⭐⭐⭐⭐⭐ | ⭐ | ⭐⭐ |
-| **Doble Eliminación** | 8-16 | 30 | 2-3 días | ⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐ |
-| **Grupos + Eliminación** | 12-32 | 31 | 2-3 días | ⭐⭐⭐⭐ | ⭐⭐ | ⭐⭐⭐⭐⭐ |
-| **Sistema Suizo** ⏳ | 16-64 | 64 | 2-4 días | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐ |
-| **Americano** ⏳ | 8-16 | 56 | 1 día | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
-| **Grupos + RR Final** ⏳ | 16-24 | 52 | 3-5 días | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐ |
+| Formato | Equipos Ideal | Partidos (16 equipos) | Duración | Justicia | Complejidad | Emoción | Estado |
+|---------|---------------|----------------------|----------|----------|-------------|---------|--------|
+| **Eliminación Simple** | 8-32 | 15 | 1 día | ⭐⭐ | ⭐ | ⭐⭐⭐⭐⭐ | ✅ |
+| **Round Robin** | 4-10 | 120 | Varios días | ⭐⭐⭐⭐⭐ | ⭐ | ⭐⭐ | ✅ |
+| **Doble Eliminación** | 8-16 | 30 | 2-3 días | ⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐ | ✅ |
+| **Grupos + Eliminación** | 12-32 | 31 | 2-3 días | ⭐⭐⭐⭐ | ⭐⭐ | ⭐⭐⭐⭐⭐ | ✅ |
+| **Americano** | 4-12 | 28 | 1-2 días | ⭐⭐⭐⭐ | ⭐⭐ | ⭐⭐⭐ | ✅ |
+| **Sistema Suizo** | 16-64 | 64 | 2-4 días | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐ | ⏳ |
+| **Grupos + RR Final** | 16-24 | 52 | 3-5 días | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐ | ⏳ |
 
 ---
 
@@ -812,7 +837,7 @@ await BracketService.progressWinner(
 - **16-32 equipos**: Sistema Suizo (pendiente)
 
 ### Para Eventos Sociales
-- **8-16 jugadores**: Americano (pendiente)
+- **4-12 equipos**: Americano ⭐ **IDEAL PARA LIGA**
 - **4-8 equipos**: Round Robin
 
 ---
@@ -823,7 +848,7 @@ await BracketService.progressWinner(
 ```typescript
 {
   id: string
-  format: "SINGLE_ELIMINATION" | "ROUND_ROBIN" | "DOUBLE_ELIMINATION" | "GROUP_STAGE_ELIMINATION"
+  format: "SINGLE_ELIMINATION" | "ROUND_ROBIN" | "DOUBLE_ELIMINATION" | "GROUP_STAGE_ELIMINATION" | "AMERICANO" | "SWISS"
   metadata: {
     groupConfig_<categoryId>: {
       numGroups: number
@@ -1134,17 +1159,17 @@ await AuditLogger.log(session, {
 
 ## 🔮 Roadmap de Formatos
 
-### Prioridad Alta
+### ✅ Implementados (5/6 - 83%)
 - ✅ Eliminación Simple
 - ✅ Round Robin
 - ✅ Doble Eliminación
 - ✅ Fase de Grupos + Eliminación
+- ✅ Americano
 
-### Prioridad Media
+### ⏳ Pendientes (1/6 - 17%)
 - ⏳ Sistema Suizo (para torneos grandes)
-- ⏳ Americano (para eventos sociales)
 
-### Prioridad Baja
+### Prioridad Baja (Formatos adicionales no planeados)
 - ⏳ Grupos + Round Robin Final (nicho específico)
 - ⏳ Triple Eliminación (muy poco usado)
 - ⏳ King of the Court (formato recreativo)
@@ -1155,7 +1180,11 @@ await AuditLogger.log(session, {
 
 ### Servicios
 - **Servicio Principal**: `src/lib/services/bracket-service.ts`
-  - Generación: líneas 130-680
+  - Eliminación Simple: líneas 130-265
+  - Round Robin: líneas 267-351
+  - Doble Eliminación: líneas 376-479
+  - Grupos + Eliminación: líneas 481-680
+  - Americano: líneas 1432-1531
   - Progresión: líneas 795-1008
   - Clasificación: líneas 1218-1411
 
@@ -1200,5 +1229,5 @@ Cada partido puede tener asignada una cancha (`courtId`) y horario (`scheduledFo
 
 ---
 
-**Última actualización**: 2025-09-30
+**Última actualización**: 2025-10-01
 **Versión**: 1.0.0

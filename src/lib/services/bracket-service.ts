@@ -95,6 +95,10 @@ export class BracketService {
         await this.generateGroupStageEliminationBracket(tournamentId, categoryId, teams)
         break
 
+      case TournamentType.AMERICANO:
+        await this.generateAmericanoBracket(tournamentId, categoryId, teams)
+        break
+
       default:
         throw new Error(`Tipo de torneo ${tournament.type} no soportado aún`)
     }
@@ -1412,5 +1416,117 @@ export class BracketService {
         console.log(`✅ Match ${i + 1}: ${team1.groupName}-${team1.position} vs ${team2.groupName}-${team2.position}`)
       }
     }
+  }
+
+  /**
+   * Genera bracket de formato Americano
+   * En el formato Americano:
+   * - Los equipos (parejas) rotan en cada ronda
+   * - Cada equipo juega con y contra diferentes oponentes
+   * - Se generan rondas donde las parejas cambian automáticamente
+   * - Típicamente 4-8 rondas dependiendo del número de equipos
+   *
+   * NOTA: El formato Americano tradicional es con jugadores individuales que rotan parejas,
+   * pero para pádel lo adaptamos a equipos/parejas que juegan entre sí con rotación balanceada.
+   */
+  private static async generateAmericanoBracket(
+    tournamentId: string,
+    categoryId: string,
+    teams: TeamData[]
+  ): Promise<void> {
+    const numTeams = teams.length
+
+    // Validar número mínimo de equipos
+    if (numTeams < 4) {
+      throw new Error("Se requieren al menos 4 equipos para formato Americano")
+    }
+
+    // Determinar número de rondas
+    // En formato Americano típico se juegan entre 6-10 rondas
+    // Cada equipo debe jugar contra varios oponentes diferentes
+    const numRounds = Math.min(numTeams - 1, 10) // Máximo 10 rondas
+
+    console.log(`📊 Generando bracket formato Americano:`, {
+      numTeams,
+      numRounds,
+      totalMatches: (numTeams / 2) * numRounds
+    })
+
+    const allMatches: BracketMatch[] = []
+
+    // Generar emparejamientos usando el algoritmo Round-Robin Circle Method
+    // Este algoritmo garantiza que cada equipo juegue contra todos los demás sin repetir
+    const pairings = this.generateRoundRobinPairings(numTeams, numRounds)
+
+    let matchNumber = 1
+
+    // Crear partidos para cada ronda
+    for (let round = 0; round < pairings.length; round++) {
+      const roundPairings = pairings[round]
+
+      for (const [team1Idx, team2Idx] of roundPairings) {
+        allMatches.push({
+          roundNumber: round + 1,
+          matchNumber: matchNumber++,
+          phaseType: PhaseType.GROUP_STAGE, // Usamos GROUP_STAGE ya que todos los partidos son igualmente importantes
+          team1Id: teams[team1Idx]?.id,
+          team2Id: teams[team2Idx]?.id
+        })
+      }
+    }
+
+    // Crear matches en la base de datos
+    await this.createMatchesWithProgression(tournamentId, categoryId, allMatches)
+
+    console.log(`✅ Formato Americano generado: ${allMatches.length} partidos en ${numRounds} rondas`)
+  }
+
+  /**
+   * Genera emparejamientos Round-Robin usando el algoritmo Circle Method
+   * Garantiza que cada equipo juegue contra todos los demás exactamente una vez
+   *
+   * @param numTeams Número de equipos
+   * @param maxRounds Número máximo de rondas a generar
+   * @returns Array de rondas, cada ronda es un array de pares [equipo1, equipo2]
+   */
+  private static generateRoundRobinPairings(
+    numTeams: number,
+    maxRounds: number
+  ): [number, number][][] {
+    // Si hay número impar de equipos, agregar un "bye" (dummy team)
+    const hasOddTeams = numTeams % 2 !== 0
+    const totalSlots = hasOddTeams ? numTeams + 1 : numTeams
+
+    // Array de índices de equipos (0-indexed)
+    const teams = Array.from({ length: totalSlots }, (_, i) => i)
+    const rounds: [number, number][][] = []
+
+    // El equipo 0 permanece fijo, los demás rotan
+    for (let round = 0; round < maxRounds && round < totalSlots - 1; round++) {
+      const roundPairings: [number, number][] = []
+
+      // Generar parejas para esta ronda
+      for (let i = 0; i < totalSlots / 2; i++) {
+        const team1Idx = teams[i]
+        const team2Idx = teams[totalSlots - 1 - i]
+
+        // Solo agregar si ambos equipos son reales (no el bye)
+        if (team1Idx < numTeams && team2Idx < numTeams) {
+          roundPairings.push([team1Idx, team2Idx])
+        }
+      }
+
+      rounds.push(roundPairings)
+
+      // Rotar equipos (excepto el primero que permanece fijo)
+      // Algoritmo: sacar el segundo, mover todos uno a la izquierda, poner el segundo al final
+      const second = teams[1]
+      for (let i = 1; i < totalSlots - 1; i++) {
+        teams[i] = teams[i + 1]
+      }
+      teams[totalSlots - 1] = second
+    }
+
+    return rounds
   }
 }

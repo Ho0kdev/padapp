@@ -102,10 +102,20 @@ src/app/api/registrations/
 
 ---
 
-### 2. 🎪 **Gestión de Brackets/Llaves** [CRÍTICO]
-**Estimado: 2 semanas**
+### 2. 🎪 **Gestión de Brackets/Llaves** [✅ 83% COMPLETADO]
+**Estimado: 2 semanas** | **Completado**: Oct 1, 2024
 
-#### Funcionalidades:
+#### ✅ Formatos Implementados (5/6):
+- ✅ **Single Elimination** - Eliminación simple con byes automáticos
+- ✅ **Double Elimination** - Upper/Lower brackets con Gran Final
+- ✅ **Round Robin** - Todos contra todos con tabla de posiciones
+- ✅ **Group Stage + Elimination** - Fase de grupos + playoffs
+- ✅ **Americano** - Round-Robin Circle Method (Oct 1, 2024) ⭐ NUEVO
+
+#### ⏳ Formato Pendiente (1/6):
+- ⏳ **Swiss System** - Para torneos grandes (16-64 equipos)
+
+#### Funcionalidades Implementadas:
 - **Generación automática de brackets**
   - Algoritmos para cada formato de torneo
   - Asignación de seeds automática
@@ -121,26 +131,35 @@ src/app/api/registrations/
   - Reasignación de equipos
   - Byes automáticos
 
-#### Componentes a desarrollar:
+#### Componentes Desarrollados:
 ```typescript
-// components/brackets/
-- BracketGenerator.tsx
-- BracketVisualization.tsx
-- BracketEditor.tsx
-- SeedAssignment.tsx
-- FormatSelector.tsx
+// ✅ Completados
+lib/services/bracket-service.ts
+- ✅ generateSingleEliminationBracket() (líneas 130-265)
+- ✅ generateDoubleEliminationBracket() (líneas 376-479)
+- ✅ generateRoundRobinBracket() (líneas 267-351)
+- ✅ generateGroupStageEliminationBracket() (líneas 481-680)
+- ✅ generateAmericanoBracket() (líneas 1432-1492) ⭐ NUEVO
+- ✅ generateRoundRobinPairings() (líneas 1492-1531) ⭐ NUEVO
+- ✅ calculateGroupStandings() (líneas 1062-1216)
+- ✅ progressWinner() (líneas 795-1008)
 
-// lib/algorithms/
-- elimination.ts
-- roundRobin.ts
-- swiss.ts
+components/brackets/
+- ✅ BracketGenerator.tsx
+- ✅ BracketVisualization.tsx
+- ✅ GroupStandings.tsx
+
+// ⏳ Pendientes
+- ⏳ generateSwissBracket() - Sistema Suizo
+- ⏳ BracketEditor.tsx - Edición manual
 ```
 
 #### Criterios de éxito:
-- ✅ Brackets generados automáticamente para todos los formatos
+- ✅ Brackets generados automáticamente para 5/6 formatos
 - ✅ Visualización clara y comprensible
-- ✅ Edición manual sin romper la lógica
+- ⏳ Edición manual sin romper la lógica [PENDIENTE]
 - ✅ Progresión automática de ganadores
+- ✅ Algoritmo Round-Robin Circle Method implementado
 
 ---
 
@@ -425,7 +444,7 @@ Semana 7:
 
 ### **Fase 1 - Funcionalidad Core**
 - **Inscripciones**: ✅ 90% completado - Funcional sin pagos automáticos
-- **Brackets**: ⏳ Pendiente - Generación exitosa para todos los formatos
+- **Brackets**: ✅ 83% completado - 5/6 formatos implementados (falta Sistema Suizo)
 - **Partidos**: ⏳ Pendiente - Carga de resultados en <30 segundos
 - **Rankings**: ✅ 100% completado - Actualización automática post-torneo
 
@@ -495,13 +514,14 @@ El sistema de inscripciones está mayormente completado. Lo que falta:
 - Sistema de Puntos con Configuración Flexible (100%) ⭐
 - Panel Administrativo (100%)
 - Sistema de Inscripciones (90%)
+- Gestión de Brackets - 5 Formatos (83%) ⭐ ACTUALIZADO
 
 ### **En Progreso** 🟡
 - Integración de Pagos (0%)
 - Sistema de Notificaciones (0%)
+- Gestión de Brackets - Sistema Suizo (0%)
 
 ### **Pendiente** ⏳
-- Gestión de Brackets (0%)
 - Sistema de Partidos (0%)
 - Calendario y Programación (0%)
 - Reportes Avanzados (0%)
@@ -518,6 +538,17 @@ El sistema de inscripciones está mayormente completado. Lo que falta:
 
 ## 📝 **Changelog Reciente**
 
+### **Octubre 1, 2024** ⭐ NUEVO
+- ✅ **Formato Americano Implementado**: Sistema completo de Round-Robin usando Circle Method
+  - Algoritmo `generateAmericanoBracket()` en `bracket-service.ts:1432-1492`
+  - Algoritmo `generateRoundRobinPairings()` para rotación en `bracket-service.ts:1492-1531`
+  - Sistema de bye automático para número impar de equipos
+  - Generación adaptativa de 4-10 rondas según número de equipos
+  - Garantiza que todos los equipos jueguen entre sí exactamente una vez
+  - Documentación completa en `TOURNAMENT_FORMATS.md`
+  - Progreso de brackets: **5/6 formatos implementados (83%)**
+  - Solo falta Sistema Suizo para completar todos los formatos
+
 ### **Septiembre 30, 2024**
 - ✅ **Sistema de Puntos Configurables**: Cada torneo ahora define su nivel de importancia (100-10,000 pts)
   - Puntos por posición proporcionales al `rankingPoints` del torneo
@@ -531,4 +562,4 @@ El sistema de inscripciones está mayormente completado. Lo que falta:
   - Validación de fechas y reglas de negocio
   - RBAC completo implementado
 
-*Última actualización: Septiembre 30, 2024*
+*Última actualización: Octubre 1, 2024*
