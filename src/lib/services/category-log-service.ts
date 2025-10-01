@@ -90,7 +90,7 @@ export class CategoryLogService {
   static async logCategoryCreated(context: LogContext, categoryData: any) {
     return this.log(context, {
       action: "CATEGORY_CREATED",
-      description: `"${categoryData.name}" creada`,
+      description: `"${categoryData.name}"`,
       newData: this.sanitizeCategoryData(categoryData),
       metadata: {
         type: categoryData.type,
@@ -111,7 +111,7 @@ export class CategoryLogService {
 
     return this.log(context, {
       action: "CATEGORY_UPDATED",
-      description: `"${newData.name}" actualizada`,
+      description: `"${newData.name}"`,
       oldData: this.sanitizeCategoryData(oldData),
       newData: this.sanitizeCategoryData(newData),
       metadata: {
@@ -127,7 +127,7 @@ export class CategoryLogService {
   static async logCategoryDeleted(context: LogContext, categoryData: any) {
     return this.log(context, {
       action: "CATEGORY_DELETED",
-      description: `"${categoryData.name}" desactivada`,
+      description: `"${categoryData.name}"`,
       oldData: this.sanitizeCategoryData(categoryData),
       metadata: {
         type: categoryData.type,
@@ -149,7 +149,7 @@ export class CategoryLogService {
 
     return this.log(context, {
       action: "CATEGORY_STATUS_CHANGED",
-      description: `"${categoryData.name}" cambió de ${statusText(oldStatus)} a ${statusText(newStatus)}`,
+      description: `"${categoryData.name}" (${statusText(oldStatus)} -> ${statusText(newStatus)})`,
       oldData: { isActive: oldStatus },
       newData: { isActive: newStatus },
       metadata: {

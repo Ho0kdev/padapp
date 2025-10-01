@@ -95,7 +95,7 @@ export class TournamentLogService {
   static async logTournamentCreated(context: LogContext, tournamentData: any) {
     return this.log(context, {
       action: "TOURNAMENT_CREATED",
-      description: `"${tournamentData.name}" creado`,
+      description: `"${tournamentData.name}"`,
       newData: this.sanitizeTournamentData(tournamentData),
       metadata: {
         type: tournamentData.type,
@@ -113,7 +113,7 @@ export class TournamentLogService {
 
     return this.log(context, {
       action: "TOURNAMENT_UPDATED",
-      description: `"${newData.name}" actualizado`,
+      description: `"${newData.name}"`,
       oldData: this.sanitizeTournamentData(oldData),
       newData: this.sanitizeTournamentData(newData),
       metadata: {
@@ -129,7 +129,7 @@ export class TournamentLogService {
   static async logTournamentDeleted(context: LogContext, tournamentData: any) {
     return this.log(context, {
       action: "TOURNAMENT_DELETED",
-      description: `"${tournamentData.name}" eliminado`,
+      description: `"${tournamentData.name}"`,
       oldData: this.sanitizeTournamentData(tournamentData),
       metadata: {
         type: tournamentData.type,
@@ -150,7 +150,7 @@ export class TournamentLogService {
   ) {
     return this.log(context, {
       action: "TOURNAMENT_STATUS_CHANGED",
-      description: `"${tournamentData.name}" cambió de ${oldStatus} a ${newStatus}`,
+      description: `"${tournamentData.name}" (${oldStatus} -> ${newStatus})`,
       oldData: { status: oldStatus },
       newData: { status: newStatus },
       metadata: {

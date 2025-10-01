@@ -88,7 +88,7 @@ export class ClubLogService {
   static async logClubCreated(context: LogContext, clubData: any) {
     return this.log(context, {
       action: "CLUB_CREATED",
-      description: `"${clubData.name}" creado`,
+      description: `"${clubData.name}"`,
       newData: this.sanitizeClubData(clubData),
       metadata: {
         status: clubData.status,
@@ -106,7 +106,7 @@ export class ClubLogService {
 
     return this.log(context, {
       action: "CLUB_UPDATED",
-      description: `"${newData.name}" actualizado`,
+      description: `"${newData.name}"`,
       oldData: this.sanitizeClubData(oldData),
       newData: this.sanitizeClubData(newData),
       metadata: {
@@ -122,7 +122,7 @@ export class ClubLogService {
   static async logClubDeleted(context: LogContext, clubData: any) {
     return this.log(context, {
       action: "CLUB_DELETED",
-      description: `"${clubData.name}" eliminado`,
+      description: `"${clubData.name}"`,
       oldData: this.sanitizeClubData(clubData),
       metadata: {
         status: clubData.status,
@@ -143,7 +143,7 @@ export class ClubLogService {
 
     return this.log(context, {
       action: "CLUB_STATUS_CHANGED",
-      description: `"${clubData.name}" cambió de ${oldStatus} a ${newStatus}`,
+      description: `"${clubData.name}" (${oldStatus} -> ${newStatus})`,
       oldData: { status: oldStatus },
       newData: { status: newStatus },
       metadata: {
