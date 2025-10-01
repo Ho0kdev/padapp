@@ -24,11 +24,19 @@ async function getTournament(id: string) {
           category: true,
           teams: {
             include: {
-              player1: {
-                select: { firstName: true, lastName: true }
+              registration1: {
+                select: {
+                  player: {
+                    select: { firstName: true, lastName: true }
+                  }
+                }
               },
-              player2: {
-                select: { firstName: true, lastName: true }
+              registration2: {
+                select: {
+                  player: {
+                    select: { firstName: true, lastName: true }
+                  }
+                }
               }
             }
           }
@@ -43,11 +51,19 @@ async function getTournament(id: string) {
       },
       teams: {
         include: {
-          player1: {
-            select: { firstName: true, lastName: true }
+          registration1: {
+            select: {
+              player: {
+                select: { firstName: true, lastName: true }
+              }
+            }
           },
-          player2: {
-            select: { firstName: true, lastName: true }
+          registration2: {
+            select: {
+              player: {
+                select: { firstName: true, lastName: true }
+              }
+            }
           },
           category: {
             select: { name: true }
@@ -58,14 +74,38 @@ async function getTournament(id: string) {
         include: {
           team1: {
             include: {
-              player1: { select: { firstName: true, lastName: true } },
-              player2: { select: { firstName: true, lastName: true } }
+              registration1: {
+                select: {
+                  player: {
+                    select: { firstName: true, lastName: true }
+                  }
+                }
+              },
+              registration2: {
+                select: {
+                  player: {
+                    select: { firstName: true, lastName: true }
+                  }
+                }
+              }
             }
           },
           team2: {
             include: {
-              player1: { select: { firstName: true, lastName: true } },
-              player2: { select: { firstName: true, lastName: true } }
+              registration1: {
+                select: {
+                  player: {
+                    select: { firstName: true, lastName: true }
+                  }
+                }
+              },
+              registration2: {
+                select: {
+                  player: {
+                    select: { firstName: true, lastName: true }
+                  }
+                }
+              }
             }
           },
           court: {

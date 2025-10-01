@@ -73,6 +73,11 @@ export async function PUT(
         id: courtId,
         clubId,
         deleted: false
+      },
+      include: {
+        club: {
+          select: { status: true }
+        }
       }
     })
 
@@ -81,6 +86,25 @@ export async function PUT(
         { error: "Cancha no encontrada" },
         { status: 404 }
       )
+    }
+
+    // Validar jerarquía club-cancha para cambios de estado
+    if (isStatusChange) {
+      // No permitir activar cancha si el club no está activo
+      if (validatedData.status !== "UNAVAILABLE" && existingCourt.club.status !== "ACTIVE") {
+        return NextResponse.json(
+          { error: "No se puede activar una cancha mientras el club no esté activo" },
+          { status: 400 }
+        )
+      }
+    } else {
+      // En edición completa, validar estado de cancha vs club
+      if (validatedData.status !== "UNAVAILABLE" && existingCourt.club.status !== "ACTIVE") {
+        return NextResponse.json(
+          { error: "No se puede cambiar el estado de una cancha a disponible mientras el club no esté activo" },
+          { status: 400 }
+        )
+      }
     }
 
     let court
@@ -275,6 +299,11 @@ export async function PATCH(
         id: courtId,
         clubId,
         deleted: false
+      },
+      include: {
+        club: {
+          select: { status: true }
+        }
       }
     })
 
@@ -288,6 +317,14 @@ export async function PATCH(
     if (existingCourt.status === "AVAILABLE") {
       return NextResponse.json(
         { error: "La cancha ya está disponible" },
+        { status: 400 }
+      )
+    }
+
+    // Validar que el club esté activo antes de activar la cancha
+    if (existingCourt.club.status !== "ACTIVE") {
+      return NextResponse.json(
+        { error: "No se puede activar una cancha mientras el club no esté activo. Active primero el club." },
         { status: 400 }
       )
     }

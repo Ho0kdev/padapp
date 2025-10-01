@@ -15,8 +15,8 @@ export interface TournamentWithDetails extends Tournament {
   categories: (TournamentCategory & {
     category: Category
     teams: (Team & {
-      player1: { firstName: string; lastName: string }
-      player2: { firstName: string; lastName: string }
+      registration1: { player: { firstName: string; lastName: string } }
+      registration2: { player: { firstName: string; lastName: string } }
     })[]
   })[]
   clubs: {
@@ -26,18 +26,18 @@ export interface TournamentWithDetails extends Tournament {
     }
   }[]
   teams: (Team & {
-    player1: { firstName: string; lastName: string }
-    player2: { firstName: string; lastName: string }
+    registration1: { player: { firstName: string; lastName: string } }
+    registration2: { player: { firstName: string; lastName: string } }
     category: { name: string }
   })[]
   matches: (Match & {
     team1?: {
-      player1: { firstName: string; lastName: string }
-      player2: { firstName: string; lastName: string }
+      registration1: { player: { firstName: string; lastName: string } }
+      registration2: { player: { firstName: string; lastName: string } }
     } | null
     team2?: {
-      player1: { firstName: string; lastName: string }
-      player2: { firstName: string; lastName: string }
+      registration1: { player: { firstName: string; lastName: string } }
+      registration2: { player: { firstName: string; lastName: string } }
     } | null
     court?: { name: string } | null
   })[]

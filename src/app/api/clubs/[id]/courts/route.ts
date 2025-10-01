@@ -61,16 +61,23 @@ export async function POST(
     // Agregar clubId al body para validación
     const validatedData = courtFormSchema.parse({ ...body, clubId })
 
-    // Verificar que el club existe y está activo
+    // Verificar que el club existe
     const club = await prisma.club.findUnique({
-      where: { id: clubId, status: "ACTIVE" }
+      where: { id: clubId },
+      select: { id: true, name: true, status: true }
     })
 
     if (!club) {
       return NextResponse.json(
-        { error: "Club no encontrado o inactivo" },
+        { error: "Club no encontrado" },
         { status: 404 }
       )
+    }
+
+    // Si el club no está activo, forzar status UNAVAILABLE en la cancha
+    let courtStatus = validatedData.status
+    if (club.status !== "ACTIVE") {
+      courtStatus = "UNAVAILABLE"
     }
 
     // Verificar que no exista otra cancha con el mismo nombre en el club (excluir eliminadas)
@@ -100,7 +107,7 @@ export async function POST(
         hasPanoramicGlass: validatedData.hasPanoramicGlass,
         hasConcreteWall: validatedData.hasConcreteWall,
         hasNet4m: validatedData.hasNet4m,
-        status: validatedData.status,
+        status: courtStatus,
         hourlyRate: validatedData.hourlyRate,
         notes: validatedData.notes,
       },

@@ -38,12 +38,14 @@ import {
   Trash2,
   ArrowLeft,
   Image as ImageIcon,
-  ExternalLink
+  ExternalLink,
+  CheckCircle,
+  Wrench
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/hooks/use-auth"
 import { CourtsList } from "@/components/courts/courts-list"
-import { getTournamentStatusStyle, getTournamentStatusLabel } from "@/lib/utils/status-styles"
+import { getTournamentStatusStyle, getTournamentStatusLabel, getClubStatusStyle, getClubStatusLabel } from "@/lib/utils/status-styles"
 
 interface Court {
   id: string
@@ -102,6 +104,8 @@ interface ClubDetailProps {
 
 export function ClubDetail({ club, currentUserId }: ClubDetailProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [activateDialogOpen, setActivateDialogOpen] = useState(false)
+  const [maintenanceDialogOpen, setMaintenanceDialogOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const { toast } = useToast()
   const router = useRouter()
@@ -123,7 +127,6 @@ export function ClubDetail({ club, currentUserId }: ClubDetailProps) {
       toast({
         title: "Club desactivado",
         description: "El club ha sido desactivado exitosamente",
-        variant: "success",
       })
 
       router.push("/dashboard/clubs")
@@ -139,23 +142,64 @@ export function ClubDetail({ club, currentUserId }: ClubDetailProps) {
     }
   }
 
-  const getClubStatusBadge = (status: string) => {
-    const variants = {
-      ACTIVE: "bg-green-100 text-green-800",
-      INACTIVE: "bg-red-100 text-red-800"
-    }
+  const handleActivate = async () => {
+    try {
+      const response = await fetch(`/api/clubs/${club.id}`, {
+        method: "PATCH",
+      })
 
-    const labels = {
-      ACTIVE: "Activo",
-      INACTIVE: "Inactivo"
+      if (response.ok) {
+        toast({
+          title: "Club activado",
+          description: "El club ha sido activado exitosamente",
+        })
+        window.location.reload()
+      } else {
+        const error = await response.json()
+        throw new Error(error.error || "Error al activar club")
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Error al activar club",
+        variant: "destructive",
+      })
+    } finally {
+      setActivateDialogOpen(false)
     }
-
-    return (
-      <Badge variant="outline" className={variants[status as keyof typeof variants]}>
-        {labels[status as keyof typeof labels] || status}
-      </Badge>
-    )
   }
+
+  const handleMaintenance = async () => {
+    try {
+      const response = await fetch(`/api/clubs/${club.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: "MAINTENANCE" })
+      })
+
+      if (response.ok) {
+        toast({
+          title: "Club en mantenimiento",
+          description: "El club ha sido puesto en modo mantenimiento exitosamente",
+        })
+        window.location.reload()
+      } else {
+        const error = await response.json()
+        throw new Error(error.error || "Error al poner club en mantenimiento")
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Error al poner club en mantenimiento",
+        variant: "destructive",
+      })
+    } finally {
+      setMaintenanceDialogOpen(false)
+    }
+  }
+
 
   const getTournamentStatusBadge = (status: string) => {
     return (
@@ -183,7 +227,9 @@ export function ClubDetail({ club, currentUserId }: ClubDetailProps) {
               />
             )}
             <h1 className="text-3xl font-bold tracking-tight">{club.name}</h1>
-            {getClubStatusBadge(club.status)}
+            <Badge variant="outline" className={getClubStatusStyle(club.status)}>
+              {getClubStatusLabel(club.status)}
+            </Badge>
           </div>
           {club.description && (
             <p className="text-muted-foreground max-w-3xl">{club.description}</p>
@@ -205,14 +251,32 @@ export function ClubDetail({ club, currentUserId }: ClubDetailProps) {
                 </DropdownMenuItem>
               </Link>
               <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className="text-red-600"
-                onClick={() => setDeleteDialogOpen(true)}
-                disabled={club.status === "INACTIVE"}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Desactivar
-              </DropdownMenuItem>
+              {club.status === "ACTIVE" ? (
+                <>
+                  <DropdownMenuItem
+                    className="text-yellow-600"
+                    onClick={() => setMaintenanceDialogOpen(true)}
+                  >
+                    <Wrench className="mr-2 h-4 w-4" />
+                    Mantenimiento
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="text-red-600"
+                    onClick={() => setDeleteDialogOpen(true)}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Desactivar
+                  </DropdownMenuItem>
+                </>
+              ) : (
+                <DropdownMenuItem
+                  className="text-green-600"
+                  onClick={() => setActivateDialogOpen(true)}
+                >
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  Activar
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         )}
@@ -260,7 +324,9 @@ export function ClubDetail({ club, currentUserId }: ClubDetailProps) {
 
                 <div>
                   <h4 className="font-medium mb-2">Estado</h4>
-                  {getClubStatusBadge(club.status)}
+                  <Badge variant="outline" className={getClubStatusStyle(club.status)}>
+                    {getClubStatusLabel(club.status)}
+                  </Badge>
                 </div>
 
                 <Separator />
@@ -472,6 +538,45 @@ export function ClubDetail({ club, currentUserId }: ClubDetailProps) {
               className="bg-red-600 hover:bg-red-700"
             >
               {loading ? "Desactivando..." : "Desactivar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Dialog de confirmación para activar */}
+      <AlertDialog open={activateDialogOpen} onOpenChange={setActivateDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Activar club?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción activará el club &quot;{club.name}&quot;. El club volverá a aparecer en las listas y estará disponible para nuevos torneos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleActivate}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              Activar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Dialog de confirmación para mantenimiento */}
+      <AlertDialog open={maintenanceDialogOpen} onOpenChange={setMaintenanceDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Poner club en mantenimiento?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción pondrá el club &quot;{club.name}&quot; en modo mantenimiento. El club seguirá visible pero no estará disponible para nuevos torneos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleMaintenance} className="bg-yellow-600 hover:bg-yellow-700">
+              Poner en Mantenimiento
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

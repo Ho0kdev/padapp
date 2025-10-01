@@ -99,11 +99,19 @@ export async function GET(
             category: true,
             teams: {
               include: {
-                player1: {
-                  select: { firstName: true, lastName: true }
+                registration1: {
+                  select: {
+                    player: {
+                      select: { firstName: true, lastName: true }
+                    }
+                  }
                 },
-                player2: {
-                  select: { firstName: true, lastName: true }
+                registration2: {
+                  select: {
+                    player: {
+                      select: { firstName: true, lastName: true }
+                    }
+                  }
                 }
               }
             }
@@ -118,11 +126,19 @@ export async function GET(
         },
         teams: {
           include: {
-            player1: {
-              select: { firstName: true, lastName: true }
+            registration1: {
+              select: {
+                player: {
+                  select: { firstName: true, lastName: true }
+                }
+              }
             },
-            player2: {
-              select: { firstName: true, lastName: true }
+            registration2: {
+              select: {
+                player: {
+                  select: { firstName: true, lastName: true }
+                }
+              }
             },
             category: {
               select: { name: true }
@@ -133,14 +149,38 @@ export async function GET(
           include: {
             team1: {
               include: {
-                player1: { select: { firstName: true, lastName: true } },
-                player2: { select: { firstName: true, lastName: true } }
+                registration1: {
+                  select: {
+                    player: {
+                      select: { firstName: true, lastName: true }
+                    }
+                  }
+                },
+                registration2: {
+                  select: {
+                    player: {
+                      select: { firstName: true, lastName: true }
+                    }
+                  }
+                }
               }
             },
             team2: {
               include: {
-                player1: { select: { firstName: true, lastName: true } },
-                player2: { select: { firstName: true, lastName: true } }
+                registration1: {
+                  select: {
+                    player: {
+                      select: { firstName: true, lastName: true }
+                    }
+                  }
+                },
+                registration2: {
+                  select: {
+                    player: {
+                      select: { firstName: true, lastName: true }
+                    }
+                  }
+                }
               }
             },
             court: {

@@ -39,8 +39,20 @@ export async function GET(
           include: {
             team: {
               include: {
-                player1: { select: { firstName: true, lastName: true } },
-                player2: { select: { firstName: true, lastName: true } }
+                registration1: {
+                  select: {
+                    player: {
+                      select: { firstName: true, lastName: true }
+                    }
+                  }
+                },
+                registration2: {
+                  select: {
+                    player: {
+                      select: { firstName: true, lastName: true }
+                    }
+                  }
+                }
               }
             }
           }

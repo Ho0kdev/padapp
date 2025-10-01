@@ -44,16 +44,24 @@ async function getCourt(clubId: string, courtId: string) {
               select: {
                 id: true,
                 name: true,
-                player1: {
+                registration1: {
                   select: {
-                    firstName: true,
-                    lastName: true
+                    player: {
+                      select: {
+                        firstName: true,
+                        lastName: true
+                      }
+                    }
                   }
                 },
-                player2: {
+                registration2: {
                   select: {
-                    firstName: true,
-                    lastName: true
+                    player: {
+                      select: {
+                        firstName: true,
+                        lastName: true
+                      }
+                    }
                   }
                 }
               }
@@ -62,16 +70,24 @@ async function getCourt(clubId: string, courtId: string) {
               select: {
                 id: true,
                 name: true,
-                player1: {
+                registration1: {
                   select: {
-                    firstName: true,
-                    lastName: true
+                    player: {
+                      select: {
+                        firstName: true,
+                        lastName: true
+                      }
+                    }
                   }
                 },
-                player2: {
+                registration2: {
                   select: {
-                    firstName: true,
-                    lastName: true
+                    player: {
+                      select: {
+                        firstName: true,
+                        lastName: true
+                      }
+                    }
                   }
                 }
               }

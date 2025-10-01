@@ -55,10 +55,6 @@ export default async function NewCourtPage({ params }: PageProps) {
     redirect("/dashboard/clubs")
   }
 
-  if (club.status !== "ACTIVE") {
-    redirect(`/dashboard/clubs/${clubId}`)
-  }
-
   return (
     <DashboardLayout>
       <div className="space-y-6">

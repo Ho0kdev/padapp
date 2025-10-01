@@ -423,10 +423,10 @@ export function TournamentDetail({ tournament, currentUserId }: TournamentDetail
                               <div className="flex items-center justify-between">
                                 <div>
                                   <p className="font-medium">
-                                    {team.name || `${team.player1.firstName} ${team.player1.lastName} / ${team.player2.firstName} ${team.player2.lastName}`}
+                                    {team.name || `${team.registration1.player.firstName} ${team.registration1.player.lastName} / ${team.registration2.player.firstName} ${team.registration2.player.lastName}`}
                                   </p>
                                   <p className="text-sm text-muted-foreground">
-                                    {team.player1.firstName} {team.player1.lastName} - {team.player2.firstName} {team.player2.lastName}
+                                    {team.registration1.player.firstName} {team.registration1.player.lastName} - {team.registration2.player.firstName} {team.registration2.player.lastName}
                                   </p>
                                 </div>
                                 <Badge variant={

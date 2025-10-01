@@ -49,6 +49,7 @@ import Link from "next/link"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/hooks/use-auth"
 import { DataTablePagination } from "@/components/ui/data-table-pagination"
+import { getClubStatusStyle, getClubStatusLabel } from "@/lib/utils/status-styles"
 
 interface Club {
   id: string
@@ -222,25 +223,6 @@ export function ClubsTable() {
     }
   }
 
-  const getStatusBadge = (status: string) => {
-    const variants = {
-      ACTIVE: "bg-green-100 text-green-800",
-      INACTIVE: "bg-red-100 text-red-800",
-      MAINTENANCE: "bg-yellow-100 text-yellow-800"
-    }
-
-    const labels = {
-      ACTIVE: "Activo",
-      INACTIVE: "Inactivo",
-      MAINTENANCE: "Mantenimiento"
-    }
-
-    return (
-      <Badge variant="outline" className={variants[status as keyof typeof variants]}>
-        {labels[status as keyof typeof labels] || status}
-      </Badge>
-    )
-  }
 
   if (loading) {
     return (
@@ -351,7 +333,9 @@ export function ClubsTable() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      {getStatusBadge(club.status)}
+                      <Badge variant="outline" className={getClubStatusStyle(club.status)}>
+                        {getClubStatusLabel(club.status)}
+                      </Badge>
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>

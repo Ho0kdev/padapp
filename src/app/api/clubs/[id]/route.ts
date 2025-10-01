@@ -164,6 +164,20 @@ export async function PUT(
         )
       }
 
+      // Si el club se está desactivando o poniendo en mantenimiento, desactivar sus canchas
+      if (body.status !== "ACTIVE" && existingClub.status === "ACTIVE") {
+        await prisma.court.updateMany({
+          where: {
+            clubId: id,
+            deleted: false,
+            status: { not: "UNAVAILABLE" }
+          },
+          data: {
+            status: "UNAVAILABLE"
+          }
+        })
+      }
+
       const club = await prisma.club.update({
         where: { id },
         data: { status: body.status },
@@ -180,7 +194,6 @@ export async function PUT(
           }
         }
       })
-
 
       await AuditLogger.log(session, {
         action: Action.UPDATE,
@@ -335,6 +348,18 @@ export async function DELETE(
         { status: 400 }
       )
     }
+
+    // Desactivar todas las canchas activas del club primero
+    await prisma.court.updateMany({
+      where: {
+        clubId: id,
+        deleted: false,
+        status: { not: "UNAVAILABLE" }
+      },
+      data: {
+        status: "UNAVAILABLE"
+      }
+    })
 
     // En lugar de eliminar, cambiar status a INACTIVE
     const club = await prisma.club.update({

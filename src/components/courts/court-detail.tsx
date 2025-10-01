@@ -54,17 +54,22 @@ import {
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/hooks/use-auth"
+import { getClubStatusStyle, getClubStatusLabel } from "@/lib/utils/status-styles"
 
 interface Player {
   firstName: string
   lastName: string
 }
 
+interface Registration {
+  player: Player
+}
+
 interface Team {
   id: string
   name?: string
-  player1: Player
-  player2: Player
+  registration1: Registration
+  registration2: Registration
 }
 
 interface Tournament {
@@ -270,7 +275,7 @@ export function CourtDetail({ court, currentUserId }: CourtDetailProps) {
 
   const formatTeamName = (team: Team) => {
     if (team.name) return team.name
-    return `${team.player1.firstName} ${team.player1.lastName} / ${team.player2.firstName} ${team.player2.lastName}`
+    return `${team.registration1.player.firstName} ${team.registration1.player.lastName} / ${team.registration2.player.firstName} ${team.registration2.player.lastName}`
   }
 
   return (
@@ -431,9 +436,11 @@ export function CourtDetail({ court, currentUserId }: CourtDetailProps) {
               <CardContent className="space-y-4">
                 <div>
                   <h4 className="font-medium">{court.club.name}</h4>
-                  <p className="text-sm text-muted-foreground">
-                    {getStatusBadge(court.club.status)}
-                  </p>
+                  <div className="mt-1">
+                    <Badge variant="outline" className={getClubStatusStyle(court.club.status)}>
+                      {getClubStatusLabel(court.club.status)}
+                    </Badge>
+                  </div>
                 </div>
 
                 <Separator />

@@ -183,3 +183,22 @@ export const getPlayerStatusLabel = (isActive: boolean) => {
   const option = playerStatusOptions.find(opt => opt.value === isActive)
   return option ? option.label : "Desconocido"
 }
+
+// Opciones de estado de club
+export const clubStatusOptions = [
+  { value: "ACTIVE", label: "Activo", color: "green", css: "bg-green-100 text-green-800 border-green-200" },
+  { value: "INACTIVE", label: "Inactivo", color: "red", css: "bg-red-100 text-red-800 border-red-200" },
+  { value: "MAINTENANCE", label: "Mantenimiento", color: "yellow", css: "bg-yellow-100 text-yellow-800 border-yellow-200" },
+] as const
+
+// Helper para obtener estilos de estado de club
+export const getClubStatusStyle = (status: string) => {
+  const option = clubStatusOptions.find(opt => opt.value === status)
+  return option ? option.css : clubStatusOptions[0].css
+}
+
+// Helper para obtener label de estado de club
+export const getClubStatusLabel = (status: string) => {
+  const option = clubStatusOptions.find(opt => opt.value === status)
+  return option ? option.label : status
+}
