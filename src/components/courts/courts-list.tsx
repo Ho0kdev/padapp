@@ -59,6 +59,7 @@ import {
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/hooks/use-auth"
+import { getCourtStatusStyle, getCourtStatusLabel, getCourtSurfaceStyle, getCourtSurfaceLabel } from "@/lib/utils/status-styles"
 
 interface Court {
   id: string
@@ -300,49 +301,6 @@ export function CourtsList({ clubId }: CourtsListProps) {
     }
   }
 
-  const getStatusBadge = (status: string) => {
-    const variants = {
-      AVAILABLE: "bg-green-100 text-green-800",
-      MAINTENANCE: "bg-yellow-100 text-yellow-800",
-      RESERVED: "bg-blue-100 text-blue-800",
-      UNAVAILABLE: "bg-red-100 text-red-800"
-    }
-
-    const labels = {
-      AVAILABLE: "Disponible",
-      MAINTENANCE: "Mantenimiento",
-      RESERVED: "Reservada",
-      UNAVAILABLE: "No Disponible"
-    }
-
-    return (
-      <Badge variant="outline" className={variants[status as keyof typeof variants]}>
-        {labels[status as keyof typeof labels] || status}
-      </Badge>
-    )
-  }
-
-  const getSurfaceBadge = (surface: string) => {
-    const variants = {
-      CONCRETE: "bg-gray-100 text-gray-800",
-      ARTIFICIAL_GRASS: "bg-green-100 text-green-800",
-      CERAMIC: "bg-orange-100 text-orange-800",
-      OTHER: "bg-blue-100 text-blue-800"
-    }
-
-    const labels = {
-      CONCRETE: "Concreto",
-      ARTIFICIAL_GRASS: "Césped Artificial",
-      CERAMIC: "Cerámica",
-      OTHER: "Otra"
-    }
-
-    return (
-      <Badge variant="outline" className={variants[surface as keyof typeof variants]}>
-        {labels[surface as keyof typeof labels] || surface}
-      </Badge>
-    )
-  }
 
   const filteredCourts = courts.filter(court => {
     const searchLower = searchTerm.toLowerCase()
@@ -490,7 +448,9 @@ export function CourtsList({ clubId }: CourtsListProps) {
                       </div>
                     </TableCell>
                     <TableCell>
-                      {getSurfaceBadge(court.surface)}
+                      <Badge variant="outline" className={getCourtSurfaceStyle(court.surface)}>
+                        {getCourtSurfaceLabel(court.surface)}
+                      </Badge>
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-wrap items-center gap-1">
@@ -549,7 +509,9 @@ export function CourtsList({ clubId }: CourtsListProps) {
                       </div>
                     </TableCell>
                     <TableCell>
-                      {getStatusBadge(court.status)}
+                      <Badge variant="outline" className={getCourtStatusStyle(court.status)}>
+                        {getCourtStatusLabel(court.status)}
+                      </Badge>
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>

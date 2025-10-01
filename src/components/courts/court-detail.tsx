@@ -54,7 +54,18 @@ import {
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/hooks/use-auth"
-import { getClubStatusStyle, getClubStatusLabel } from "@/lib/utils/status-styles"
+import {
+  getClubStatusStyle,
+  getClubStatusLabel,
+  getCourtStatusStyle,
+  getCourtStatusLabel,
+  getCourtSurfaceStyle,
+  getCourtSurfaceLabel,
+  getMatchStatusStyle,
+  getMatchStatusLabel,
+  getTournamentStatusStyle,
+  getTournamentStatusLabel
+} from "@/lib/utils/status-styles"
 
 interface Player {
   firstName: string
@@ -192,86 +203,6 @@ export function CourtDetail({ court, currentUserId }: CourtDetailProps) {
     }
   }
 
-  const getStatusBadge = (status: string, type: "court" | "match" | "tournament" = "court") => {
-    let variants, labels
-
-    if (type === "court") {
-      variants = {
-        AVAILABLE: "bg-green-100 text-green-800",
-        MAINTENANCE: "bg-yellow-100 text-yellow-800",
-        RESERVED: "bg-blue-100 text-blue-800",
-        UNAVAILABLE: "bg-red-100 text-red-800"
-      }
-      labels = {
-        AVAILABLE: "Disponible",
-        MAINTENANCE: "Mantenimiento",
-        RESERVED: "Reservada",
-        UNAVAILABLE: "No Disponible"
-      }
-    } else if (type === "match") {
-      variants = {
-        SCHEDULED: "bg-blue-100 text-blue-800",
-        IN_PROGRESS: "bg-yellow-100 text-yellow-800",
-        COMPLETED: "bg-green-100 text-green-800",
-        CANCELLED: "bg-red-100 text-red-800",
-        WALKOVER: "bg-purple-100 text-purple-800"
-      }
-      labels = {
-        SCHEDULED: "Programado",
-        IN_PROGRESS: "En Progreso",
-        COMPLETED: "Completado",
-        CANCELLED: "Cancelado",
-        WALKOVER: "Walkover"
-      }
-    } else {
-      variants = {
-        DRAFT: "bg-gray-100 text-gray-800",
-        PUBLISHED: "bg-blue-100 text-blue-800",
-        REGISTRATION_OPEN: "bg-green-100 text-green-800",
-        REGISTRATION_CLOSED: "bg-yellow-100 text-yellow-800",
-        IN_PROGRESS: "bg-orange-100 text-orange-800",
-        COMPLETED: "bg-purple-100 text-purple-800",
-        CANCELLED: "bg-red-100 text-red-800"
-      }
-      labels = {
-        DRAFT: "Borrador",
-        PUBLISHED: "Publicado",
-        REGISTRATION_OPEN: "Inscripciones Abiertas",
-        REGISTRATION_CLOSED: "Inscripciones Cerradas",
-        IN_PROGRESS: "En Progreso",
-        COMPLETED: "Completado",
-        CANCELLED: "Cancelado"
-      }
-    }
-
-    return (
-      <Badge variant="outline" className={variants[status as keyof typeof variants]}>
-        {labels[status as keyof typeof labels] || status}
-      </Badge>
-    )
-  }
-
-  const getSurfaceBadge = (surface: string) => {
-    const variants = {
-      CONCRETE: "bg-gray-100 text-gray-800",
-      ARTIFICIAL_GRASS: "bg-green-100 text-green-800",
-      CERAMIC: "bg-orange-100 text-orange-800",
-      OTHER: "bg-blue-100 text-blue-800"
-    }
-
-    const labels = {
-      CONCRETE: "Concreto",
-      ARTIFICIAL_GRASS: "Césped Artificial",
-      CERAMIC: "Cerámica",
-      OTHER: "Otra"
-    }
-
-    return (
-      <Badge variant="outline" className={variants[surface as keyof typeof variants]}>
-        {labels[surface as keyof typeof labels] || surface}
-      </Badge>
-    )
-  }
 
   const formatTeamName = (team: Team) => {
     if (team.name) return team.name
@@ -288,7 +219,9 @@ export function CourtDetail({ court, currentUserId }: CourtDetailProps) {
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <h1 className="text-3xl font-bold tracking-tight">{court.name}</h1>
-            {getStatusBadge(court.status)}
+            <Badge variant="outline" className={getCourtStatusStyle(court.status)}>
+              {getCourtStatusLabel(court.status)}
+            </Badge>
           </div>
           <p className="text-muted-foreground">
             {court.club.name}
@@ -355,12 +288,16 @@ export function CourtDetail({ court, currentUserId }: CourtDetailProps) {
               <CardContent className="space-y-4">
                 <div>
                   <h4 className="font-medium mb-2">Superficie</h4>
-                  {getSurfaceBadge(court.surface)}
+                  <Badge variant="outline" className={getCourtSurfaceStyle(court.surface)}>
+                    {getCourtSurfaceLabel(court.surface)}
+                  </Badge>
                 </div>
 
                 <div>
                   <h4 className="font-medium mb-2">Estado</h4>
-                  {getStatusBadge(court.status)}
+                  <Badge variant="outline" className={getCourtStatusStyle(court.status)}>
+                    {getCourtStatusLabel(court.status)}
+                  </Badge>
                 </div>
 
                 <Separator />
@@ -511,7 +448,9 @@ export function CourtDetail({ court, currentUserId }: CourtDetailProps) {
                           <div>
                             <div className="font-medium">{match.tournament.name}</div>
                             <div className="text-sm">
-                              {getStatusBadge(match.tournament.status, "tournament")}
+                              <Badge variant="outline" className={getTournamentStatusStyle(match.tournament.status)}>
+                                {getTournamentStatusLabel(match.tournament.status)}
+                              </Badge>
                             </div>
                           </div>
                         </TableCell>
@@ -537,7 +476,9 @@ export function CourtDetail({ court, currentUserId }: CourtDetailProps) {
                           </div>
                         </TableCell>
                         <TableCell>
-                          {getStatusBadge(match.status, "match")}
+                          <Badge variant="outline" className={getMatchStatusStyle(match.status)}>
+                            {getMatchStatusLabel(match.status)}
+                          </Badge>
                         </TableCell>
                         <TableCell>
                           <Link href={`/dashboard/tournaments/${match.tournament.id}/matches/${match.id}`}>

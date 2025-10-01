@@ -202,3 +202,64 @@ export const getClubStatusLabel = (status: string) => {
   const option = clubStatusOptions.find(opt => opt.value === status)
   return option ? option.label : status
 }
+
+// Opciones de estado de cancha
+export const courtStatusOptions = [
+  { value: "AVAILABLE", label: "Disponible", color: "green", css: "bg-green-100 text-green-800 border-green-200" },
+  { value: "MAINTENANCE", label: "Mantenimiento", color: "yellow", css: "bg-yellow-100 text-yellow-800 border-yellow-200" },
+  { value: "RESERVED", label: "Reservada", color: "blue", css: "bg-blue-100 text-blue-800 border-blue-200" },
+  { value: "UNAVAILABLE", label: "No Disponible", color: "red", css: "bg-red-100 text-red-800 border-red-200" },
+] as const
+
+// Helper para obtener estilos de estado de cancha
+export const getCourtStatusStyle = (status: string) => {
+  const option = courtStatusOptions.find(opt => opt.value === status)
+  return option ? option.css : courtStatusOptions[0].css
+}
+
+// Helper para obtener label de estado de cancha
+export const getCourtStatusLabel = (status: string) => {
+  const option = courtStatusOptions.find(opt => opt.value === status)
+  return option ? option.label : status
+}
+
+// Opciones de superficie de cancha
+export const courtSurfaceOptions = [
+  { value: "CONCRETE", label: "Concreto", color: "gray", css: "bg-gray-100 text-gray-800 border-gray-200" },
+  { value: "ARTIFICIAL_GRASS", label: "Césped Artificial", color: "green", css: "bg-green-100 text-green-800 border-green-200" },
+  { value: "CERAMIC", label: "Cerámica", color: "orange", css: "bg-orange-100 text-orange-800 border-orange-200" },
+  { value: "OTHER", label: "Otra", color: "blue", css: "bg-blue-100 text-blue-800 border-blue-200" },
+] as const
+
+// Helper para obtener estilos de superficie de cancha
+export const getCourtSurfaceStyle = (surface: string) => {
+  const option = courtSurfaceOptions.find(opt => opt.value === surface)
+  return option ? option.css : courtSurfaceOptions[0].css
+}
+
+// Helper para obtener label de superficie de cancha
+export const getCourtSurfaceLabel = (surface: string) => {
+  const option = courtSurfaceOptions.find(opt => opt.value === surface)
+  return option ? option.label : surface
+}
+
+// Opciones de estado de partido
+export const matchStatusOptions = [
+  { value: "SCHEDULED", label: "Programado", color: "blue", css: "bg-blue-100 text-blue-800 border-blue-200" },
+  { value: "IN_PROGRESS", label: "En Progreso", color: "yellow", css: "bg-yellow-100 text-yellow-800 border-yellow-200" },
+  { value: "COMPLETED", label: "Completado", color: "green", css: "bg-green-100 text-green-800 border-green-200" },
+  { value: "CANCELLED", label: "Cancelado", color: "red", css: "bg-red-100 text-red-800 border-red-200" },
+  { value: "WALKOVER", label: "Walkover", color: "purple", css: "bg-purple-100 text-purple-800 border-purple-200" },
+] as const
+
+// Helper para obtener estilos de estado de partido
+export const getMatchStatusStyle = (status: string) => {
+  const option = matchStatusOptions.find(opt => opt.value === status)
+  return option ? option.css : matchStatusOptions[0].css
+}
+
+// Helper para obtener label de estado de partido
+export const getMatchStatusLabel = (status: string) => {
+  const option = matchStatusOptions.find(opt => opt.value === status)
+  return option ? option.label : status
+}
