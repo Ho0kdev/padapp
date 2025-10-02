@@ -11,6 +11,7 @@ const checkPlayersSchema = z.object({
 /**
  * GET /api/registrations/check-players
  * Retorna los IDs de jugadores ya inscritos en una categoría de un torneo
+ * Y también información sobre restricciones de género de la categoría
  * Endpoint público (requiere autenticación pero no permisos especiales)
  * Usado para filtrar jugadores disponibles en el formulario de inscripción
  */
@@ -25,31 +26,49 @@ export async function GET(request: NextRequest) {
     const validatedParams = checkPlayersSchema.parse(params)
     const { tournamentId, categoryId } = validatedParams
 
-    // Buscar todos los equipos activos (no cancelados) en esta categoría
-    const teams = await prisma.team.findMany({
+    // Obtener información de la categoría para conocer restricciones de género y nivel
+    const category = await prisma.category.findUnique({
+      where: { id: categoryId },
+      select: {
+        genderRestriction: true,
+        level: true,
+      }
+    })
+
+    // Buscar todas las registrations activas en esta categoría
+    const registrations = await prisma.registration.findMany({
       where: {
         tournamentId,
         categoryId,
         registrationStatus: {
-          in: ['PENDING', 'CONFIRMED', 'PAID', 'WAITLIST']
+          in: ['PENDING', 'CONFIRMED', 'WAITLIST']
         }
       },
       select: {
-        player1Id: true,
-        player2Id: true,
+        playerId: true,
       }
     })
 
     // Extraer IDs únicos de jugadores
     const playerIds = new Set<string>()
-    teams.forEach(team => {
-      playerIds.add(team.player1Id)
-      playerIds.add(team.player2Id)
+    registrations.forEach(reg => {
+      playerIds.add(reg.playerId)
     })
 
-    return NextResponse.json({
-      playerIds: Array.from(playerIds)
-    })
+    return NextResponse.json(
+      {
+        playerIds: Array.from(playerIds),
+        genderRestriction: category?.genderRestriction || null,
+        categoryLevel: category?.level || null
+      },
+      {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+        }
+      }
+    )
 
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -60,8 +79,14 @@ export async function GET(request: NextRequest) {
     }
 
     console.error("Error checking registered players:", error)
+    console.error("Error details:", error instanceof Error ? error.message : String(error))
+    console.error("Error stack:", error instanceof Error ? error.stack : "No stack trace")
+
     return NextResponse.json(
-      { error: "Error al verificar jugadores inscritos" },
+      {
+        error: "Error al verificar jugadores inscritos",
+        details: error instanceof Error ? error.message : String(error)
+      },
       { status: 500 }
     )
   }

@@ -17,17 +17,18 @@ const updateRegistrationSchema = z.object({
 })
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await requireAuth()
+    const { id } = await params
 
     const registration = await prisma.team.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         tournament: {
           select: {
@@ -162,6 +163,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
+    const { id } = await params
     const session = await requireAuth()
 
     const body = await request.json()
@@ -169,7 +171,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     // Buscar la inscripción actual
     const currentRegistration = await prisma.team.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         tournament: {
           select: {
@@ -199,7 +201,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     }
 
     const updatedRegistration = await prisma.team.update({
-      where: { id: params.id },
+      where: { id: id },
       data: validatedData,
       include: {
         tournament: {
@@ -235,7 +237,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     await AuditLogger.log(session, {
       action: Action.UPDATE,
       resource: Resource.REGISTRATION,
-      resourceId: params.id,
+      resourceId: id,
       description: `Inscripción actualizada: ${updatedRegistration.name || 'Sin nombre'}`,
       oldData: currentRegistration,
       newData: updatedRegistration,
@@ -257,16 +259,24 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
+    const { id } = await params
     const session = await requireAuth()
 
-    // Buscar la inscripción
-    const registration = await prisma.team.findUnique({
-      where: { id: params.id },
+    // Buscar la inscripción (Registration, no Team)
+    const registration = await prisma.registration.findUnique({
+      where: { id },
       include: {
         tournament: {
           select: {
             organizerId: true,
             status: true,
+            type: true,
+          }
+        },
+        player: {
+          select: {
+            firstName: true,
+            lastName: true,
           }
         }
       }
@@ -290,34 +300,70 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       )
     }
 
-    // Verificar si hay partidos asignados
-    const matchesCount = await prisma.match.count({
-      where: {
-        OR: [
-          { team1Id: params.id },
-          { team2Id: params.id }
-        ]
+    // Si es un torneo por equipos, verificar si hay team asociado y partidos
+    if (registration.tournament.type !== 'AMERICANO_SOCIAL') {
+      // Buscar el team asociado
+      const team = await prisma.team.findFirst({
+        where: {
+          OR: [
+            { registration1Id: id },
+            { registration2Id: id }
+          ]
+        }
+      })
+
+      if (team) {
+        // Verificar si hay partidos asignados
+        const matchesCount = await prisma.match.count({
+          where: {
+            OR: [
+              { team1Id: team.id },
+              { team2Id: team.id }
+            ]
+          }
+        })
+
+        if (matchesCount > 0) {
+          return NextResponse.json(
+            { error: "No se puede eliminar una inscripción que ya tiene partidos asignados" },
+            { status: 400 }
+          )
+        }
+
+        // Eliminar el team y sus registrations asociadas
+        await prisma.$transaction(async (tx) => {
+          // Primero eliminar el team
+          await tx.team.delete({
+            where: { id: team.id }
+          })
+
+          // Luego eliminar ambas registrations
+          await tx.registration.delete({
+            where: { id: team.registration1Id }
+          })
+          await tx.registration.delete({
+            where: { id: team.registration2Id }
+          })
+        })
+      } else {
+        // Si no hay team, solo eliminar la registration
+        await prisma.registration.delete({
+          where: { id: id }
+        })
       }
-    })
-
-    if (matchesCount > 0) {
-      return NextResponse.json(
-        { error: "No se puede eliminar una inscripción que ya tiene partidos asignados" },
-        { status: 400 }
-      )
+    } else {
+      // Para Americano Social, solo eliminar la registration
+      await prisma.registration.delete({
+        where: { id: id }
+      })
     }
-
-    // Eliminar la inscripción
-    await prisma.team.delete({
-      where: { id: params.id }
-    })
 
     // Auditoría
     await AuditLogger.log(session, {
       action: Action.DELETE,
       resource: Resource.REGISTRATION,
-      resourceId: params.id,
-      description: `Inscripción eliminada: ${registration.name || 'Sin nombre'}`,
+      resourceId: id,
+      description: `Inscripción eliminada: ${registration.player.firstName} ${registration.player.lastName}`,
       oldData: registration,
     }, request)
 

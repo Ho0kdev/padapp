@@ -62,14 +62,13 @@ interface Player {
 
 interface Registration {
   id: string
-  name: string | null
   registrationStatus: string
   registeredAt: Date
-  seed: number | null
   notes: string | null
   tournament: {
     id: string
     name: string
+    type: string
     status: string
   }
   category: {
@@ -77,18 +76,31 @@ interface Registration {
     name: string
     type: string
   }
-  player1: Player
-  player2: Player
-  payments: Array<{
+  player: Player
+  payment: {
     id: string
     amount: number
     paymentStatus: string
     paymentMethod: string
     paidAt: Date | null
-  }>
+  } | null
   tournamentCategory: {
     registrationFee: number | null
   } | null
+  teamAsPlayer1: Array<{
+    id: string
+    name: string | null
+    registration2: {
+      player: Player
+    }
+  }>
+  teamAsPlayer2: Array<{
+    id: string
+    name: string | null
+    registration1: {
+      player: Player
+    }
+  }>
 }
 
 interface RegistrationsPaginatedResponse {
@@ -189,20 +201,38 @@ export function RegistrationsTable() {
     )
   }
 
-  const getTeamName = (registration: Registration) => {
-    return registration.name ||
-           `${registration.player1.firstName} ${registration.player1.lastName} / ${registration.player2.firstName} ${registration.player2.lastName}`
+  const getDisplayName = (registration: Registration) => {
+    // Si es Americano Social (inscripción individual)
+    if (registration.tournament.type === 'AMERICANO_SOCIAL') {
+      return `${registration.player.firstName} ${registration.player.lastName}`
+    }
+
+    // Si es torneo por equipos
+    const team = registration.teamAsPlayer1[0] || registration.teamAsPlayer2[0]
+    if (team) {
+      if (team.name) {
+        return team.name
+      }
+      // Construir nombre del equipo
+      const partner = registration.teamAsPlayer1[0]
+        ? registration.teamAsPlayer1[0].registration2.player
+        : registration.teamAsPlayer2[0].registration1.player
+
+      return `${registration.player.firstName} ${registration.player.lastName} / ${partner.firstName} ${partner.lastName}`
+    }
+
+    // Fallback
+    return `${registration.player.firstName} ${registration.player.lastName}`
   }
 
-  const getTotalPaid = (payments: Registration['payments']) => {
-    return payments
-      .filter(payment => payment.paymentStatus === 'PAID')
-      .reduce((sum, payment) => sum + payment.amount, 0)
+  const getTotalPaid = (payment: Registration['payment']) => {
+    if (!payment) return 0
+    return payment.paymentStatus === 'PAID' ? payment.amount : 0
   }
 
   const getPaymentStatus = (registration: Registration) => {
     const registrationFee = registration.tournamentCategory?.registrationFee || 0
-    const totalPaid = getTotalPaid(registration.payments)
+    const totalPaid = getTotalPaid(registration.payment)
 
     if (registrationFee === 0) {
       return <Badge variant="secondary">Sin Costo</Badge>
@@ -292,10 +322,10 @@ export function RegistrationsTable() {
                   <TableCell>
                     <div className="space-y-1">
                       <div className="font-medium">
-                        {getTeamName(registration)}
+                        {getDisplayName(registration)}
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        {registration.player1.firstName} {registration.player1.lastName} • {registration.player2.firstName} {registration.player2.lastName}
+                        {registration.category.name}
                       </div>
                     </div>
                   </TableCell>
@@ -403,7 +433,7 @@ export function RegistrationsTable() {
           <AlertDialogHeader>
             <AlertDialogTitle>¿Eliminar inscripción?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción eliminará la inscripción de &quot;{registrationToDelete && getTeamName(registrationToDelete)}&quot;.
+              Esta acción eliminará la inscripción de &quot;{registrationToDelete && getDisplayName(registrationToDelete)}&quot;.
               Esta acción no se puede deshacer.
               {registrationToDelete && ['IN_PROGRESS', 'COMPLETED'].includes(registrationToDelete.tournament.status) && (
                 <span className="block mt-2 text-red-600">

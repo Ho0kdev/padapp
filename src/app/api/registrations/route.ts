@@ -69,58 +69,26 @@ export async function GET(request: NextRequest) {
     }
 
     if (playerId) {
-      where.OR = [
-        { player1Id: playerId },
-        { player2Id: playerId }
-      ]
+      where.playerId = playerId
     }
 
     if (search) {
-      where.OR = [
-        ...(where.OR || []),
-        {
-          name: {
-            contains: search,
-            mode: 'insensitive'
+      where.player = {
+        OR: [
+          {
+            firstName: {
+              contains: search,
+              mode: 'insensitive'
+            }
+          },
+          {
+            lastName: {
+              contains: search,
+              mode: 'insensitive'
+            }
           }
-        },
-        {
-          player1: {
-            OR: [
-              {
-                firstName: {
-                  contains: search,
-                  mode: 'insensitive'
-                }
-              },
-              {
-                lastName: {
-                  contains: search,
-                  mode: 'insensitive'
-                }
-              }
-            ]
-          }
-        },
-        {
-          player2: {
-            OR: [
-              {
-                firstName: {
-                  contains: search,
-                  mode: 'insensitive'
-                }
-              },
-              {
-                lastName: {
-                  contains: search,
-                  mode: 'insensitive'
-                }
-              }
-            ]
-          }
-        }
-      ]
+        ]
+      }
     }
 
     // Filtrado basado en permisos RBAC
@@ -132,11 +100,8 @@ export async function GET(request: NextRequest) {
       })
 
       if (userPlayer) {
-        // Filtrar solo inscripciones donde el usuario es player1 o player2
-        where.OR = [
-          { player1Id: userPlayer.id },
-          { player2Id: userPlayer.id }
-        ]
+        // Filtrar solo inscripciones del usuario
+        where.playerId = userPlayer.id
       } else {
         // Si no es jugador, no puede ver ninguna inscripción
         return NextResponse.json({
@@ -149,9 +114,41 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Para evitar duplicados en torneos por equipos, agregamos una condición:
+    // Solo mostrar registrations que NO tienen un teamAsPlayer2 (es decir, solo la registration1 del equipo)
+    // O que son de torneos AMERICANO_SOCIAL (que no tienen equipos)
+    const whereWithTeamFilter = {
+      ...where,
+      OR: [
+        // Registrations de torneos Americano Social (sin equipos)
+        {
+          tournament: {
+            type: 'AMERICANO_SOCIAL'
+          }
+        },
+        // O registrations que son player1 de un equipo (evita duplicados)
+        {
+          AND: [
+            {
+              tournament: {
+                type: {
+                  not: 'AMERICANO_SOCIAL'
+                }
+              }
+            },
+            {
+              teamAsPlayer1: {
+                some: {}
+              }
+            }
+          ]
+        }
+      ]
+    }
+
     const [registrations, total] = await Promise.all([
-      prisma.team.findMany({
-        where,
+      prisma.registration.findMany({
+        where: whereWithTeamFilter,
         skip: offset,
         take: limit,
         include: {
@@ -159,6 +156,7 @@ export async function GET(request: NextRequest) {
             select: {
               id: true,
               name: true,
+              type: true,
               status: true,
               registrationStart: true,
               registrationEnd: true,
@@ -171,7 +169,7 @@ export async function GET(request: NextRequest) {
               type: true,
             }
           },
-          player1: {
+          player: {
             select: {
               id: true,
               firstName: true,
@@ -183,19 +181,7 @@ export async function GET(request: NextRequest) {
               }
             }
           },
-          player2: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              user: {
-                select: {
-                  email: true
-                }
-              }
-            }
-          },
-          payments: {
+          payment: {
             select: {
               id: true,
               amount: true,
@@ -209,13 +195,49 @@ export async function GET(request: NextRequest) {
               registrationFee: true,
               maxTeams: true,
             }
+          },
+          teamAsPlayer1: {
+            select: {
+              id: true,
+              name: true,
+              registration2: {
+                select: {
+                  player: {
+                    select: {
+                      id: true,
+                      firstName: true,
+                      lastName: true
+                    }
+                  }
+                }
+              }
+            },
+            take: 1
+          },
+          teamAsPlayer2: {
+            select: {
+              id: true,
+              name: true,
+              registration1: {
+                select: {
+                  player: {
+                    select: {
+                      id: true,
+                      firstName: true,
+                      lastName: true
+                    }
+                  }
+                }
+              }
+            },
+            take: 1
           }
         },
         orderBy: {
-          registeredAt: 'desc'
+          createdAt: 'desc'
         }
       }),
-      prisma.team.count({ where })
+      prisma.registration.count({ where: whereWithTeamFilter })
     ])
 
     const totalPages = Math.ceil(total / limit)
@@ -311,10 +333,32 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Verificar que los jugadores existen
+    // Verificar que los jugadores existen y obtener sus categorías principales
     const [player1, player2] = await Promise.all([
-      prisma.player.findUnique({ where: { id: validatedData.player1Id } }),
-      prisma.player.findUnique({ where: { id: validatedData.player2Id } })
+      prisma.player.findUnique({
+        where: { id: validatedData.player1Id },
+        include: {
+          primaryCategory: {
+            select: {
+              id: true,
+              name: true,
+              level: true
+            }
+          }
+        }
+      }),
+      prisma.player.findUnique({
+        where: { id: validatedData.player2Id },
+        include: {
+          primaryCategory: {
+            select: {
+              id: true,
+              name: true,
+              level: true
+            }
+          }
+        }
+      })
     ])
 
     if (!player1 || !player2) {
@@ -324,29 +368,47 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Validar nivel de categoría para ambos jugadores
+    // Nivel más bajo = mejor jugador (ej: nivel 1 o 2 = profesional)
+    // Nivel más alto = principiante (ej: nivel 8 = principiante)
+    // Un jugador puede jugar en su nivel o en niveles más bajos (con mejores jugadores)
+    // pero NO puede jugar en niveles más altos (con principiantes) - sería injusto
+    if (tournamentCategory.category.level) {
+      // Validar player1
+      if (player1.primaryCategory?.level && player1.primaryCategory.level < tournamentCategory.category.level) {
+        return NextResponse.json(
+          {
+            error: `El nivel del jugador ${player1.firstName} ${player1.lastName} (${player1.primaryCategory.name} - Nivel ${player1.primaryCategory.level}) es superior para la categoría del torneo (${tournamentCategory.category.name} - Nivel ${tournamentCategory.category.level}). Solo puede jugar en categorías de su nivel o superior.`
+          },
+          { status: 400 }
+        )
+      }
+
+      // Validar player2
+      if (player2.primaryCategory?.level && player2.primaryCategory.level < tournamentCategory.category.level) {
+        return NextResponse.json(
+          {
+            error: `El nivel del jugador ${player2.firstName} ${player2.lastName} (${player2.primaryCategory.name} - Nivel ${player2.primaryCategory.level}) es superior para la categoría del torneo (${tournamentCategory.category.name} - Nivel ${tournamentCategory.category.level}). Solo puede jugar en categorías de su nivel o superior.`
+          },
+          { status: 400 }
+        )
+      }
+    }
+
     // Verificar que ningún jugador esté ya inscrito en esta categoría del torneo
-    const existingTeamWithPlayers = await prisma.team.findFirst({
+    const existingRegistrations = await prisma.registration.findMany({
       where: {
         tournamentId: validatedData.tournamentId,
         categoryId: validatedData.categoryId,
-        registrationStatus: {
-          in: ['PENDING', 'CONFIRMED', 'PAID', 'WAITLIST']
+        playerId: {
+          in: [validatedData.player1Id, validatedData.player2Id]
         },
-        OR: [
-          { player1Id: validatedData.player1Id },
-          { player1Id: validatedData.player2Id },
-          { player2Id: validatedData.player1Id },
-          { player2Id: validatedData.player2Id },
-        ]
+        registrationStatus: {
+          in: ['PENDING', 'CONFIRMED', 'WAITLIST']
+        }
       },
       include: {
-        player1: {
-          select: {
-            firstName: true,
-            lastName: true
-          }
-        },
-        player2: {
+        player: {
           select: {
             firstName: true,
             lastName: true
@@ -355,26 +417,10 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    if (existingTeamWithPlayers) {
-      // Determinar qué jugador(es) ya están inscritos
-      const player1AlreadyRegistered =
-        existingTeamWithPlayers.player1Id === validatedData.player1Id ||
-        existingTeamWithPlayers.player2Id === validatedData.player1Id
-      const player2AlreadyRegistered =
-        existingTeamWithPlayers.player1Id === validatedData.player2Id ||
-        existingTeamWithPlayers.player2Id === validatedData.player2Id
-
-      let errorMessage = ""
-      if (player1AlreadyRegistered && player2AlreadyRegistered) {
-        errorMessage = `Ambos jugadores ya están inscritos en esta categoría del torneo (Equipo: ${existingTeamWithPlayers.player1.firstName} ${existingTeamWithPlayers.player1.lastName} / ${existingTeamWithPlayers.player2.firstName} ${existingTeamWithPlayers.player2.lastName})`
-      } else if (player1AlreadyRegistered) {
-        errorMessage = `${player1.firstName} ${player1.lastName} ya está inscrito en esta categoría del torneo (Equipo: ${existingTeamWithPlayers.player1.firstName} ${existingTeamWithPlayers.player1.lastName} / ${existingTeamWithPlayers.player2.firstName} ${existingTeamWithPlayers.player2.lastName})`
-      } else {
-        errorMessage = `${player2.firstName} ${player2.lastName} ya está inscrito en esta categoría del torneo (Equipo: ${existingTeamWithPlayers.player1.firstName} ${existingTeamWithPlayers.player1.lastName} / ${existingTeamWithPlayers.player2.firstName} ${existingTeamWithPlayers.player2.lastName})`
-      }
-
+    if (existingRegistrations.length > 0) {
+      const playerNames = existingRegistrations.map(r => `${r.player.firstName} ${r.player.lastName}`).join(', ')
       return NextResponse.json(
-        { error: errorMessage },
+        { error: `El/los siguiente(s) jugador(es) ya están inscritos en esta categoría: ${playerNames}` },
         { status: 400 }
       )
     }
@@ -387,60 +433,97 @@ export async function POST(request: NextRequest) {
       where: {
         tournamentId: validatedData.tournamentId,
         categoryId: validatedData.categoryId,
-        registrationStatus: {
-          in: ['PENDING', 'CONFIRMED', 'PAID']
+        status: {
+          in: ['DRAFT', 'CONFIRMED']
         }
       }
     })
 
     const isWaitlist = tournamentCategory.maxTeams && currentTeamsCount >= tournamentCategory.maxTeams
+    const registrationStatus = isWaitlist ? 'WAITLIST' : 'PENDING'
 
-    // Crear el equipo/inscripción
-    const registration = await prisma.team.create({
-      data: {
-        tournamentId: validatedData.tournamentId,
-        categoryId: validatedData.categoryId,
-        player1Id: validatedData.player1Id,
-        player2Id: validatedData.player2Id,
-        name: validatedData.teamName,
-        notes: validatedData.notes,
-        registrationStatus: isWaitlist ? 'WAITLIST' : 'PENDING',
-        registeredAt: new Date(),
-      },
-      include: {
-        tournament: {
-          select: {
-            id: true,
-            name: true,
-          }
+    // Crear las 2 registrations y el team en una transacción
+    const result = await prisma.$transaction(async (tx) => {
+      // Crear registration para player 1
+      const reg1 = await tx.registration.create({
+        data: {
+          tournamentId: validatedData.tournamentId,
+          categoryId: validatedData.categoryId,
+          playerId: validatedData.player1Id,
+          registrationStatus,
+          notes: validatedData.notes,
+        }
+      })
+
+      // Crear registration para player 2
+      const reg2 = await tx.registration.create({
+        data: {
+          tournamentId: validatedData.tournamentId,
+          categoryId: validatedData.categoryId,
+          playerId: validatedData.player2Id,
+          registrationStatus,
+          notes: validatedData.notes,
+        }
+      })
+
+      // Crear el team
+      const team = await tx.team.create({
+        data: {
+          tournamentId: validatedData.tournamentId,
+          categoryId: validatedData.categoryId,
+          registration1Id: reg1.id,
+          registration2Id: reg2.id,
+          name: validatedData.teamName,
+          notes: validatedData.notes,
+          status: isWaitlist ? 'DRAFT' : 'DRAFT', // Siempre empieza como DRAFT
         },
-        category: {
-          select: {
-            id: true,
-            name: true,
-          }
-        },
-        player1: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-          }
-        },
-        player2: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-          }
-        },
-        tournamentCategory: {
-          select: {
-            registrationFee: true,
+        include: {
+          tournament: {
+            select: {
+              id: true,
+              name: true,
+            }
+          },
+          category: {
+            select: {
+              id: true,
+              name: true,
+            }
+          },
+          registration1: {
+            include: {
+              player: {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                }
+              }
+            }
+          },
+          registration2: {
+            include: {
+              player: {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                }
+              }
+            }
+          },
+          tournamentCategory: {
+            select: {
+              registrationFee: true,
+            }
           }
         }
-      }
+      })
+
+      return team
     })
+
+    const registration = result
 
     // TODO: Enviar notificación por email
     // TODO: Si hay tarifa de inscripción, crear el registro de pago pendiente

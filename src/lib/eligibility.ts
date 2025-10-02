@@ -14,7 +14,7 @@ export type EligibilityResult = {
  * Reglas:
  * - Si la categoría NO tiene level definido → todos son elegibles
  * - Si el jugador NO tiene categoría principal con level → requiere revisión manual
- * - Si el jugador tiene level MENOR que la categoría → NO elegible (es demasiado bueno)
+ * - Si el jugador tiene level MENOR que la categoría → NO elegible (es nivel superior)
  * - Si el jugador tiene level MAYOR O IGUAL que la categoría → elegible
  */
 export async function checkCategoryEligibility(
