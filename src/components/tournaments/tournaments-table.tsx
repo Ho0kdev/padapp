@@ -219,7 +219,11 @@ export function TournamentsTable() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem asChild>
-                          <Link href={`/dashboard/tournaments/${tournament.id}`}>
+                          <Link href={
+                            tournament.type === "AMERICANO_SOCIAL"
+                              ? `/dashboard/tournaments/${tournament.id}/americano-social`
+                              : `/dashboard/tournaments/${tournament.id}`
+                          }>
                             <Eye className="mr-2 h-4 w-4" />
                             Ver detalle
                           </Link>

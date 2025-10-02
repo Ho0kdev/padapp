@@ -9,7 +9,8 @@ export const tournamentFormSchema = z.object({
     "ROUND_ROBIN",
     "SWISS",
     "GROUP_STAGE_ELIMINATION",
-    "AMERICANO"
+    "AMERICANO",
+    "AMERICANO_SOCIAL"
   ], {
     message: "El tipo de torneo es requerido"
   }),
@@ -108,7 +109,8 @@ export const tournamentTypeOptions = [
   { value: "ROUND_ROBIN", label: "Todos contra Todos" },
   { value: "SWISS", label: "Sistema Suizo" },
   { value: "GROUP_STAGE_ELIMINATION", label: "Grupos + Eliminatoria" },
-  { value: "AMERICANO", label: "Americano" },
+  { value: "AMERICANO", label: "Americano (Parejas Fijas)" },
+  { value: "AMERICANO_SOCIAL", label: "Americano Social (Pools con Rotación)" },
 ] as const
 
 export const tournamentStatusOptions = [

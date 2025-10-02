@@ -12,7 +12,8 @@ const createTournamentSchema = z.object({
     "ROUND_ROBIN",
     "SWISS",
     "GROUP_STAGE_ELIMINATION",
-    "AMERICANO"
+    "AMERICANO",
+    "AMERICANO_SOCIAL"
   ], {
     message: "El tipo de torneo es requerido"
   }),

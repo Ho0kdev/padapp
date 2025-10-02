@@ -249,7 +249,12 @@ export function TournamentForm({
         variant: "success",
       })
 
-      router.push(`/dashboard/tournaments/${tournament.id}`)
+      // Redirigir a la página específica según el tipo de torneo
+      if (tournament.type === "AMERICANO_SOCIAL") {
+        router.push(`/dashboard/tournaments/${tournament.id}/americano-social`)
+      } else {
+        router.push(`/dashboard/tournaments/${tournament.id}`)
+      }
     } catch (error) {
       toast({
         title: "Error",
