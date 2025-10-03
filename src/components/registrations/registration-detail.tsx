@@ -56,9 +56,11 @@ interface RegistrationWithDetails {
   registeredAt: Date
   seed: number | null
   notes: string | null
+  isAmericanoSocial: boolean
   tournament: {
     id: string
     name: string
+    type: string
     status: string
     tournamentStart: Date
     tournamentEnd: Date | null
@@ -75,6 +77,18 @@ interface RegistrationWithDetails {
     minRankingPoints: number | null
     maxRankingPoints: number | null
   }
+  player?: {
+    id: string
+    firstName: string
+    lastName: string
+    phone: string | null
+    dateOfBirth: Date | null
+    gender: string | null
+    rankingPoints: number
+    user?: {
+      email: string | null
+    } | null
+  }
   player1: {
     id: string
     firstName: string
@@ -86,7 +100,7 @@ interface RegistrationWithDetails {
     user?: {
       email: string | null
     } | null
-  }
+  } | null
   player2: {
     id: string
     firstName: string
@@ -98,7 +112,7 @@ interface RegistrationWithDetails {
     user?: {
       email: string | null
     } | null
-  }
+  } | null
   payments: Array<{
     id: string
     amount: number
@@ -133,8 +147,16 @@ export function RegistrationDetail({ registration }: RegistrationDetailProps) {
   const amountDue = Math.max(0, registrationFee - totalPaid)
 
   const getTeamName = () => {
-    return registration.name ||
-           `${registration.player1.firstName} ${registration.player1.lastName} / ${registration.player2.firstName} ${registration.player2.lastName}`
+    if (registration.isAmericanoSocial && registration.player) {
+      return `${registration.player.firstName} ${registration.player.lastName}`
+    }
+
+    if (registration.player1 && registration.player2) {
+      return registration.name ||
+             `${registration.player1.firstName} ${registration.player1.lastName} / ${registration.player2.firstName} ${registration.player2.lastName}`
+    }
+
+    return registration.name || 'Sin nombre'
   }
 
   const handleDelete = async () => {
@@ -455,99 +477,150 @@ export function RegistrationDetail({ registration }: RegistrationDetailProps) {
         </TabsContent>
 
         <TabsContent value="players">
-          <div className="grid gap-4 md:grid-cols-2">
-            {/* Jugador 1 */}
+          {registration.isAmericanoSocial && registration.player ? (
+            /* Vista para Americano Social - Un solo jugador */
             <Card>
               <CardHeader>
-                <CardTitle>Jugador 1</CardTitle>
+                <CardTitle>Información del Jugador</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Nombre</p>
-                  <p>{registration.player1.firstName} {registration.player1.lastName}</p>
+                  <p>{registration.player.firstName} {registration.player.lastName}</p>
                 </div>
 
-                {registration.player1.user?.email && (
+                {registration.player.user?.email && (
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Email</p>
-                    <p>{registration.player1.user.email}</p>
+                    <p>{registration.player.user.email}</p>
                   </div>
                 )}
 
-                {registration.player1.phone && (
+                {registration.player.phone && (
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Teléfono</p>
-                    <p>{registration.player1.phone}</p>
+                    <p>{registration.player.phone}</p>
                   </div>
                 )}
 
-                {registration.player1.gender && (
+                {registration.player.gender && (
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Género</p>
-                    <p>{registration.player1.gender}</p>
+                    <p>{registration.player.gender}</p>
                   </div>
                 )}
 
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Puntos de Ranking</p>
-                  <p>{registration.player1.rankingPoints} puntos</p>
+                  <p>{registration.player.rankingPoints} puntos</p>
                 </div>
 
-                {registration.player1.dateOfBirth && (
+                {registration.player.dateOfBirth && (
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Fecha de Nacimiento</p>
-                    <p>{format(new Date(registration.player1.dateOfBirth), "dd/MM/yyyy", { locale: es })}</p>
+                    <p>{format(new Date(registration.player.dateOfBirth), "dd/MM/yyyy", { locale: es })}</p>
                   </div>
                 )}
               </CardContent>
             </Card>
+          ) : (
+            /* Vista para torneos por equipos - Dos jugadores */
+            <div className="grid gap-4 md:grid-cols-2">
+              {registration.player1 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Jugador 1</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Nombre</p>
+                      <p>{registration.player1.firstName} {registration.player1.lastName}</p>
+                    </div>
 
-            {/* Jugador 2 */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Jugador 2</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Nombre</p>
-                  <p>{registration.player2.firstName} {registration.player2.lastName}</p>
-                </div>
+                    {registration.player1.user?.email && (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Email</p>
+                        <p>{registration.player1.user.email}</p>
+                      </div>
+                    )}
 
-                {registration.player2.user?.email && (
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Email</p>
-                    <p>{registration.player2.user.email}</p>
-                  </div>
-                )}
+                    {registration.player1.phone && (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Teléfono</p>
+                        <p>{registration.player1.phone}</p>
+                      </div>
+                    )}
 
-                {registration.player2.phone && (
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Teléfono</p>
-                    <p>{registration.player2.phone}</p>
-                  </div>
-                )}
+                    {registration.player1.gender && (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Género</p>
+                        <p>{registration.player1.gender}</p>
+                      </div>
+                    )}
 
-                {registration.player2.gender && (
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Género</p>
-                    <p>{registration.player2.gender}</p>
-                  </div>
-                )}
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Puntos de Ranking</p>
+                      <p>{registration.player1.rankingPoints} puntos</p>
+                    </div>
 
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Puntos de Ranking</p>
-                  <p>{registration.player2.rankingPoints} puntos</p>
-                </div>
+                    {registration.player1.dateOfBirth && (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Fecha de Nacimiento</p>
+                        <p>{format(new Date(registration.player1.dateOfBirth), "dd/MM/yyyy", { locale: es })}</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
 
-                {registration.player2.dateOfBirth && (
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Fecha de Nacimiento</p>
-                    <p>{format(new Date(registration.player2.dateOfBirth), "dd/MM/yyyy", { locale: es })}</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+              {registration.player2 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Jugador 2</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Nombre</p>
+                      <p>{registration.player2.firstName} {registration.player2.lastName}</p>
+                    </div>
+
+                    {registration.player2.user?.email && (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Email</p>
+                        <p>{registration.player2.user.email}</p>
+                      </div>
+                    )}
+
+                    {registration.player2.phone && (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Teléfono</p>
+                        <p>{registration.player2.phone}</p>
+                      </div>
+                    )}
+
+                    {registration.player2.gender && (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Género</p>
+                        <p>{registration.player2.gender}</p>
+                      </div>
+                    )}
+
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Puntos de Ranking</p>
+                      <p>{registration.player2.rankingPoints} puntos</p>
+                    </div>
+
+                    {registration.player2.dateOfBirth && (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Fecha de Nacimiento</p>
+                        <p>{format(new Date(registration.player2.dateOfBirth), "dd/MM/yyyy", { locale: es })}</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="payments">

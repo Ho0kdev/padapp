@@ -163,7 +163,12 @@ export function BracketVisualization({
 
     if (team.name) return team.name
 
-    return `${team.player1.firstName} ${team.player1.lastName} / ${team.player2.firstName} ${team.player2.lastName}`
+    // @ts-expect-error - team might have registration1/registration2 with nested players
+    if (team.registration1?.player && team.registration2?.player) {
+      return `${team.registration1.player.firstName} ${team.registration1.player.lastName} / ${team.registration2.player.firstName} ${team.registration2.player.lastName}`
+    }
+
+    return "Equipo sin nombre"
   }
 
   return (

@@ -244,11 +244,11 @@ export function UserDetail({ user }: UserDetailProps) {
   }
 
   const getTeamPartnername = (team: any) => {
-    if (team.player1) {
-      return `${team.player1.firstName} ${team.player1.lastName}`
+    if (team.registration1?.player) {
+      return `${team.registration1.player.firstName} ${team.registration1.player.lastName}`
     }
-    if (team.player2) {
-      return `${team.player2.firstName} ${team.player2.lastName}`
+    if (team.registration2?.player) {
+      return `${team.registration2.player.firstName} ${team.registration2.player.lastName}`
     }
     return 'Sin compañero'
   }

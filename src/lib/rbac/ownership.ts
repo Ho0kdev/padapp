@@ -15,30 +15,36 @@ export function isOwner(userId: string, resource: any): boolean {
 }
 
 /**
- * Verificar si un usuario es miembro de un equipo (player1 o player2)
+ * Verificar si un usuario es miembro de un equipo
+ * Verifica a través de registration1 y registration2
  * @example isTeamMember(userId, team)
  */
 export function isTeamMember(userId: string, team: any): boolean {
   if (!team) return false
-  return team.player1Id === userId || team.player2Id === userId
+
+  // Necesita tener las registrations cargadas con sus players
+  if (team.registration1?.player?.userId === userId) return true
+  if (team.registration2?.player?.userId === userId) return true
+
+  return false
 }
 
 /**
  * Verificar si un usuario es participante de una inscripción
- * Busca en el team relacionado
+ * Verifica a través del player asociado
  * @example isRegistrationParticipant(userId, registration)
  */
 export function isRegistrationParticipant(userId: string, registration: any): boolean {
   if (!registration) return false
 
-  // Si tiene team directamente
-  if (registration.team) {
-    return isTeamMember(userId, registration.team)
+  // Verificar si el player de la registration pertenece al usuario
+  if (registration.player?.userId === userId) {
+    return true
   }
 
-  // Si tiene player1Id/player2Id directamente (team embebido)
-  if (registration.player1Id || registration.player2Id) {
-    return registration.player1Id === userId || registration.player2Id === userId
+  // Si tiene team directamente, verificar membership
+  if (registration.team) {
+    return isTeamMember(userId, registration.team)
   }
 
   return false
@@ -125,8 +131,8 @@ export function checkOwnership(userId: string, resource: any, context?: any): bo
     return true
   }
 
-  // Estrategia 2: Team member
-  if (resource.player1Id || resource.player2Id) {
+  // Estrategia 2: Team member (verifica si tiene registrations)
+  if (resource.registration1Id || resource.registration2Id) {
     return isTeamMember(userId, resource)
   }
 
@@ -180,7 +186,7 @@ export function checkOwnership(userId: string, resource: any, context?: any): bo
  * ability.can(Action.READ, Resource.TEAM, ownsTeam(userId))
  *
  * // Permite ver equipos donde es miembro
- * // team.player1Id === userId || team.player2Id === userId
+ * // team.registration1.player.userId === userId || team.registration2.player.userId === userId
  * ```
  *
  * ### 3. Ownership Anidado (Registration)
@@ -188,8 +194,8 @@ export function checkOwnership(userId: string, resource: any, context?: any): bo
  * // En ability.ts
  * ability.can(Action.DELETE, Resource.REGISTRATION, ownsRegistration(userId))
  *
- * // Verifica ownership en el team relacionado
- * // registration.team.player1Id === userId || registration.team.player2Id === userId
+ * // Verifica ownership del player o del team relacionado
+ * // registration.player.userId === userId
  * ```
  *
  * ### 4. Ownership por Rol (Match/Referee)

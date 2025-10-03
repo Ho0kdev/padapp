@@ -122,8 +122,18 @@ export class PointsCalculationService {
           teams: {
             select: {
               categoryId: true,
-              player1Id: true,
-              player2Id: true
+              registration1Id: true,
+              registration2Id: true,
+              registration1: {
+                select: {
+                  playerId: true
+                }
+              },
+              registration2: {
+                select: {
+                  playerId: true
+                }
+              }
             }
           },
           categories: {
@@ -146,7 +156,7 @@ export class PointsCalculationService {
       for (const stat of tournament.stats) {
         // Contar participantes en la categoría del jugador
         const playerTeam = tournament.teams.find(team =>
-          team.player1Id === stat.playerId || team.player2Id === stat.playerId
+          team.registration1.playerId === stat.playerId || team.registration2.playerId === stat.playerId
         )
 
         if (!playerTeam) continue
@@ -213,7 +223,21 @@ export class PointsCalculationService {
       const tournament = await prisma.tournament.findUnique({
         where: { id: tournamentId },
         include: {
-          teams: true
+          teams: {
+            select: {
+              categoryId: true,
+              registration1: {
+                select: {
+                  playerId: true
+                }
+              },
+              registration2: {
+                select: {
+                  playerId: true
+                }
+              }
+            }
+          }
         }
       })
 
@@ -227,7 +251,7 @@ export class PointsCalculationService {
 
         // Encontrar la categoría del jugador en este torneo
         const playerTeam = tournament.teams.find(team =>
-          team.player1Id === playerId || team.player2Id === playerId
+          team.registration1.playerId === playerId || team.registration2.playerId === playerId
         )
 
         if (!playerTeam) continue
@@ -249,8 +273,16 @@ export class PointsCalculationService {
                 some: {
                   categoryId,
                   OR: [
-                    { player1Id: playerId },
-                    { player2Id: playerId }
+                    {
+                      registration1: {
+                        playerId: playerId
+                      }
+                    },
+                    {
+                      registration2: {
+                        playerId: playerId
+                      }
+                    }
                   ]
                 }
               }

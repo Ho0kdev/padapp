@@ -52,52 +52,68 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
             maxRankingPoints: true,
           }
         },
-        player1: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            dateOfBirth: true,
-            gender: true,
-            rankingPoints: true,
-            user: {
+        registration1: {
+          include: {
+            player: {
               select: {
                 id: true,
-                email: true,
-                image: true,
+                firstName: true,
+                lastName: true,
+                dateOfBirth: true,
+                gender: true,
+                rankingPoints: true,
+                user: {
+                  select: {
+                    id: true,
+                    email: true,
+                    image: true,
+                  }
+                }
+              }
+            },
+            payment: {
+              select: {
+                id: true,
+                amount: true,
+                paymentStatus: true,
+                paymentMethod: true,
+                transactionId: true,
+                paidAt: true,
+                createdAt: true,
               }
             }
           }
         },
-        player2: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            dateOfBirth: true,
-            gender: true,
-            rankingPoints: true,
-            user: {
+        registration2: {
+          include: {
+            player: {
               select: {
                 id: true,
-                email: true,
-                image: true,
+                firstName: true,
+                lastName: true,
+                dateOfBirth: true,
+                gender: true,
+                rankingPoints: true,
+                user: {
+                  select: {
+                    id: true,
+                    email: true,
+                    image: true,
+                  }
+                }
+              }
+            },
+            payment: {
+              select: {
+                id: true,
+                amount: true,
+                paymentStatus: true,
+                paymentMethod: true,
+                transactionId: true,
+                paidAt: true,
+                createdAt: true,
               }
             }
-          }
-        },
-        payments: {
-          select: {
-            id: true,
-            amount: true,
-            paymentStatus: true,
-            paymentMethod: true,
-            transactionId: true,
-            paidAt: true,
-            createdAt: true,
-          },
-          orderBy: {
-            createdAt: 'desc'
           }
         },
         tournamentCategory: {
@@ -115,8 +131,20 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
             team2: {
               select: {
                 name: true,
-                player1: { select: { firstName: true, lastName: true } },
-                player2: { select: { firstName: true, lastName: true } }
+                registration1: {
+                  select: {
+                    player: {
+                      select: { firstName: true, lastName: true }
+                    }
+                  }
+                },
+                registration2: {
+                  select: {
+                    player: {
+                      select: { firstName: true, lastName: true }
+                    }
+                  }
+                }
               }
             }
           },
@@ -132,8 +160,20 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
             team1: {
               select: {
                 name: true,
-                player1: { select: { firstName: true, lastName: true } },
-                player2: { select: { firstName: true, lastName: true } }
+                registration1: {
+                  select: {
+                    player: {
+                      select: { firstName: true, lastName: true }
+                    }
+                  }
+                },
+                registration2: {
+                  select: {
+                    player: {
+                      select: { firstName: true, lastName: true }
+                    }
+                  }
+                }
               }
             }
           },
@@ -169,8 +209,8 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     const body = await request.json()
     const validatedData = updateRegistrationSchema.parse(body)
 
-    // Buscar la inscripción actual
-    const currentRegistration = await prisma.team.findUnique({
+    // Intentar buscar primero como Team
+    const currentTeam = await prisma.team.findUnique({
       where: { id },
       include: {
         tournament: {
@@ -182,55 +222,178 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       }
     })
 
-    if (!currentRegistration) {
-      return NextResponse.json(
-        { error: "Inscripción no encontrada" },
-        { status: 404 }
-      )
+    // Si no se encuentra como Team, buscar como Registration
+    let currentRegistration = null
+    if (!currentTeam) {
+      currentRegistration = await prisma.registration.findUnique({
+        where: { id },
+        include: {
+          tournament: {
+            select: {
+              organizerId: true,
+              status: true,
+            }
+          }
+        }
+      })
+
+      if (!currentRegistration) {
+        return NextResponse.json(
+          { error: "Inscripción no encontrada" },
+          { status: 404 }
+        )
+      }
+
+      // Verificar permisos contextuales para Registration
+      await authorize(Action.UPDATE, Resource.REGISTRATION, currentRegistration)
+
+      // Restricciones según el estado del torneo
+      if (currentRegistration.tournament.status === 'COMPLETED') {
+        return NextResponse.json(
+          { error: "No se pueden modificar inscripciones de torneos completados" },
+          { status: 400 }
+        )
+      }
+
+      // Actualizar solo los campos permitidos para Registration
+      const registrationUpdateData: any = {}
+      if (validatedData.registrationStatus) {
+        registrationUpdateData.registrationStatus = validatedData.registrationStatus
+      }
+      if (validatedData.notes !== undefined) {
+        registrationUpdateData.notes = validatedData.notes
+      }
+
+      const updatedRegistration = await prisma.registration.update({
+        where: { id },
+        data: registrationUpdateData,
+        include: {
+          tournament: {
+            select: {
+              id: true,
+              name: true,
+            }
+          },
+          category: {
+            select: {
+              id: true,
+              name: true,
+            }
+          },
+          player: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+            }
+          }
+        }
+      })
+
+      // Auditoría
+      await AuditLogger.log(session, {
+        action: Action.UPDATE,
+        resource: Resource.REGISTRATION,
+        resourceId: id,
+        description: `Inscripción actualizada: ${updatedRegistration.player.firstName} ${updatedRegistration.player.lastName}`,
+        oldData: currentRegistration,
+        newData: updatedRegistration,
+      }, request)
+
+      return NextResponse.json(updatedRegistration)
     }
 
+    // Si se encontró como Team, actualizar el Team
     // Verificar permisos contextuales
-    await authorize(Action.UPDATE, Resource.REGISTRATION, currentRegistration)
+    await authorize(Action.UPDATE, Resource.REGISTRATION, currentTeam)
 
     // Restricciones según el estado del torneo
-    if (currentRegistration.tournament.status === 'COMPLETED') {
+    if (currentTeam.tournament.status === 'COMPLETED') {
       return NextResponse.json(
         { error: "No se pueden modificar inscripciones de torneos completados" },
         { status: 400 }
       )
     }
 
-    const updatedRegistration = await prisma.team.update({
-      where: { id: id },
-      data: validatedData,
-      include: {
-        tournament: {
-          select: {
-            id: true,
-            name: true,
-          }
-        },
-        category: {
-          select: {
-            id: true,
-            name: true,
-          }
-        },
-        player1: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-          }
-        },
-        player2: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
+    // Separar datos de team vs datos de registration
+    const teamUpdateData: any = {}
+    const registrationUpdateData: any = {}
+
+    if (validatedData.name !== undefined) {
+      teamUpdateData.name = validatedData.name
+    }
+    if (validatedData.seed !== undefined) {
+      teamUpdateData.seed = validatedData.seed
+    }
+    if (validatedData.notes !== undefined) {
+      teamUpdateData.notes = validatedData.notes
+    }
+    if (validatedData.registrationStatus !== undefined) {
+      registrationUpdateData.registrationStatus = validatedData.registrationStatus
+    }
+
+    // Actualizar el team y las registrations en una transacción
+    const updatedTeam = await prisma.$transaction(async (tx) => {
+      // Actualizar team si hay cambios
+      if (Object.keys(teamUpdateData).length > 0) {
+        await tx.team.update({
+          where: { id },
+          data: teamUpdateData,
+        })
+      }
+
+      // Actualizar registrations si hay cambios de estado
+      if (Object.keys(registrationUpdateData).length > 0) {
+        await tx.registration.update({
+          where: { id: currentTeam.registration1Id },
+          data: registrationUpdateData,
+        })
+        await tx.registration.update({
+          where: { id: currentTeam.registration2Id },
+          data: registrationUpdateData,
+        })
+      }
+
+      // Retornar el team actualizado
+      return tx.team.findUnique({
+        where: { id },
+        include: {
+          tournament: {
+            select: {
+              id: true,
+              name: true,
+            }
+          },
+          category: {
+            select: {
+              id: true,
+              name: true,
+            }
+          },
+          registration1: {
+            include: {
+              player: {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                }
+              }
+            }
+          },
+          registration2: {
+            include: {
+              player: {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                }
+              }
+            }
           }
         }
-      }
+      })
     })
 
     // Auditoría
@@ -238,18 +401,18 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       action: Action.UPDATE,
       resource: Resource.REGISTRATION,
       resourceId: id,
-      description: `Inscripción actualizada: ${updatedRegistration.name || 'Sin nombre'}`,
-      oldData: currentRegistration,
-      newData: updatedRegistration,
+      description: `Inscripción actualizada: ${updatedTeam.name || 'Sin nombre'}`,
+      oldData: currentTeam,
+      newData: updatedTeam,
     }, request)
 
-    return NextResponse.json(updatedRegistration)
+    return NextResponse.json(updatedTeam)
 
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Datos inválidos", details: error.errors },
-        { status: 400 }
+        { status: 250 }
       )
     }
 

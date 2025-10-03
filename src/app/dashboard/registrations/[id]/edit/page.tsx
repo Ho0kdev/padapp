@@ -10,25 +10,162 @@ interface EditRegistrationPageProps {
 }
 
 async function getRegistration(id: string, userId: string) {
-  const registration = await prisma.team.findUnique({
-    where: { id }
-  })
-
-  if (!registration) {
-    return null
-  }
-
-  // Verificar permisos - Solo ADMIN puede editar
+  // Verificar permisos primero
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: { role: true }
   })
 
-  if (user?.role !== "ADMIN") {
+  const isAdminOrClubAdmin = user?.role === "ADMIN" || user?.role === "CLUB_ADMIN"
+  if (!isAdminOrClubAdmin) {
     return null
   }
 
-  return registration
+  // Intentar buscar como Registration primero
+  const registration = await prisma.registration.findUnique({
+    where: { id },
+    include: {
+      tournament: {
+        select: {
+          id: true,
+          name: true,
+          type: true,
+          status: true,
+        }
+      },
+      category: {
+        select: {
+          id: true,
+          name: true,
+        }
+      },
+      player: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+        }
+      },
+      teamAsPlayer1: {
+        select: {
+          id: true,
+          name: true,
+          seed: true,
+          registration2: {
+            select: {
+              player: {
+                select: {
+                  firstName: true,
+                  lastName: true,
+                }
+              }
+            }
+          }
+        }
+      },
+      teamAsPlayer2: {
+        select: {
+          id: true,
+          name: true,
+          seed: true,
+          registration1: {
+            select: {
+              player: {
+                select: {
+                  firstName: true,
+                  lastName: true,
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  })
+
+  if (registration) {
+    return registration
+  }
+
+  // Si no se encontró, podría ser que el ID sea de un Team
+  // En ese caso, buscar el team y extraer las registrations
+  const team = await prisma.team.findUnique({
+    where: { id },
+    include: {
+      tournament: {
+        select: {
+          id: true,
+          name: true,
+          type: true,
+          status: true,
+        }
+      },
+      category: {
+        select: {
+          id: true,
+          name: true,
+        }
+      },
+      registration1: {
+        include: {
+          player: true,
+          teamAsPlayer1: {
+            select: {
+              id: true,
+              name: true,
+              seed: true,
+              registration2: {
+                select: {
+                  player: {
+                    select: {
+                      firstName: true,
+                      lastName: true,
+                    }
+                  }
+                }
+              }
+            }
+          },
+          teamAsPlayer2: {
+            select: {
+              id: true,
+              name: true,
+              seed: true,
+              registration1: {
+                select: {
+                  player: {
+                    select: {
+                      firstName: true,
+                      lastName: true,
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      registration2: {
+        include: {
+          player: true
+        }
+      }
+    }
+  })
+
+  if (!team) {
+    return null
+  }
+
+  // Retornar la primera registration del team con la estructura esperada
+  return {
+    ...team.registration1,
+    tournament: team.tournament,
+    category: team.category,
+    // Incluir el team en la estructura
+    teamAsPlayer1: team.registration1.teamAsPlayer1,
+    teamAsPlayer2: team.registration1.teamAsPlayer2,
+  }
 }
 
 export default async function EditRegistrationPage({ params }: EditRegistrationPageProps) {
@@ -45,10 +182,24 @@ export default async function EditRegistrationPage({ params }: EditRegistrationP
     notFound()
   }
 
+  // Obtener el team asociado
+  const team = registration.teamAsPlayer1[0] || registration.teamAsPlayer2[0]
+
   // Transformar datos para el formulario
   const initialData = {
-    name: registration.name || undefined,
+    registrationStatus: registration.registrationStatus,
     notes: registration.notes || undefined,
+    teamName: team?.name || undefined,
+    seed: team?.seed || undefined,
+  }
+
+  // Información para mostrar en la página
+  const registrationInfo = {
+    tournament: registration.tournament,
+    category: registration.category,
+    player: registration.player,
+    team: team,
+    isAmericanoSocial: registration.tournament.type === 'AMERICANO_SOCIAL',
   }
 
   return (
@@ -57,13 +208,28 @@ export default async function EditRegistrationPage({ params }: EditRegistrationP
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Editar Inscripción</h1>
           <p className="text-muted-foreground">
-            Modifica la información de la inscripción
+            {registrationInfo.tournament.name} - {registrationInfo.category.name}
+          </p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Jugador: {registrationInfo.player.firstName} {registrationInfo.player.lastName}
+            {!registrationInfo.isAmericanoSocial && team && (
+              <>
+                {' '}/{' '}
+                {team.registration1
+                  ? `${team.registration1.player.firstName} ${team.registration1.player.lastName}`
+                  : `${team.registration2.player.firstName} ${team.registration2.player.lastName}`
+                }
+              </>
+            )}
           </p>
         </div>
 
         <RegistrationEditForm
           initialData={initialData}
           registrationId={registration.id}
+          teamId={team?.id}
+          isAmericanoSocial={registrationInfo.isAmericanoSocial}
+          tournamentStatus={registration.tournament.status}
         />
       </div>
     </DashboardLayout>

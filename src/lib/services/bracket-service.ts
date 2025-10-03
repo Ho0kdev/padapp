@@ -922,32 +922,48 @@ export class BracketService {
       include: {
         team1: {
           include: {
-            player1: {
+            registration1: {
               select: {
-                firstName: true,
-                lastName: true
+                player: {
+                  select: {
+                    firstName: true,
+                    lastName: true
+                  }
+                }
               }
             },
-            player2: {
+            registration2: {
               select: {
-                firstName: true,
-                lastName: true
+                player: {
+                  select: {
+                    firstName: true,
+                    lastName: true
+                  }
+                }
               }
             }
           }
         },
         team2: {
           include: {
-            player1: {
+            registration1: {
               select: {
-                firstName: true,
-                lastName: true
+                player: {
+                  select: {
+                    firstName: true,
+                    lastName: true
+                  }
+                }
               }
             },
-            player2: {
+            registration2: {
               select: {
-                firstName: true,
-                lastName: true
+                player: {
+                  select: {
+                    firstName: true,
+                    lastName: true
+                  }
+                }
               }
             }
           }
@@ -1064,8 +1080,20 @@ export class BracketService {
           include: {
             team: {
               include: {
-                player1: { select: { firstName: true, lastName: true } },
-                player2: { select: { firstName: true, lastName: true } }
+                registration1: {
+                  select: {
+                    player: {
+                      select: { firstName: true, lastName: true }
+                    }
+                  }
+                },
+                registration2: {
+                  select: {
+                    player: {
+                      select: { firstName: true, lastName: true }
+                    }
+                  }
+                }
               }
             }
           }
@@ -1112,7 +1140,7 @@ export class BracketService {
     // Inicializar stats para todos los equipos del grupo
     zone.teams.forEach(({ team }) => {
       const teamName = team.name ||
-        `${team.player1.firstName} ${team.player1.lastName} / ${team.player2.firstName} ${team.player2.lastName}`
+        `${team.registration1.player.firstName} ${team.registration1.player.lastName} / ${team.registration2.player.firstName} ${team.registration2.player.lastName}`
 
       statsMap.set(team.id, {
         teamId: team.id,

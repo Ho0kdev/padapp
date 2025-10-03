@@ -8,20 +8,30 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
-import { Loader2, Users, FileText } from "lucide-react"
+import { Loader2, Users, FileText, Trophy } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { z } from "zod"
 
 const registrationEditSchema = z.object({
-  name: z.string().max(100, "El nombre no puede tener más de 100 caracteres").optional(),
+  registrationStatus: z.enum([
+    "PENDING",
+    "CONFIRMED",
+    "PAID",
+    "CANCELLED",
+    "WAITLIST"
+  ]),
+  teamName: z.string().max(100, "El nombre no puede tener más de 100 caracteres").optional(),
+  seed: z.number().int().positive("La semilla debe ser un número positivo").optional().or(z.literal(undefined)),
   notes: z.string().max(500, "Las notas no pueden tener más de 500 caracteres").optional(),
 })
 
@@ -29,13 +39,24 @@ type RegistrationEditData = z.infer<typeof registrationEditSchema>
 
 interface RegistrationEditFormProps {
   initialData?: {
-    name?: string
+    registrationStatus: string
+    teamName?: string
+    seed?: number
     notes?: string
   }
-  registrationId?: string
+  registrationId: string
+  teamId?: string
+  isAmericanoSocial: boolean
+  tournamentStatus: string
 }
 
-export function RegistrationEditForm({ initialData, registrationId }: RegistrationEditFormProps) {
+export function RegistrationEditForm({
+  initialData,
+  registrationId,
+  teamId,
+  isAmericanoSocial,
+  tournamentStatus
+}: RegistrationEditFormProps) {
   const [loading, setLoading] = useState(false)
   const { error: toastError, success: toastSuccess } = useToast()
   const router = useRouter()
@@ -43,38 +64,57 @@ export function RegistrationEditForm({ initialData, registrationId }: Registrati
   const form = useForm<RegistrationEditData>({
     resolver: zodResolver(registrationEditSchema),
     defaultValues: {
-      name: initialData?.name || "",
+      registrationStatus: initialData?.registrationStatus as any || "PENDING",
+      teamName: initialData?.teamName || "",
+      seed: initialData?.seed || undefined,
       notes: initialData?.notes || "",
     }
   })
+
+  const isTournamentCompleted = tournamentStatus === 'COMPLETED'
 
   const onSubmit = async (data: RegistrationEditData) => {
     try {
       setLoading(true)
 
-      const url = `/api/registrations/${registrationId}`
-      const method = "PUT"
+      // Actualizar la registration
+      const registrationData = {
+        registrationStatus: data.registrationStatus,
+        notes: data.notes,
+      }
 
-      const response = await fetch(url, {
-        method,
+      const registrationResponse = await fetch(`/api/registrations/${registrationId}`, {
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(registrationData),
       })
 
-      if (!response.ok) {
-        const errorData = await response.json()
+      if (!registrationResponse.ok) {
+        const errorData = await registrationResponse.json()
+        throw new Error(errorData.error || "Error al actualizar la inscripción")
+      }
 
-        // Si hay detalles de validación de Zod, mostrar el mensaje específico
-        if (errorData.details && Array.isArray(errorData.details)) {
-          const specificErrors = errorData.details
-            .map((detail: { message: string }) => detail.message)
-            .join(', ')
-          throw new Error(specificErrors)
+      // Si hay team y no es Americano Social, actualizar el team
+      if (teamId && !isAmericanoSocial) {
+        const teamData = {
+          name: data.teamName,
+          seed: data.seed,
         }
 
-        throw new Error(errorData.error || "Error al actualizar la inscripción")
+        const teamResponse = await fetch(`/api/registrations/${teamId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(teamData),
+        })
+
+        if (!teamResponse.ok) {
+          const errorData = await teamResponse.json()
+          throw new Error(errorData.error || "Error al actualizar el equipo")
+        }
       }
 
       toastSuccess("Inscripción actualizada correctamente")
@@ -93,27 +133,38 @@ export function RegistrationEditForm({ initialData, registrationId }: Registrati
     <div className="space-y-6">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          {/* Información del Equipo */}
+          {/* Estado de la Inscripción */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                Información del Equipo
+                <FileText className="h-5 w-5" />
+                Estado de la Inscripción
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <FormField
                 control={form.control}
-                name="name"
+                name="registrationStatus"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nombre del Equipo (Opcional)</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Nombre personalizado para el equipo"
-                        {...field}
-                      />
-                    </FormControl>
+                    <FormLabel>Estado *</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value} disabled={isTournamentCompleted}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecciona el estado" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="PENDING">Pendiente</SelectItem>
+                        <SelectItem value="CONFIRMED">Confirmado</SelectItem>
+                        <SelectItem value="PAID">Pagado</SelectItem>
+                        <SelectItem value="WAITLIST">Lista de Espera</SelectItem>
+                        <SelectItem value="CANCELLED">Cancelado</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      Estado actual de la inscripción
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -129,6 +180,7 @@ export function RegistrationEditForm({ initialData, registrationId }: Registrati
                       <Textarea
                         placeholder="Información adicional sobre la inscripción"
                         className="min-h-[80px]"
+                        disabled={isTournamentCompleted}
                         {...field}
                       />
                     </FormControl>
@@ -139,11 +191,69 @@ export function RegistrationEditForm({ initialData, registrationId }: Registrati
             </CardContent>
           </Card>
 
+          {/* Información del Equipo - Solo para torneos por equipos */}
+          {!isAmericanoSocial && teamId && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Información del Equipo
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="teamName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nombre del Equipo (Opcional)</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Nombre personalizado para el equipo"
+                          disabled={isTournamentCompleted}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="seed"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Semilla (Opcional)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="Posición inicial del equipo"
+                          disabled={isTournamentCompleted}
+                          {...field}
+                          onChange={(e) => {
+                            const value = e.target.value
+                            field.onChange(value === '' ? undefined : parseInt(value))
+                          }}
+                          value={field.value || ''}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        La semilla determina la posición inicial del equipo en el torneo
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </Card>
+          )}
+
           {/* Botones de Acción */}
           <div className="flex gap-4">
             <Button
               type="submit"
-              disabled={loading}
+              disabled={loading || isTournamentCompleted}
               className="min-w-[120px]"
             >
               {loading ? (
@@ -159,6 +269,12 @@ export function RegistrationEditForm({ initialData, registrationId }: Registrati
               Cancelar
             </Button>
           </div>
+
+          {isTournamentCompleted && (
+            <p className="text-sm text-muted-foreground text-center">
+              No se puede editar una inscripción de un torneo completado
+            </p>
+          )}
         </form>
       </Form>
     </div>
