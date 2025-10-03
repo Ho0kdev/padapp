@@ -1,4 +1,4 @@
-import { Tournament, TournamentCategory, Category, Club, User, Team, Match } from "@prisma/client"
+import { Tournament, TournamentCategory, Category, Club, User, Team, Match, Registration } from "@prisma/client"
 
 export interface TournamentWithDetails extends Tournament {
   organizer: {
@@ -26,9 +26,33 @@ export interface TournamentWithDetails extends Tournament {
     }
   }[]
   teams: (Team & {
-    registration1: { player: { firstName: string; lastName: string } }
-    registration2: { player: { firstName: string; lastName: string } }
+    registration1: {
+      registrationStatus: string
+      player: { firstName: string; lastName: string }
+    }
+    registration2: {
+      registrationStatus: string
+      player: { firstName: string; lastName: string }
+    }
     category: { name: string }
+  })[]
+  registrations?: (Registration & {
+    player: {
+      id: string
+      firstName: string
+      lastName: string
+      gender: string | null
+      rankingPoints: number
+      primaryCategory?: {
+        id: string
+        name: string
+        level: number
+      } | null
+    }
+    category: {
+      id: string
+      name: string
+    }
   })[]
   matches: (Match & {
     team1?: {

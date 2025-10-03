@@ -47,6 +47,14 @@ import { es } from "date-fns/locale"
 import { TournamentWithDetails } from "@/types/tournament"
 import { tournamentStatusOptions, tournamentTypeOptions } from "@/lib/validations/tournament"
 import { useToast } from "@/hooks/use-toast"
+import {
+  getGenderRestrictionStyle,
+  getGenderRestrictionLabel,
+  getCategoryLevelStyle,
+  formatCategoryLevel,
+  getRegistrationStatusStyle,
+  getRegistrationStatusLabel
+} from "@/lib/utils/status-styles"
 
 interface TournamentDetailProps {
   tournament: TournamentWithDetails
@@ -398,52 +406,106 @@ export function TournamentDetail({ tournament, currentUserId }: TournamentDetail
         <TabsContent value="teams">
           <Card>
             <CardHeader>
-              <CardTitle>Equipos Inscritos</CardTitle>
+              <CardTitle>{tournament.type === 'AMERICANO_SOCIAL' ? 'Jugadores Inscritos' : 'Equipos Inscritos'}</CardTitle>
             </CardHeader>
             <CardContent>
-              {tournament.teams.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">
-                  No hay equipos inscritos aún
-                </p>
+              {tournament.type === 'AMERICANO_SOCIAL' ? (
+                // Vista para Americano Social - Jugadores individuales
+                tournament.registrations && tournament.registrations.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">
+                    No hay jugadores inscritos aún
+                  </p>
+                ) : (
+                  <div className="space-y-4">
+                    {tournament.categories.map((category) => {
+                      const categoryPlayers = tournament.registrations?.filter(
+                        reg => reg.categoryId === category.categoryId
+                      ) || []
+
+                      if (categoryPlayers.length === 0) return null
+
+                      return (
+                        <div key={category.id}>
+                          <h4 className="font-medium mb-3">{category.category.name}</h4>
+                          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                            {categoryPlayers.map((registration) => (
+                              <div key={registration.id} className="border rounded-lg p-3">
+                                <div className="flex items-center justify-between mb-2">
+                                  <p className="font-medium">
+                                    {registration.player.firstName} {registration.player.lastName}
+                                  </p>
+                                  <Badge className={getRegistrationStatusStyle(registration.registrationStatus)}>
+                                    {getRegistrationStatusLabel(registration.registrationStatus)}
+                                  </Badge>
+                                </div>
+                                <div className="space-y-2">
+                                  <div className="text-sm text-muted-foreground">
+                                    Puntos: {registration.player.rankingPoints}
+                                  </div>
+                                  <div className="flex flex-wrap gap-2">
+                                    {registration.player.primaryCategory && (
+                                      <Badge className={getCategoryLevelStyle(registration.player.primaryCategory.level)}>
+                                        {formatCategoryLevel(registration.player.primaryCategory.name, registration.player.primaryCategory.level)}
+                                      </Badge>
+                                    )}
+                                    {registration.player.gender && (
+                                      <Badge className={getGenderRestrictionStyle(registration.player.gender)}>
+                                        {getGenderRestrictionLabel(registration.player.gender)}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )
               ) : (
-                <div className="space-y-4">
-                  {tournament.categories.map((category) => {
-                    const categoryTeams = tournament.teams.filter(
-                      team => team.categoryId === category.categoryId
-                    )
+                // Vista para torneos convencionales - Equipos
+                tournament.teams.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">
+                    No hay equipos inscritos aún
+                  </p>
+                ) : (
+                  <div className="space-y-4">
+                    {tournament.categories.map((category) => {
+                      const categoryTeams = tournament.teams.filter(
+                        team => team.categoryId === category.categoryId
+                      )
 
-                    if (categoryTeams.length === 0) return null
+                      if (categoryTeams.length === 0) return null
 
-                    return (
-                      <div key={category.id}>
-                        <h4 className="font-medium mb-3">{category.category.name}</h4>
-                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                          {categoryTeams.map((team) => (
-                            <div key={team.id} className="border rounded-lg p-3">
-                              <div className="flex items-center justify-between">
-                                <div>
+                      return (
+                        <div key={category.id}>
+                          <h4 className="font-medium mb-3">{category.category.name}</h4>
+                          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                            {categoryTeams.map((team) => (
+                              <div key={team.id} className="border rounded-lg p-3">
+                                <div className="flex items-center justify-between mb-2">
                                   <p className="font-medium">
                                     {team.name || `${team.registration1.player.firstName} ${team.registration1.player.lastName} / ${team.registration2.player.firstName} ${team.registration2.player.lastName}`}
                                   </p>
-                                  <p className="text-sm text-muted-foreground">
-                                    {team.registration1.player.firstName} {team.registration1.player.lastName} - {team.registration2.player.firstName} {team.registration2.player.lastName}
-                                  </p>
+                                  <Badge className={getRegistrationStatusStyle(team.registration1.registrationStatus)}>
+                                    {getRegistrationStatusLabel(team.registration1.registrationStatus)}
+                                  </Badge>
                                 </div>
-                                <Badge variant={
-                                  team.registrationStatus === "PAID" ? "default" :
-                                  team.registrationStatus === "CONFIRMED" ? "secondary" :
-                                  "outline"
-                                }>
-                                  {team.registrationStatus}
-                                </Badge>
+                                <div className="space-y-2">
+                                  <div className="text-sm text-muted-foreground">
+                                    <div>{team.registration1.player.firstName} {team.registration1.player.lastName}</div>
+                                    <div>{team.registration2.player.firstName} {team.registration2.player.lastName}</div>
+                                  </div>
+                                </div>
                               </div>
-                            </div>
-                          ))}
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    )
-                  })}
-                </div>
+                      )
+                    })}
+                  </div>
+                )
               )}
             </CardContent>
           </Card>

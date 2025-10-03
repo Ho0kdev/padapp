@@ -53,6 +53,7 @@ async function getTournament(id: string) {
         include: {
           registration1: {
             select: {
+              registrationStatus: true,
               player: {
                 select: { firstName: true, lastName: true }
               }
@@ -60,6 +61,7 @@ async function getTournament(id: string) {
           },
           registration2: {
             select: {
+              registrationStatus: true,
               player: {
                 select: { firstName: true, lastName: true }
               }
@@ -67,6 +69,32 @@ async function getTournament(id: string) {
           },
           category: {
             select: { name: true }
+          }
+        }
+      },
+      registrations: {
+        include: {
+          player: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              gender: true,
+              rankingPoints: true,
+              primaryCategory: {
+                select: {
+                  id: true,
+                  name: true,
+                  level: true
+                }
+              }
+            }
+          },
+          category: {
+            select: {
+              id: true,
+              name: true
+            }
           }
         }
       },

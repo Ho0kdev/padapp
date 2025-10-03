@@ -47,6 +47,14 @@ import { tournamentStatusOptions, tournamentTypeOptions } from "@/lib/validation
 import { GlobalRankingTable } from "./global-ranking-table"
 import { PoolCard } from "./pool-card"
 import { CategorySelector } from "./category-selector"
+import {
+  getRegistrationStatusStyle,
+  getRegistrationStatusLabel,
+  getGenderRestrictionStyle,
+  getGenderRestrictionLabel,
+  getCategoryLevelStyle,
+  formatCategoryLevel
+} from "@/lib/utils/status-styles"
 
 interface AmericanoSocialDetailProps {
   tournament: any
@@ -66,6 +74,7 @@ export function AmericanoSocialDetail({
   const [generating, setGenerating] = useState(false)
   const [pools, setPools] = useState<any[]>([])
   const [ranking, setRanking] = useState<any[]>([])
+  const [registrations, setRegistrations] = useState<any[]>([])
 
   const isOwner = tournament.organizerId === currentUserId
   const statusConfig = tournamentStatusOptions.find(s => s.value === tournament.status)
@@ -73,6 +82,7 @@ export function AmericanoSocialDetail({
 
   useEffect(() => {
     loadData()
+    loadRegistrations()
   }, [categoryId])
 
   const loadData = async () => {
@@ -99,6 +109,23 @@ export function AmericanoSocialDetail({
       })
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadRegistrations = async () => {
+    try {
+      const response = await fetch(
+        `/api/registrations?tournamentId=${tournament.id}&categoryId=${categoryId}`
+      )
+
+      if (!response.ok) {
+        throw new Error("Error cargando inscripciones")
+      }
+
+      const data = await response.json()
+      setRegistrations(data.registrations || [])
+    } catch (error) {
+      console.error("Error:", error)
     }
   }
 
@@ -345,6 +372,7 @@ export function AmericanoSocialDetail({
       <Tabs defaultValue="info" className="space-y-4">
         <TabsList>
           <TabsTrigger value="info">Información</TabsTrigger>
+          <TabsTrigger value="players">Jugadores</TabsTrigger>
           <TabsTrigger value="pools">Pools</TabsTrigger>
           <TabsTrigger value="matches">Partidos</TabsTrigger>
           <TabsTrigger value="ranking">Ranking</TabsTrigger>
@@ -485,6 +513,54 @@ export function AmericanoSocialDetail({
               </CardContent>
             </Card>
           )}
+        </TabsContent>
+
+        {/* Tab: Players */}
+        <TabsContent value="players">
+          <Card>
+            <CardHeader>
+              <CardTitle>Jugadores Inscritos</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {registrations.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">
+                  No hay jugadores inscritos aún
+                </p>
+              ) : (
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {registrations.map((registration: any) => (
+                    <div key={registration.id} className="border rounded-lg p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="font-medium">
+                          {registration.player.firstName} {registration.player.lastName}
+                        </p>
+                        <Badge className={getRegistrationStatusStyle(registration.registrationStatus)}>
+                          {getRegistrationStatusLabel(registration.registrationStatus)}
+                        </Badge>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="text-sm text-muted-foreground">
+                          Puntos: {registration.player.rankingPoints}
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {registration.player.primaryCategory && (
+                            <Badge className={getCategoryLevelStyle(registration.player.primaryCategory.level)}>
+                              {formatCategoryLevel(registration.player.primaryCategory.name, registration.player.primaryCategory.level)}
+                            </Badge>
+                          )}
+                          {registration.player.gender && (
+                            <Badge className={getGenderRestrictionStyle(registration.player.gender)}>
+                              {getGenderRestrictionLabel(registration.player.gender)}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Tab: Pools */}
