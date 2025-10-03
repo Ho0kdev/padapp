@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from "next/server"
 import { authorize, handleAuthError, Action, Resource, AuditLogger } from "@/lib/rbac"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
+import {
+  validateTournamentStatus,
+  validateRegistrationDates,
+  validatePlayerCategoryLevel,
+  shouldBeWaitlisted,
+  getInitialRegistrationStatus
+} from "@/lib/validations/registration-validations"
 
 const individualRegistrationSchema = z.object({
   tournamentId: z.string().min(1, "El torneo es requerido"),
@@ -51,39 +58,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (tournament.status !== 'REGISTRATION_OPEN') {
-      return NextResponse.json(
-        { error: "Las inscripciones para este torneo no están abiertas" },
-        { status: 400 }
-      )
-    }
+    // Validar estado del torneo
+    const statusError = validateTournamentStatus(tournament)
+    if (statusError) return statusError
 
-    // Verificar fechas de inscripción
-    const now = new Date()
-    const registrationStart = tournament.registrationStart ? new Date(tournament.registrationStart) : null
-    const registrationEnd = tournament.registrationEnd ? new Date(tournament.registrationEnd) : null
-
-    if (registrationStart) {
-      const startDate = new Date(registrationStart.getFullYear(), registrationStart.getMonth(), registrationStart.getDate())
-      const currentDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-      if (currentDate < startDate) {
-        return NextResponse.json(
-          { error: "Las inscripciones aún no han comenzado" },
-          { status: 400 }
-        )
-      }
-    }
-
-    if (registrationEnd) {
-      const endDate = new Date(registrationEnd.getFullYear(), registrationEnd.getMonth(), registrationEnd.getDate())
-      const currentDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-      if (currentDate > endDate) {
-        return NextResponse.json(
-          { error: "Las inscripciones ya han finalizado" },
-          { status: 400 }
-        )
-      }
-    }
+    // Validar fechas de inscripción
+    const datesError = validateRegistrationDates(tournament)
+    if (datesError) return datesError
 
     // Verificar que la categoría existe en el torneo
     const tournamentCategory = tournament.categories[0]
@@ -115,21 +96,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validar nivel de categoría si ambos tienen nivel definido
-    // Nivel más bajo = mejor jugador (ej: nivel 1 o 2 = profesional)
-    // Nivel más alto = principiante (ej: nivel 8 = principiante)
-    // Un jugador puede jugar en su nivel o en niveles más bajos (con mejores jugadores)
-    // pero NO puede jugar en niveles más altos (con principiantes) - sería injusto
-    if (tournamentCategory.category.level && player.primaryCategory?.level) {
-      if (player.primaryCategory.level < tournamentCategory.category.level) {
-        return NextResponse.json(
-          {
-            error: `El nivel del jugador (${player.primaryCategory.name} - Nivel ${player.primaryCategory.level}) es superior para la categoría del torneo (${tournamentCategory.category.name} - Nivel ${tournamentCategory.category.level}). Solo puede jugar en categorías de su nivel o superior.`
-          },
-          { status: 400 }
-        )
-      }
-    }
+    // Validar nivel de categoría
+    const levelError = validatePlayerCategoryLevel(
+      player.primaryCategory?.level,
+      tournamentCategory.category.level,
+      `${player.firstName} ${player.lastName}`,
+      player.primaryCategory?.name,
+      tournamentCategory.category.name
+    )
+    if (levelError) return levelError
 
     // Verificar que el jugador no esté ya inscrito en esta categoría del torneo
     const existingRegistration = await prisma.registration.findUnique({
@@ -149,7 +124,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Verificar si hay cupo disponible
+    // Verificar cupo disponible
     const currentRegistrationsCount = await prisma.registration.count({
       where: {
         tournamentId: validatedData.tournamentId,
@@ -160,8 +135,8 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    const isWaitlist = tournamentCategory.maxTeams && currentRegistrationsCount >= tournamentCategory.maxTeams
-    const registrationStatus = isWaitlist ? 'WAITLIST' : 'PENDING'
+    const isWaitlist = shouldBeWaitlisted(currentRegistrationsCount, tournamentCategory.maxTeams)
+    const registrationStatus = getInitialRegistrationStatus(isWaitlist)
 
     // Crear la registration
     const registration = await prisma.registration.create({

@@ -45,7 +45,11 @@ import {
   tournamentStatusOptions as statusStyles,
   registrationStatusOptions,
   getRegistrationStatusStyle,
-  getRegistrationStatusLabel
+  getRegistrationStatusLabel,
+  getGenderRestrictionStyle,
+  getGenderRestrictionLabel,
+  getCategoryLevelStyle,
+  formatCategoryLevel
 } from "@/lib/utils/status-styles"
 import { RegistrationStatusManager } from "./registration-status-manager"
 
@@ -85,6 +89,11 @@ interface RegistrationWithDetails {
     dateOfBirth: Date | null
     gender: string | null
     rankingPoints: number
+    primaryCategory?: {
+      id: string
+      name: string
+      level: number
+    } | null
     user?: {
       email: string | null
     } | null
@@ -97,6 +106,11 @@ interface RegistrationWithDetails {
     dateOfBirth: Date | null
     gender: string | null
     rankingPoints: number
+    primaryCategory?: {
+      id: string
+      name: string
+      level: number
+    } | null
     user?: {
       email: string | null
     } | null
@@ -109,6 +123,11 @@ interface RegistrationWithDetails {
     dateOfBirth: Date | null
     gender: string | null
     rankingPoints: number
+    primaryCategory?: {
+      id: string
+      name: string
+      level: number
+    } | null
     user?: {
       email: string | null
     } | null
@@ -506,7 +525,9 @@ export function RegistrationDetail({ registration }: RegistrationDetailProps) {
                 {registration.player.gender && (
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Género</p>
-                    <p>{registration.player.gender}</p>
+                    <Badge className={getGenderRestrictionStyle(registration.player.gender)}>
+                      {getGenderRestrictionLabel(registration.player.gender)}
+                    </Badge>
                   </div>
                 )}
 
@@ -514,6 +535,15 @@ export function RegistrationDetail({ registration }: RegistrationDetailProps) {
                   <p className="text-sm font-medium text-muted-foreground">Puntos de Ranking</p>
                   <p>{registration.player.rankingPoints} puntos</p>
                 </div>
+
+                {registration.player.primaryCategory && (
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Nivel</p>
+                    <Badge className={getCategoryLevelStyle(registration.player.primaryCategory.level)}>
+                      {formatCategoryLevel(registration.player.primaryCategory.name, registration.player.primaryCategory.level)}
+                    </Badge>
+                  </div>
+                )}
 
                 {registration.player.dateOfBirth && (
                   <div>
@@ -554,7 +584,9 @@ export function RegistrationDetail({ registration }: RegistrationDetailProps) {
                     {registration.player1.gender && (
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">Género</p>
-                        <p>{registration.player1.gender}</p>
+                        <Badge className={getGenderRestrictionStyle(registration.player1.gender)}>
+                          {getGenderRestrictionLabel(registration.player1.gender)}
+                        </Badge>
                       </div>
                     )}
 
@@ -562,6 +594,15 @@ export function RegistrationDetail({ registration }: RegistrationDetailProps) {
                       <p className="text-sm font-medium text-muted-foreground">Puntos de Ranking</p>
                       <p>{registration.player1.rankingPoints} puntos</p>
                     </div>
+
+                    {registration.player1.primaryCategory && (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Nivel</p>
+                        <Badge className={getCategoryLevelStyle(registration.player1.primaryCategory.level)}>
+                          {formatCategoryLevel(registration.player1.primaryCategory.name, registration.player1.primaryCategory.level)}
+                        </Badge>
+                      </div>
+                    )}
 
                     {registration.player1.dateOfBirth && (
                       <div>
@@ -601,7 +642,9 @@ export function RegistrationDetail({ registration }: RegistrationDetailProps) {
                     {registration.player2.gender && (
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">Género</p>
-                        <p>{registration.player2.gender}</p>
+                        <Badge className={getGenderRestrictionStyle(registration.player2.gender)}>
+                          {getGenderRestrictionLabel(registration.player2.gender)}
+                        </Badge>
                       </div>
                     )}
 
@@ -609,6 +652,15 @@ export function RegistrationDetail({ registration }: RegistrationDetailProps) {
                       <p className="text-sm font-medium text-muted-foreground">Puntos de Ranking</p>
                       <p>{registration.player2.rankingPoints} puntos</p>
                     </div>
+
+                    {registration.player2.primaryCategory && (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Nivel</p>
+                        <Badge className={getCategoryLevelStyle(registration.player2.primaryCategory.level)}>
+                          {formatCategoryLevel(registration.player2.primaryCategory.name, registration.player2.primaryCategory.level)}
+                        </Badge>
+                      </div>
+                    )}
 
                     {registration.player2.dateOfBirth && (
                       <div>

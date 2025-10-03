@@ -47,6 +47,13 @@ async function getRegistration(id: string) {
           dateOfBirth: true,
           gender: true,
           rankingPoints: true,
+          primaryCategory: {
+            select: {
+              id: true,
+              name: true,
+              level: true
+            }
+          },
           user: {
             select: {
               email: true
@@ -87,6 +94,13 @@ async function getRegistration(id: string) {
                   dateOfBirth: true,
                   gender: true,
                   rankingPoints: true,
+                  primaryCategory: {
+                    select: {
+                      id: true,
+                      name: true,
+                      level: true
+                    }
+                  },
                   user: {
                     select: {
                       email: true
@@ -115,6 +129,13 @@ async function getRegistration(id: string) {
                   dateOfBirth: true,
                   gender: true,
                   rankingPoints: true,
+                  primaryCategory: {
+                    select: {
+                      id: true,
+                      name: true,
+                      level: true
+                    }
+                  },
                   user: {
                     select: {
                       email: true
@@ -172,6 +193,13 @@ async function getRegistration(id: string) {
               dateOfBirth: true,
               gender: true,
               rankingPoints: true,
+              primaryCategory: {
+                select: {
+                  id: true,
+                  name: true,
+                  level: true
+                }
+              },
               user: {
                 select: {
                   email: true
@@ -193,6 +221,13 @@ async function getRegistration(id: string) {
               dateOfBirth: true,
               gender: true,
               rankingPoints: true,
+              primaryCategory: {
+                select: {
+                  id: true,
+                  name: true,
+                  level: true
+                }
+              },
               user: {
                 select: {
                   email: true

@@ -22,12 +22,23 @@ interface RouteParams {
   }>
 }
 
+/**
+ * GET /api/registrations/[id]
+ *
+ * Obtiene los detalles de una inscripción.
+ * El ID puede ser:
+ * - Team ID (torneos convencionales)
+ * - Registration ID (americano social - NO IMPLEMENTADO AÚN en GET)
+ *
+ * Actualmente solo soporta Team IDs.
+ */
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
-    const session = await requireAuth()
+    await requireAuth()
     const { id } = await params
 
-    const registration = await prisma.team.findUnique({
+    // Buscar como Team (torneos convencionales)
+    const team = await prisma.team.findUnique({
       where: { id },
       include: {
         tournament: {
@@ -62,6 +73,13 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
                 dateOfBirth: true,
                 gender: true,
                 rankingPoints: true,
+                primaryCategory: {
+                  select: {
+                    id: true,
+                    name: true,
+                    level: true,
+                  }
+                },
                 user: {
                   select: {
                     id: true,
@@ -94,6 +112,13 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
                 dateOfBirth: true,
                 gender: true,
                 rankingPoints: true,
+                primaryCategory: {
+                  select: {
+                    id: true,
+                    name: true,
+                    level: true,
+                  }
+                },
                 user: {
                   select: {
                     id: true,
@@ -184,235 +209,95 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       }
     })
 
-    if (!registration) {
+    if (!team) {
       return NextResponse.json(
         { error: "Inscripción no encontrada" },
         { status: 404 }
       )
     }
 
-    // Verificar permisos contextuales: RBAC verifica automáticamente ownership
-    await authorize(Action.READ, Resource.REGISTRATION, registration)
+    // Verificar permisos contextuales
+    await authorize(Action.READ, Resource.REGISTRATION, team)
 
-    return NextResponse.json(registration)
+    return NextResponse.json(team)
 
   } catch (error) {
     return handleAuthError(error)
   }
 }
 
+/**
+ * PUT /api/registrations/[id]
+ *
+ * Actualiza una inscripción.
+ * Maneja dos casos:
+ * 1. Torneos Americano Social: ID de Registration (individual)
+ * 2. Torneos Convencionales: ID de Team (pareja)
+ */
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params
     const session = await requireAuth()
-
     const body = await request.json()
     const validatedData = updateRegistrationSchema.parse(body)
 
-    // Intentar buscar primero como Team
-    const currentTeam = await prisma.team.findUnique({
+    // Determinar si es Team o Registration
+    const team = await prisma.team.findUnique({
       where: { id },
       include: {
         tournament: {
           select: {
             organizerId: true,
             status: true,
+            type: true,
+          }
+        },
+        registration1: {
+          select: {
+            id: true,
+          }
+        },
+        registration2: {
+          select: {
+            id: true,
           }
         }
       }
     })
 
-    // Si no se encuentra como Team, buscar como Registration
-    let currentRegistration = null
-    if (!currentTeam) {
-      currentRegistration = await prisma.registration.findUnique({
+    if (team) {
+      // Caso 1: Torneo Convencional (Team)
+      return await handleTeamUpdate(id, team, validatedData, session, request)
+    } else {
+      // Caso 2: Torneo Americano Social (Registration individual)
+      const registration = await prisma.registration.findUnique({
         where: { id },
         include: {
           tournament: {
             select: {
               organizerId: true,
               status: true,
+              type: true,
             }
           }
         }
       })
 
-      if (!currentRegistration) {
+      if (!registration) {
         return NextResponse.json(
           { error: "Inscripción no encontrada" },
           { status: 404 }
         )
       }
 
-      // Verificar permisos contextuales para Registration
-      await authorize(Action.UPDATE, Resource.REGISTRATION, currentRegistration)
-
-      // Restricciones según el estado del torneo
-      if (currentRegistration.tournament.status === 'COMPLETED') {
-        return NextResponse.json(
-          { error: "No se pueden modificar inscripciones de torneos completados" },
-          { status: 400 }
-        )
-      }
-
-      // Actualizar solo los campos permitidos para Registration
-      const registrationUpdateData: any = {}
-      if (validatedData.registrationStatus) {
-        registrationUpdateData.registrationStatus = validatedData.registrationStatus
-      }
-      if (validatedData.notes !== undefined) {
-        registrationUpdateData.notes = validatedData.notes
-      }
-
-      const updatedRegistration = await prisma.registration.update({
-        where: { id },
-        data: registrationUpdateData,
-        include: {
-          tournament: {
-            select: {
-              id: true,
-              name: true,
-            }
-          },
-          category: {
-            select: {
-              id: true,
-              name: true,
-            }
-          },
-          player: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-            }
-          }
-        }
-      })
-
-      // Auditoría
-      await AuditLogger.log(session, {
-        action: Action.UPDATE,
-        resource: Resource.REGISTRATION,
-        resourceId: id,
-        description: `Inscripción actualizada: ${updatedRegistration.player.firstName} ${updatedRegistration.player.lastName}`,
-        oldData: currentRegistration,
-        newData: updatedRegistration,
-      }, request)
-
-      return NextResponse.json(updatedRegistration)
+      return await handleIndividualRegistrationUpdate(id, registration, validatedData, session, request)
     }
-
-    // Si se encontró como Team, actualizar el Team
-    // Verificar permisos contextuales
-    await authorize(Action.UPDATE, Resource.REGISTRATION, currentTeam)
-
-    // Restricciones según el estado del torneo
-    if (currentTeam.tournament.status === 'COMPLETED') {
-      return NextResponse.json(
-        { error: "No se pueden modificar inscripciones de torneos completados" },
-        { status: 400 }
-      )
-    }
-
-    // Separar datos de team vs datos de registration
-    const teamUpdateData: any = {}
-    const registrationUpdateData: any = {}
-
-    if (validatedData.name !== undefined) {
-      teamUpdateData.name = validatedData.name
-    }
-    if (validatedData.seed !== undefined) {
-      teamUpdateData.seed = validatedData.seed
-    }
-    if (validatedData.notes !== undefined) {
-      teamUpdateData.notes = validatedData.notes
-    }
-    if (validatedData.registrationStatus !== undefined) {
-      registrationUpdateData.registrationStatus = validatedData.registrationStatus
-    }
-
-    // Actualizar el team y las registrations en una transacción
-    const updatedTeam = await prisma.$transaction(async (tx) => {
-      // Actualizar team si hay cambios
-      if (Object.keys(teamUpdateData).length > 0) {
-        await tx.team.update({
-          where: { id },
-          data: teamUpdateData,
-        })
-      }
-
-      // Actualizar registrations si hay cambios de estado
-      if (Object.keys(registrationUpdateData).length > 0) {
-        await tx.registration.update({
-          where: { id: currentTeam.registration1Id },
-          data: registrationUpdateData,
-        })
-        await tx.registration.update({
-          where: { id: currentTeam.registration2Id },
-          data: registrationUpdateData,
-        })
-      }
-
-      // Retornar el team actualizado
-      return tx.team.findUnique({
-        where: { id },
-        include: {
-          tournament: {
-            select: {
-              id: true,
-              name: true,
-            }
-          },
-          category: {
-            select: {
-              id: true,
-              name: true,
-            }
-          },
-          registration1: {
-            include: {
-              player: {
-                select: {
-                  id: true,
-                  firstName: true,
-                  lastName: true,
-                }
-              }
-            }
-          },
-          registration2: {
-            include: {
-              player: {
-                select: {
-                  id: true,
-                  firstName: true,
-                  lastName: true,
-                }
-              }
-            }
-          }
-        }
-      })
-    })
-
-    // Auditoría
-    await AuditLogger.log(session, {
-      action: Action.UPDATE,
-      resource: Resource.REGISTRATION,
-      resourceId: id,
-      description: `Inscripción actualizada: ${updatedTeam.name || 'Sin nombre'}`,
-      oldData: currentTeam,
-      newData: updatedTeam,
-    }, request)
-
-    return NextResponse.json(updatedTeam)
 
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Datos inválidos", details: error.errors },
-        { status: 250 }
+        { status: 400 }
       )
     }
 
@@ -420,12 +305,21 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   }
 }
 
+/**
+ * DELETE /api/registrations/[id]
+ *
+ * Elimina una inscripción.
+ * El ID debe ser un Registration ID (no Team ID).
+ *
+ * Para torneos convencionales: elimina la registration y el team asociado si no tiene partidos.
+ * Para americano social: elimina solo la registration.
+ */
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params
     const session = await requireAuth()
 
-    // Buscar la inscripción (Registration, no Team)
+    // Buscar la registration
     const registration = await prisma.registration.findUnique({
       where: { id },
       include: {
@@ -452,10 +346,10 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       )
     }
 
-    // Verificar permisos contextuales
+    // Verificar permisos
     await authorize(Action.DELETE, Resource.REGISTRATION, registration)
 
-    // No permitir eliminar si el torneo ya está en progreso
+    // Validar estado del torneo
     if (['IN_PROGRESS', 'COMPLETED'].includes(registration.tournament.status)) {
       return NextResponse.json(
         { error: "No se pueden eliminar inscripciones de torneos en progreso o completados" },
@@ -463,62 +357,11 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       )
     }
 
-    // Si es un torneo por equipos, verificar si hay team asociado y partidos
-    if (registration.tournament.type !== 'AMERICANO_SOCIAL') {
-      // Buscar el team asociado
-      const team = await prisma.team.findFirst({
-        where: {
-          OR: [
-            { registration1Id: id },
-            { registration2Id: id }
-          ]
-        }
-      })
-
-      if (team) {
-        // Verificar si hay partidos asignados
-        const matchesCount = await prisma.match.count({
-          where: {
-            OR: [
-              { team1Id: team.id },
-              { team2Id: team.id }
-            ]
-          }
-        })
-
-        if (matchesCount > 0) {
-          return NextResponse.json(
-            { error: "No se puede eliminar una inscripción que ya tiene partidos asignados" },
-            { status: 400 }
-          )
-        }
-
-        // Eliminar el team y sus registrations asociadas
-        await prisma.$transaction(async (tx) => {
-          // Primero eliminar el team
-          await tx.team.delete({
-            where: { id: team.id }
-          })
-
-          // Luego eliminar ambas registrations
-          await tx.registration.delete({
-            where: { id: team.registration1Id }
-          })
-          await tx.registration.delete({
-            where: { id: team.registration2Id }
-          })
-        })
-      } else {
-        // Si no hay team, solo eliminar la registration
-        await prisma.registration.delete({
-          where: { id: id }
-        })
-      }
+    // Procesar eliminación según tipo de torneo
+    if (registration.tournament.type === 'AMERICANO_SOCIAL') {
+      await handleAmericanoSocialDeletion(id)
     } else {
-      // Para Americano Social, solo eliminar la registration
-      await prisma.registration.delete({
-        where: { id: id }
-      })
+      await handleConventionalTournamentDeletion(id)
     }
 
     // Auditoría
@@ -530,9 +373,6 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       oldData: registration,
     }, request)
 
-    // TODO: Mover equipos de lista de espera si corresponde
-    // TODO: Procesar reembolsos si hay pagos
-
     return NextResponse.json({
       message: "Inscripción eliminada exitosamente"
     })
@@ -540,4 +380,258 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
   } catch (error) {
     return handleAuthError(error)
   }
+}
+
+// ============================================================================
+// FUNCIONES AUXILIARES
+// ============================================================================
+
+/**
+ * Actualiza un Team (torneo convencional)
+ * Actualiza tanto el Team como las Registrations subyacentes
+ */
+async function handleTeamUpdate(
+  teamId: string,
+  team: any,
+  validatedData: z.infer<typeof updateRegistrationSchema>,
+  session: any,
+  request: NextRequest
+) {
+  // Verificar permisos
+  await authorize(Action.UPDATE, Resource.REGISTRATION, team)
+
+  // Validar estado del torneo
+  if (team.tournament.status === 'COMPLETED') {
+    return NextResponse.json(
+      { error: "No se pueden modificar inscripciones de torneos completados" },
+      { status: 400 }
+    )
+  }
+
+  // Separar datos de Team vs Registrations
+  const teamUpdateData: Partial<{ name: string; seed: number; notes: string }> = {}
+  const registrationUpdateData: Partial<{ registrationStatus: string }> = {}
+
+  if (validatedData.name !== undefined) {
+    teamUpdateData.name = validatedData.name
+  }
+  if (validatedData.seed !== undefined) {
+    teamUpdateData.seed = validatedData.seed
+  }
+  if (validatedData.notes !== undefined) {
+    teamUpdateData.notes = validatedData.notes
+  }
+  if (validatedData.registrationStatus !== undefined) {
+    registrationUpdateData.registrationStatus = validatedData.registrationStatus
+  }
+
+  // Actualizar en una transacción
+  const updatedTeam = await prisma.$transaction(async (tx) => {
+    // Actualizar Team si hay cambios
+    if (Object.keys(teamUpdateData).length > 0) {
+      await tx.team.update({
+        where: { id: teamId },
+        data: teamUpdateData,
+      })
+    }
+
+    // Actualizar AMBAS Registrations si hay cambio de estado
+    if (Object.keys(registrationUpdateData).length > 0) {
+      await tx.registration.update({
+        where: { id: team.registration1.id },
+        data: registrationUpdateData,
+      })
+      await tx.registration.update({
+        where: { id: team.registration2.id },
+        data: registrationUpdateData,
+      })
+    }
+
+    // Retornar Team actualizado
+    return tx.team.findUnique({
+      where: { id: teamId },
+      include: {
+        tournament: {
+          select: {
+            id: true,
+            name: true,
+          }
+        },
+        category: {
+          select: {
+            id: true,
+            name: true,
+          }
+        },
+        registration1: {
+          include: {
+            player: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+              }
+            }
+          }
+        },
+        registration2: {
+          include: {
+            player: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+              }
+            }
+          }
+        }
+      }
+    })
+  })
+
+  // Auditoría
+  await AuditLogger.log(session, {
+    action: Action.UPDATE,
+    resource: Resource.REGISTRATION,
+    resourceId: teamId,
+    description: `Equipo actualizado: ${updatedTeam?.name || 'Sin nombre'}`,
+    oldData: team,
+    newData: updatedTeam,
+  }, request)
+
+  return NextResponse.json(updatedTeam)
+}
+
+/**
+ * Actualiza una Registration individual (americano social)
+ */
+async function handleIndividualRegistrationUpdate(
+  registrationId: string,
+  registration: any,
+  validatedData: z.infer<typeof updateRegistrationSchema>,
+  session: any,
+  request: NextRequest
+) {
+  // Verificar permisos
+  await authorize(Action.UPDATE, Resource.REGISTRATION, registration)
+
+  // Validar estado del torneo
+  if (registration.tournament.status === 'COMPLETED') {
+    return NextResponse.json(
+      { error: "No se pueden modificar inscripciones de torneos completados" },
+      { status: 400 }
+    )
+  }
+
+  // Preparar datos de actualización (solo campos permitidos para Registration)
+  const updateData: Partial<{ registrationStatus: string; notes: string }> = {}
+
+  if (validatedData.registrationStatus) {
+    updateData.registrationStatus = validatedData.registrationStatus
+  }
+  if (validatedData.notes !== undefined) {
+    updateData.notes = validatedData.notes
+  }
+
+  // Actualizar
+  const updatedRegistration = await prisma.registration.update({
+    where: { id: registrationId },
+    data: updateData,
+    include: {
+      tournament: {
+        select: {
+          id: true,
+          name: true,
+        }
+      },
+      category: {
+        select: {
+          id: true,
+          name: true,
+        }
+      },
+      player: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+        }
+      }
+    }
+  })
+
+  // Auditoría
+  await AuditLogger.log(session, {
+    action: Action.UPDATE,
+    resource: Resource.REGISTRATION,
+    resourceId: registrationId,
+    description: `Inscripción individual actualizada: ${updatedRegistration.player.firstName} ${updatedRegistration.player.lastName}`,
+    oldData: registration,
+    newData: updatedRegistration,
+  }, request)
+
+  return NextResponse.json(updatedRegistration)
+}
+
+/**
+ * Elimina una inscripción de torneo americano social
+ */
+async function handleAmericanoSocialDeletion(registrationId: string) {
+  await prisma.registration.delete({
+    where: { id: registrationId }
+  })
+}
+
+/**
+ * Elimina una inscripción de torneo convencional
+ * También elimina el Team asociado si existe y no tiene partidos
+ */
+async function handleConventionalTournamentDeletion(registrationId: string) {
+  // Buscar team asociado
+  const team = await prisma.team.findFirst({
+    where: {
+      OR: [
+        { registration1Id: registrationId },
+        { registration2Id: registrationId }
+      ]
+    }
+  })
+
+  if (!team) {
+    // Si no hay team, solo eliminar la registration
+    await prisma.registration.delete({
+      where: { id: registrationId }
+    })
+    return
+  }
+
+  // Verificar si el team tiene partidos asignados
+  const matchesCount = await prisma.match.count({
+    where: {
+      OR: [
+        { team1Id: team.id },
+        { team2Id: team.id }
+      ]
+    }
+  })
+
+  if (matchesCount > 0) {
+    throw new Error("No se puede eliminar una inscripción que ya tiene partidos asignados")
+  }
+
+  // Eliminar team y ambas registrations en transacción
+  await prisma.$transaction(async (tx) => {
+    // 1. Eliminar el team
+    await tx.team.delete({
+      where: { id: team.id }
+    })
+
+    // 2. Eliminar ambas registrations
+    await tx.registration.delete({
+      where: { id: team.registration1Id }
+    })
+    await tx.registration.delete({
+      where: { id: team.registration2Id }
+    })
+  })
 }

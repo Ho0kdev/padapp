@@ -263,3 +263,28 @@ export const getMatchStatusLabel = (status: string) => {
   const option = matchStatusOptions.find(opt => opt.value === status)
   return option ? option.label : status
 }
+
+// Opciones de nivel de categoría - Niveles más bajos = mejores jugadores
+export const categoryLevelOptions = [
+  { level: 1, color: "red", css: "bg-red-100 text-red-800 border-red-200" },
+  { level: 2, color: "orange", css: "bg-orange-100 text-orange-800 border-orange-200" },
+  { level: 3, color: "yellow", css: "bg-yellow-100 text-yellow-800 border-yellow-200" },
+  { level: 4, color: "lime", css: "bg-lime-100 text-lime-800 border-lime-200" },
+  { level: 5, color: "green", css: "bg-green-100 text-green-800 border-green-200" },
+  { level: 6, color: "teal", css: "bg-teal-100 text-teal-800 border-teal-200" },
+  { level: 7, color: "blue", css: "bg-blue-100 text-blue-800 border-blue-200" },
+  { level: 8, color: "indigo", css: "bg-indigo-100 text-indigo-800 border-indigo-200" },
+  { level: 9, color: "purple", css: "bg-purple-100 text-purple-800 border-purple-200" },
+  { level: 10, color: "gray", css: "bg-gray-100 text-gray-800 border-gray-200" },
+] as const
+
+// Helper para obtener estilos de nivel de categoría
+export const getCategoryLevelStyle = (level: number) => {
+  const option = categoryLevelOptions.find(opt => opt.level === level)
+  return option ? option.css : "bg-gray-100 text-gray-800 border-gray-200"
+}
+
+// Helper para formatear label de nivel de categoría con nombre
+export const formatCategoryLevel = (categoryName: string, level: number) => {
+  return `${categoryName} - Nivel ${level}`
+}

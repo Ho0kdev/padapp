@@ -2,8 +2,19 @@ import { NextRequest, NextResponse } from "next/server"
 import { requireAuth, authorize, handleAuthError, Action, Resource, AuditLogger } from "@/lib/rbac"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
+import {
+  validateTournamentStatus,
+  validateRegistrationDates,
+  validatePlayerCategoryLevel,
+  shouldBeWaitlisted,
+  getInitialRegistrationStatus
+} from "@/lib/validations/registration-validations"
 
-const createRegistrationSchema = z.object({
+// ============================================================================
+// SCHEMAS
+// ============================================================================
+
+const createTeamRegistrationSchema = z.object({
   tournamentId: z.string().min(1, "El torneo es requerido"),
   categoryId: z.string().min(1, "La categoría es requerida"),
   player1Id: z.string().min(1, "El jugador 1 es requerido"),
@@ -42,18 +53,32 @@ const getRegistrationsSchema = z.object({
   playerId: z.string().optional(),
 })
 
+// ============================================================================
+// GET ENDPOINT
+// ============================================================================
+
+/**
+ * GET /api/registrations
+ *
+ * Lista todas las inscripciones con paginación y filtros.
+ * Aplica permisos RBAC:
+ * - ADMIN y CLUB_ADMIN: Ven todas las inscripciones
+ * - Otros usuarios: Solo ven sus propias inscripciones
+ *
+ * Para torneos convencionales, evita duplicados mostrando solo registration1 de cada Team.
+ */
 export async function GET(request: NextRequest) {
   try {
     const session = await requireAuth()
 
     const { searchParams } = new URL(request.url)
     const params = Object.fromEntries(searchParams.entries())
-
     const validatedParams = getRegistrationsSchema.parse(params)
     const { page, limit, status, search, tournamentId, categoryId, playerId } = validatedParams
 
     const offset = (page - 1) * limit
 
+    // Construir filtros base
     const where: any = {}
 
     if (status && status !== 'all') {
@@ -91,16 +116,13 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Filtrado basado en permisos RBAC
-    // Solo ADMIN y CLUB_ADMIN pueden ver todas las inscripciones
-    // Otros usuarios solo ven sus propias inscripciones
+    // Aplicar filtrado basado en permisos RBAC
     if (session.user.role !== 'ADMIN' && session.user.role !== 'CLUB_ADMIN') {
       const userPlayer = await prisma.player.findUnique({
         where: { userId: session.user.id }
       })
 
       if (userPlayer) {
-        // Filtrar solo inscripciones del usuario
         where.playerId = userPlayer.id
       } else {
         // Si no es jugador, no puede ver ninguna inscripción
@@ -114,9 +136,8 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Para evitar duplicados en torneos por equipos, agregamos una condición:
-    // Solo mostrar registrations que NO tienen un teamAsPlayer2 (es decir, solo la registration1 del equipo)
-    // O que son de torneos AMERICANO_SOCIAL (que no tienen equipos)
+    // Filtro para evitar duplicados en torneos por equipos:
+    // Solo mostrar registrations que son player1 de un Team, o que son de Americano Social
     const whereWithTeamFilter = {
       ...where,
       OR: [
@@ -126,7 +147,7 @@ export async function GET(request: NextRequest) {
             type: 'AMERICANO_SOCIAL'
           }
         },
-        // O registrations que son player1 de un equipo (evita duplicados)
+        // O registrations que son registration1 de un equipo
         {
           AND: [
             {
@@ -262,14 +283,30 @@ export async function GET(request: NextRequest) {
   }
 }
 
+// ============================================================================
+// POST ENDPOINT
+// ============================================================================
+
+/**
+ * POST /api/registrations
+ *
+ * Crea una nueva inscripción para un torneo CONVENCIONAL (Team de 2 jugadores).
+ * Para torneos Americano Social, usar /api/registrations/individual
+ *
+ * Proceso:
+ * 1. Valida el torneo y fechas
+ * 2. Valida ambos jugadores y sus categorías
+ * 3. Verifica que no estén ya inscritos
+ * 4. Crea 2 Registrations + 1 Team en una transacción
+ */
 export async function POST(request: NextRequest) {
   try {
     const session = await authorize(Action.CREATE, Resource.REGISTRATION)
 
     const body = await request.json()
-    const validatedData = createRegistrationSchema.parse(body)
+    const validatedData = createTeamRegistrationSchema.parse(body)
 
-    // Verificar que el torneo existe y está en estado de inscripciones abiertas
+    // 1. Obtener y validar el torneo
     const tournament = await prisma.tournament.findUnique({
       where: { id: validatedData.tournamentId },
       include: {
@@ -289,42 +326,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (tournament.status !== 'REGISTRATION_OPEN') {
-      return NextResponse.json(
-        { error: "Las inscripciones para este torneo no están abiertas" },
-        { status: 400 }
-      )
-    }
+    // Validar estado del torneo
+    const statusError = validateTournamentStatus(tournament)
+    if (statusError) return statusError
 
-    // Verificar fechas de inscripción
-    const now = new Date()
-    const registrationStart = tournament.registrationStart ? new Date(tournament.registrationStart) : null
-    const registrationEnd = tournament.registrationEnd ? new Date(tournament.registrationEnd) : null
+    // Validar fechas de inscripción
+    const datesError = validateRegistrationDates(tournament)
+    if (datesError) return datesError
 
-    // Comparar solo fechas (sin hora) - el último día debe incluirse completo
-    if (registrationStart) {
-      const startDate = new Date(registrationStart.getFullYear(), registrationStart.getMonth(), registrationStart.getDate())
-      const currentDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-      if (currentDate < startDate) {
-        return NextResponse.json(
-          { error: "Las inscripciones aún no han comenzado" },
-          { status: 400 }
-        )
-      }
-    }
-
-    if (registrationEnd) {
-      const endDate = new Date(registrationEnd.getFullYear(), registrationEnd.getMonth(), registrationEnd.getDate())
-      const currentDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-      if (currentDate > endDate) {
-        return NextResponse.json(
-          { error: "Las inscripciones ya han finalizado" },
-          { status: 400 }
-        )
-      }
-    }
-
-    // Verificar que la categoría existe en el torneo
+    // 2. Verificar que la categoría existe en el torneo
     const tournamentCategory = tournament.categories[0]
     if (!tournamentCategory) {
       return NextResponse.json(
@@ -333,7 +343,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Verificar que los jugadores existen y obtener sus categorías principales
+    // 3. Obtener y validar jugadores
     const [player1, player2] = await Promise.all([
       prisma.player.findUnique({
         where: { id: validatedData.player1Id },
@@ -368,34 +378,27 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validar nivel de categoría para ambos jugadores
-    // Nivel más bajo = mejor jugador (ej: nivel 1 o 2 = profesional)
-    // Nivel más alto = principiante (ej: nivel 8 = principiante)
-    // Un jugador puede jugar en su nivel o en niveles más bajos (con mejores jugadores)
-    // pero NO puede jugar en niveles más altos (con principiantes) - sería injusto
-    if (tournamentCategory.category.level) {
-      // Validar player1
-      if (player1.primaryCategory?.level && player1.primaryCategory.level < tournamentCategory.category.level) {
-        return NextResponse.json(
-          {
-            error: `El nivel del jugador ${player1.firstName} ${player1.lastName} (${player1.primaryCategory.name} - Nivel ${player1.primaryCategory.level}) es superior para la categoría del torneo (${tournamentCategory.category.name} - Nivel ${tournamentCategory.category.level}). Solo puede jugar en categorías de su nivel o superior.`
-          },
-          { status: 400 }
-        )
-      }
+    // Validar nivel de categoría para player1
+    const player1LevelError = validatePlayerCategoryLevel(
+      player1.primaryCategory?.level,
+      tournamentCategory.category.level,
+      `${player1.firstName} ${player1.lastName}`,
+      player1.primaryCategory?.name,
+      tournamentCategory.category.name
+    )
+    if (player1LevelError) return player1LevelError
 
-      // Validar player2
-      if (player2.primaryCategory?.level && player2.primaryCategory.level < tournamentCategory.category.level) {
-        return NextResponse.json(
-          {
-            error: `El nivel del jugador ${player2.firstName} ${player2.lastName} (${player2.primaryCategory.name} - Nivel ${player2.primaryCategory.level}) es superior para la categoría del torneo (${tournamentCategory.category.name} - Nivel ${tournamentCategory.category.level}). Solo puede jugar en categorías de su nivel o superior.`
-          },
-          { status: 400 }
-        )
-      }
-    }
+    // Validar nivel de categoría para player2
+    const player2LevelError = validatePlayerCategoryLevel(
+      player2.primaryCategory?.level,
+      tournamentCategory.category.level,
+      `${player2.firstName} ${player2.lastName}`,
+      player2.primaryCategory?.name,
+      tournamentCategory.category.name
+    )
+    if (player2LevelError) return player2LevelError
 
-    // Verificar que ningún jugador esté ya inscrito en esta categoría del torneo
+    // 4. Verificar que ningún jugador esté ya inscrito
     const existingRegistrations = await prisma.registration.findMany({
       where: {
         tournamentId: validatedData.tournamentId,
@@ -425,10 +428,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // TODO: Aquí se implementarán más validaciones de elegibilidad
-    // - Verificar categoría por edad, género, ranking, etc.
-
-    // Verificar si hay cupo disponible
+    // 5. Verificar cupo disponible
     const currentTeamsCount = await prisma.team.count({
       where: {
         tournamentId: validatedData.tournamentId,
@@ -439,11 +439,11 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    const isWaitlist = tournamentCategory.maxTeams && currentTeamsCount >= tournamentCategory.maxTeams
-    const registrationStatus = isWaitlist ? 'WAITLIST' : 'PENDING'
+    const isWaitlist = shouldBeWaitlisted(currentTeamsCount, tournamentCategory.maxTeams)
+    const registrationStatus = getInitialRegistrationStatus(isWaitlist)
 
-    // Crear las 2 registrations y el team en una transacción
-    const result = await prisma.$transaction(async (tx) => {
+    // 6. Crear las 2 registrations y el team en una transacción
+    const team = await prisma.$transaction(async (tx) => {
       // Crear registration para player 1
       const reg1 = await tx.registration.create({
         data: {
@@ -467,7 +467,7 @@ export async function POST(request: NextRequest) {
       })
 
       // Crear el team
-      const team = await tx.team.create({
+      return tx.team.create({
         data: {
           tournamentId: validatedData.tournamentId,
           categoryId: validatedData.categoryId,
@@ -475,7 +475,7 @@ export async function POST(request: NextRequest) {
           registration2Id: reg2.id,
           name: validatedData.teamName,
           notes: validatedData.notes,
-          status: isWaitlist ? 'DRAFT' : 'DRAFT', // Siempre empieza como DRAFT
+          status: 'DRAFT', // Siempre empieza como DRAFT
         },
         include: {
           tournament: {
@@ -519,25 +519,18 @@ export async function POST(request: NextRequest) {
           }
         }
       })
-
-      return team
     })
-
-    const registration = result
-
-    // TODO: Enviar notificación por email
-    // TODO: Si hay tarifa de inscripción, crear el registro de pago pendiente
 
     // Auditoría
     await AuditLogger.log(session, {
       action: Action.CREATE,
       resource: Resource.REGISTRATION,
-      resourceId: registration.id,
-      description: `Inscripción creada: ${registration.name} - ${registration.tournament.name}`,
-      newData: registration,
+      resourceId: team.id,
+      description: `Equipo inscrito: ${team.name} - ${team.tournament.name}`,
+      newData: team,
     }, request)
 
-    return NextResponse.json(registration, { status: 201 })
+    return NextResponse.json(team, { status: 201 })
 
   } catch (error) {
     if (error instanceof z.ZodError) {
