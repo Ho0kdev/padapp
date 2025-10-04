@@ -3,9 +3,9 @@ import { redirect } from "next/navigation"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
-import { RegistrationForm } from "@/components/registrations/registration-form"
+import { TeamFormationForm } from "@/components/teams/team-formation-form"
 
-export default async function NewRegistrationPage() {
+export default async function NewTeamPage() {
   const session = await getServerSession(authOptions)
 
   if (!session?.user) {
@@ -26,13 +26,13 @@ export default async function NewRegistrationPage() {
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Nueva Inscripción</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Formar Equipo</h1>
           <p className="text-muted-foreground">
-            Inscribir un jugador en un torneo. Para torneos convencionales, después podrás formar equipos.
+            Vincula dos inscripciones confirmadas para crear un equipo en un torneo convencional.
           </p>
         </div>
 
-        <RegistrationForm />
+        <TeamFormationForm />
       </div>
     </DashboardLayout>
   )

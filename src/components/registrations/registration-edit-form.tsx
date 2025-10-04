@@ -18,7 +18,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
-import { Loader2, Users, FileText, Trophy } from "lucide-react"
+import { Loader2, FileText } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { z } from "zod"
 
@@ -30,8 +30,6 @@ const registrationEditSchema = z.object({
     "CANCELLED",
     "WAITLIST"
   ]),
-  teamName: z.string().max(100, "El nombre no puede tener más de 100 caracteres").optional(),
-  seed: z.number().int().positive("La semilla debe ser un número positivo").optional().or(z.literal(undefined)),
   notes: z.string().max(500, "Las notas no pueden tener más de 500 caracteres").optional(),
 })
 
@@ -40,33 +38,25 @@ type RegistrationEditData = z.infer<typeof registrationEditSchema>
 interface RegistrationEditFormProps {
   initialData?: {
     registrationStatus: string
-    teamName?: string
-    seed?: number
     notes?: string
   }
   registrationId: string
-  teamId?: string
-  isAmericanoSocial: boolean
   tournamentStatus: string
 }
 
 export function RegistrationEditForm({
   initialData,
   registrationId,
-  teamId,
-  isAmericanoSocial,
   tournamentStatus
 }: RegistrationEditFormProps) {
   const [loading, setLoading] = useState(false)
-  const { error: toastError, success: toastSuccess } = useToast()
+  const { toast } = useToast()
   const router = useRouter()
 
   const form = useForm<RegistrationEditData>({
     resolver: zodResolver(registrationEditSchema),
     defaultValues: {
       registrationStatus: initialData?.registrationStatus as any || "PENDING",
-      teamName: initialData?.teamName || "",
-      seed: initialData?.seed || undefined,
       notes: initialData?.notes || "",
     }
   })
@@ -77,53 +67,36 @@ export function RegistrationEditForm({
     try {
       setLoading(true)
 
-      // Actualizar la registration
-      const registrationData = {
-        registrationStatus: data.registrationStatus,
-        notes: data.notes,
-      }
-
-      const registrationResponse = await fetch(`/api/registrations/${registrationId}`, {
+      const response = await fetch(`/api/registrations/${registrationId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(registrationData),
+        body: JSON.stringify({
+          registrationStatus: data.registrationStatus,
+          notes: data.notes,
+        }),
       })
 
-      if (!registrationResponse.ok) {
-        const errorData = await registrationResponse.json()
+      if (!response.ok) {
+        const errorData = await response.json()
         throw new Error(errorData.error || "Error al actualizar la inscripción")
       }
 
-      // Si hay team y no es Americano Social, actualizar el team
-      if (teamId && !isAmericanoSocial) {
-        const teamData = {
-          name: data.teamName,
-          seed: data.seed,
-        }
+      toast({
+        title: "Éxito",
+        description: "Inscripción actualizada correctamente",
+        variant: "success"
+      })
 
-        const teamResponse = await fetch(`/api/registrations/${teamId}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(teamData),
-        })
-
-        if (!teamResponse.ok) {
-          const errorData = await teamResponse.json()
-          throw new Error(errorData.error || "Error al actualizar el equipo")
-        }
-      }
-
-      toastSuccess("Inscripción actualizada correctamente")
-
-      // Redirigir a la página de detalle
       router.push(`/dashboard/registrations/${registrationId}`)
     } catch (error) {
       console.error("Error updating registration:", error)
-      toastError(error instanceof Error ? error.message : "Error al actualizar la inscripción")
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Error al actualizar la inscripción",
+        variant: "destructive"
+      })
     } finally {
       setLoading(false)
     }
@@ -190,64 +163,6 @@ export function RegistrationEditForm({
               />
             </CardContent>
           </Card>
-
-          {/* Información del Equipo - Solo para torneos por equipos */}
-          {!isAmericanoSocial && teamId && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5" />
-                  Información del Equipo
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="teamName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nombre del Equipo (Opcional)</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Nombre personalizado para el equipo"
-                          disabled={isTournamentCompleted}
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="seed"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Semilla (Opcional)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="Posición inicial del equipo"
-                          disabled={isTournamentCompleted}
-                          {...field}
-                          onChange={(e) => {
-                            const value = e.target.value
-                            field.onChange(value === '' ? undefined : parseInt(value))
-                          }}
-                          value={field.value || ''}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        La semilla determina la posición inicial del equipo en el torneo
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-            </Card>
-          )}
 
           {/* Botones de Acción */}
           <div className="flex gap-4">

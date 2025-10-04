@@ -1,12 +1,24 @@
 import { z } from "zod"
 
-// Schema para crear una inscripción individual
+// Schema para crear una inscripción individual (API)
 export const createRegistrationSchema = z.object({
   tournamentId: z.string().min(1, "El torneo es requerido"),
   categoryId: z.string().min(1, "La categoría es requerida"),
   playerId: z.string().min(1, "El jugador es requerido"),
   notes: z.string().max(500, "Las notas no pueden tener más de 500 caracteres").optional(),
 })
+
+// Schema para formulario de inscripción (Frontend)
+export const registrationFormSchema = z.object({
+  tournamentId: z.string().min(1, "Debe seleccionar un torneo"),
+  categoryId: z.string().min(1, "Debe seleccionar una categoría"),
+  playerId: z.string().min(1, "Debe seleccionar un jugador"),
+  notes: z.string().max(500, "Las notas no pueden tener más de 500 caracteres").optional(),
+  acceptTerms: z.boolean().refine(val => val === true, "Debe aceptar los términos y condiciones")
+})
+
+// Alias para retrocompatibilidad (deprecado)
+export const individualRegistrationSchema = registrationFormSchema
 
 // Schema para actualizar una inscripción
 export const updateRegistrationSchema = z.object({
@@ -71,6 +83,8 @@ export const updateRegistrationPaymentSchema = z.object({
 
 // Tipos TypeScript derivados de los schemas
 export type CreateRegistrationInput = z.infer<typeof createRegistrationSchema>
+export type RegistrationFormData = z.infer<typeof registrationFormSchema>
+export type IndividualRegistrationData = RegistrationFormData // Alias para retrocompatibilidad
 export type UpdateRegistrationInput = z.infer<typeof updateRegistrationSchema>
 export type UpdateRegistrationStatusInput = z.infer<typeof updateRegistrationStatusSchema>
 export type GetRegistrationsInput = z.infer<typeof getRegistrationsSchema>

@@ -8,6 +8,7 @@ import {
   Shield,
   Tag,
   UserPlus,
+  UsersRound,
 } from "lucide-react"
 
 export type UserRole = "ADMIN" | "CLUB_ADMIN" | "PLAYER" | "REFEREE"
@@ -73,6 +74,12 @@ export const navigation: NavigationItem[] = [
     href: "/dashboard/registrations",
     icon: UserPlus
     // Sin roles = todos pueden ver inscripciones (jugadores para inscribirse, admins para gestionar)
+  },
+  {
+    name: "Equipos",
+    href: "/dashboard/teams",
+    icon: UsersRound,
+    roles: ["ADMIN", "CLUB_ADMIN"] // Admins y administradores de club pueden gestionar equipos
   },
   {
     name: "Rankings",

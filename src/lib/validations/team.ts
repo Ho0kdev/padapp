@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-// Schema para crear un equipo
+// Schema para crear un equipo (API)
 export const createTeamSchema = z.object({
   tournamentId: z.string().min(1, "El torneo es requerido"),
   categoryId: z.string().min(1, "La categoría es requerida"),
@@ -13,6 +13,21 @@ export const createTeamSchema = z.object({
   return data.registration1Id !== data.registration2Id
 }, {
   message: "Las inscripciones deben ser de jugadores diferentes",
+  path: ["registration2Id"]
+})
+
+// Schema para formulario de formación de equipos (Frontend)
+export const teamFormationSchema = z.object({
+  tournamentId: z.string().min(1, "Debe seleccionar un torneo"),
+  categoryId: z.string().min(1, "Debe seleccionar una categoría"),
+  registration1Id: z.string().min(1, "Debe seleccionar tu inscripción"),
+  registration2Id: z.string().min(1, "Debe seleccionar la inscripción de tu pareja"),
+  teamName: z.string().min(1, "El nombre del equipo es requerido").max(100, "El nombre no puede tener más de 100 caracteres"),
+  notes: z.string().max(500, "Las notas no pueden tener más de 500 caracteres").optional(),
+}).refine((data) => {
+  return data.registration1Id !== data.registration2Id
+}, {
+  message: "Debes seleccionar inscripciones de jugadores diferentes",
   path: ["registration2Id"]
 })
 
@@ -62,6 +77,7 @@ export const getEligiblePlayersSchema = z.object({
 
 // Tipos TypeScript derivados de los schemas
 export type CreateTeamInput = z.infer<typeof createTeamSchema>
+export type TeamFormationData = z.infer<typeof teamFormationSchema>
 export type UpdateTeamInput = z.infer<typeof updateTeamSchema>
 export type UpdateTeamStatusInput = z.infer<typeof updateTeamStatusSchema>
 export type GetTeamsInput = z.infer<typeof getTeamsSchema>

@@ -14,26 +14,14 @@ import {
 // SCHEMAS
 // ============================================================================
 
-const createTeamRegistrationSchema = z.object({
+const createRegistrationSchema = z.object({
   tournamentId: z.string().min(1, "El torneo es requerido"),
   categoryId: z.string().min(1, "La categoría es requerida"),
-  player1Id: z.string().min(1, "El jugador 1 es requerido"),
-  player2Id: z.string().min(1, "El jugador 2 es requerido"),
-  teamName: z.string().min(1, "El nombre del equipo es requerido").max(100, "El nombre no puede tener más de 100 caracteres").optional(),
+  playerId: z.string().min(1, "El jugador es requerido"),
   notes: z.string().max(500, "Las notas no pueden tener más de 500 caracteres").optional(),
-  contactEmail: z.string().email("Email inválido").optional(),
-  contactPhone: z.string().min(10, "Teléfono debe tener al menos 10 dígitos").optional(),
   acceptTerms: z.boolean().refine(val => val === true, {
     message: "Debe aceptar los términos y condiciones"
   }),
-  acceptPrivacyPolicy: z.boolean().refine(val => val === true, {
-    message: "Debe aceptar la política de privacidad"
-  }),
-}).refine((data) => {
-  return data.player1Id !== data.player2Id
-}, {
-  message: "Los jugadores deben ser diferentes",
-  path: ["player2Id"]
 })
 
 const getRegistrationsSchema = z.object({
@@ -60,12 +48,13 @@ const getRegistrationsSchema = z.object({
 /**
  * GET /api/registrations
  *
- * Lista todas las inscripciones con paginación y filtros.
+ * Lista todas las inscripciones individuales con paginación y filtros.
  * Aplica permisos RBAC:
  * - ADMIN y CLUB_ADMIN: Ven todas las inscripciones
  * - Otros usuarios: Solo ven sus propias inscripciones
  *
- * Para torneos convencionales, evita duplicados mostrando solo registration1 de cada Team.
+ * Cada inscripción representa a un jugador individual inscrito en un torneo/categoría.
+ * Los equipos se gestionan por separado en /api/teams
  */
 export async function GET(request: NextRequest) {
   try {
@@ -136,40 +125,11 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Filtro para evitar duplicados en torneos por equipos:
-    // Solo mostrar registrations que son player1 de un Team, o que son de Americano Social
-    const whereWithTeamFilter = {
-      ...where,
-      OR: [
-        // Registrations de torneos Americano Social (sin equipos)
-        {
-          tournament: {
-            type: 'AMERICANO_SOCIAL'
-          }
-        },
-        // O registrations que son registration1 de un equipo
-        {
-          AND: [
-            {
-              tournament: {
-                type: {
-                  not: 'AMERICANO_SOCIAL'
-                }
-              }
-            },
-            {
-              teamAsPlayer1: {
-                some: {}
-              }
-            }
-          ]
-        }
-      ]
-    }
-
+    // Mostrar todas las inscripciones sin filtros de duplicados
+    // Las inscripciones son individuales y se muestran todas
     const [registrations, total] = await Promise.all([
       prisma.registration.findMany({
-        where: whereWithTeamFilter,
+        where,
         skip: offset,
         take: limit,
         include: {
@@ -258,7 +218,7 @@ export async function GET(request: NextRequest) {
           createdAt: 'desc'
         }
       }),
-      prisma.registration.count({ where: whereWithTeamFilter })
+      prisma.registration.count({ where })
     ])
 
     const totalPages = Math.ceil(total / limit)
@@ -290,23 +250,24 @@ export async function GET(request: NextRequest) {
 /**
  * POST /api/registrations
  *
- * Crea una nueva inscripción para un torneo CONVENCIONAL (Team de 2 jugadores).
- * Para torneos Americano Social, usar /api/registrations/individual
+ * Crea una inscripción individual para CUALQUIER tipo de torneo.
  *
- * Proceso:
- * 1. Valida el torneo y fechas
- * 2. Valida ambos jugadores y sus categorías
- * 3. Verifica que no estén ya inscritos
- * 4. Crea 2 Registrations + 1 Team en una transacción
+ * Flujo unificado:
+ * 1. Cada jugador se inscribe individualmente con este endpoint
+ * 2. Para torneos convencionales, después de que los jugadores se inscriban,
+ *    se crea un equipo con POST /api/teams vinculando las inscripciones
+ *
+ * Para torneos AMERICANO_SOCIAL: El jugador juega individualmente (sin equipo)
+ * Para torneos convencionales: El jugador debe formar equipo después de inscribirse
  */
 export async function POST(request: NextRequest) {
   try {
     const session = await authorize(Action.CREATE, Resource.REGISTRATION)
 
     const body = await request.json()
-    const validatedData = createTeamRegistrationSchema.parse(body)
+    const validatedData = createRegistrationSchema.parse(body)
 
-    // 1. Obtener y validar el torneo
+    // 1. Verificar que el torneo existe
     const tournament = await prisma.tournament.findUnique({
       where: { id: validatedData.tournamentId },
       include: {
@@ -343,194 +304,116 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 3. Obtener y validar jugadores
-    const [player1, player2] = await Promise.all([
-      prisma.player.findUnique({
-        where: { id: validatedData.player1Id },
-        include: {
-          primaryCategory: {
-            select: {
-              id: true,
-              name: true,
-              level: true
-            }
-          }
-        }
-      }),
-      prisma.player.findUnique({
-        where: { id: validatedData.player2Id },
-        include: {
-          primaryCategory: {
-            select: {
-              id: true,
-              name: true,
-              level: true
-            }
-          }
-        }
-      })
-    ])
-
-    if (!player1 || !player2) {
-      return NextResponse.json(
-        { error: "Uno o ambos jugadores no existen" },
-        { status: 400 }
-      )
-    }
-
-    // Validar nivel de categoría para player1
-    const player1LevelError = validatePlayerCategoryLevel(
-      player1.primaryCategory?.level,
-      tournamentCategory.category.level,
-      `${player1.firstName} ${player1.lastName}`,
-      player1.primaryCategory?.name,
-      tournamentCategory.category.name
-    )
-    if (player1LevelError) return player1LevelError
-
-    // Validar nivel de categoría para player2
-    const player2LevelError = validatePlayerCategoryLevel(
-      player2.primaryCategory?.level,
-      tournamentCategory.category.level,
-      `${player2.firstName} ${player2.lastName}`,
-      player2.primaryCategory?.name,
-      tournamentCategory.category.name
-    )
-    if (player2LevelError) return player2LevelError
-
-    // 4. Verificar que ningún jugador esté ya inscrito
-    const existingRegistrations = await prisma.registration.findMany({
-      where: {
-        tournamentId: validatedData.tournamentId,
-        categoryId: validatedData.categoryId,
-        playerId: {
-          in: [validatedData.player1Id, validatedData.player2Id]
-        },
-        registrationStatus: {
-          in: ['PENDING', 'CONFIRMED', 'WAITLIST']
-        }
-      },
+    // 3. Verificar que el jugador existe y obtener su categoría principal
+    const player = await prisma.player.findUnique({
+      where: { id: validatedData.playerId },
       include: {
-        player: {
+        primaryCategory: {
           select: {
-            firstName: true,
-            lastName: true
+            id: true,
+            name: true,
+            level: true
           }
         }
       }
     })
 
-    if (existingRegistrations.length > 0) {
-      const playerNames = existingRegistrations.map(r => `${r.player.firstName} ${r.player.lastName}`).join(', ')
+    if (!player) {
       return NextResponse.json(
-        { error: `El/los siguiente(s) jugador(es) ya están inscritos en esta categoría: ${playerNames}` },
+        { error: "Jugador no encontrado" },
+        { status: 400 }
+      )
+    }
+
+    // Validar nivel de categoría
+    const levelError = validatePlayerCategoryLevel(
+      player.primaryCategory?.level,
+      tournamentCategory.category.level,
+      `${player.firstName} ${player.lastName}`,
+      player.primaryCategory?.name,
+      tournamentCategory.category.name
+    )
+    if (levelError) return levelError
+
+    // 4. Verificar que el jugador no esté ya inscrito en esta categoría del torneo
+    const existingRegistration = await prisma.registration.findUnique({
+      where: {
+        tournamentId_categoryId_playerId: {
+          tournamentId: validatedData.tournamentId,
+          categoryId: validatedData.categoryId,
+          playerId: validatedData.playerId
+        }
+      }
+    })
+
+    if (existingRegistration) {
+      return NextResponse.json(
+        { error: `${player.firstName} ${player.lastName} ya está inscrito en esta categoría` },
         { status: 400 }
       )
     }
 
     // 5. Verificar cupo disponible
-    const currentTeamsCount = await prisma.team.count({
+    const currentRegistrationsCount = await prisma.registration.count({
       where: {
         tournamentId: validatedData.tournamentId,
         categoryId: validatedData.categoryId,
-        status: {
-          in: ['DRAFT', 'CONFIRMED']
+        registrationStatus: {
+          in: ['PENDING', 'CONFIRMED']
         }
       }
     })
 
-    const isWaitlist = shouldBeWaitlisted(currentTeamsCount, tournamentCategory.maxTeams)
+    const isWaitlist = shouldBeWaitlisted(currentRegistrationsCount, tournamentCategory.maxTeams)
     const registrationStatus = getInitialRegistrationStatus(isWaitlist)
 
-    // 6. Crear las 2 registrations y el team en una transacción
-    const team = await prisma.$transaction(async (tx) => {
-      // Crear registration para player 1
-      const reg1 = await tx.registration.create({
-        data: {
-          tournamentId: validatedData.tournamentId,
-          categoryId: validatedData.categoryId,
-          playerId: validatedData.player1Id,
-          registrationStatus,
-          notes: validatedData.notes,
-        }
-      })
-
-      // Crear registration para player 2
-      const reg2 = await tx.registration.create({
-        data: {
-          tournamentId: validatedData.tournamentId,
-          categoryId: validatedData.categoryId,
-          playerId: validatedData.player2Id,
-          registrationStatus,
-          notes: validatedData.notes,
-        }
-      })
-
-      // Crear el team
-      return tx.team.create({
-        data: {
-          tournamentId: validatedData.tournamentId,
-          categoryId: validatedData.categoryId,
-          registration1Id: reg1.id,
-          registration2Id: reg2.id,
-          name: validatedData.teamName,
-          notes: validatedData.notes,
-          status: 'DRAFT', // Siempre empieza como DRAFT
+    // 6. Crear la registration
+    const registration = await prisma.registration.create({
+      data: {
+        tournamentId: validatedData.tournamentId,
+        categoryId: validatedData.categoryId,
+        playerId: validatedData.playerId,
+        registrationStatus,
+        notes: validatedData.notes,
+      },
+      include: {
+        tournament: {
+          select: {
+            id: true,
+            name: true,
+          }
         },
-        include: {
-          tournament: {
-            select: {
-              id: true,
-              name: true,
-            }
-          },
-          category: {
-            select: {
-              id: true,
-              name: true,
-            }
-          },
-          registration1: {
-            include: {
-              player: {
-                select: {
-                  id: true,
-                  firstName: true,
-                  lastName: true,
-                }
-              }
-            }
-          },
-          registration2: {
-            include: {
-              player: {
-                select: {
-                  id: true,
-                  firstName: true,
-                  lastName: true,
-                }
-              }
-            }
-          },
-          tournamentCategory: {
-            select: {
-              registrationFee: true,
-            }
+        category: {
+          select: {
+            id: true,
+            name: true,
+          }
+        },
+        player: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+          }
+        },
+        tournamentCategory: {
+          select: {
+            registrationFee: true,
           }
         }
-      })
+      }
     })
 
     // Auditoría
     await AuditLogger.log(session, {
       action: Action.CREATE,
       resource: Resource.REGISTRATION,
-      resourceId: team.id,
-      description: `Equipo inscrito: ${team.name} - ${team.tournament.name}`,
-      newData: team,
+      resourceId: registration.id,
+      description: `Inscripción creada: ${registration.player.firstName} ${registration.player.lastName} - ${registration.tournament.name}`,
+      newData: registration,
     }, request)
 
-    return NextResponse.json(team, { status: 201 })
+    return NextResponse.json(registration, { status: 201 })
 
   } catch (error) {
     if (error instanceof z.ZodError) {

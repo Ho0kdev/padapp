@@ -30,12 +30,11 @@ import {
   Edit,
   MoreHorizontal,
   Trophy,
-  Users,
   CreditCard,
   Copy,
   Trash2,
   DollarSign,
-  UserCheck
+  Users
 } from "lucide-react"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
@@ -53,14 +52,29 @@ import {
 } from "@/lib/utils/status-styles"
 import { RegistrationStatusManager } from "./registration-status-manager"
 
+interface Player {
+  id: string
+  firstName: string
+  lastName: string
+  phone: string | null
+  dateOfBirth: Date | null
+  gender: string | null
+  rankingPoints: number
+  primaryCategory?: {
+    id: string
+    name: string
+    level: number
+  } | null
+  user?: {
+    email: string | null
+  } | null
+}
+
 interface RegistrationWithDetails {
   id: string
-  name: string | null
   registrationStatus: string
   registeredAt: Date
-  seed: number | null
   notes: string | null
-  isAmericanoSocial: boolean
   tournament: {
     id: string
     name: string
@@ -81,65 +95,15 @@ interface RegistrationWithDetails {
     minRankingPoints: number | null
     maxRankingPoints: number | null
   }
-  player?: {
-    id: string
-    firstName: string
-    lastName: string
-    phone: string | null
-    dateOfBirth: Date | null
-    gender: string | null
-    rankingPoints: number
-    primaryCategory?: {
-      id: string
-      name: string
-      level: number
-    } | null
-    user?: {
-      email: string | null
-    } | null
-  }
-  player1: {
-    id: string
-    firstName: string
-    lastName: string
-    phone: string | null
-    dateOfBirth: Date | null
-    gender: string | null
-    rankingPoints: number
-    primaryCategory?: {
-      id: string
-      name: string
-      level: number
-    } | null
-    user?: {
-      email: string | null
-    } | null
-  } | null
-  player2: {
-    id: string
-    firstName: string
-    lastName: string
-    phone: string | null
-    dateOfBirth: Date | null
-    gender: string | null
-    rankingPoints: number
-    primaryCategory?: {
-      id: string
-      name: string
-      level: number
-    } | null
-    user?: {
-      email: string | null
-    } | null
-  } | null
-  payments: Array<{
+  player: Player
+  payment: {
     id: string
     amount: number
     paymentStatus: string
     paymentMethod: string
     paidAt: Date | null
     createdAt: Date
-  }>
+  } | null
   tournamentCategory: {
     registrationFee: number | null
     maxTeams: number | null
@@ -158,24 +122,15 @@ export function RegistrationDetail({ registration }: RegistrationDetailProps) {
 
   const statusConfig = registrationStatusOptions.find(s => s.value === registration.registrationStatus)
 
-  const totalPaid = registration.payments
-    .filter(payment => payment.paymentStatus === 'PAID')
-    .reduce((sum, payment) => sum + payment.amount, 0)
+  const totalPaid = (registration.payment && registration.payment.paymentStatus === 'PAID')
+    ? registration.payment.amount
+    : 0
 
   const registrationFee = registration.tournamentCategory?.registrationFee || 0
   const amountDue = Math.max(0, registrationFee - totalPaid)
 
-  const getTeamName = () => {
-    if (registration.isAmericanoSocial && registration.player) {
-      return `${registration.player.firstName} ${registration.player.lastName}`
-    }
-
-    if (registration.player1 && registration.player2) {
-      return registration.name ||
-             `${registration.player1.firstName} ${registration.player1.lastName} / ${registration.player2.firstName} ${registration.player2.lastName}`
-    }
-
-    return registration.name || 'Sin nombre'
+  const getPlayerName = () => {
+    return `${registration.player.firstName} ${registration.player.lastName}`
   }
 
   const handleDelete = async () => {
@@ -260,7 +215,7 @@ export function RegistrationDetail({ registration }: RegistrationDetailProps) {
       <div className="flex items-start justify-between">
         <div className="space-y-1">
           <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold tracking-tight">{getTeamName()}</h1>
+            <h1 className="text-3xl font-bold tracking-tight">{getPlayerName()}</h1>
             <RegistrationStatusManager
               registrationId={registration.id}
               currentStatus={registration.registrationStatus}
@@ -281,12 +236,6 @@ export function RegistrationDetail({ registration }: RegistrationDetailProps) {
               <Calendar className="h-4 w-4" />
               Inscrito {format(new Date(registration.registeredAt), "dd/MM/yyyy", { locale: es })}
             </div>
-            {registration.seed && (
-              <div className="flex items-center gap-1">
-                <UserCheck className="h-4 w-4" />
-                Seed #{registration.seed}
-              </div>
-            )}
           </div>
         </div>
 
@@ -364,18 +313,6 @@ export function RegistrationDetail({ registration }: RegistrationDetailProps) {
               <div className="ml-3">
                 <p className="text-sm font-medium text-muted-foreground">Pendiente</p>
                 <p className="text-2xl font-bold">${amountDue}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <UserCheck className="h-4 w-4 text-muted-foreground" />
-              <div className="ml-3">
-                <p className="text-sm font-medium text-muted-foreground">Seed</p>
-                <p className="text-2xl font-bold">{registration.seed ? `#${registration.seed}` : "-"}</p>
               </div>
             </div>
           </CardContent>
@@ -470,13 +407,6 @@ export function RegistrationDetail({ registration }: RegistrationDetailProps) {
                   <p>{format(new Date(registration.registeredAt), "dd/MM/yyyy HH:mm", { locale: es })}</p>
                 </div>
 
-                {registration.seed && (
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Seed</p>
-                    <p>#{registration.seed}</p>
-                  </div>
-                )}
-
                 {registration.notes && (
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Notas</p>
@@ -496,183 +426,61 @@ export function RegistrationDetail({ registration }: RegistrationDetailProps) {
         </TabsContent>
 
         <TabsContent value="players">
-          {registration.isAmericanoSocial && registration.player ? (
-            /* Vista para Americano Social - Un solo jugador */
-            <Card>
-              <CardHeader>
-                <CardTitle>Información del Jugador</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Información del Jugador</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Nombre</p>
+                <p>{registration.player.firstName} {registration.player.lastName}</p>
+              </div>
+
+              {registration.player.user?.email && (
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Nombre</p>
-                  <p>{registration.player.firstName} {registration.player.lastName}</p>
+                  <p className="text-sm font-medium text-muted-foreground">Email</p>
+                  <p>{registration.player.user.email}</p>
                 </div>
-
-                {registration.player.user?.email && (
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Email</p>
-                    <p>{registration.player.user.email}</p>
-                  </div>
-                )}
-
-                {registration.player.phone && (
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Teléfono</p>
-                    <p>{registration.player.phone}</p>
-                  </div>
-                )}
-
-                {registration.player.gender && (
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Género</p>
-                    <Badge className={getGenderRestrictionStyle(registration.player.gender)}>
-                      {getGenderRestrictionLabel(registration.player.gender)}
-                    </Badge>
-                  </div>
-                )}
-
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Puntos de Ranking</p>
-                  <p>{registration.player.rankingPoints} puntos</p>
-                </div>
-
-                {registration.player.primaryCategory && (
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Nivel</p>
-                    <Badge className={getCategoryLevelStyle(registration.player.primaryCategory.level)}>
-                      {formatCategoryLevel(registration.player.primaryCategory.name, registration.player.primaryCategory.level)}
-                    </Badge>
-                  </div>
-                )}
-
-                {registration.player.dateOfBirth && (
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Fecha de Nacimiento</p>
-                    <p>{format(new Date(registration.player.dateOfBirth), "dd/MM/yyyy", { locale: es })}</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ) : (
-            /* Vista para torneos por equipos - Dos jugadores */
-            <div className="grid gap-4 md:grid-cols-2">
-              {registration.player1 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Jugador 1</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Nombre</p>
-                      <p>{registration.player1.firstName} {registration.player1.lastName}</p>
-                    </div>
-
-                    {registration.player1.user?.email && (
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Email</p>
-                        <p>{registration.player1.user.email}</p>
-                      </div>
-                    )}
-
-                    {registration.player1.phone && (
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Teléfono</p>
-                        <p>{registration.player1.phone}</p>
-                      </div>
-                    )}
-
-                    {registration.player1.gender && (
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Género</p>
-                        <Badge className={getGenderRestrictionStyle(registration.player1.gender)}>
-                          {getGenderRestrictionLabel(registration.player1.gender)}
-                        </Badge>
-                      </div>
-                    )}
-
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Puntos de Ranking</p>
-                      <p>{registration.player1.rankingPoints} puntos</p>
-                    </div>
-
-                    {registration.player1.primaryCategory && (
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Nivel</p>
-                        <Badge className={getCategoryLevelStyle(registration.player1.primaryCategory.level)}>
-                          {formatCategoryLevel(registration.player1.primaryCategory.name, registration.player1.primaryCategory.level)}
-                        </Badge>
-                      </div>
-                    )}
-
-                    {registration.player1.dateOfBirth && (
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Fecha de Nacimiento</p>
-                        <p>{format(new Date(registration.player1.dateOfBirth), "dd/MM/yyyy", { locale: es })}</p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
               )}
 
-              {registration.player2 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Jugador 2</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Nombre</p>
-                      <p>{registration.player2.firstName} {registration.player2.lastName}</p>
-                    </div>
-
-                    {registration.player2.user?.email && (
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Email</p>
-                        <p>{registration.player2.user.email}</p>
-                      </div>
-                    )}
-
-                    {registration.player2.phone && (
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Teléfono</p>
-                        <p>{registration.player2.phone}</p>
-                      </div>
-                    )}
-
-                    {registration.player2.gender && (
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Género</p>
-                        <Badge className={getGenderRestrictionStyle(registration.player2.gender)}>
-                          {getGenderRestrictionLabel(registration.player2.gender)}
-                        </Badge>
-                      </div>
-                    )}
-
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Puntos de Ranking</p>
-                      <p>{registration.player2.rankingPoints} puntos</p>
-                    </div>
-
-                    {registration.player2.primaryCategory && (
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Nivel</p>
-                        <Badge className={getCategoryLevelStyle(registration.player2.primaryCategory.level)}>
-                          {formatCategoryLevel(registration.player2.primaryCategory.name, registration.player2.primaryCategory.level)}
-                        </Badge>
-                      </div>
-                    )}
-
-                    {registration.player2.dateOfBirth && (
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Fecha de Nacimiento</p>
-                        <p>{format(new Date(registration.player2.dateOfBirth), "dd/MM/yyyy", { locale: es })}</p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+              {registration.player.phone && (
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Teléfono</p>
+                  <p>{registration.player.phone}</p>
+                </div>
               )}
-            </div>
-          )}
+
+              {registration.player.gender && (
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Género</p>
+                  <Badge className={getGenderRestrictionStyle(registration.player.gender)}>
+                    {getGenderRestrictionLabel(registration.player.gender)}
+                  </Badge>
+                </div>
+              )}
+
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Puntos de Ranking</p>
+                <p>{registration.player.rankingPoints} puntos</p>
+              </div>
+
+              {registration.player.primaryCategory && (
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Nivel</p>
+                  <Badge className={getCategoryLevelStyle(registration.player.primaryCategory.level)}>
+                    {formatCategoryLevel(registration.player.primaryCategory.name, registration.player.primaryCategory.level)}
+                  </Badge>
+                </div>
+              )}
+
+              {registration.player.dateOfBirth && (
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Fecha de Nacimiento</p>
+                  <p>{format(new Date(registration.player.dateOfBirth), "dd/MM/yyyy", { locale: es })}</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="payments">
@@ -681,13 +489,13 @@ export function RegistrationDetail({ registration }: RegistrationDetailProps) {
               <CardTitle>Historial de Pagos</CardTitle>
             </CardHeader>
             <CardContent>
-              {registration.payments.length === 0 ? (
+              {!registration.payment ? (
                 <p className="text-center text-muted-foreground py-8">
                   No hay pagos registrados para esta inscripción
                 </p>
               ) : (
                 <div className="space-y-4">
-                  {registration.payments.map((payment) => (
+                  {[registration.payment].map((payment) => (
                     <div key={payment.id} className="border rounded-lg p-4">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-3">
@@ -753,7 +561,7 @@ export function RegistrationDetail({ registration }: RegistrationDetailProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>¿Eliminar inscripción?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción eliminará la inscripción de &quot;{getTeamName()}&quot;. Esta acción no se puede deshacer.
+              Esta acción eliminará la inscripción de &quot;{getPlayerName()}&quot;. Esta acción no se puede deshacer.
               {!canDelete && (
                 <span className="block mt-2 text-red-600">
                   No se puede eliminar esta inscripción porque el torneo está en progreso o completado.

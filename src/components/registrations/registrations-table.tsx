@@ -45,7 +45,9 @@ import {
   tournamentStatusOptions as statusStyles,
   registrationStatusOptions,
   getRegistrationStatusStyle,
-  getRegistrationStatusLabel
+  getRegistrationStatusLabel,
+  getTeamFormationStatusStyle,
+  getTeamFormationStatusLabel
 } from "@/lib/utils/status-styles"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/hooks/use-auth"
@@ -105,12 +107,10 @@ interface Registration {
 
 interface RegistrationsPaginatedResponse {
   registrations: Registration[]
-  pagination: {
-    page: number
-    limit: number
-    total: number
-    totalPages: number
-  }
+  page: number
+  limit: number
+  total: number
+  totalPages: number
 }
 
 export function RegistrationsTable() {
@@ -143,11 +143,11 @@ export function RegistrationsTable() {
       if (response.ok) {
         const data: RegistrationsPaginatedResponse = await response.json()
         setRegistrations(data.registrations || [])
-        setPagination(data.pagination || {
-          page: 1,
-          limit: 10,
-          total: 0,
-          totalPages: 0
+        setPagination({
+          page: data.page || 1,
+          limit: data.limit || 10,
+          total: data.total || 0,
+          totalPages: data.totalPages || 0
         })
       } else {
         throw new Error("Error al cargar inscripciones")
@@ -202,26 +202,6 @@ export function RegistrationsTable() {
   }
 
   const getDisplayName = (registration: Registration) => {
-    // Si es Americano Social (inscripción individual)
-    if (registration.tournament.type === 'AMERICANO_SOCIAL') {
-      return `${registration.player.firstName} ${registration.player.lastName}`
-    }
-
-    // Si es torneo por equipos
-    const team = registration.teamAsPlayer1[0] || registration.teamAsPlayer2[0]
-    if (team) {
-      if (team.name) {
-        return team.name
-      }
-      // Construir nombre del equipo
-      const partner = registration.teamAsPlayer1[0]
-        ? registration.teamAsPlayer1[0].registration2.player
-        : registration.teamAsPlayer2[0].registration1.player
-
-      return `${registration.player.firstName} ${registration.player.lastName} / ${partner.firstName} ${partner.lastName}`
-    }
-
-    // Fallback
     return `${registration.player.firstName} ${registration.player.lastName}`
   }
 
@@ -247,6 +227,28 @@ export function RegistrationsTable() {
     }
 
     return <Badge variant="destructive">Pendiente</Badge>
+  }
+
+  const getTeamStatus = (registration: Registration) => {
+    const hasTeam = (registration.teamAsPlayer1 && registration.teamAsPlayer1.length > 0) ||
+                    (registration.teamAsPlayer2 && registration.teamAsPlayer2.length > 0)
+
+    if (hasTeam) {
+      const team = registration.teamAsPlayer1[0] || registration.teamAsPlayer2[0]
+      return (
+        <Link href={`/dashboard/teams/${team.id}`}>
+          <Badge variant="default" className={`cursor-pointer ${getTeamFormationStatusStyle(true)}`}>
+            {getTeamFormationStatusLabel(true)}
+          </Badge>
+        </Link>
+      )
+    }
+
+    return (
+      <Badge variant="outline" className={getTeamFormationStatusStyle(false)}>
+        {getTeamFormationStatusLabel(false)}
+      </Badge>
+    )
   }
 
 
@@ -299,20 +301,19 @@ export function RegistrationsTable() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Equipo</TableHead>
+              <TableHead>Jugador</TableHead>
               <TableHead>Torneo</TableHead>
               <TableHead>Categoría</TableHead>
               <TableHead>Estado</TableHead>
               <TableHead>Pago</TableHead>
-              <TableHead>Seed</TableHead>
-              <TableHead>Fecha</TableHead>
+              <TableHead>Equipo</TableHead>
               <TableHead className="w-[70px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {registrations.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="h-24 text-center">
+                <TableCell colSpan={7} className="h-24 text-center">
                   No se encontraron inscripciones.
                 </TableCell>
               </TableRow>
@@ -325,7 +326,7 @@ export function RegistrationsTable() {
                         {getDisplayName(registration)}
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        {registration.category.name}
+                        {registration.player.user?.email}
                       </div>
                     </div>
                   </TableCell>
@@ -348,19 +349,7 @@ export function RegistrationsTable() {
                     {getPaymentStatus(registration)}
                   </TableCell>
                   <TableCell>
-                    {registration.seed ? (
-                      <Badge variant="outline">#{registration.seed}</Badge>
-                    ) : (
-                      <span className="text-muted-foreground">-</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="text-sm">
-                      {format(new Date(registration.registeredAt), "dd/MM/yyyy", { locale: es })}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {format(new Date(registration.registeredAt), "HH:mm", { locale: es })}
-                    </div>
+                    {getTeamStatus(registration)}
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>

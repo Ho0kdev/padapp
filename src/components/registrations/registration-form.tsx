@@ -5,40 +5,22 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Loader2, AlertTriangle, Users, Trophy } from "lucide-react"
+import { Loader2, AlertTriangle, User, Trophy, Check, CreditCard, Users } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { getTournamentStatusStyle, getTournamentStatusLabel } from "@/lib/utils/status-styles"
-import { z } from "zod"
-
-const registrationFormSchema = z.object({
-  tournamentId: z.string().min(1, "Debe seleccionar un torneo"),
-  categoryId: z.string().min(1, "Debe seleccionar una categoría"),
-  playerId: z.string().optional(), // Para Americano Social
-  player1Id: z.string().optional(), // Para torneos por equipos
-  player2Id: z.string().optional(), // Para torneos por equipos
-  teamName: z.string().max(100, "El nombre no puede tener más de 100 caracteres").optional(),
-  notes: z.string().max(500, "Las notas no pueden tener más de 500 caracteres").optional(),
-  acceptTerms: z.boolean().refine(val => val === true, "Debe aceptar los términos y condiciones")
-}).refine((data) => {
-  // Solo validar para torneos por equipos (cuando se usan player1Id y player2Id)
-  if (data.player1Id && data.player2Id) {
-    return data.player1Id !== data.player2Id
-  }
-  return true
-}, {
-  message: "Los jugadores deben ser diferentes",
-  path: ["player2Id"]
-})
-
-type RegistrationFormData = z.infer<typeof registrationFormSchema>
+import {
+  getTournamentStatusStyle,
+  getTournamentStatusLabel,
+  getRegistrationStatusStyle,
+  getRegistrationStatusLabel
+} from "@/lib/utils/status-styles"
+import { registrationFormSchema, RegistrationFormData } from "@/lib/validations/registration"
 
 interface Tournament {
   id: string
@@ -58,6 +40,7 @@ interface Tournament {
       id: string
       name: string
       type: string
+      level: number | null
       genderRestriction: string | null
       minAge: number | null
       maxAge: number | null
@@ -81,12 +64,29 @@ interface Player {
   } | null
 }
 
-interface RegistrationFormProps {
-  initialData?: Partial<RegistrationFormData>
-  registrationId?: string
+interface Registration {
+  id: string
+  registrationStatus: string
+  tournament: {
+    id: string
+    name: string
+    type: string
+  }
+  category: {
+    id: string
+    name: string
+  }
+  player: {
+    id: string
+    firstName: string
+    lastName: string
+  }
+  tournamentCategory?: {
+    registrationFee: number | null
+  }
 }
 
-export function RegistrationForm({ initialData, registrationId }: RegistrationFormProps) {
+export function RegistrationForm() {
   const [loading, setLoading] = useState(false)
   const [dataLoading, setDataLoading] = useState(true)
   const [tournaments, setTournaments] = useState<Tournament[]>([])
@@ -97,29 +97,24 @@ export function RegistrationForm({ initialData, registrationId }: RegistrationFo
   const [registeredPlayerIds, setRegisteredPlayerIds] = useState<Set<string>>(new Set())
   const [genderRestriction, setGenderRestriction] = useState<string | null>(null)
   const [categoryLevel, setCategoryLevel] = useState<number | null>(null)
-  const [checkingPlayers, setCheckingPlayers] = useState(false)
-  const { error: toastError, success: toastSuccess } = useToast()
+  const [recentRegistration, setRecentRegistration] = useState<Registration | null>(null)
+  const { toast } = useToast()
   const router = useRouter()
 
   const form = useForm<RegistrationFormData>({
     resolver: zodResolver(registrationFormSchema),
     defaultValues: {
-      tournamentId: initialData?.tournamentId || "",
-      categoryId: initialData?.categoryId || "",
-      playerId: initialData?.playerId || "",
-      player1Id: initialData?.player1Id || "",
-      player2Id: initialData?.player2Id || "",
-      teamName: initialData?.teamName || "",
-      notes: initialData?.notes || "",
-      acceptTerms: initialData?.acceptTerms || false,
+      tournamentId: "",
+      categoryId: "",
+      playerId: "",
+      notes: "",
+      acceptTerms: false,
     }
   })
 
   useEffect(() => {
-    if (!registrationId) {
-      fetchData()
-    }
-  }, [registrationId]) // eslint-disable-line react-hooks/exhaustive-deps
+    fetchData()
+  }, [])
 
   // Verificar jugadores inscritos cuando cambian tournament o category
   useEffect(() => {
@@ -142,6 +137,7 @@ export function RegistrationForm({ initialData, registrationId }: RegistrationFo
     setRegisteredPlayerIds(new Set())
     setGenderRestriction(null)
     setCategoryLevel(null)
+    setRecentRegistration(null)
   }
 
   // Verificar jugadores ya inscritos en la categoría
@@ -152,7 +148,6 @@ export function RegistrationForm({ initialData, registrationId }: RegistrationFo
     }
 
     try {
-      setCheckingPlayers(true)
       const url = `/api/registrations/check-players?tournamentId=${tournamentId}&categoryId=${categoryId}`
       const response = await fetch(url)
 
@@ -163,8 +158,6 @@ export function RegistrationForm({ initialData, registrationId }: RegistrationFo
         setGenderRestriction(data.genderRestriction || null)
         setCategoryLevel(data.categoryLevel || null)
       } else {
-        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
-        console.error('Failed to fetch registered players:', response.status, errorData)
         setRegisteredPlayerIds(new Set())
         setGenderRestriction(null)
         setCategoryLevel(null)
@@ -172,8 +165,6 @@ export function RegistrationForm({ initialData, registrationId }: RegistrationFo
     } catch (error) {
       console.error("Error checking registered players:", error)
       setRegisteredPlayerIds(new Set())
-    } finally {
-      setCheckingPlayers(false)
     }
   }
 
@@ -184,28 +175,23 @@ export function RegistrationForm({ initialData, registrationId }: RegistrationFo
     if (tournamentId && categoryId) {
       checkRegisteredPlayers(tournamentId, categoryId)
     }
+    setRecentRegistration(null)
   }
 
   // Filtrar jugadores disponibles según género, nivel y registrados
-  const getAvailablePlayers = (excludePlayerId?: string) => {
+  const getAvailablePlayers = () => {
     return players.filter(player => {
       // No mostrar jugadores ya registrados
       if (registeredPlayerIds.has(player.id)) return false
-
-      // Excluir el jugador seleccionado en el otro campo (para evitar duplicados)
-      if (excludePlayerId && player.id === excludePlayerId) return false
 
       // Filtrar por restricción de género si existe
       if (genderRestriction) {
         if (genderRestriction === 'MALE' && player.gender !== 'MALE') return false
         if (genderRestriction === 'FEMALE' && player.gender !== 'FEMALE') return false
-        // Para MIXED no filtramos por género, ambos pueden aparecer
       }
 
-      // Filtrar por nivel de categoría - solo pueden inscribirse jugadores de nivel inferior o igual
+      // Filtrar por nivel de categoría
       if (categoryLevel !== null && player.primaryCategory?.level !== null && player.primaryCategory?.level !== undefined) {
-        // Un número mayor indica una categoría menor (ej: 7ma=7 es menor que 4ta=4)
-        // Solo permitir jugadores cuyo nivel sea >= al de la categoría (números más altos)
         if (player.primaryCategory.level < categoryLevel) return false
       }
 
@@ -234,7 +220,6 @@ export function RegistrationForm({ initialData, registrationId }: RegistrationFo
 
       setTournaments(tournamentsData.tournaments || [])
 
-      // Extraer jugadores de los usuarios
       const playersFromUsers = playersData.users
         ?.filter((user: { player?: unknown }) => user.player)
         ?.map((user: {
@@ -266,7 +251,11 @@ export function RegistrationForm({ initialData, registrationId }: RegistrationFo
     } catch (error) {
       console.error("Error fetching data:", error)
       setError("Error al cargar la información necesaria para crear la inscripción")
-      toastError("Error al cargar datos")
+      toast({
+        title: "Error",
+        description: "Error al cargar datos",
+        variant: "destructive"
+      })
     } finally {
       setDataLoading(false)
     }
@@ -276,141 +265,60 @@ export function RegistrationForm({ initialData, registrationId }: RegistrationFo
     try {
       setLoading(true)
 
-      const isAmericanoSocial = selectedTournament?.type === "AMERICANO_SOCIAL"
-
-      if (isAmericanoSocial) {
-        // Inscripción individual para Americano Social
-        if (!data.playerId) {
-          throw new Error("Debe seleccionar un jugador")
-        }
-
-        const apiData = {
-          tournamentId: data.tournamentId,
-          categoryId: data.categoryId,
-          playerId: data.playerId,
-          notes: data.notes,
-          acceptTerms: data.acceptTerms,
-        }
-
-        const response = await fetch('/api/registrations/individual', {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(apiData),
-        })
-
-        if (!response.ok) {
-          const errorData = await response.json()
-          throw new Error(errorData.error || "Error al procesar la inscripción")
-        }
-
-        const registration = await response.json()
-        toastSuccess("Inscripción creada exitosamente")
-
-        // Resetear el formulario manteniendo torneo y categoría seleccionados
-        form.reset({
-          tournamentId: data.tournamentId,
-          categoryId: data.categoryId,
-          playerId: "",
-          player1Id: "",
-          player2Id: "",
-          teamName: "",
-          notes: "",
-          acceptTerms: false,
-        })
-
-        // Recargar jugadores inscritos
-        await checkRegisteredPlayers(data.tournamentId, data.categoryId)
-      } else {
-        // Inscripción por equipo para torneos tradicionales
-        if (!data.player1Id || !data.player2Id) {
-          throw new Error("Debe seleccionar ambos jugadores")
-        }
-
-        // Generar nombre del equipo automáticamente si no se proporciona
-        let teamName = data.teamName
-        if (!teamName || teamName.trim() === '') {
-          const player1 = players.find(p => p.id === data.player1Id)
-          const player2 = players.find(p => p.id === data.player2Id)
-
-          if (player1 && player2) {
-            teamName = `${player1.firstName} ${player1.lastName}/${player2.firstName} ${player2.lastName}`
-          } else {
-            teamName = "Equipo sin nombre"
-          }
-        }
-
-        const apiData = {
-          tournamentId: data.tournamentId,
-          categoryId: data.categoryId,
-          player1Id: data.player1Id,
-          player2Id: data.player2Id,
-          teamName: teamName,
-          notes: data.notes,
-          acceptTerms: data.acceptTerms,
-          acceptPrivacyPolicy: true
-        }
-
-        const url = registrationId
-          ? `/api/registrations/${registrationId}`
-          : `/api/registrations`
-        const method = registrationId ? "PUT" : "POST"
-
-        const response = await fetch(url, {
-          method,
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(apiData),
-        })
-
-        if (!response.ok) {
-          const errorData = await response.json()
-
-          // Si hay detalles de validación de Zod, mostrar el mensaje específico
-          if (errorData.details && Array.isArray(errorData.details)) {
-            const specificErrors = errorData.details
-              .map((detail: { message: string }) => detail.message)
-              .join(', ')
-            throw new Error(specificErrors)
-          }
-
-          throw new Error(errorData.error || "Error al procesar la inscripción")
-        }
-
-        const registration = await response.json()
-        toastSuccess(registrationId ? "Inscripción actualizada correctamente" : "Inscripción creada exitosamente")
-
-        if (registrationId) {
-          // Si estamos editando, redirigir al detalle
-          router.push(`/dashboard/registrations/${registration.id}`)
-        } else {
-          // Si es nueva inscripción, resetear formulario para seguir inscribiendo
-          form.reset({
-            tournamentId: data.tournamentId,
-            categoryId: data.categoryId,
-            playerId: "",
-            player1Id: "",
-            player2Id: "",
-            teamName: "",
-            notes: "",
-            acceptTerms: false,
-          })
-
-          // Recargar jugadores inscritos
-          await checkRegisteredPlayers(data.tournamentId, data.categoryId)
-        }
+      const apiData = {
+        tournamentId: data.tournamentId,
+        categoryId: data.categoryId,
+        playerId: data.playerId,
+        notes: data.notes,
+        acceptTerms: data.acceptTerms,
       }
+
+      const response = await fetch('/api/registrations', {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(apiData),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Error al procesar la inscripción")
+      }
+
+      const registration = await response.json()
+      setRecentRegistration(registration)
+      toast({
+        title: "Inscripción creada",
+        description: "Inscripción creada exitosamente",
+        variant: "success"
+      })
+
+      // Resetear el formulario manteniendo torneo y categoría seleccionados
+      form.reset({
+        tournamentId: data.tournamentId,
+        categoryId: data.categoryId,
+        playerId: "",
+        notes: "",
+        acceptTerms: false,
+      })
+
+      // Recargar jugadores inscritos
+      await checkRegisteredPlayers(data.tournamentId, data.categoryId)
+
     } catch (error) {
       console.error("Error processing registration:", error)
-      toastError(error instanceof Error ? error.message : "Error al procesar la inscripción")
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Error al procesar la inscripción",
+        variant: "destructive"
+      })
     } finally {
       setLoading(false)
     }
   }
 
-  if (dataLoading && !registrationId) {
+  if (dataLoading) {
     return (
       <Card>
         <CardContent className="flex items-center justify-center py-16">
@@ -423,7 +331,7 @@ export function RegistrationForm({ initialData, registrationId }: RegistrationFo
     )
   }
 
-  if (error && !registrationId) {
+  if (error) {
     return (
       <div className="space-y-6">
         <Alert variant="destructive">
@@ -450,7 +358,7 @@ export function RegistrationForm({ initialData, registrationId }: RegistrationFo
     )
   }
 
-  if (!registrationId && tournaments.length === 0) {
+  if (tournaments.length === 0) {
     return (
       <Alert>
         <AlertTriangle className="h-4 w-4" />
@@ -461,7 +369,7 @@ export function RegistrationForm({ initialData, registrationId }: RegistrationFo
     )
   }
 
-  if (!registrationId && players.length === 0) {
+  if (players.length === 0) {
     return (
       <Alert>
         <AlertTriangle className="h-4 w-4" />
@@ -474,6 +382,47 @@ export function RegistrationForm({ initialData, registrationId }: RegistrationFo
 
   return (
     <div className="space-y-6">
+      {/* Success Banner */}
+      {recentRegistration && (
+        <Alert className="border-green-200 bg-green-50">
+          <Check className="h-4 w-4 text-green-600" />
+          <AlertDescription className="text-green-800">
+            <div className="space-y-2">
+              <p className="font-medium">
+                ¡Inscripción creada exitosamente para {recentRegistration.player.firstName} {recentRegistration.player.lastName}!
+              </p>
+              <div className="flex items-center gap-2 text-sm">
+                <Badge className={getRegistrationStatusStyle(recentRegistration.registrationStatus)}>
+                  {getRegistrationStatusLabel(recentRegistration.registrationStatus)}
+                </Badge>
+              </div>
+              <div className="flex gap-2 mt-3">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="bg-white"
+                  onClick={() => router.push(`/dashboard/registrations/${recentRegistration.id}`)}
+                >
+                  <CreditCard className="h-4 w-4 mr-2" />
+                  Ir a pagar
+                </Button>
+                {selectedTournament?.type !== 'AMERICANO_SOCIAL' && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="bg-white"
+                    onClick={() => router.push('/dashboard/teams/new')}
+                  >
+                    <Users className="h-4 w-4 mr-2" />
+                    Formar equipo
+                  </Button>
+                )}
+              </div>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
+
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           {/* Selección de Torneo */}
@@ -481,8 +430,11 @@ export function RegistrationForm({ initialData, registrationId }: RegistrationFo
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Trophy className="h-5 w-5" />
-                Selección de Torneo
+                Selección de Torneo y Categoría
               </CardTitle>
+              <CardDescription>
+                Nuevo flujo de inscripción: Cada jugador se inscribe individualmente. Para torneos convencionales, después podrás formar equipo.
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <FormField
@@ -529,7 +481,6 @@ export function RegistrationForm({ initialData, registrationId }: RegistrationFo
                     </div>
 
                     <div className="text-muted-foreground space-y-1">
-                      {/* Tipo de Torneo */}
                       <p>
                         <strong>Tipo:</strong>{" "}
                         {selectedTournament.type === "SINGLE_ELIMINATION" && "Eliminación Directa"}
@@ -541,15 +492,6 @@ export function RegistrationForm({ initialData, registrationId }: RegistrationFo
                         {selectedTournament.type === "AMERICANO_SOCIAL" && "Americano Social"}
                       </p>
 
-                      {/* Fechas del Torneo */}
-                      {selectedTournament.tournamentStart && (
-                        <p><strong>Fecha de inicio:</strong> {new Date(selectedTournament.tournamentStart).toLocaleDateString()}</p>
-                      )}
-                      {selectedTournament.tournamentEnd && (
-                        <p><strong>Fecha de fin:</strong> {new Date(selectedTournament.tournamentEnd).toLocaleDateString()}</p>
-                      )}
-
-                      {/* Fechas de Inscripción */}
                       {selectedTournament.registrationStart && (
                         <p><strong>Inscripciones desde:</strong> {new Date(selectedTournament.registrationStart).toLocaleDateString()}</p>
                       )}
@@ -604,15 +546,19 @@ export function RegistrationForm({ initialData, registrationId }: RegistrationFo
             </CardContent>
           </Card>
 
-          {/* Formulario según tipo de torneo */}
-          {selectedTournament?.type === "AMERICANO_SOCIAL" ? (
-            /* Inscripción Individual para Americano Social */
+          {/* Formulario de Inscripción Individual */}
+          {selectedTournament && form.watch('categoryId') && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5" />
+                  <User className="h-5 w-5" />
                   Inscripción Individual
                 </CardTitle>
+                <CardDescription>
+                  {selectedTournament.type === 'AMERICANO_SOCIAL'
+                    ? 'En Americano Social, cada jugador juega individualmente. Los pools se armarán automáticamente.'
+                    : 'Después de inscribirse, podrás formar equipo con otro jugador inscrito en la misma categoría.'}
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <FormField
@@ -628,20 +574,22 @@ export function RegistrationForm({ initialData, registrationId }: RegistrationFo
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {getAvailablePlayers()
-                            .map((player) => (
+                          {getAvailablePlayers().length === 0 ? (
+                            <SelectItem value="none" disabled>
+                              No hay jugadores disponibles para esta categoría
+                            </SelectItem>
+                          ) : (
+                            getAvailablePlayers().map((player) => (
                               <SelectItem key={player.id} value={player.id}>
                                 {player.firstName} {player.lastName}
                                 <span className="ml-2 text-muted-foreground">
                                   ({player.rankingPoints} pts)
                                 </span>
                               </SelectItem>
-                            ))}
+                            ))
+                          )}
                         </SelectContent>
                       </Select>
-                      <FormDescription>
-                        En Americano Social, cada jugador se inscribe individualmente. Los pools se armarán automáticamente al generar el torneo.
-                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -666,116 +614,10 @@ export function RegistrationForm({ initialData, registrationId }: RegistrationFo
                 />
               </CardContent>
             </Card>
-          ) : selectedTournament ? (
-            /* Inscripción por Equipo para torneos tradicionales */
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5" />
-                  Información del Equipo
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="player1Id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Jugador 1 *</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecciona jugador 1" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {getAvailablePlayers(form.watch('player2Id'))
-                            .map((player) => (
-                              <SelectItem key={player.id} value={player.id}>
-                                {player.firstName} {player.lastName}
-                                <span className="ml-2 text-muted-foreground">
-                                  ({player.rankingPoints} pts)
-                                </span>
-                              </SelectItem>
-                            ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="player2Id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Jugador 2 *</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecciona jugador 2" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {getAvailablePlayers(form.watch('player1Id'))
-                            .map((player) => (
-                              <SelectItem key={player.id} value={player.id}>
-                                {player.firstName} {player.lastName}
-                                <span className="ml-2 text-muted-foreground">
-                                  ({player.rankingPoints} pts)
-                                </span>
-                              </SelectItem>
-                            ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <FormField
-                control={form.control}
-                name="teamName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nombre del Equipo (Opcional)</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Nombre personalizado para el equipo"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="notes"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Notas (Opcional)</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Información adicional sobre la inscripción"
-                        className="min-h-[80px]"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
-          ) : null}
+          )}
 
           {/* Términos y Condiciones */}
-          {!registrationId && (
+          {selectedTournament && form.watch('categoryId') && (
             <Card>
               <CardContent className="pt-6">
                 <FormField
@@ -805,25 +647,27 @@ export function RegistrationForm({ initialData, registrationId }: RegistrationFo
           )}
 
           {/* Botones de Acción */}
-          <div className="flex gap-4">
-            <Button
-              type="submit"
-              disabled={loading}
-              className="min-w-[120px]"
-            >
-              {loading ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : null}
-              {registrationId ? "Actualizar Inscripción" : "Crear Inscripción"}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => router.back()}
-            >
-              Cancelar
-            </Button>
-          </div>
+          {selectedTournament && form.watch('categoryId') && (
+            <div className="flex gap-4">
+              <Button
+                type="submit"
+                disabled={loading}
+                className="min-w-[120px]"
+              >
+                {loading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : null}
+                Crear Inscripción
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => router.push('/dashboard/registrations')}
+              >
+                Volver
+              </Button>
+            </div>
+          )}
         </form>
       </Form>
     </div>

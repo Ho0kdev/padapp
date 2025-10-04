@@ -288,3 +288,40 @@ export const getCategoryLevelStyle = (level: number) => {
 export const formatCategoryLevel = (categoryName: string, level: number) => {
   return `${categoryName} - Nivel ${level}`
 }
+
+// Opciones de estado de equipo
+export const teamStatusOptions = [
+  { value: "DRAFT", label: "Borrador", color: "gray", css: "bg-gray-100 text-gray-800 border-gray-200" },
+  { value: "CONFIRMED", label: "Confirmado", color: "green", css: "bg-green-100 text-green-800 border-green-200" },
+  { value: "CANCELLED", label: "Cancelado", color: "red", css: "bg-red-100 text-red-800 border-red-200" },
+] as const
+
+// Helper para obtener estilos de estado de equipo
+export const getTeamStatusStyle = (status: string) => {
+  const option = teamStatusOptions.find(opt => opt.value === status)
+  return option ? option.css : teamStatusOptions[0].css
+}
+
+// Helper para obtener label de estado de equipo
+export const getTeamStatusLabel = (status: string) => {
+  const option = teamStatusOptions.find(opt => opt.value === status)
+  return option ? option.label : status
+}
+
+// Opciones de estado de formación de equipo (para inscripciones)
+export const teamFormationStatusOptions = [
+  { value: "HAS_TEAM", label: "Formado", color: "blue", css: "bg-blue-600 hover:bg-blue-700" },
+  { value: "NO_TEAM", label: "Sin Equipo", color: "gray", css: "text-muted-foreground" },
+] as const
+
+// Helper para obtener estilos de formación de equipo
+export const getTeamFormationStatusStyle = (hasTeam: boolean) => {
+  const option = teamFormationStatusOptions.find(opt => opt.value === (hasTeam ? "HAS_TEAM" : "NO_TEAM"))
+  return option ? option.css : teamFormationStatusOptions[1].css
+}
+
+// Helper para obtener label de formación de equipo
+export const getTeamFormationStatusLabel = (hasTeam: boolean) => {
+  const option = teamFormationStatusOptions.find(opt => opt.value === (hasTeam ? "HAS_TEAM" : "NO_TEAM"))
+  return option ? option.label : "Desconocido"
+}
