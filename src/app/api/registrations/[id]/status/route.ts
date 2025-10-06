@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { authorize, handleAuthError, Action, Resource, AuditLogger } from "@/lib/rbac"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
+import { RegistrationLogService } from "@/lib/services/registration-log-service"
 
 const updateStatusSchema = z.object({
   status: z.enum([
@@ -280,6 +281,17 @@ async function handleIndividualRegistrationStatusUpdate(
     oldData: { registrationStatus: currentStatus },
     newData: { registrationStatus: validatedData.status },
   }, request)
+
+  // Log status change
+  await RegistrationLogService.logRegistrationStatusChanged(
+    {
+      userId: session.user.id,
+      registrationId
+    },
+    updatedRegistration,
+    currentStatus,
+    validatedData.status
+  )
 
   return NextResponse.json(updatedRegistration)
 }

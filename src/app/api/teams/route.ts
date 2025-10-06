@@ -3,6 +3,7 @@ import { requireAuth, authorize, handleAuthError, Action, Resource, AuditLogger 
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
 import { createTeamSchema, getTeamsSchema } from "@/lib/validations/team"
+import { TeamLogService } from "@/lib/services/team-log-service"
 
 // ============================================================================
 // GET ENDPOINT
@@ -473,6 +474,15 @@ export async function POST(request: NextRequest) {
       description: `Equipo creado: ${team.name || `${registration1.player.firstName} ${registration1.player.lastName} / ${registration2.player.firstName} ${registration2.player.lastName}`} - ${tournament.name}`,
       newData: team,
     }, request)
+
+    // Log team creation
+    await TeamLogService.logTeamCreated(
+      {
+        userId: session.user.id,
+        teamId: team.id
+      },
+      team
+    )
 
     return NextResponse.json(team, { status: 201 })
 

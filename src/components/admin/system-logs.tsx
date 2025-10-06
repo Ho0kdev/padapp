@@ -36,7 +36,12 @@ import {
   Building2,
   MapPin,
   Tag,
-  TrendingUp
+  TrendingUp,
+  Users,
+  UserPlus,
+  UsersRound,
+  Medal,
+  Building
 } from "lucide-react"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
@@ -73,14 +78,36 @@ interface SystemLog {
     firstName: string
     lastName: string
   }
+  targetUser?: {
+    name: string
+    email: string
+  }
+  registration?: {
+    player: {
+      firstName: string
+      lastName: string
+    }
+    tournament: {
+      name: string
+    }
+  }
+  team?: {
+    name: string
+    tournament: {
+      name: string
+    }
+  }
 }
 
 const moduleIcons = {
   tournaments: Trophy,
-  clubs: Building2,
+  clubs: Building,
   courts: MapPin,
   categories: Tag,
-  rankings: TrendingUp
+  rankings: Medal,
+  users: Users,
+  registrations: UserPlus,
+  teams: UsersRound
 }
 
 const moduleLabels = {
@@ -88,7 +115,10 @@ const moduleLabels = {
   clubs: "Clubes",
   courts: "Canchas",
   categories: "Categorías",
-  rankings: "Rankings"
+  rankings: "Rankings",
+  users: "Usuarios",
+  registrations: "Inscripciones",
+  teams: "Equipos"
 }
 
 const actionIcons: Record<string, any> = {
@@ -130,6 +160,27 @@ const actionIcons: Record<string, any> = {
   SEASON_UPDATED: Clock,
   MANUAL_ADJUSTMENT: Edit,
 
+  // Usuarios
+  USER_CREATED: User,
+  USER_UPDATED: Edit,
+  USER_DELETED: Trash2,
+  USER_STATUS_CHANGED: PlayCircle,
+  USER_ROLE_CHANGED: Edit,
+
+  // Inscripciones
+  REGISTRATION_CREATED: User,
+  REGISTRATION_UPDATED: Edit,
+  REGISTRATION_DELETED: Trash2,
+  REGISTRATION_STATUS_CHANGED: PlayCircle,
+  REGISTRATION_PAYMENT_UPDATED: Calendar,
+
+  // Equipos
+  TEAM_CREATED: User,
+  TEAM_UPDATED: Edit,
+  TEAM_DELETED: Trash2,
+  TEAM_STATUS_CHANGED: PlayCircle,
+  TEAM_CONFIRMED: PlayCircle,
+
   // General
   USER_ACTION: User,
 }
@@ -141,6 +192,9 @@ const actionColors: Record<string, string> = {
   COURT_CREATED: "bg-green-100 text-green-800",
   CATEGORY_CREATED: "bg-green-100 text-green-800",
   RANKING_CREATED: "bg-green-100 text-green-800",
+  USER_CREATED: "bg-green-100 text-green-800",
+  REGISTRATION_CREATED: "bg-green-100 text-green-800",
+  TEAM_CREATED: "bg-green-100 text-green-800",
 
   // Actualizaciones
   TOURNAMENT_UPDATED: "bg-blue-100 text-blue-800",
@@ -148,6 +202,9 @@ const actionColors: Record<string, string> = {
   COURT_UPDATED: "bg-blue-100 text-blue-800",
   CATEGORY_UPDATED: "bg-blue-100 text-blue-800",
   RANKING_UPDATED: "bg-blue-100 text-blue-800",
+  USER_UPDATED: "bg-blue-100 text-blue-800",
+  REGISTRATION_UPDATED: "bg-blue-100 text-blue-800",
+  TEAM_UPDATED: "bg-blue-100 text-blue-800",
 
   // Eliminaciones/Desactivaciones
   TOURNAMENT_DELETED: "bg-red-100 text-red-800",
@@ -155,12 +212,21 @@ const actionColors: Record<string, string> = {
   COURT_DELETED: "bg-red-100 text-red-800",
   CATEGORY_DELETED: "bg-red-100 text-red-800",
   RANKING_DELETED: "bg-red-100 text-red-800",
+  USER_DELETED: "bg-red-100 text-red-800",
+  REGISTRATION_DELETED: "bg-red-100 text-red-800",
+  TEAM_DELETED: "bg-red-100 text-red-800",
 
   // Cambios de estado
   TOURNAMENT_STATUS_CHANGED: "bg-orange-100 text-orange-800",
   CLUB_STATUS_CHANGED: "bg-orange-100 text-orange-800",
   COURT_STATUS_CHANGED: "bg-orange-100 text-orange-800",
   CATEGORY_STATUS_CHANGED: "bg-orange-100 text-orange-800",
+  USER_STATUS_CHANGED: "bg-orange-100 text-orange-800",
+  USER_ROLE_CHANGED: "bg-purple-100 text-purple-800",
+  REGISTRATION_STATUS_CHANGED: "bg-orange-100 text-orange-800",
+  REGISTRATION_PAYMENT_UPDATED: "bg-emerald-100 text-emerald-800",
+  TEAM_STATUS_CHANGED: "bg-orange-100 text-orange-800",
+  TEAM_CONFIRMED: "bg-purple-100 text-purple-800",
 
   // Equipos/Usuarios
   TEAM_REGISTERED: "bg-purple-100 text-purple-800",
@@ -217,6 +283,27 @@ const actionLabels: Record<string, string> = {
   POINTS_CALCULATED: "Puntos Calculados",
   SEASON_UPDATED: "Temporada Actualizada",
   MANUAL_ADJUSTMENT: "Ajuste Manual",
+
+  // Usuarios
+  USER_CREATED: "Usuario Creado",
+  USER_UPDATED: "Usuario Actualizado",
+  USER_DELETED: "Usuario Eliminado",
+  USER_STATUS_CHANGED: "Estado de Usuario Cambiado",
+  USER_ROLE_CHANGED: "Rol de Usuario Cambiado",
+
+  // Inscripciones
+  REGISTRATION_CREATED: "Inscripción Creada",
+  REGISTRATION_UPDATED: "Inscripción Actualizada",
+  REGISTRATION_DELETED: "Inscripción Eliminada",
+  REGISTRATION_STATUS_CHANGED: "Estado de Inscripción Cambiado",
+  REGISTRATION_PAYMENT_UPDATED: "Pago de Inscripción Actualizado",
+
+  // Equipos
+  TEAM_CREATED: "Equipo Creado",
+  TEAM_UPDATED: "Equipo Actualizado",
+  TEAM_DELETED: "Equipo Eliminado",
+  TEAM_STATUS_CHANGED: "Estado de Equipo Cambiado",
+  TEAM_CONFIRMED: "Equipo Confirmado",
 
   // General
   USER_ACTION: "Acción de Usuario",
@@ -320,6 +407,9 @@ export function SystemLogs() {
            log.club?.name ||
            log.court?.name ||
            log.category?.name ||
+           (log.targetUser ? log.targetUser.name || log.targetUser.email : null) ||
+           (log.registration ? `${log.registration.player.firstName} ${log.registration.player.lastName}` : null) ||
+           (log.team ? log.team.name : null) ||
            (log.player ? `${log.player.firstName} ${log.player.lastName}` : null) ||
            "-"
   }
@@ -349,27 +439,39 @@ export function SystemLogs() {
         <CardContent>
           {/* Tabs por módulo */}
           <Tabs value={activeModule} onValueChange={setActiveModule} className="mb-6">
-            <TabsList className="grid w-full grid-cols-6">
-              <TabsTrigger value="all">Todos</TabsTrigger>
-              <TabsTrigger value="tournaments" className="flex items-center gap-2">
-                <Trophy className="h-4 w-4" />
-                Torneos
+            <TabsList className="flex flex-wrap h-auto gap-1 p-1">
+              <TabsTrigger value="all" className="flex-shrink-0">Todos</TabsTrigger>
+              <TabsTrigger value="users" className="flex items-center gap-1 flex-shrink-0">
+                <Users className="h-3 w-3" />
+                <span className="hidden sm:inline">Usuarios</span>
               </TabsTrigger>
-              <TabsTrigger value="clubs" className="flex items-center gap-2">
-                <Building2 className="h-4 w-4" />
-                Clubes
+              <TabsTrigger value="registrations" className="flex items-center gap-1 flex-shrink-0">
+                <UserPlus className="h-3 w-3" />
+                <span className="hidden sm:inline">Inscripciones</span>
               </TabsTrigger>
-              <TabsTrigger value="courts" className="flex items-center gap-2">
-                <MapPin className="h-4 w-4" />
-                Canchas
+              <TabsTrigger value="teams" className="flex items-center gap-1 flex-shrink-0">
+                <UsersRound className="h-3 w-3" />
+                <span className="hidden sm:inline">Equipos</span>
               </TabsTrigger>
-              <TabsTrigger value="categories" className="flex items-center gap-2">
-                <Tag className="h-4 w-4" />
-                Categorías
+              <TabsTrigger value="tournaments" className="flex items-center gap-1 flex-shrink-0">
+                <Trophy className="h-3 w-3" />
+                <span className="hidden sm:inline">Torneos</span>
               </TabsTrigger>
-              <TabsTrigger value="rankings" className="flex items-center gap-2">
-                <TrendingUp className="h-4 w-4" />
-                Rankings
+              <TabsTrigger value="clubs" className="flex items-center gap-1 flex-shrink-0">
+                <Building className="h-3 w-3" />
+                <span className="hidden sm:inline">Clubes</span>
+              </TabsTrigger>
+              <TabsTrigger value="courts" className="flex items-center gap-1 flex-shrink-0">
+                <MapPin className="h-3 w-3" />
+                <span className="hidden sm:inline">Canchas</span>
+              </TabsTrigger>
+              <TabsTrigger value="categories" className="flex items-center gap-1 flex-shrink-0">
+                <Tag className="h-3 w-3" />
+                <span className="hidden sm:inline">Categorías</span>
+              </TabsTrigger>
+              <TabsTrigger value="rankings" className="flex items-center gap-1 flex-shrink-0">
+                <Medal className="h-3 w-3" />
+                <span className="hidden sm:inline">Rankings</span>
               </TabsTrigger>
             </TabsList>
           </Tabs>
@@ -435,18 +537,17 @@ export function SystemLogs() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Fecha</TableHead>
-                  <TableHead>Módulo</TableHead>
-                  <TableHead>Acción</TableHead>
-                  <TableHead>Descripción</TableHead>
-                  <TableHead>Usuario</TableHead>
                   <TableHead>Entidad</TableHead>
+                  <TableHead>Acción</TableHead>
+                  <TableHead>Usuario</TableHead>
+                  <TableHead>Descripción</TableHead>
                   <TableHead>Campos Modificados</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredLogs.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8">
+                    <TableCell colSpan={6} className="text-center py-8">
                       No se encontraron logs con los filtros aplicados
                     </TableCell>
                   </TableRow>
@@ -457,14 +558,7 @@ export function SystemLogs() {
                         {formatDate(log.createdAt)}
                       </TableCell>
                       <TableCell>
-                        {log.module && (
-                          <div className="flex items-center gap-2">
-                            {getModuleIcon(log.module)}
-                            <Badge variant="outline">
-                              {moduleLabels[log.module as keyof typeof moduleLabels]}
-                            </Badge>
-                          </div>
-                        )}
+                        {getEntityName(log)}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
@@ -474,19 +568,16 @@ export function SystemLogs() {
                           </Badge>
                         </div>
                       </TableCell>
-                      <TableCell className="max-w-md">
-                        <div className="truncate" title={log.description}>
-                          {log.description}
-                        </div>
-                      </TableCell>
                       <TableCell>
                         <div className="flex flex-col">
                           <span className="font-medium">{log.user.name}</span>
                           <span className="text-xs text-muted-foreground">{log.user.email}</span>
                         </div>
                       </TableCell>
-                      <TableCell>
-                        {getEntityName(log)}
+                      <TableCell className="max-w-md">
+                        <div className="truncate" title={log.description}>
+                          {log.description}
+                        </div>
                       </TableCell>
                       <TableCell>
                         <span className="text-sm text-muted-foreground">

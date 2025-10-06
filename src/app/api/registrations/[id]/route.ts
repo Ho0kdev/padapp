@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { requireAuth, authorize, handleAuthError, Action, Resource, AuditLogger } from "@/lib/rbac"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
+import { RegistrationLogService } from "@/lib/services/registration-log-service"
 
 const updateRegistrationSchema = z.object({
   name: z.string().min(1, "El nombre del equipo es requerido").max(100, "El nombre no puede tener más de 100 caracteres").optional(),
@@ -373,6 +374,15 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       oldData: registration,
     }, request)
 
+    // Log registration deletion
+    await RegistrationLogService.logRegistrationDeleted(
+      {
+        userId: session.user.id,
+        registrationId: id
+      },
+      registration
+    )
+
     return NextResponse.json({
       message: "Inscripción eliminada exitosamente"
     })
@@ -569,6 +579,26 @@ async function handleIndividualRegistrationUpdate(
     oldData: registration,
     newData: updatedRegistration,
   }, request)
+
+  // Log registration update
+  await RegistrationLogService.logRegistrationUpdated(
+    {
+      userId: session.user.id,
+      registrationId
+    },
+    registration,
+    updatedRegistration
+  )
+
+  // Log status change if applicable
+  if (validatedData.registrationStatus && registration.registrationStatus !== validatedData.registrationStatus) {
+    await RegistrationLogService.logRegistrationStatusChanged(
+      { userId: session.user.id, registrationId },
+      updatedRegistration,
+      registration.registrationStatus,
+      validatedData.registrationStatus
+    )
+  }
 
   return NextResponse.json(updatedRegistration)
 }

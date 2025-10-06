@@ -4,6 +4,7 @@ import { UserRole, UserStatus, Gender } from '@prisma/client'
 import { requireAuth, authorize, handleAuthError, Action, Resource, AuditLogger } from '@/lib/rbac'
 import { invalidateUserCache } from '@/lib/rbac/cache'
 import { rateLimit, RateLimitPresets } from '@/lib/rbac/rate-limit'
+import { UserLogService } from '@/lib/services/user-log-service'
 
 interface RouteContext {
   params: Promise<{ id: string }>
@@ -436,6 +437,35 @@ export async function PUT(
       request
     )
 
+    // Log user update
+    await UserLogService.logUserUpdated(
+      {
+        userId: session.user.id,
+        targetUserId: id
+      },
+      existingUser,
+      user
+    )
+
+    // Log specific changes
+    if (role !== undefined && existingUser.role !== role) {
+      await UserLogService.logUserRoleChanged(
+        { userId: session.user.id, targetUserId: id },
+        user,
+        existingUser.role,
+        role
+      )
+    }
+
+    if (status !== undefined && existingUser.status !== status) {
+      await UserLogService.logUserStatusChanged(
+        { userId: session.user.id, targetUserId: id },
+        user,
+        existingUser.status,
+        status
+      )
+    }
+
     return NextResponse.json(user)
 
   } catch (error) {
@@ -529,6 +559,15 @@ export async function DELETE(
       request
     )
 
+    // Log user deletion
+    await UserLogService.logUserDeleted(
+      {
+        userId: session.user.id,
+        targetUserId: id
+      },
+      user
+    )
+
     return NextResponse.json({ message: 'Usuario desactivado exitosamente' })
 
   } catch (error) {
@@ -593,6 +632,17 @@ export async function PATCH(
         newData: updatedUser,
       },
       request
+    )
+
+    // Log status change
+    await UserLogService.logUserStatusChanged(
+      {
+        userId: session.user.id,
+        targetUserId: id
+      },
+      updatedUser,
+      existingUser.status,
+      UserStatus.ACTIVE
     )
 
     return NextResponse.json(updatedUser)

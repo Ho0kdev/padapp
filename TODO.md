@@ -25,8 +25,4 @@
 
 //ADMIN
 //LOGS
-- mejorar los mensajes de logs.
-- modulo esta al pedo
-- entidad deberia estar a la izq
 - torneo no carga lo que cambio.
-- falta logueo de inscripciones.

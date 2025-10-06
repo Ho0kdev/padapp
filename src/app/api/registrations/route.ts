@@ -9,6 +9,7 @@ import {
   shouldBeWaitlisted,
   getInitialRegistrationStatus
 } from "@/lib/validations/registration-validations"
+import { RegistrationLogService } from "@/lib/services/registration-log-service"
 
 // ============================================================================
 // SCHEMAS
@@ -412,6 +413,15 @@ export async function POST(request: NextRequest) {
       description: `Inscripción creada: ${registration.player.firstName} ${registration.player.lastName} - ${registration.tournament.name}`,
       newData: registration,
     }, request)
+
+    // Log registration creation
+    await RegistrationLogService.logRegistrationCreated(
+      {
+        userId: session.user.id,
+        registrationId: registration.id
+      },
+      registration
+    )
 
     return NextResponse.json(registration, { status: 201 })
 

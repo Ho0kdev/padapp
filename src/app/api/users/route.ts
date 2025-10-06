@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { UserRole, UserStatus, Gender } from '@prisma/client'
 import { requireAuth, authorize, handleAuthError, Action, Resource, AuditLogger } from '@/lib/rbac'
 import { rateLimit, RateLimitPresets } from '@/lib/rbac/rate-limit'
+import { UserLogService } from '@/lib/services/user-log-service'
 
 export async function GET(request: NextRequest) {
   try {
@@ -249,6 +250,15 @@ export async function POST(request: NextRequest) {
         }
       })
     }
+
+    // Log user creation
+    await UserLogService.logUserCreated(
+      {
+        userId: session.user.id,
+        targetUserId: user.id
+      },
+      user
+    )
 
     return NextResponse.json(user, { status: 201 })
 

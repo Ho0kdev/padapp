@@ -37,27 +37,31 @@ model Session {
 }
 
 model User {
-  id                   String          @id @default(cuid())
+  id                   String             @id @default(cuid())
   name                 String?
-  email                String          @unique
+  email                String             @unique
   emailVerified        DateTime?
   image                String?
   password             String?
-  role                 UserRole        @default(PLAYER)
-  status               UserStatus      @default(ACTIVE)
-  createdAt            DateTime        @default(now())
-  updatedAt            DateTime        @updatedAt
+  role                 UserRole           @default(PLAYER)
+  status               UserStatus         @default(ACTIVE)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
   accounts             Account[]
   categoryLogs         CategoryLog[]
   clubLogs             ClubLog[]
   courtLogs            CourtLog[]
   rankingLogs          RankingLog[]
-  refereeMatches       Match[]         @relation("MatchReferee")
+  refereeMatches       Match[]            @relation("MatchReferee")
   notifications        Notification[]
   player               Player?
   sessions             Session[]
   tournamentLogs       TournamentLog[]
-  organizerTournaments Tournament[]    @relation("TournamentOrganizer")
+  organizerTournaments Tournament[]       @relation("TournamentOrganizer")
+  userLogsAsActor      UserLog[]          @relation("UserLogActor")
+  userLogsAsTarget     UserLog[]          @relation("UserLogTarget")
+  registrationLogs     RegistrationLog[]
+  teamLogs             TeamLog[]
 
   @@map("users")
 }
@@ -294,6 +298,7 @@ model Registration {
   payment            RegistrationPayment?
   teamAsPlayer1      Team[]               @relation("TeamRegistration1")
   teamAsPlayer2      Team[]               @relation("TeamRegistration2")
+  logs               RegistrationLog[]
 
   @@unique([tournamentId, categoryId, playerId])
   @@index([tournamentId])
@@ -344,6 +349,7 @@ model Team {
   tournamentCategory TournamentCategory @relation(fields: [tournamentId, categoryId], references: [tournamentId, categoryId])
   tournament         Tournament         @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
   zoneTeams          ZoneTeam[]
+  logs               TeamLog[]
 
   @@unique([tournamentId, categoryId, registration1Id, registration2Id])
   @@index([tournamentId, categoryId])
@@ -616,6 +622,72 @@ model RankingLog {
   @@map("ranking_logs")
 }
 
+model UserLog {
+  id           String   @id @default(cuid())
+  action       LogAction
+  description  String
+  targetUserId String?  // Usuario sobre el que se realiza la acción
+  userId       String   // Usuario que realiza la acción
+  ipAddress    String?
+  userAgent    String?
+  oldData      Json?
+  newData      Json?
+  metadata     Json?
+  createdAt    DateTime @default(now())
+  targetUser   User?    @relation("UserLogTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
+  user         User     @relation("UserLogActor", fields: [userId], references: [id])
+
+  @@index([targetUserId])
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("user_logs")
+}
+
+model RegistrationLog {
+  id             String        @id @default(cuid())
+  action         LogAction
+  description    String
+  registrationId String?
+  userId         String
+  ipAddress      String?
+  userAgent      String?
+  oldData        Json?
+  newData        Json?
+  metadata       Json?
+  createdAt      DateTime      @default(now())
+  registration   Registration? @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+  user           User          @relation(fields: [userId], references: [id])
+
+  @@index([registrationId])
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("registration_logs")
+}
+
+model TeamLog {
+  id          String   @id @default(cuid())
+  action      LogAction
+  description String
+  teamId      String?
+  userId      String
+  ipAddress   String?
+  userAgent   String?
+  oldData     Json?
+  newData     Json?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  team        Team?    @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@index([teamId])
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("team_logs")
+}
+
 enum UserRole {
   ADMIN
   CLUB_ADMIN
@@ -793,6 +865,21 @@ enum LogAction {
   POINTS_CALCULATED
   SEASON_UPDATED
   MANUAL_ADJUSTMENT
+  USER_CREATED
+  USER_UPDATED
+  USER_DELETED
+  USER_STATUS_CHANGED
+  USER_ROLE_CHANGED
+  REGISTRATION_CREATED
+  REGISTRATION_UPDATED
+  REGISTRATION_DELETED
+  REGISTRATION_STATUS_CHANGED
+  REGISTRATION_PAYMENT_UPDATED
+  TEAM_CREATED
+  TEAM_UPDATED
+  TEAM_DELETED
+  TEAM_STATUS_CHANGED
+  TEAM_CONFIRMED
 }
 
 // ============================================

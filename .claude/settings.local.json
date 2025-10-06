@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(git reset:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(npx prisma:*)"
     ],
     "deny": [],
     "ask": []

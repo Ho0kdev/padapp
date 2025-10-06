@@ -3,6 +3,7 @@ import { requireAuth, authorize, handleAuthError, Action, Resource, AuditLogger 
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
 import { updateTeamSchema } from "@/lib/validations/team"
+import { TeamLogService } from "@/lib/services/team-log-service"
 
 interface RouteParams {
   params: Promise<{
@@ -245,6 +246,26 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       newData: updatedTeam,
     }, request)
 
+    // Log team update
+    await TeamLogService.logTeamUpdated(
+      {
+        userId: session.user.id,
+        teamId: id
+      },
+      team,
+      updatedTeam
+    )
+
+    // Log status change if applicable
+    if (validatedData.status && team.status !== validatedData.status) {
+      await TeamLogService.logTeamStatusChanged(
+        { userId: session.user.id, teamId: id },
+        updatedTeam,
+        team.status,
+        validatedData.status
+      )
+    }
+
     return NextResponse.json(updatedTeam)
 
   } catch (error) {
@@ -355,6 +376,15 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       description: `Equipo disuelto: ${team.name || `${team.registration1.player.firstName} ${team.registration1.player.lastName} / ${team.registration2.player.firstName} ${team.registration2.player.lastName}`}. Las inscripciones individuales se mantienen.`,
       oldData: team,
     }, request)
+
+    // Log team deletion
+    await TeamLogService.logTeamDeleted(
+      {
+        userId: session.user.id,
+        teamId: id
+      },
+      team
+    )
 
     return NextResponse.json({
       message: "Equipo disuelto exitosamente. Las inscripciones individuales se mantienen y pueden formar un nuevo equipo."
