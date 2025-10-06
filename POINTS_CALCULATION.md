@@ -1,6 +1,6 @@
 # 📊 SISTEMA DE CÁLCULO DE PUNTOS - GUÍA COMPLETA
 
-*Última actualización: Septiembre 30, 2024*
+*Última actualización: Octubre 6, 2025*
 
 ## ✅ SISTEMA DE CÁLCULO AUTOMÁTICO DE PUNTOS COMPLETADO!
 
@@ -360,6 +360,11 @@ Puedes combinar torneos de diferentes niveles para maximizar puntos:
 ---
 
 ## 📝 CHANGELOG
+
+### Octubre 6, 2025
+- ✅ Fecha de documentación actualizada
+- ✅ Sistema validado en producción con múltiples torneos
+- ✅ Integración completa con sistema de logs y auditoría
 
 ### Septiembre 30, 2024 - Sistema de Puntos Configurables
 - ✅ Agregado campo `rankingPoints` al modelo Tournament

@@ -1305,6 +1305,13 @@ console.log('Tournament created:', {
     - Solución: Agregado "all" a enum y lógica condicional para ignorarlo en queries
     - Aplica a status, tournamentId, categoryId
 
+### Octubre 6, 2025
+- **✅ Sistema de Logs Expandido** - Agregados logs para todos los módulos nuevos (Usuarios, Inscripciones, Equipos)
+- **✅ Panel de Administración Mejorado** - Visualización completa de logs con filtros avanzados
+
+### Octubre 3, 2025
+- **✅ Migración de Inscripciones Completada** - Sistema desacoplado: inscripciones individuales + formación de equipos
+
 ### Octubre 1, 2024
 - **✅ Formato Americano Implementado** - Sistema completo de Round-Robin usando Circle Method
   - Algoritmo de rotación con bye automático para equipos impares
@@ -1345,4 +1352,4 @@ Para preguntas, sugerencias o reportar problemas:
 - **Full TypeScript** con validaciones Zod
 - **100% validado** en backend y frontend
 
-*Última actualización: Octubre 1, 2024*
+*Última actualización: Octubre 6, 2025*

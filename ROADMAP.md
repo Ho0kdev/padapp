@@ -1,6 +1,6 @@
 # 🗺️ ROADMAP - PadApp Sistema de Gestión Integral de Pádel
 
-*Actualizado: Septiembre 30, 2024*
+*Actualizado: Octubre 6, 2025*
 
 ## 🎯 **Visión General**
 
@@ -538,7 +538,22 @@ El sistema de inscripciones está mayormente completado. Lo que falta:
 
 ## 📝 **Changelog Reciente**
 
-### **Octubre 1, 2024** ⭐ NUEVO
+### **Octubre 6, 2025** ⭐ NUEVO
+- ✅ **Sistema de Logs Completo**: 8 servicios de logging implementados
+  - UserLogService, RegistrationLogService, TeamLogService
+  - TournamentLogService, ClubLogService, CourtLogService
+  - CategoryLogService, RankingsLogService
+- ✅ **Panel de Administración Avanzado**: Visualización de logs con filtros por módulo, acción, fecha y búsqueda
+- ✅ **Auditoría Total**: Tracking de IP, user agent, oldData/newData en todos los cambios
+
+### **Octubre 3, 2025**
+- ✅ **Migración de Inscripciones**: Sistema desacoplado completado
+  - Inscripciones individuales para todos los tipos de torneo
+  - Formación de equipos independiente (torneos convencionales)
+  - Endpoints `/api/teams` implementados (CRUD completo)
+  - Frontend con formularios separados y flujo optimizado
+
+### **Octubre 1, 2024**
 - ✅ **Formato Americano Implementado**: Sistema completo de Round-Robin usando Circle Method
   - Algoritmo `generateAmericanoBracket()` en `bracket-service.ts:1432-1492`
   - Algoritmo `generateRoundRobinPairings()` para rotación en `bracket-service.ts:1492-1531`
@@ -562,4 +577,4 @@ El sistema de inscripciones está mayormente completado. Lo que falta:
   - Validación de fechas y reglas de negocio
   - RBAC completo implementado
 
-*Última actualización: Octubre 1, 2024*
+*Última actualización: Octubre 6, 2025*

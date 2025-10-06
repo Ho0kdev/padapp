@@ -1,8 +1,8 @@
 # 📘 GUÍA DEFINITIVA DEL SISTEMA RBAC
 
-> **Última actualización**: 2025-09-29 21:00
+> **Última actualización**: 2025-10-06
 > **Estado**: ✅ Sistema 100% funcional - Migración completa
-> **Cobertura**: 25/25 archivos migrados (100%)
+> **Cobertura**: 30/30 archivos migrados (100%)
 
 ---
 
@@ -21,23 +21,26 @@
 ### Estado del Sistema
 
 ✅ **Sistema RBAC 100% funcional y production-ready**
-✅ **25 archivos migrados** con 60+ endpoints
-✅ **Auditoría completa** en todas las operaciones de escritura
+✅ **30 archivos migrados** con 70+ endpoints
+✅ **Auditoría completa** con 8 servicios de logging (UserLog, RegistrationLog, TeamLog, TournamentLog, ClubLog, CourtLog, CategoryLog, RankingLog)
+✅ **Panel de administración** con visualización avanzada de logs
 ✅ **Caché optimizado** - Reduce overhead ~90%
 ✅ **Componentes frontend** listos (hooks y componentes React)
 
 ### Módulos Migrados (100%)
 
-| Módulo | Archivos | Estado |
-|--------|----------|--------|
-| Usuarios | 2 | ✅ |
-| Torneos | 2 | ✅ |
-| Clubes | 2 | ✅ |
-| Categorías | 2 | ✅ |
-| Rankings | 3 | ✅ |
-| Inscripciones | 5 | ✅ |
-| Canchas | 3 | ✅ |
-| **TOTAL** | **26** | **✅ 100%** |
+| Módulo | Archivos | Estado | Logs |
+|--------|----------|--------|------|
+| Usuarios | 2 | ✅ | ✅ UserLogService |
+| Torneos | 2 | ✅ | ✅ TournamentLogService |
+| Clubes | 2 | ✅ | ✅ ClubLogService |
+| Categorías | 2 | ✅ | ✅ CategoryLogService |
+| Rankings | 3 | ✅ | ✅ RankingsLogService |
+| Inscripciones | 5 | ✅ | ✅ RegistrationLogService |
+| Equipos | 4 | ✅ | ✅ TeamLogService |
+| Canchas | 3 | ✅ | ✅ CourtLogService |
+| Admin | 2 | ✅ | ✅ Panel de Logs |
+| **TOTAL** | **30** | **✅ 100%** | **8 Servicios** |
 
 ### Arquitectura del Sistema
 
@@ -54,11 +57,24 @@ src/lib/rbac/
     ├── TournamentPolicy.ts
     └── ...
 
+src/lib/services/         # 🆕 Servicios de Logging
+├── user-log-service.ts
+├── registration-log-service.ts
+├── team-log-service.ts
+├── tournament-log-service.ts
+├── club-log-service.ts
+├── court-log-service.ts
+├── category-log-service.ts
+└── rankings-log-service.ts
+
 src/hooks/
 └── use-auth.ts           # Hook: isAdmin, hasRole, etc.
 
 src/components/rbac/
 └── Can.tsx               # <Can>, <AdminOnly>
+
+src/components/admin/     # 🆕 Panel de Administración
+└── system-logs.tsx       # Visualización de logs con filtros
 ```
 
 ---
