@@ -1,10 +1,11 @@
 import { requireAuth } from "@/lib/rbac"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
+import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { BracketGenerator } from "@/components/brackets/bracket-generator"
 import { BracketVisualization } from "@/components/brackets/bracket-visualization"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, Trophy } from "lucide-react"
 import Link from "next/link"
 import {
   Tabs,
@@ -14,18 +15,17 @@ import {
 } from "@/components/ui/tabs"
 
 interface BracketsPageProps {
-  params: {
-    id: string
-  }
+  params: Promise<{ id: string }>
 }
 
 export default async function BracketsPage({ params }: BracketsPageProps) {
   // Verificar autenticación
   const session = await requireAuth()
+  const { id } = await params
 
   // Obtener torneo con categorías
   const tournament = await prisma.tournament.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       categories: {
         include: {
@@ -65,72 +65,86 @@ export default async function BracketsPage({ params }: BracketsPageProps) {
   }
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="space-y-1">
+    <DashboardLayout>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <Link href={`/dashboard/tournaments/${params.id}`}>
+            <Link href={`/dashboard/tournaments/${id}`}>
               <Button variant="ghost" size="sm">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Volver
               </Button>
             </Link>
           </div>
-          <h1 className="text-3xl font-bold">{tournament.name}</h1>
-          <p className="text-muted-foreground">Gestión de Brackets</p>
-        </div>
-      </div>
 
-      {tournament.categories.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground">
-            Este torneo no tiene categorías configuradas.
-          </p>
-          <Link href={`/dashboard/tournaments/${params.id}/edit`}>
-            <Button className="mt-4">Configurar Categorías</Button>
-          </Link>
+          <div>
+            <div className="flex items-center gap-2">
+              <Trophy className="h-8 w-8 text-muted-foreground" />
+              <h1 className="text-3xl font-bold tracking-tight">{tournament.name}</h1>
+            </div>
+            <p className="text-muted-foreground mt-1">
+              Gestión de Brackets y Cuadros de Partidos
+            </p>
+          </div>
         </div>
-      ) : tournament.categories.length === 1 ? (
-        // Si solo hay una categoría, mostrar directamente
-        <div className="grid gap-6 md:grid-cols-2">
-          <BracketGenerator
-            tournamentId={tournament.id}
-            categories={tournament.categories}
-          />
-          <BracketVisualization
-            tournamentId={tournament.id}
-            categoryId={tournament.categories[0].categoryId}
-          />
-        </div>
-      ) : (
-        // Si hay múltiples categorías, usar tabs
-        <Tabs defaultValue={tournament.categories[0].categoryId}>
-          <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${tournament.categories.length}, 1fr)` }}>
+
+        {/* Content */}
+        {tournament.categories.length === 0 ? (
+          <div className="text-center py-12 border rounded-lg bg-muted/50">
+            <Trophy className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <p className="text-muted-foreground mb-4">
+              Este torneo no tiene categorías configuradas.
+            </p>
+            <Link href={`/dashboard/tournaments/${id}/edit`}>
+              <Button>Configurar Categorías</Button>
+            </Link>
+          </div>
+        ) : tournament.categories.length === 1 ? (
+          // Si solo hay una categoría, mostrar directamente (sin tabs)
+          <div className="grid gap-6 lg:grid-cols-2">
+            <BracketGenerator
+              tournamentId={tournament.id}
+              categoryId={tournament.categories[0].categoryId}
+              categoryName={tournament.categories[0].category.name}
+              teamsCount={tournament.categories[0]._count?.teams || 0}
+            />
+            <BracketVisualization
+              tournamentId={tournament.id}
+              categoryId={tournament.categories[0].categoryId}
+            />
+          </div>
+        ) : (
+          // Si hay múltiples categorías, usar tabs
+          <Tabs defaultValue={tournament.categories[0].categoryId} className="space-y-4">
+            <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${Math.min(tournament.categories.length, 4)}, 1fr)` }}>
+              {tournament.categories.map((cat) => (
+                <TabsTrigger key={cat.id} value={cat.categoryId}>
+                  {cat.category.name}
+                  {cat._count && ` (${cat._count.teams})`}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+
             {tournament.categories.map((cat) => (
-              <TabsTrigger key={cat.id} value={cat.categoryId}>
-                {cat.category.name}
-                {cat._count && ` (${cat._count.teams})`}
-              </TabsTrigger>
+              <TabsContent key={cat.id} value={cat.categoryId} className="space-y-6 mt-4">
+                <div className="grid gap-6 lg:grid-cols-2">
+                  <BracketGenerator
+                    tournamentId={tournament.id}
+                    categoryId={cat.categoryId}
+                    categoryName={cat.category.name}
+                    teamsCount={cat._count?.teams || 0}
+                  />
+                  <BracketVisualization
+                    tournamentId={tournament.id}
+                    categoryId={cat.categoryId}
+                  />
+                </div>
+              </TabsContent>
             ))}
-          </TabsList>
-
-          {tournament.categories.map((cat) => (
-            <TabsContent key={cat.id} value={cat.categoryId} className="space-y-6">
-              <div className="grid gap-6 md:grid-cols-2">
-                <BracketGenerator
-                  tournamentId={tournament.id}
-                  categories={tournament.categories}
-                />
-                <BracketVisualization
-                  tournamentId={tournament.id}
-                  categoryId={cat.categoryId}
-                />
-              </div>
-            </TabsContent>
-          ))}
-        </Tabs>
-      )}
-    </div>
+          </Tabs>
+        )}
+      </div>
+    </DashboardLayout>
   )
 }

@@ -9,52 +9,31 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
-import { Trophy, AlertCircle, CheckCircle2 } from "lucide-react"
+import { Trophy, AlertCircle, CheckCircle2, Sparkles } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Badge } from "@/components/ui/badge"
 
 interface BracketGeneratorProps {
   tournamentId: string
-  categories: Array<{
-    id: string
-    categoryId: string
-    category: {
-      name: string
-    }
-    _count?: {
-      teams: number
-    }
-  }>
+  categoryId: string
+  categoryName: string
+  teamsCount: number
   onBracketGenerated?: () => void
 }
 
 export function BracketGenerator({
   tournamentId,
-  categories,
+  categoryId,
+  categoryName,
+  teamsCount,
   onBracketGenerated
 }: BracketGeneratorProps) {
-  const [selectedCategory, setSelectedCategory] = useState<string>("")
   const [isGenerating, setIsGenerating] = useState(false)
   const [validationErrors, setValidationErrors] = useState<string[]>([])
   const { toast } = useToast()
 
   const handleGenerate = async () => {
-    if (!selectedCategory) {
-      toast({
-        title: "Error",
-        description: "Debes seleccionar una categoría",
-        variant: "destructive"
-      })
-      return
-    }
-
     setIsGenerating(true)
     setValidationErrors([])
 
@@ -67,7 +46,7 @@ export function BracketGenerator({
             "Content-Type": "application/json"
           },
           body: JSON.stringify({
-            categoryId: selectedCategory
+            categoryId
           })
         }
       )
@@ -84,9 +63,12 @@ export function BracketGenerator({
       }
 
       toast({
-        title: "Bracket generado",
+        title: "✓ Bracket generado exitosamente",
         description: `Se crearon ${data.data.totalMatches} partidos en ${data.data.totalRounds} rondas`,
       })
+
+      // Limpiar errores previos
+      setValidationErrors([])
 
       // Llamar callback si existe
       if (onBracketGenerated) {
@@ -104,53 +86,36 @@ export function BracketGenerator({
     }
   }
 
-  const selectedCategoryData = categories.find(
-    c => c.categoryId === selectedCategory
-  )
-
   return (
     <Card>
       <CardHeader>
         <div className="flex items-center gap-2">
-          <Trophy className="h-5 w-5" />
+          <Trophy className="h-5 w-5 text-primary" />
           <CardTitle>Generar Bracket</CardTitle>
         </div>
         <CardDescription>
-          Selecciona una categoría para generar automáticamente el cuadro de
-          enfrentamientos
+          Genera automáticamente el cuadro de enfrentamientos para esta categoría
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Categoría</label>
-          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecciona una categoría" />
-            </SelectTrigger>
-            <SelectContent>
-              {categories.map((cat) => (
-                <SelectItem key={cat.id} value={cat.categoryId}>
-                  {cat.category.name}
-                  {cat._count && ` (${cat._count.teams} equipos)`}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {/* Info de la categoría */}
+        <Alert>
+          <CheckCircle2 className="h-4 w-4" />
+          <AlertDescription>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="font-medium">Categoría:</span>
+                <Badge variant="outline">{categoryName}</Badge>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-medium">Equipos confirmados:</span>
+                <Badge variant="secondary">{teamsCount}</Badge>
+              </div>
+            </div>
+          </AlertDescription>
+        </Alert>
 
-        {selectedCategoryData && (
-          <Alert>
-            <CheckCircle2 className="h-4 w-4" />
-            <AlertDescription>
-              Se generará el bracket para{" "}
-              <strong>{selectedCategoryData.category.name}</strong>
-              {selectedCategoryData._count && (
-                <> con {selectedCategoryData._count.teams} equipos confirmados</>
-              )}
-            </AlertDescription>
-          </Alert>
-        )}
-
+        {/* Errores de validación */}
         {validationErrors.length > 0 && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
@@ -167,16 +132,27 @@ export function BracketGenerator({
           </Alert>
         )}
 
-        <div className="flex gap-2">
-          <Button
-            onClick={handleGenerate}
-            disabled={!selectedCategory || isGenerating}
-            className="flex-1"
-          >
-            {isGenerating ? "Generando..." : "Generar Bracket"}
-          </Button>
-        </div>
+        {/* Botón de generar */}
+        <Button
+          onClick={handleGenerate}
+          disabled={isGenerating || teamsCount < 2}
+          className="w-full"
+          size="lg"
+        >
+          {isGenerating ? (
+            <>
+              <Sparkles className="h-4 w-4 mr-2 animate-spin" />
+              Generando bracket...
+            </>
+          ) : (
+            <>
+              <Trophy className="h-4 w-4 mr-2" />
+              Generar Bracket
+            </>
+          )}
+        </Button>
 
+        {/* Warning sobre regeneración */}
         <Alert>
           <AlertCircle className="h-4 w-4" />
           <AlertDescription className="text-sm">
@@ -185,6 +161,17 @@ export function BracketGenerator({
             equipos confirmados.
           </AlertDescription>
         </Alert>
+
+        {/* Mensaje si no hay suficientes equipos */}
+        {teamsCount < 2 && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription className="text-sm">
+              Se requieren al menos 2 equipos confirmados para generar el bracket.
+              Actualmente hay {teamsCount} equipo(s).
+            </AlertDescription>
+          </Alert>
+        )}
       </CardContent>
     </Card>
   )

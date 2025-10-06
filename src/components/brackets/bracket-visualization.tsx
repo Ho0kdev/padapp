@@ -135,24 +135,24 @@ export function BracketVisualization({
   }
 
   const getStatusBadge = (status: string) => {
-    const variants: Record<string, "default" | "secondary" | "success" | "warning"> = {
-      SCHEDULED: "default",
-      IN_PROGRESS: "warning",
-      COMPLETED: "success",
-      CANCELLED: "secondary",
-      WALKOVER: "secondary"
+    const styles: Record<string, string> = {
+      SCHEDULED: "bg-blue-100 text-blue-800 border-blue-200",
+      IN_PROGRESS: "bg-yellow-100 text-yellow-800 border-yellow-200",
+      COMPLETED: "bg-green-100 text-green-800 border-green-200",
+      CANCELLED: "bg-red-100 text-red-800 border-red-200",
+      WALKOVER: "bg-purple-100 text-purple-800 border-purple-200"
     }
 
     const labels: Record<string, string> = {
       SCHEDULED: "Programado",
-      IN_PROGRESS: "En Curso",
-      COMPLETED: "Finalizado",
+      IN_PROGRESS: "En Progreso",
+      COMPLETED: "Completado",
       CANCELLED: "Cancelado",
-      WALKOVER: "WO"
+      WALKOVER: "Walkover"
     }
 
     return (
-      <Badge variant={variants[status] || "default"} className="text-xs">
+      <Badge variant="outline" className={`text-xs ${styles[status] || styles.SCHEDULED}`}>
         {labels[status] || status}
       </Badge>
     )

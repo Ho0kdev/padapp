@@ -83,6 +83,12 @@ export const navigation: NavigationItem[] = [
     roles: ["ADMIN", "CLUB_ADMIN"] // Admins y administradores de club pueden gestionar equipos
   },
   {
+    name: "Partidos",
+    href: "/dashboard/matches",
+    icon: FileText,
+    roles: ["ADMIN", "CLUB_ADMIN", "REFEREE"] // Admins, club admins y árbitros pueden gestionar partidos
+  },
+  {
     name: "Rankings",
     href: "/dashboard/rankings",
     icon: Medal

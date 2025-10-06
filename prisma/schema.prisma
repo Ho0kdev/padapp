@@ -37,31 +37,32 @@ model Session {
 }
 
 model User {
-  id                   String             @id @default(cuid())
+  id                   String            @id @default(cuid())
   name                 String?
-  email                String             @unique
+  email                String            @unique
   emailVerified        DateTime?
   image                String?
   password             String?
-  role                 UserRole           @default(PLAYER)
-  status               UserStatus         @default(ACTIVE)
-  createdAt            DateTime           @default(now())
-  updatedAt            DateTime           @updatedAt
+  role                 UserRole          @default(PLAYER)
+  status               UserStatus        @default(ACTIVE)
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
   accounts             Account[]
   categoryLogs         CategoryLog[]
   clubLogs             ClubLog[]
   courtLogs            CourtLog[]
   rankingLogs          RankingLog[]
-  refereeMatches       Match[]            @relation("MatchReferee")
+  refereeMatches       Match[]           @relation("MatchReferee")
   notifications        Notification[]
   player               Player?
   sessions             Session[]
   tournamentLogs       TournamentLog[]
-  organizerTournaments Tournament[]       @relation("TournamentOrganizer")
-  userLogsAsActor      UserLog[]          @relation("UserLogActor")
-  userLogsAsTarget     UserLog[]          @relation("UserLogTarget")
+  organizerTournaments Tournament[]      @relation("TournamentOrganizer")
+  userLogsAsActor      UserLog[]         @relation("UserLogActor")
+  userLogsAsTarget     UserLog[]         @relation("UserLogTarget")
   registrationLogs     RegistrationLog[]
   teamLogs             TeamLog[]
+  matchLogs            MatchLog[]
 
   @@map("users")
 }
@@ -76,8 +77,8 @@ model VerificationToken {
 }
 
 model Player {
-  id                    String            @id @default(cuid())
-  userId                String            @unique
+  id                    String                   @id @default(cuid())
+  userId                String                   @unique
   firstName             String
   lastName              String
   phone                 String?
@@ -89,22 +90,22 @@ model Player {
   emergencyContactPhone String?
   bloodType             BloodType?
   medicalNotes          String?
-  rankingPoints         Int               @default(0)
+  rankingPoints         Int                      @default(0)
   primaryCategoryId     String?
-  isActive              Boolean           @default(true)
-  createdAt             DateTime          @default(now())
-  updatedAt             DateTime          @updatedAt
+  isActive              Boolean                  @default(true)
+  createdAt             DateTime                 @default(now())
+  updatedAt             DateTime                 @updatedAt
   rankings              PlayerRanking[]
   rankingLogs           RankingLog[]
-  primaryCategory       Category?         @relation("PlayerPrimaryCategory", fields: [primaryCategoryId], references: [id])
-  user                  User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  primaryCategory       Category?                @relation("PlayerPrimaryCategory", fields: [primaryCategoryId], references: [id])
+  user                  User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
   registrations         Registration[]
   tournamentStats       TournamentStats[]
-  americanoPoolPlayers  AmericanoPoolPlayer[] @relation("AmericanoPlayer")
-  americanoMatchesP1    AmericanoPoolMatch[]  @relation("AmericanoPlayer1")
-  americanoMatchesP2    AmericanoPoolMatch[]  @relation("AmericanoPlayer2")
-  americanoMatchesP3    AmericanoPoolMatch[]  @relation("AmericanoPlayer3")
-  americanoMatchesP4    AmericanoPoolMatch[]  @relation("AmericanoPlayer4")
+  americanoPoolPlayers  AmericanoPoolPlayer[]    @relation("AmericanoPlayer")
+  americanoMatchesP1    AmericanoPoolMatch[]     @relation("AmericanoPlayer1")
+  americanoMatchesP2    AmericanoPoolMatch[]     @relation("AmericanoPlayer2")
+  americanoMatchesP3    AmericanoPoolMatch[]     @relation("AmericanoPlayer3")
+  americanoMatchesP4    AmericanoPoolMatch[]     @relation("AmericanoPlayer4")
   americanoRankings     AmericanoGlobalRanking[] @relation("AmericanoRanking")
 
   @@map("players")
@@ -138,25 +139,25 @@ model Club {
 }
 
 model Court {
-  id                String       @id @default(cuid())
+  id                String          @id @default(cuid())
   clubId            String
   name              String
   surface           CourtSurface
-  hasLighting       Boolean      @default(false)
-  hasRoof           Boolean      @default(false)
-  status            CourtStatus  @default(AVAILABLE)
+  hasLighting       Boolean         @default(false)
+  hasRoof           Boolean         @default(false)
+  status            CourtStatus     @default(AVAILABLE)
   hourlyRate        Float?
   notes             String?
-  deleted           Boolean      @default(false)
+  deleted           Boolean         @default(false)
   deletedAt         DateTime?
-  createdAt         DateTime     @default(now())
-  updatedAt         DateTime     @updatedAt
-  hasConcreteWall   Boolean      @default(false)
-  hasNet4m          Boolean      @default(false)
-  hasPanoramicGlass Boolean      @default(false)
-  isOutdoor         Boolean      @default(false)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  hasConcreteWall   Boolean         @default(false)
+  hasNet4m          Boolean         @default(false)
+  hasPanoramicGlass Boolean         @default(false)
+  isOutdoor         Boolean         @default(false)
   logs              CourtLog[]
-  club              Club         @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  club              Club            @relation(fields: [clubId], references: [id], onDelete: Cascade)
   matches           Match[]
   americanoPools    AmericanoPool[] @relation("AmericanoCourt")
 
@@ -168,7 +169,7 @@ model Category {
   name                 String
   description          String?
   type                 CategoryType
-  level                Int?                 // Nivel numérico de la categoría (ej: 7ma=7, 4ta=4, B=6)
+  level                Int? // Nivel numérico de la categoría (ej: 7ma=7, 4ta=4, B=6)
   minAge               Int?
   maxAge               Int?
   genderRestriction    Gender?
@@ -208,32 +209,32 @@ model PlayerRanking {
 }
 
 model Tournament {
-  id                String               @id @default(cuid())
+  id                String                   @id @default(cuid())
   name              String
   description       String?
   type              TournamentType
-  status            TournamentStatus     @default(DRAFT)
-  visibility        TournamentVisibility @default(PUBLIC)
+  status            TournamentStatus         @default(DRAFT)
+  visibility        TournamentVisibility     @default(PUBLIC)
   registrationStart DateTime?
   registrationEnd   DateTime?
   tournamentStart   DateTime
   tournamentEnd     DateTime?
   maxParticipants   Int?
-  minParticipants   Int                  @default(4)
-  registrationFee   Float                @default(0)
-  prizePool         Float                @default(0)
-  rankingPoints     Int                  @default(1000)
-  setsToWin         Int                  @default(2)
-  gamesToWinSet     Int                  @default(6)
-  tiebreakAt        Int                  @default(6)
-  goldenPoint       Boolean              @default(true)
+  minParticipants   Int                      @default(4)
+  registrationFee   Float                    @default(0)
+  prizePool         Float                    @default(0)
+  rankingPoints     Int                      @default(1000)
+  setsToWin         Int                      @default(2)
+  gamesToWinSet     Int                      @default(6)
+  tiebreakAt        Int                      @default(6)
+  goldenPoint       Boolean                  @default(true)
   organizerId       String
   mainClubId        String?
   rules             String?
   prizesDescription String?
   logoUrl           String?
-  createdAt         DateTime             @default(now())
-  updatedAt         DateTime             @updatedAt
+  createdAt         DateTime                 @default(now())
+  updatedAt         DateTime                 @updatedAt
   matches           Match[]
   notifications     Notification[]
   registrations     Registration[]
@@ -243,10 +244,10 @@ model Tournament {
   logs              TournamentLog[]
   stats             TournamentStats[]
   zones             TournamentZone[]
-  mainClub          Club?                @relation("TournamentMainClub", fields: [mainClubId], references: [id])
-  organizer         User                 @relation("TournamentOrganizer", fields: [organizerId], references: [id])
-  americanoPools    AmericanoPool[]      @relation("AmericanoTournament")
-  americanoMatches  AmericanoPoolMatch[] @relation("AmericanoMatchTournament")
+  mainClub          Club?                    @relation("TournamentMainClub", fields: [mainClubId], references: [id])
+  organizer         User                     @relation("TournamentOrganizer", fields: [organizerId], references: [id])
+  americanoPools    AmericanoPool[]          @relation("AmericanoTournament")
+  americanoMatches  AmericanoPoolMatch[]     @relation("AmericanoMatchTournament")
   americanoRankings AmericanoGlobalRanking[] @relation("AmericanoRankingTournament")
 
   @@map("tournaments")
@@ -421,6 +422,7 @@ model Match {
   winnerTeam       Team?           @relation("MatchWinner", fields: [winnerTeamId], references: [id])
   zone             TournamentZone? @relation(fields: [zoneId], references: [id])
   notifications    Notification[]
+  logs             MatchLog[]
 
   @@index([tournamentId, categoryId])
   @@index([status])
@@ -623,19 +625,19 @@ model RankingLog {
 }
 
 model UserLog {
-  id           String   @id @default(cuid())
+  id           String    @id @default(cuid())
   action       LogAction
   description  String
-  targetUserId String?  // Usuario sobre el que se realiza la acción
-  userId       String   // Usuario que realiza la acción
+  targetUserId String? // Usuario sobre el que se realiza la acción
+  userId       String // Usuario que realiza la acción
   ipAddress    String?
   userAgent    String?
   oldData      Json?
   newData      Json?
   metadata     Json?
-  createdAt    DateTime @default(now())
-  targetUser   User?    @relation("UserLogTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
-  user         User     @relation("UserLogActor", fields: [userId], references: [id])
+  createdAt    DateTime  @default(now())
+  targetUser   User?     @relation("UserLogTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
+  user         User      @relation("UserLogActor", fields: [userId], references: [id])
 
   @@index([targetUserId])
   @@index([userId])
@@ -667,7 +669,7 @@ model RegistrationLog {
 }
 
 model TeamLog {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   action      LogAction
   description String
   teamId      String?
@@ -677,15 +679,37 @@ model TeamLog {
   oldData     Json?
   newData     Json?
   metadata    Json?
-  createdAt   DateTime @default(now())
-  team        Team?    @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  user        User     @relation(fields: [userId], references: [id])
+  createdAt   DateTime  @default(now())
+  team        Team?     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id])
 
   @@index([teamId])
   @@index([userId])
   @@index([action])
   @@index([createdAt])
   @@map("team_logs")
+}
+
+model MatchLog {
+  id          String    @id @default(cuid())
+  action      LogAction
+  description String
+  matchId     String?
+  userId      String
+  ipAddress   String?
+  userAgent   String?
+  oldData     Json?
+  newData     Json?
+  metadata    Json?
+  createdAt   DateTime  @default(now())
+  match       Match?    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id])
+
+  @@index([matchId])
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("match_logs")
 }
 
 enum UserRole {
@@ -845,6 +869,8 @@ enum LogAction {
   MATCH_UPDATED
   MATCH_RESULT_ADDED
   MATCH_WINNER_PROGRESSED
+  MATCH_DELETED
+  MATCH_STATUS_CHANGED
   USER_ACTION
   CLUB_CREATED
   CLUB_UPDATED
@@ -888,20 +914,20 @@ enum LogAction {
 
 // Pool de jugadores para Americano Social
 model AmericanoPool {
-  id           String   @id @default(cuid())
+  id           String  @id @default(cuid())
   tournamentId String
   categoryId   String
-  name         String   // "Pool A", "Pool B", etc.
-  courtId      String?  // Cancha asignada
-  poolNumber   Int      // 1, 2, 3...
+  name         String // "Pool A", "Pool B", etc.
+  courtId      String? // Cancha asignada
+  poolNumber   Int // 1, 2, 3...
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  tournament   Tournament              @relation("AmericanoTournament", fields: [tournamentId], references: [id], onDelete: Cascade)
-  court        Court?                  @relation("AmericanoCourt", fields: [courtId], references: [id])
-  players      AmericanoPoolPlayer[]
-  matches      AmericanoPoolMatch[]
+  tournament Tournament            @relation("AmericanoTournament", fields: [tournamentId], references: [id], onDelete: Cascade)
+  court      Court?                @relation("AmericanoCourt", fields: [courtId], references: [id])
+  players    AmericanoPoolPlayer[]
+  matches    AmericanoPoolMatch[]
 
   @@unique([tournamentId, categoryId, poolNumber])
   @@index([tournamentId, categoryId])
@@ -910,23 +936,23 @@ model AmericanoPool {
 
 // Jugadores asignados a cada pool
 model AmericanoPoolPlayer {
-  id          String   @id @default(cuid())
-  poolId      String
-  playerId    String
-  position    Int      // Posición en el pool (1-4)
+  id       String @id @default(cuid())
+  poolId   String
+  playerId String
+  position Int // Posición en el pool (1-4)
 
   // Estadísticas individuales del pool
-  gamesWon    Int      @default(0)
-  gamesLost   Int      @default(0)
-  matchesWon  Int      @default(0)
-  matchesLost Int      @default(0)
-  totalPoints Int      @default(0) // = gamesWon
+  gamesWon    Int @default(0)
+  gamesLost   Int @default(0)
+  matchesWon  Int @default(0)
+  matchesLost Int @default(0)
+  totalPoints Int @default(0) // = gamesWon
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  pool        AmericanoPool @relation(fields: [poolId], references: [id], onDelete: Cascade)
-  player      Player        @relation("AmericanoPlayer", fields: [playerId], references: [id])
+  pool   AmericanoPool @relation(fields: [poolId], references: [id], onDelete: Cascade)
+  player Player        @relation("AmericanoPlayer", fields: [playerId], references: [id])
 
   @@unique([poolId, playerId])
   @@index([poolId])
@@ -936,37 +962,37 @@ model AmericanoPoolPlayer {
 
 // Partidos dentro de cada pool
 model AmericanoPoolMatch {
-  id           String      @id @default(cuid())
+  id           String @id @default(cuid())
   poolId       String
   tournamentId String
   categoryId   String
-  roundNumber  Int         // 1, 2, 3
+  roundNumber  Int // 1, 2, 3
 
   // 4 jugadores del partido (parejas rotativas)
-  player1Id    String      // Equipo A - Jugador 1
-  player2Id    String      // Equipo A - Jugador 2
-  player3Id    String      // Equipo B - Jugador 1
-  player4Id    String      // Equipo B - Jugador 2
+  player1Id String // Equipo A - Jugador 1
+  player2Id String // Equipo A - Jugador 2
+  player3Id String // Equipo B - Jugador 1
+  player4Id String // Equipo B - Jugador 2
 
   // Resultado
-  status       MatchStatus @default(SCHEDULED)
-  teamAScore   Int?        // Games ganados por pareja A
-  teamBScore   Int?        // Games ganados por pareja B
-  winnerTeam   String?     // "A" o "B"
+  status     MatchStatus @default(SCHEDULED)
+  teamAScore Int? // Games ganados por pareja A
+  teamBScore Int? // Games ganados por pareja B
+  winnerTeam String? // "A" o "B"
 
   scheduledFor DateTime?
   completedAt  DateTime?
 
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  pool         AmericanoPool @relation(fields: [poolId], references: [id], onDelete: Cascade)
-  tournament   Tournament    @relation("AmericanoMatchTournament", fields: [tournamentId], references: [id], onDelete: Cascade)
-  player1      Player        @relation("AmericanoPlayer1", fields: [player1Id], references: [id])
-  player2      Player        @relation("AmericanoPlayer2", fields: [player2Id], references: [id])
-  player3      Player        @relation("AmericanoPlayer3", fields: [player3Id], references: [id])
-  player4      Player        @relation("AmericanoPlayer4", fields: [player4Id], references: [id])
-  sets         AmericanoPoolMatchSet[]
+  pool       AmericanoPool           @relation(fields: [poolId], references: [id], onDelete: Cascade)
+  tournament Tournament              @relation("AmericanoMatchTournament", fields: [tournamentId], references: [id], onDelete: Cascade)
+  player1    Player                  @relation("AmericanoPlayer1", fields: [player1Id], references: [id])
+  player2    Player                  @relation("AmericanoPlayer2", fields: [player2Id], references: [id])
+  player3    Player                  @relation("AmericanoPlayer3", fields: [player3Id], references: [id])
+  player4    Player                  @relation("AmericanoPlayer4", fields: [player4Id], references: [id])
+  sets       AmericanoPoolMatchSet[]
 
   @@index([poolId])
   @@index([tournamentId, categoryId])
@@ -975,15 +1001,15 @@ model AmericanoPoolMatch {
 
 // Sets de cada partido
 model AmericanoPoolMatchSet {
-  id         String             @id @default(cuid())
+  id         String @id @default(cuid())
   matchId    String
   setNumber  Int
   teamAScore Int
   teamBScore Int
 
-  createdAt  DateTime           @default(now())
+  createdAt DateTime @default(now())
 
-  match      AmericanoPoolMatch @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  match AmericanoPoolMatch @relation(fields: [matchId], references: [id], onDelete: Cascade)
 
   @@unique([matchId, setNumber])
   @@map("americano_pool_match_sets")
@@ -991,25 +1017,25 @@ model AmericanoPoolMatchSet {
 
 // Ranking global del torneo (consolidado de todos los pools)
 model AmericanoGlobalRanking {
-  id              String   @id @default(cuid())
-  tournamentId    String
-  categoryId      String
-  playerId        String
+  id           String @id @default(cuid())
+  tournamentId String
+  categoryId   String
+  playerId     String
 
   // Stats totales
-  totalGamesWon   Int      @default(0)
-  totalGamesLost  Int      @default(0)
-  totalMatchesWon Int      @default(0)
-  totalPoints     Int      @default(0)
+  totalGamesWon   Int @default(0)
+  totalGamesLost  Int @default(0)
+  totalMatchesWon Int @default(0)
+  totalPoints     Int @default(0)
 
   // Ranking
-  position        Int?
+  position Int?
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  tournament      Tournament @relation("AmericanoRankingTournament", fields: [tournamentId], references: [id], onDelete: Cascade)
-  player          Player     @relation("AmericanoRanking", fields: [playerId], references: [id])
+  tournament Tournament @relation("AmericanoRankingTournament", fields: [tournamentId], references: [id], onDelete: Cascade)
+  player     Player     @relation("AmericanoRanking", fields: [playerId], references: [id])
 
   @@unique([tournamentId, categoryId, playerId])
   @@index([tournamentId, categoryId])
