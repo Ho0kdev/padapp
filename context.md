@@ -1,10 +1,10 @@
 # 📋 PadApp - Context para Desarrollo Rápido
 
-*Última actualización: Septiembre 30, 2024*
+*Última actualización: Octubre 5, 2025*
 
 ## 🎯 Resumen Ejecutivo del Proyecto
 
-**PadApp** es un sistema completo de gestión de torneos de pádel construido con tecnologías modernas, actualmente al **85% de funcionalidad core completa**.
+**PadApp** es un sistema completo de gestión de torneos de pádel construido con tecnologías modernas, actualmente al **90% de funcionalidad core completa**.
 
 ### Stack Tecnológico
 - **Frontend**: Next.js 15 + React 19 + TypeScript + Tailwind CSS
@@ -18,7 +18,7 @@
 
 ## 🚀 Estado Actual del Desarrollo
 
-### ✅ COMPLETADO Y FUNCIONAL (85%)
+### ✅ COMPLETADO Y FUNCIONAL (90%)
 
 #### 1. **Sistema de Autenticación y RBAC** [100%]
 - **4 Roles**: ADMIN, CLUB_ADMIN, PLAYER, REFEREE
@@ -94,11 +94,22 @@
 - Dashboard con estadísticas en tiempo real
 - Actividad reciente de torneos
 - Métricas de usuarios y clubes activos
-- Logs de auditoría (solo ADMIN)
+- **Sistema de Logs completo** (solo ADMIN) 🆕
+  - Logs de usuarios (creación, actualización, cambios de rol/estado)
+  - Logs de inscripciones (creación, cambios de estado, pagos)
+  - Logs de equipos (creación, actualización, confirmación)
+  - Logs de torneos, clubes, canchas, categorías y rankings
+  - Tabla con filtros por módulo, acción, fecha y búsqueda
+  - Visualización de campos modificados (antes/después)
+  - Tracking completo de IP, user agent y metadata
 
 #### 10. **Base de Datos** [100%]
-- 15+ tablas relacionadas optimizadas
-- Sistema completo de logs y auditoría
+- 18+ tablas relacionadas optimizadas 🆕
+- **Sistema completo de logs y auditoría expandido** 🆕
+  - UserLog (tracking completo de acciones sobre usuarios)
+  - RegistrationLog (tracking de inscripciones y pagos)
+  - TeamLog (tracking de equipos/parejas)
+  - TournamentLog, ClubLog, CourtLog, CategoryLog, RankingLog
 - Seeds realistas para desarrollo
 - Migraciones versionadas
 
@@ -149,6 +160,15 @@ padapp/
 │   │   │   ├── index.ts      # requireAuth, authorize, can
 │   │   │   ├── permissions.ts # Matriz de permisos
 │   │   │   └── audit.ts      # AuditLogger
+│   │   ├── services/         # Servicios de logs 🆕
+│   │   │   ├── user-log-service.ts         # Logs de usuarios
+│   │   │   ├── registration-log-service.ts # Logs de inscripciones
+│   │   │   ├── team-log-service.ts         # Logs de equipos
+│   │   │   ├── tournament-log-service.ts   # Logs de torneos
+│   │   │   ├── club-log-service.ts         # Logs de clubes
+│   │   │   ├── court-log-service.ts        # Logs de canchas
+│   │   │   ├── category-log-service.ts     # Logs de categorías
+│   │   │   └── rankings-log-service.ts     # Logs de rankings
 │   │   ├── validations/      # Esquemas Zod
 │   │   ├── auth.ts           # NextAuth config
 │   │   ├── prisma.ts         # Cliente Prisma

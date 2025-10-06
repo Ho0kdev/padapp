@@ -316,26 +316,73 @@ export async function PUT(
     const updateData: any = { ...tournamentData }
 
     // Manejar categorías si se proporcionan
-    if (categories) {
-      updateData.categories = {
-        deleteMany: {},
-        create: categories.map((cat: any) => ({
-          categoryId: cat.categoryId,
-          maxTeams: cat.maxTeams,
-          registrationFee: cat.registrationFee,
-          prizePool: cat.prizePool,
-        }))
+    if (categories && categories.length > 0) {
+      // Comparar con las categorías actuales
+      const currentCategories = existingTournament.categories.map((tc: any) => ({
+        categoryId: tc.categoryId,
+        maxTeams: tc.maxTeams || undefined,
+        registrationFee: tc.registrationFee || undefined,
+        prizePool: tc.prizePool || undefined,
+      }))
+
+      // Normalizar las categorías nuevas para comparación
+      const newCategories = categories.map((cat: any) => ({
+        categoryId: cat.categoryId,
+        maxTeams: cat.maxTeams || undefined,
+        registrationFee: cat.registrationFee || undefined,
+        prizePool: cat.prizePool || undefined,
+      }))
+
+      // Verificar si las categorías realmente cambiaron
+      const categoriesChanged = JSON.stringify(currentCategories.sort((a: any, b: any) => a.categoryId.localeCompare(b.categoryId))) !==
+                                JSON.stringify(newCategories.sort((a: any, b: any) => a.categoryId.localeCompare(b.categoryId)))
+
+      if (categoriesChanged) {
+        // Verificar si hay equipos asociados al torneo
+        const teamsCount = await prisma.team.count({
+          where: { tournamentId: id }
+        })
+
+        if (teamsCount > 0) {
+          // Si hay equipos, NO permitir cambiar las categorías
+          return NextResponse.json(
+            { error: "No se pueden modificar las categorías porque ya hay equipos formados en el torneo. Elimina los equipos primero." },
+            { status: 400 }
+          )
+        }
+
+        // Si no hay equipos, permitir cambiar categorías
+        updateData.categories = {
+          deleteMany: {},
+          create: categories.map((cat: any) => ({
+            categoryId: cat.categoryId,
+            maxTeams: cat.maxTeams,
+            registrationFee: cat.registrationFee,
+            prizePool: cat.prizePool,
+          }))
+        }
       }
+      // Si no cambiaron, no hacer nada (no incluir updateData.categories)
     }
 
     // Manejar clubes si se proporcionan
-    if (clubs) {
-      updateData.clubs = {
-        deleteMany: {},
-        create: clubs.map((clubId: string) => ({
-          clubId
-        }))
+    if (clubs && clubs.length > 0) {
+      // Comparar con los clubes actuales
+      const currentClubs = existingTournament.clubs.map((tc: any) => tc.clubId).sort()
+      const newClubs = [...clubs].sort()
+
+      // Verificar si los clubes realmente cambiaron
+      const clubsChanged = JSON.stringify(currentClubs) !== JSON.stringify(newClubs)
+
+      if (clubsChanged) {
+        updateData.clubs = {
+          deleteMany: {},
+          create: clubs.map((clubId: string) => ({
+            clubId
+          }))
+        }
       }
+      // Si no cambiaron, no hacer nada
     }
 
     const tournament = await prisma.tournament.update({
