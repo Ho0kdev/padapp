@@ -223,16 +223,20 @@ Sistema híbrido que combina una fase de grupos inicial (round robin por grupos)
 - Sistema de mejores terceros cuando es necesario
 - Clasificación siempre a potencia de 2 (4, 8, 16, 32)
 
-**Configuración Automática**:
+**Configuración Automática (Máximo 4 equipos por grupo)**:
 
-| Equipos | Grupos | Tamaño Grupos | Clasifican | Mejores 3ros | Fase Final |
+| Equipos | Grupos | Tamaño Grupos | Clasifican | Mejores 2dos | Fase Final |
 |---------|--------|---------------|------------|--------------|------------|
-| 8-11    | 2      | 4-5-6         | Top 2      | -            | Semifinales (4) |
-| 12-15   | 4      | 3-4           | Top 2      | -            | Cuartos (8) |
-| 16-19   | 4      | 4-5           | Top 4      | -            | Octavos (16) |
-| 20-23   | 4      | 5-6           | Top 3      | 4 mejores    | Octavos (16) |
-| 24-31   | 8      | 3-4           | Top 2      | -            | Octavos (16) |
-| 32+     | 8      | 4+            | Top 4      | -            | Dieciseisavos (32) |
+| 8       | 2      | 4-4           | Top 2      | -            | Semifinales (4) |
+| 9-11    | 3      | 3-4           | Top 1      | 1 mejor      | Semifinales (4) |
+| 12-16   | 4      | 3-4           | Top 2      | -            | Cuartos (8) |
+| 17-20   | 5      | 3-4           | Top 1      | 3 mejores    | Cuartos (8) |
+| 21-24   | 6      | 3-4           | Top 1      | 2 mejores    | Cuartos (8) |
+| 25-32   | 8      | 3-4           | Top 2      | -            | Octavos (16) |
+| 33-40   | 10     | 3-4           | Top 1      | 6 mejores    | Octavos (16) |
+| 41-48   | 12     | 3-4           | Top 1      | 4 mejores    | Octavos (16) |
+| 49-64   | 16     | 3-4           | Top 2      | -            | Dieciseisavos (32) |
+| 65+     | N/4    | 3-4           | Top 2      | -            | Variable |
 
 **Estructura**:
 
@@ -262,67 +266,55 @@ QF3: 1C vs 2D ─┐       │
 QF4: 1D vs 2C ─┘
 ```
 
-**Ejemplo Detallado: Torneo de 20 Equipos**
+**Ejemplo Detallado: Torneo de 20 Equipos (Nueva Configuración)**
 
 ```
 DISTRIBUCIÓN INICIAL (Serpiente)
 ═══════════════════════════════════════════
-Grupo A: Equipos 1, 8, 9, 16, 17
-Grupo B: Equipos 2, 7, 10, 15, 18
-Grupo C: Equipos 3, 6, 11, 14, 19
-Grupo D: Equipos 4, 5, 12, 13, 20
+Con 20 equipos → 5 grupos de 4 equipos máximo
+Grupo A: Equipos 1, 10, 11, 20 (4 equipos)
+Grupo B: Equipos 2, 9, 12, 19 (4 equipos)
+Grupo C: Equipos 3, 8, 13, 18 (4 equipos)
+Grupo D: Equipos 4, 7, 14, 17 (4 equipos)
+Grupo E: Equipos 5, 6, 15, 16 (4 equipos)
 
-Cada grupo: 5 equipos × 4 partidos = 10 partidos por grupo
-Total fase de grupos: 40 partidos
+Cada grupo: 4 equipos × 6 partidos = 6 partidos por grupo
+Total fase de grupos: 30 partidos
 
 TABLA GRUPO A (ejemplo)
 Pos  Equipo    PJ  PG  PP  Sets   Juegos  Pts
-1    Team 1    4   4   0   8-0    48-20   8  ← Clasificado
-2    Team 8    4   3   1   6-2    42-28   6  ← Clasificado
-3    Team 9    4   2   2   4-4    35-35   4  ← Candidato mejor 3ro
-4    Team 16   4   1   3   2-6    28-40   2
-5    Team 17   4   0   4   0-8    18-48   0
+1    Team 1    3   3   0   6-0    36-18   6  ← Clasificado
+2    Team 10   3   2   1   4-2    32-24   4  ← Candidato mejor 2do
+3    Team 11   3   1   2   2-4    26-30   2
+4    Team 20   3   0   3   0-6    16-38   0
 
-CLASIFICACIÓN A OCTAVOS
+CLASIFICACIÓN A CUARTOS
 ═══════════════════════════════════════════
-Clasificados directos: Top 2 de cada grupo = 8 equipos
-- 1A, 2A (Grupo A)
-- 1B, 2B (Grupo B)
-- 1C, 2C (Grupo C)
-- 1D, 2D (Grupo D)
+Sistema: Top 1 de cada grupo + 3 mejores segundos = 8 clasificados
 
-Mejores terceros: 4 mejores terceros = 4 equipos
+Clasificados directos (Primeros):
+- 1A, 1B, 1C, 1D, 1E = 5 equipos
+
+Mejores segundos: 3 mejores segundos
 - Ordenados por: Puntos → Diff Sets → Diff Juegos → Sets Ganados
-- Supongamos: 3A (4pts), 3B (4pts), 3C (3pts), 3D (3pts)
-- Clasifican: 3A, 3B, 3C, 3D
+- Supongamos: 2A (4pts, +2), 2B (4pts, +1), 2C (4pts, 0)
+- Clasifican: 2A, 2B, 2C
 
-Total clasificados: 12 equipos
-⚠️ PROBLEMA: 12 no es potencia de 2
+Total clasificados: 8 equipos ✅ (potencia de 2)
 
-SOLUCIÓN: Configuración cambia automáticamente
-Con 20 equipos → 4 grupos × Top 3 + 4 mejores 3ros = 16 equipos
-
-OCTAVOS DE FINAL (16 equipos con seeding estándar)
+CUARTOS DE FINAL (8 equipos con seeding estándar)
 ═══════════════════════════════════════════
-OF1: Seed 1  vs Seed 16 ─┐
-OF2: Seed 8  vs Seed 9  ─┼─ QF1 ─┐
-OF3: Seed 4  vs Seed 13 ─┤       │
-OF4: Seed 5  vs Seed 12 ─┘       ├─ SF1 ─┐
-                                 │       │
-OF5: Seed 2  vs Seed 15 ─┐       │       │
-OF6: Seed 7  vs Seed 10 ─┼─ QF2 ─┘       ├─ FINAL
-OF7: Seed 3  vs Seed 14 ─┤               │
-OF8: Seed 6  vs Seed 11 ─┘               │
-                                         │
-                         (continúa...)   │
-                                         │
-                                    (CAMPEÓN)
+QF1: Seed 1 (1A) vs Seed 8 (2C) ─┐
+                                  ├─ SF1 ─┐
+QF2: Seed 4 (1D) vs Seed 5 (1E) ─┘       │
+                                         ├─ FINAL
+QF3: Seed 2 (1B) vs Seed 7 (2B) ─┐       │
+                                  ├─ SF2 ─┘
+QF4: Seed 3 (1C) vs Seed 6 (2A) ─┘
 
 Seeding:
-- Seeds 1-4: Primeros de grupo
-- Seeds 5-8: Segundos de grupo
-- Seeds 9-12: Terceros de grupo
-- Seeds 13-16: Mejores terceros
+- Seeds 1-5: Primeros de cada grupo (ordenados por criterios)
+- Seeds 6-8: Mejores segundos (ordenados por criterios)
 ```
 
 **Número de Partidos**:
@@ -334,7 +326,7 @@ Fase de Grupos (N equipos en grupos de G):
 Fase Eliminatoria (C clasificados):
 - `C - 1` partidos
 
-**Ejemplos**:
+**Ejemplos (Máximo 4 equipos por grupo)**:
 - 8 equipos (2 grupos de 4):
   - Fase grupos: 6 + 6 = 12 partidos
   - Semifinales: 2 partidos
@@ -348,13 +340,12 @@ Fase Eliminatoria (C clasificados):
   - Final: 1 partido
   - **Total: 31 partidos**
 
-- 20 equipos (4 grupos de 5):
-  - Fase grupos: 10 × 4 = 40 partidos
-  - Octavos: 8 partidos
-  - Cuartos: 4 partidos
+- 20 equipos (5 grupos de 4):
+  - Fase grupos: 6 × 5 = 30 partidos
+  - Cuartos: 4 partidos (top 1 + 3 mejores 2dos)
   - Semifinales: 2 partidos
   - Final: 1 partido
-  - **Total: 55 partidos**
+  - **Total: 37 partidos**
 
 **Ventajas**:
 - Balance perfecto entre justicia y eficiencia
@@ -374,31 +365,32 @@ Fase Eliminatoria (C clasificados):
 - Cuando quieres balance justicia/emoción
 - Formato más común en pádel profesional
 
-**Sistema de Mejores Terceros**:
+**Sistema de Mejores Segundos** (Actualizado):
 
-Cuando se necesitan más clasificados, se usa el sistema de mejores terceros:
+Cuando se necesitan más clasificados además de los primeros, se usa el sistema de mejores segundos:
 
 ```
-Criterios de desempate entre terceros de diferentes grupos:
+Criterios de desempate entre segundos/terceros de diferentes grupos:
 1. Puntos totales
 2. Diferencia de sets
 3. Diferencia de juegos
 4. Sets ganados totales
 
-Ejemplo:
-Grupo A - 3ro: 4pts, +2 sets, +8 juegos
-Grupo B - 3ro: 4pts, +2 sets, +5 juegos
-Grupo C - 3ro: 4pts, +1 sets, +10 juegos
-Grupo D - 3ro: 3pts, +3 sets, +12 juegos
+Ejemplo con 5 grupos (clasifican Top 1 + 3 mejores 2dos):
+Grupo A - 2do: 4pts, +2 sets, +8 juegos
+Grupo B - 2do: 4pts, +2 sets, +5 juegos
+Grupo C - 2do: 4pts, +1 sets, +10 juegos
+Grupo D - 2do: 3pts, +3 sets, +12 juegos
+Grupo E - 2do: 3pts, +2 sets, +8 juegos
 
-Ranking de terceros:
-1. Grupo A (4pts, +2, +8)
-2. Grupo B (4pts, +2, +5)
-3. Grupo C (4pts, +1, +10)
-4. Grupo D (3pts, +3, +12)
+Ranking de segundos:
+1. Grupo A (4pts, +2, +8) ✅ Clasificado
+2. Grupo B (4pts, +2, +5) ✅ Clasificado
+3. Grupo C (4pts, +1, +10) ✅ Clasificado
+4. Grupo D (3pts, +3, +12) ❌ Eliminado
+5. Grupo E (3pts, +2, +8) ❌ Eliminado
 
-Si clasifican 4 mejores terceros → Todos clasifican
-Si clasifican 2 mejores terceros → Solo Grupos A y B
+Total clasificados: 5 primeros + 3 mejores segundos = 8 equipos
 ```
 
 **Distribución Serpiente**:
@@ -982,34 +974,38 @@ await BracketService.progressWinner(
 
 ## 📈 Tabla de Configuraciones Automáticas
 
-### Fase de Grupos + Eliminación
+### Fase de Grupos + Eliminación (Máximo 4 equipos por grupo)
 
-| Equipos | Grupos | Config | Top/Grupo | 3ros | Total Clasif. | Primera Ronda |
-|---------|--------|--------|-----------|------|---------------|---------------|
-| 8       | 2      | 4-4    | 2         | -    | 4             | Semifinales   |
-| 9       | 2      | 5-4    | 2         | -    | 4             | Semifinales   |
-| 10      | 2      | 5-5    | 2         | -    | 4             | Semifinales   |
-| 11      | 2      | 6-5    | 2         | -    | 4             | Semifinales   |
-| 12      | 4      | 3-3-3-3| 2         | -    | 8             | Cuartos       |
-| 13      | 4      | 4-3-3-3| 2         | -    | 8             | Cuartos       |
-| 14      | 4      | 4-4-3-3| 2         | -    | 8             | Cuartos       |
-| 15      | 4      | 4-4-4-3| 2         | -    | 8             | Cuartos       |
-| 16      | 4      | 4-4-4-4| 4         | -    | 16            | Octavos       |
-| 17      | 4      | 5-4-4-4| 4         | -    | 16            | Octavos       |
-| 18      | 4      | 5-5-4-4| 4         | -    | 16            | Octavos       |
-| 19      | 4      | 5-5-5-4| 4         | -    | 16            | Octavos       |
-| 20      | 4      | 5-5-5-5| 3         | 4    | 16            | Octavos       |
-| 21      | 4      | 6-5-5-5| 3         | 4    | 16            | Octavos       |
-| 22      | 4      | 6-6-5-5| 3         | 4    | 16            | Octavos       |
-| 23      | 4      | 6-6-6-5| 3         | 4    | 16            | Octavos       |
-| 24      | 8      | 3×8    | 2         | -    | 16            | Octavos       |
-| 28      | 8      | 4-4-4-4-3-3-3-3 | 2  | -    | 16            | Octavos       |
-| 32      | 8      | 4×8    | 4         | -    | 32            | Dieciseisavos |
+| Equipos | Grupos | Config | Top/Grupo | Mejores 2dos | Total Clasif. | Primera Ronda |
+|---------|--------|--------|-----------|--------------|---------------|---------------|
+| 8       | 2      | 4-4    | 2         | -            | 4             | Semifinales   |
+| 9       | 3      | 3-3-3  | 1         | 1            | 4             | Semifinales   |
+| 10      | 3      | 4-3-3  | 1         | 1            | 4             | Semifinales   |
+| 11      | 3      | 4-4-3  | 1         | 1            | 4             | Semifinales   |
+| 12      | 4      | 3-3-3-3| 2         | -            | 8             | Cuartos       |
+| 13      | 4      | 4-3-3-3| 2         | -            | 8             | Cuartos       |
+| 14      | 4      | 4-4-3-3| 2         | -            | 8             | Cuartos       |
+| 15      | 4      | 4-4-4-3| 2         | -            | 8             | Cuartos       |
+| 16      | 4      | 4-4-4-4| 2         | -            | 8             | Cuartos       |
+| 17      | 5      | 4-4-3-3-3| 1       | 3            | 8             | Cuartos       |
+| 18      | 5      | 4-4-4-3-3| 1       | 3            | 8             | Cuartos       |
+| 19      | 5      | 4-4-4-4-3| 1       | 3            | 8             | Cuartos       |
+| 20      | 5      | 4-4-4-4-4| 1       | 3            | 8             | Cuartos       |
+| 21      | 6      | 4-4-3-3-3-3| 1     | 2            | 8             | Cuartos       |
+| 22      | 6      | 4-4-4-3-3-3| 1     | 2            | 8             | Cuartos       |
+| 23      | 6      | 4-4-4-4-3-3| 1     | 2            | 8             | Cuartos       |
+| 24      | 6      | 4-4-4-4-4-4| 1     | 2            | 8             | Cuartos       |
+| 25      | 8      | 4-4-3-3-3-3-3-3 | 2 | -          | 16            | Octavos       |
+| 28      | 8      | 4-4-4-4-3-3-3-3 | 2 | -          | 16            | Octavos       |
+| 32      | 8      | 4-4-4-4-4-4-4-4 | 2 | -          | 16            | Octavos       |
+| 40      | 10     | 4×10   | 1         | 6            | 16            | Octavos       |
+| 48      | 12     | 4×12   | 1         | 4            | 16            | Octavos       |
+| 64      | 16     | 4×16   | 2         | -            | 32            | Dieciseisavos |
 
 **Leyenda**:
-- **Config**: Tamaño de cada grupo
+- **Config**: Tamaño de cada grupo (máximo 4 equipos)
 - **Top/Grupo**: Cuántos clasifican directamente por grupo
-- **3ros**: Cuántos mejores terceros clasifican
+- **Mejores 2dos**: Cuántos mejores segundos clasifican (si aplica)
 - **Total Clasif.**: Total de equipos que pasan a playoffs (siempre potencia de 2)
 
 ---
@@ -1020,18 +1016,19 @@ await BracketService.progressWinner(
 
 **Formato Recomendado**: Fase de Grupos + Eliminación
 
-**Configuración Automática**:
+**Configuración Automática (Máximo 4 por grupo)**:
 - 4 grupos: A(4), B(4), C(3), D(3)
 - Top 2 por grupo = 8 clasificados
 - Cuartos de Final → Semifinales → Final
 
 **Timeline**:
-- **Sábado AM**: Jornada 1 de grupos (14 partidos)
-- **Sábado PM**: Jornada 2-3 de grupos (14 partidos)
+- **Sábado AM**: Fase de grupos - Jornada 1 (14 partidos)
+- **Sábado PM**: Fase de grupos - Jornada 2-3 (10 partidos)
 - **Domingo AM**: Cuartos de Final (4 partidos)
 - **Domingo PM**: Semifinales (2) + Final (1)
 
 **Total**: 31 partidos en 2 días
+**Grupos**: Ningún grupo supera los 4 equipos ✅
 
 ---
 
@@ -1071,18 +1068,19 @@ await BracketService.progressWinner(
 
 **Formato Recomendado**: Fase de Grupos + Eliminación
 
-**Configuración Automática**:
-- 8 grupos de 3 equipos
-- Top 2 por grupo = 16 clasificados
-- Octavos → Cuartos → Semifinales → Final
+**Configuración Automática (Máximo 4 por grupo)**:
+- 6 grupos de 4 equipos cada uno
+- Clasifican: Top 1 de cada grupo (6) + 2 mejores segundos = 8 clasificados
+- Cuartos → Semifinales → Final
 
 **Timeline**:
-- **Viernes**: Fase de grupos (24 partidos)
-- **Sábado AM**: Octavos de Final (8 partidos)
-- **Sábado PM**: Cuartos de Final (4 partidos)
-- **Domingo**: Semifinales (2) + Final (1)
+- **Viernes**: Fase de grupos completa (36 partidos, 6 partidos por grupo)
+- **Sábado AM**: Cuartos de Final (4 partidos)
+- **Sábado PM**: Semifinales (2 partidos)
+- **Domingo**: Final (1 partido)
 
-**Total**: 39 partidos en 3 días
+**Total**: 43 partidos en 3 días
+**Grupos**: Máximo 4 equipos por grupo ✅
 
 ---
 

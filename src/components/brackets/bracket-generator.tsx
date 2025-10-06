@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -19,6 +20,7 @@ interface BracketGeneratorProps {
   categoryId: string
   categoryName: string
   teamsCount: number
+  tournamentType: string
   onBracketGenerated?: () => void
 }
 
@@ -27,11 +29,144 @@ export function BracketGenerator({
   categoryId,
   categoryName,
   teamsCount,
+  tournamentType,
   onBracketGenerated
 }: BracketGeneratorProps) {
   const [isGenerating, setIsGenerating] = useState(false)
   const [validationErrors, setValidationErrors] = useState<string[]>([])
   const { toast } = useToast()
+  const router = useRouter()
+
+  // Calcular estructura del bracket según tipo y cantidad de equipos
+  const getBracketStructure = () => {
+    switch (tournamentType) {
+      case 'SINGLE_ELIMINATION': {
+        const rounds = Math.ceil(Math.log2(teamsCount))
+        const bracketSize = Math.pow(2, rounds)
+        const byes = bracketSize - teamsCount
+        return {
+          type: 'Eliminación Simple',
+          description: `${rounds} rondas hasta la final`,
+          details: byes > 0
+            ? `${teamsCount} equipos (${byes} bye${byes > 1 ? 's' : ''} en primera ronda)`
+            : `${teamsCount} equipos compiten desde la primera ronda`
+        }
+      }
+
+      case 'DOUBLE_ELIMINATION': {
+        const upperRounds = Math.ceil(Math.log2(teamsCount))
+        const lowerRounds = (upperRounds * 2) - 1
+        return {
+          type: 'Doble Eliminación',
+          description: 'Upper bracket + Lower bracket + Gran Final',
+          details: `${upperRounds + lowerRounds + 1} rondas totales. Los perdedores tienen segunda oportunidad`
+        }
+      }
+
+      case 'ROUND_ROBIN': {
+        const totalMatches = (teamsCount * (teamsCount - 1)) / 2
+        return {
+          type: 'Round Robin (Todos contra Todos)',
+          description: `${totalMatches} partidos en total`,
+          details: `Cada equipo juega ${teamsCount - 1} partidos`
+        }
+      }
+
+      case 'GROUP_STAGE_ELIMINATION': {
+        // Usar la misma lógica que calculateOptimalGroupConfiguration (máximo 4 por grupo)
+        let numGroups = 2
+        let qualified = 4
+        let qualifiedPerGroup = 2
+        let bestThirdPlace = 0
+
+        if (teamsCount === 8) {
+          numGroups = 2
+          qualified = 4
+          qualifiedPerGroup = 2
+        } else if (teamsCount >= 9 && teamsCount <= 11) {
+          numGroups = 3
+          qualified = 4
+          qualifiedPerGroup = 1
+          bestThirdPlace = 1
+        } else if (teamsCount >= 12 && teamsCount <= 16) {
+          numGroups = 4
+          qualified = 8
+          qualifiedPerGroup = 2
+        } else if (teamsCount >= 17 && teamsCount <= 20) {
+          numGroups = 5
+          qualified = 8
+          qualifiedPerGroup = 1
+          bestThirdPlace = 3
+        } else if (teamsCount >= 21 && teamsCount <= 24) {
+          numGroups = 6
+          qualified = 8
+          qualifiedPerGroup = 1
+          bestThirdPlace = 2
+        } else if (teamsCount >= 25 && teamsCount <= 32) {
+          numGroups = 8
+          qualified = 16
+          qualifiedPerGroup = 2
+        } else if (teamsCount >= 33 && teamsCount <= 40) {
+          numGroups = 10
+          qualified = 16
+          qualifiedPerGroup = 1
+          bestThirdPlace = 6
+        } else if (teamsCount >= 41 && teamsCount <= 48) {
+          numGroups = 12
+          qualified = 16
+          qualifiedPerGroup = 1
+          bestThirdPlace = 4
+        } else if (teamsCount >= 49 && teamsCount <= 64) {
+          numGroups = 16
+          qualified = 32
+          qualifiedPerGroup = 2
+        } else if (teamsCount > 64) {
+          numGroups = Math.ceil(teamsCount / 4)
+          qualified = Math.pow(2, Math.floor(Math.log2(numGroups * 2)))
+          qualifiedPerGroup = 2
+        }
+
+        const eliminationRounds = Math.ceil(Math.log2(qualified))
+
+        // Construir descripción detallada
+        let classificationDesc = ''
+        if (qualifiedPerGroup === 1 && bestThirdPlace > 0) {
+          classificationDesc = `Top 1 de cada grupo + ${bestThirdPlace} mejor${bestThirdPlace > 1 ? 'es' : ''} segundo${bestThirdPlace > 1 ? 's' : ''}`
+        } else if (qualifiedPerGroup === 2) {
+          classificationDesc = 'Top 2 de cada grupo'
+        } else if (qualifiedPerGroup === 1) {
+          classificationDesc = 'Primero de cada grupo'
+        } else {
+          classificationDesc = `Top ${qualifiedPerGroup} de cada grupo`
+        }
+
+        return {
+          type: 'Fase de Grupos + Eliminación',
+          description: `${numGroups} grupos → ${qualified} clasificados → ${eliminationRounds} rondas eliminatorias`,
+          details: `${classificationDesc}. Máximo 4 equipos por grupo`
+        }
+      }
+
+      case 'AMERICANO': {
+        const numRounds = Math.min(teamsCount - 1, 10)
+        const totalMatches = (teamsCount / 2) * numRounds
+        return {
+          type: 'Formato Americano',
+          description: `${numRounds} rondas con rotación de equipos`,
+          details: `${totalMatches} partidos totales. Cada equipo juega contra diferentes oponentes`
+        }
+      }
+
+      default:
+        return {
+          type: 'Formato desconocido',
+          description: '',
+          details: ''
+        }
+    }
+  }
+
+  const bracketInfo = getBracketStructure()
 
   const handleGenerate = async () => {
     setIsGenerating(true)
@@ -70,10 +205,15 @@ export function BracketGenerator({
       // Limpiar errores previos
       setValidationErrors([])
 
-      // Llamar callback si existe
+      // Llamar callback para refrescar componentes
       if (onBracketGenerated) {
         onBracketGenerated()
       }
+
+      // Refrescar la página después de un delay para que se vea el toast
+      setTimeout(() => {
+        router.refresh()
+      }, 500)
 
     } catch (error) {
       toast({
@@ -114,6 +254,28 @@ export function BracketGenerator({
             </div>
           </AlertDescription>
         </Alert>
+
+        {/* Estructura del bracket */}
+        {teamsCount >= 2 && (
+          <Alert className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+            <Trophy className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+            <AlertDescription>
+              <div className="space-y-2">
+                <div>
+                  <span className="font-semibold text-blue-900 dark:text-blue-100">
+                    {bracketInfo.type}
+                  </span>
+                </div>
+                <div className="text-sm text-blue-800 dark:text-blue-200">
+                  {bracketInfo.description}
+                </div>
+                <div className="text-xs text-blue-700 dark:text-blue-300">
+                  {bracketInfo.details}
+                </div>
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* Errores de validación */}
         {validationErrors.length > 0 && (

@@ -1,60 +1,61 @@
 import { NextRequest, NextResponse } from "next/server"
-import { requireAuth, handleAuthError } from "@/lib/rbac"
+import { requireAuth } from "@/lib/rbac"
 import { prisma } from "@/lib/prisma"
-import { BracketService } from "@/lib/services/bracket-service"
+import { PhaseType } from "@prisma/client"
 
-/**
- * GET /api/tournaments/[id]/groups?categoryId=xxx
- * Obtiene todos los grupos de un torneo/categoría con sus tablas de posiciones
- */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await requireAuth()
-    const { id: tournamentId } = await params
-
+    const { id } = await params
     const { searchParams } = new URL(request.url)
     const categoryId = searchParams.get("categoryId")
 
     if (!categoryId) {
-      return NextResponse.json({
-        error: "El parámetro categoryId es requerido"
-      }, { status: 400 })
+      return NextResponse.json(
+        { error: "categoryId is required" },
+        { status: 400 }
+      )
     }
 
-    // Obtener todas las zonas/grupos
     const zones = await prisma.tournamentZone.findMany({
       where: {
-        tournamentId,
+        tournamentId: id,
         categoryId,
-        phaseType: "GROUP_STAGE"
+        phaseType: PhaseType.GROUP_STAGE
       },
       include: {
         teams: {
-          orderBy: {
-            position: 'asc'
-          },
           include: {
             team: {
               include: {
                 registration1: {
                   select: {
                     player: {
-                      select: { firstName: true, lastName: true }
+                      select: {
+                        firstName: true,
+                        lastName: true
+                      }
                     }
                   }
                 },
                 registration2: {
                   select: {
                     player: {
-                      select: { firstName: true, lastName: true }
+                      select: {
+                        firstName: true,
+                        lastName: true
+                      }
                     }
                   }
                 }
               }
             }
+          },
+          orderBy: {
+            position: 'asc'
           }
         }
       },
@@ -63,35 +64,16 @@ export async function GET(
       }
     })
 
-    // Calcular tabla de cada grupo
-    const groupsWithStandings = await Promise.all(
-      zones.map(async (zone) => {
-        try {
-          const standings = await BracketService.calculateGroupStandings(zone.id)
-          return {
-            ...zone,
-            standings
-          }
-        } catch (error) {
-          return {
-            ...zone,
-            standings: []
-          }
-        }
-      })
-    )
-
     return NextResponse.json({
-      groups: groupsWithStandings
-    }, { status: 200 })
-
+      zones,
+      totalZones: zones.length,
+      totalTeams: zones.reduce((acc, zone) => acc + zone.teams.length, 0)
+    })
   } catch (error) {
-    if (error instanceof Error) {
-      return NextResponse.json({
-        error: error.message
-      }, { status: 400 })
-    }
-
-    return handleAuthError(error)
+    console.error("Error fetching groups:", error)
+    return NextResponse.json(
+      { error: "Error al obtener los grupos" },
+      { status: 500 }
+    )
   }
 }

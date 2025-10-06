@@ -10,7 +10,7 @@ export default function MatchesPage() {
       <div className="space-y-6">
         <MatchesHeader />
 
-        <Suspense fallback={<DataTableSkeleton columns={7} rows={5} showHeader={false} />}>
+        <Suspense fallback={<DataTableSkeleton columns={8} rows={5} showHeader={false} />}>
           <MatchesTable />
         </Suspense>
       </div>

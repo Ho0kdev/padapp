@@ -17,6 +17,7 @@ interface BracketMatch {
   team2Id?: string
   team1FromMatchId?: string
   team2FromMatchId?: string
+  zoneId?: string
 }
 
 /**
@@ -36,12 +37,17 @@ export class BracketService {
           where: { categoryId },
           include: {
             teams: {
-              where: {
-                registrationStatus: { in: ['CONFIRMED', 'PAID'] }
+              include: {
+                registration1: {
+                  select: { registrationStatus: true }
+                },
+                registration2: {
+                  select: { registrationStatus: true }
+                }
               },
               orderBy: [
                 { seed: 'asc' },
-                { registeredAt: 'asc' }
+                { createdAt: 'asc' }
               ]
             }
           }
@@ -58,7 +64,12 @@ export class BracketService {
       throw new Error("Categoría no encontrada en el torneo")
     }
 
-    const teams = tournamentCategory.teams
+    // Filtrar equipos confirmados con ambas inscripciones confirmadas o pagadas
+    const teams = tournamentCategory.teams.filter(team =>
+      team.status === 'CONFIRMED' &&
+      (team.registration1.registrationStatus === 'CONFIRMED' || team.registration1.registrationStatus === 'PAID') &&
+      (team.registration2.registrationStatus === 'CONFIRMED' || team.registration2.registrationStatus === 'PAID')
+    )
     if (teams.length < 2) {
       throw new Error("Se requieren al menos 2 equipos para generar el bracket")
     }
@@ -69,13 +80,26 @@ export class BracketService {
       throw new Error("Todos los equipos deben tener seed asignado o ninguno debe tenerlo")
     }
 
-    // Limpiar matches existentes de esta categoría
+    // Limpiar bracket existente (matches y grupos/zonas) de esta categoría
+    console.log(`🗑️ Limpiando bracket existente para categoría ${categoryId}`)
+
+    // Eliminar partidos existentes
     await prisma.match.deleteMany({
       where: {
         tournamentId,
         categoryId
       }
     })
+
+    // Eliminar zonas/grupos existentes (esto también elimina las relaciones ZoneTeam automáticamente por cascade)
+    await prisma.tournamentZone.deleteMany({
+      where: {
+        tournamentId,
+        categoryId
+      }
+    })
+
+    console.log(`✅ Bracket anterior eliminado`)
 
     // Generar bracket según el tipo de torneo
     switch (tournament.type) {
@@ -357,6 +381,7 @@ export class BracketService {
   /**
    * Calcula la configuración óptima de grupos según el número de equipos
    * Retorna una configuración que resulte en un número de clasificados que sea potencia de 2
+   * REGLA: Máximo 4 equipos por grupo
    */
   private static calculateOptimalGroupConfiguration(numTeams: number): {
     numGroups: number
@@ -366,105 +391,165 @@ export class BracketService {
     totalClassified: number
   } {
     // Estrategias según número de equipos
-    // Objetivo: que el número de clasificados sea potencia de 2 (8, 16, 32, etc.)
+    // Objetivo: que el número de clasificados sea potencia de 2 (4, 8, 16, 32, etc.)
+    // RESTRICCIÓN: Máximo 4 equipos por grupo
 
-    // 8-11 equipos → 2 grupos → 4 clasificados (top 2 por grupo)
-    if (numTeams >= 8 && numTeams <= 11) {
-      const group1Size = Math.ceil(numTeams / 2)
-      const group2Size = numTeams - group1Size
+    // 8 equipos → 2 grupos de 4 → 4 clasificados (top 2 por grupo)
+    if (numTeams === 8) {
       return {
         numGroups: 2,
-        groupSizes: [group1Size, group2Size],
+        groupSizes: [4, 4],
         qualifiedPerGroup: 2,
         bestThirdPlace: 0,
         totalClassified: 4
       }
     }
 
-    // 12-15 equipos → 4 grupos → 8 clasificados (top 2 por grupo)
-    if (numTeams >= 12 && numTeams <= 15) {
-      const baseSize = Math.floor(numTeams / 4)
-      const remainder = numTeams % 4
-      const groupSizes = Array(4).fill(baseSize)
+    // 9-11 equipos → 3 grupos de 3-4 → 4 clasificados (top 1 + mejor 2do)
+    if (numTeams >= 9 && numTeams <= 11) {
+      const numGroups = 3
+      const baseSize = Math.floor(numTeams / numGroups)
+      const remainder = numTeams % numGroups
+      const groupSizes = Array(numGroups).fill(baseSize)
       for (let i = 0; i < remainder; i++) {
         groupSizes[i]++
       }
       return {
-        numGroups: 4,
-        groupSizes,
+        numGroups,
+        groupSizes, // [4,4,3] o [4,3,3] o [3,3,3]
+        qualifiedPerGroup: 1,
+        bestThirdPlace: 1, // 3 primeros + 1 mejor segundo = 4
+        totalClassified: 4
+      }
+    }
+
+    // 12-16 equipos → 4 grupos de 3-4 → 8 clasificados (top 2 por grupo)
+    if (numTeams >= 12 && numTeams <= 16) {
+      const numGroups = 4
+      const baseSize = Math.floor(numTeams / numGroups)
+      const remainder = numTeams % numGroups
+      const groupSizes = Array(numGroups).fill(baseSize)
+      for (let i = 0; i < remainder; i++) {
+        groupSizes[i]++
+      }
+      return {
+        numGroups,
+        groupSizes, // [4,4,4,4] o [4,4,3,3] o [4,3,3,3] o [3,3,3,3]
         qualifiedPerGroup: 2,
         bestThirdPlace: 0,
         totalClassified: 8
       }
     }
 
-    // 16-23 equipos → 4 grupos → 8 o 16 clasificados
-    if (numTeams >= 16 && numTeams <= 23) {
-      const baseSize = Math.floor(numTeams / 4)
-      const remainder = numTeams % 4
-      const groupSizes = Array(4).fill(baseSize)
+    // 17-20 equipos → 5 grupos de 3-4 → 8 clasificados (top 1 + 3 mejores 2dos)
+    if (numTeams >= 17 && numTeams <= 20) {
+      const numGroups = 5
+      const baseSize = Math.floor(numTeams / numGroups)
+      const remainder = numTeams % numGroups
+      const groupSizes = Array(numGroups).fill(baseSize)
       for (let i = 0; i < remainder; i++) {
         groupSizes[i]++
       }
-
-      // Si hay 16+ equipos, podemos clasificar 16 (top 4 por grupo)
-      if (numTeams >= 16 && numTeams <= 19) {
-        return {
-          numGroups: 4,
-          groupSizes,
-          qualifiedPerGroup: 4,
-          bestThirdPlace: 0,
-          totalClassified: 16
-        }
-      }
-
-      // Si hay 20-23, clasificar top 3 + 4 mejores terceros = 16
       return {
-        numGroups: 4,
-        groupSizes,
-        qualifiedPerGroup: 3,
-        bestThirdPlace: 4,
-        totalClassified: 16
+        numGroups,
+        groupSizes, // [4,4,4,4,4] o [4,4,4,3,3] etc
+        qualifiedPerGroup: 1,
+        bestThirdPlace: 3, // 5 primeros + 3 mejores segundos = 8
+        totalClassified: 8
       }
     }
 
-    // 24-31 equipos → 8 grupos → 16 clasificados (top 2 por grupo)
-    if (numTeams >= 24 && numTeams <= 31) {
-      const baseSize = Math.floor(numTeams / 8)
-      const remainder = numTeams % 8
-      const groupSizes = Array(8).fill(baseSize)
+    // 21-24 equipos → 6 grupos de 3-4 → 8 clasificados (top 1 + 2 mejores 2dos)
+    if (numTeams >= 21 && numTeams <= 24) {
+      const numGroups = 6
+      const baseSize = Math.floor(numTeams / numGroups)
+      const remainder = numTeams % numGroups
+      const groupSizes = Array(numGroups).fill(baseSize)
       for (let i = 0; i < remainder; i++) {
         groupSizes[i]++
       }
       return {
-        numGroups: 8,
-        groupSizes,
+        numGroups,
+        groupSizes, // [4,4,4,4,4,4] o [4,4,4,4,3,3] etc
+        qualifiedPerGroup: 1,
+        bestThirdPlace: 2, // 6 primeros + 2 mejores segundos = 8
+        totalClassified: 8
+      }
+    }
+
+    // 25-32 equipos → 8 grupos de 3-4 → 16 clasificados (top 2 por grupo)
+    if (numTeams >= 25 && numTeams <= 32) {
+      const numGroups = 8
+      const baseSize = Math.floor(numTeams / numGroups)
+      const remainder = numTeams % numGroups
+      const groupSizes = Array(numGroups).fill(baseSize)
+      for (let i = 0; i < remainder; i++) {
+        groupSizes[i]++
+      }
+      return {
+        numGroups,
+        groupSizes, // [4,4,4,4,4,4,4,4] o [4,4,4,4,3,3,3,3] etc
         qualifiedPerGroup: 2,
         bestThirdPlace: 0,
         totalClassified: 16
       }
     }
 
-    // 32+ equipos → 8 grupos → 16 o 32 clasificados
-    if (numTeams >= 32) {
-      const baseSize = Math.floor(numTeams / 8)
-      const remainder = numTeams % 8
-      const groupSizes = Array(8).fill(baseSize)
+    // 33-40 equipos → 10 grupos de 3-4 → 16 clasificados (top 1 + 6 mejores 2dos)
+    if (numTeams >= 33 && numTeams <= 40) {
+      const numGroups = 10
+      const baseSize = Math.floor(numTeams / numGroups)
+      const remainder = numTeams % numGroups
+      const groupSizes = Array(numGroups).fill(baseSize)
       for (let i = 0; i < remainder; i++) {
         groupSizes[i]++
       }
-
-      // Si hay 32+ equipos, clasificar top 4 por grupo = 32
       return {
-        numGroups: 8,
+        numGroups,
+        groupSizes, // [4,4,4,4,4,4,4,4,4,4] etc
+        qualifiedPerGroup: 1,
+        bestThirdPlace: 6, // 10 primeros + 6 mejores segundos = 16
+        totalClassified: 16
+      }
+    }
+
+    // 41-48 equipos → 12 grupos de 3-4 → 16 clasificados (top 1 + 4 mejores 2dos)
+    if (numTeams >= 41 && numTeams <= 48) {
+      const numGroups = 12
+      const baseSize = Math.floor(numTeams / numGroups)
+      const remainder = numTeams % numGroups
+      const groupSizes = Array(numGroups).fill(baseSize)
+      for (let i = 0; i < remainder; i++) {
+        groupSizes[i]++
+      }
+      return {
+        numGroups,
+        groupSizes, // [4,4,4,4,4,4,4,4,4,4,4,4] etc
+        qualifiedPerGroup: 1,
+        bestThirdPlace: 4, // 12 primeros + 4 mejores segundos = 16
+        totalClassified: 16
+      }
+    }
+
+    // 49-64 equipos → 16 grupos de 3-4 → 32 clasificados (top 2 por grupo)
+    if (numTeams >= 49 && numTeams <= 64) {
+      const numGroups = 16
+      const baseSize = Math.floor(numTeams / numGroups)
+      const remainder = numTeams % numGroups
+      const groupSizes = Array(numGroups).fill(baseSize)
+      for (let i = 0; i < remainder; i++) {
+        groupSizes[i]++
+      }
+      return {
+        numGroups,
         groupSizes,
-        qualifiedPerGroup: 4,
+        qualifiedPerGroup: 2,
         bestThirdPlace: 0,
         totalClassified: 32
       }
     }
 
-    // Fallback: default configuration
+    // Fallback para más de 64 equipos: grupos de 4 máximo
     const numGroups = Math.ceil(numTeams / 4)
     const baseSize = Math.floor(numTeams / numGroups)
     const remainder = numTeams % numGroups
@@ -473,12 +558,15 @@ export class BracketService {
       groupSizes[i]++
     }
 
+    // Clasifican potencia de 2 más cercana
+    const totalClassified = Math.pow(2, Math.floor(Math.log2(numGroups * 2)))
+
     return {
       numGroups,
       groupSizes,
       qualifiedPerGroup: 2,
       bestThirdPlace: 0,
-      totalClassified: numGroups * 2
+      totalClassified
     }
   }
 
@@ -607,7 +695,8 @@ export class BracketService {
             matchNumber: matchNumber++,
             phaseType: PhaseType.GROUP_STAGE,
             team1Id: groupTeams[i].id,
-            team2Id: groupTeams[j].id
+            team2Id: groupTeams[j].id,
+            zoneId: zone.id // Asignar el grupo/zona al partido
           })
         }
       }
@@ -622,21 +711,8 @@ export class BracketService {
 
     console.log(`📊 Fase eliminatoria: ${numClassified} clasificados, ${eliminationRounds} rondas`)
 
-    // Guardar configuración de grupos en metadata del torneo para clasificación posterior
-    await prisma.tournament.update({
-      where: { id: tournamentId },
-      data: {
-        metadata: {
-          [`groupConfig_${categoryId}`]: {
-            numGroups: groupConfig.numGroups,
-            groupSizes: groupConfig.groupSizes,
-            qualifiedPerGroup: groupConfig.qualifiedPerGroup,
-            bestThirdPlace: groupConfig.bestThirdPlace,
-            totalClassified: groupConfig.totalClassified
-          }
-        }
-      }
-    })
+    // NOTA: La configuración de grupos se recalcula dinámicamente cuando sea necesario
+    // No necesitamos guardarla en metadata ya que se puede derivar del número de equipos
 
     // Los equipos se asignarán cuando termine la fase de grupos
     // Por ahora creamos matches vacíos que se llenarán después
@@ -783,6 +859,7 @@ export class BracketService {
           roundNumber: matchData.roundNumber,
           matchNumber: matchData.matchNumber,
           phaseType: matchData.phaseType,
+          zoneId: matchData.zoneId, // Asignar zona si existe (fase de grupos)
           status: MatchStatus.SCHEDULED
         }
       })
@@ -1024,8 +1101,13 @@ export class BracketService {
           where: { categoryId },
           include: {
             teams: {
-              where: {
-                registrationStatus: { in: ['CONFIRMED', 'PAID'] }
+              include: {
+                registration1: {
+                  select: { registrationStatus: true }
+                },
+                registration2: {
+                  select: { registrationStatus: true }
+                }
               }
             }
           }
@@ -1044,13 +1126,33 @@ export class BracketService {
       return { valid: false, errors }
     }
 
-    const teams = category.teams
-    if (teams.length < 2) {
-      errors.push("Se requieren al menos 2 equipos confirmados")
+    // Filtrar equipos confirmados con ambas inscripciones confirmadas o pagadas
+    const teams = category.teams.filter(team =>
+      team.status === 'CONFIRMED' &&
+      (team.registration1.registrationStatus === 'CONFIRMED' || team.registration1.registrationStatus === 'PAID') &&
+      (team.registration2.registrationStatus === 'CONFIRMED' || team.registration2.registrationStatus === 'PAID')
+    )
+    // Validación mínima de equipos según tipo de torneo
+    let minTeamsRequired = 2
+
+    switch (tournament.type) {
+      case 'SINGLE_ELIMINATION':
+      case 'DOUBLE_ELIMINATION':
+      case 'ROUND_ROBIN':
+        minTeamsRequired = 2
+        break
+      case 'GROUP_STAGE_ELIMINATION':
+        minTeamsRequired = 8 // Mínimo para tener fase de grupos + eliminación
+        break
+      case 'AMERICANO':
+        minTeamsRequired = 4
+        break
+      default:
+        minTeamsRequired = 2
     }
 
-    if (teams.length < tournament.minParticipants) {
-      errors.push(`Se requieren al menos ${tournament.minParticipants} equipos (hay ${teams.length})`)
+    if (teams.length < minTeamsRequired) {
+      errors.push(`Se requieren al menos ${minTeamsRequired} equipos confirmados para este formato (hay ${teams.length})`)
     }
 
     // Validar que el torneo esté en estado apropiado
@@ -1247,28 +1349,7 @@ export class BracketService {
    * (Asigna top 2 de cada grupo a los matches eliminatorios)
    */
   static async classifyTeamsToEliminationPhase(tournamentId: string, categoryId: string): Promise<void> {
-    // Obtener configuración de grupos guardada en metadata
-    const tournament = await prisma.tournament.findUnique({
-      where: { id: tournamentId },
-      select: { metadata: true }
-    })
-
-    interface GroupConfig {
-      numGroups: number
-      groupSizes: number[]
-      qualifiedPerGroup: number
-      bestThirdPlace: number
-      totalClassified: number
-    }
-
-    const metadata = tournament?.metadata as Record<string, GroupConfig> | null
-    const groupConfig = metadata?.[`groupConfig_${categoryId}`]
-
-    if (!groupConfig) {
-      throw new Error("No se encontró la configuración de grupos. Regenera el bracket.")
-    }
-
-    // Obtener todas las zonas del torneo/categoría
+    // Obtener todas las zonas del torneo/categoría primero para contar equipos
     const zones = await prisma.tournamentZone.findMany({
       where: {
         tournamentId,
@@ -1303,6 +1384,18 @@ export class BracketService {
       throw new Error("Debes calcular las tablas de todos los grupos antes de clasificar")
     }
 
+    // Contar el total de equipos para recalcular la configuración
+    const totalTeams = zones.reduce((acc, zone) => acc + zone.teams.length, 0)
+    const groupConfig = this.calculateOptimalGroupConfiguration(totalTeams)
+
+    console.log(`📊 Configuración recalculada:`, {
+      totalTeams,
+      numGroups: groupConfig.numGroups,
+      qualifiedPerGroup: groupConfig.qualifiedPerGroup,
+      bestThirdPlace: groupConfig.bestThirdPlace,
+      totalClassified: groupConfig.totalClassified
+    })
+
     // Obtener clasificados según configuración
     const classified: Array<{
       teamId: string
@@ -1314,7 +1407,7 @@ export class BracketService {
       setsWon: number
     }> = []
 
-    const thirdPlaceTeams: typeof classified = []
+    const secondPlaceTeams: typeof classified = []
 
     // Clasificar equipos de cada grupo
     for (const zone of zones) {
@@ -1336,9 +1429,9 @@ export class BracketService {
             setsWon: stats.setsWon
           }
 
-          // Si es tercero y hay mejores terceros, guardarlo aparte
-          if (pos === 3 && groupConfig.bestThirdPlace > 0) {
-            thirdPlaceTeams.push(classifiedTeam)
+          // Si es segundo y hay mejores segundos, guardarlo aparte
+          if (pos === 2 && groupConfig.bestThirdPlace > 0) {
+            secondPlaceTeams.push(classifiedTeam)
           } else {
             classified.push(classifiedTeam)
           }
@@ -1346,21 +1439,21 @@ export class BracketService {
       }
     }
 
-    // Si hay mejores terceros, ordenarlos y tomar los mejores
-    if (groupConfig.bestThirdPlace > 0) {
-      // Ordenar terceros por: puntos → diferencia sets → diferencia juegos → sets ganados
-      thirdPlaceTeams.sort((a, b) => {
+    // Si hay mejores segundos, ordenarlos y tomar los mejores
+    if (groupConfig.bestThirdPlace > 0 && secondPlaceTeams.length > 0) {
+      // Ordenar segundos por: puntos → diferencia sets → diferencia juegos → sets ganados
+      secondPlaceTeams.sort((a, b) => {
         if (a.points !== b.points) return b.points - a.points
         if (a.setDiff !== b.setDiff) return b.setDiff - a.setDiff
         if (a.gameDiff !== b.gameDiff) return b.gameDiff - a.gameDiff
         return b.setsWon - a.setsWon
       })
 
-      // Agregar mejores terceros a clasificados
-      const bestThirds = thirdPlaceTeams.slice(0, groupConfig.bestThirdPlace)
-      classified.push(...bestThirds)
+      // Agregar mejores segundos a clasificados
+      const bestSeconds = secondPlaceTeams.slice(0, groupConfig.bestThirdPlace)
+      classified.push(...bestSeconds)
 
-      console.log(`📊 Mejores terceros:`, bestThirds.map(t => `${t.groupName}-${t.position} (${t.points}pts)`).join(', '))
+      console.log(`📊 Mejores segundos:`, bestSeconds.map(t => `${t.groupName}-${t.position} (${t.points}pts)`).join(', '))
     }
 
     console.log(`📊 Total clasificados: ${classified.length}`,

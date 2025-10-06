@@ -101,6 +101,10 @@ interface Match {
     id: string
     name: string | null
   } | null
+  zone: {
+    id: string
+    name: string
+  } | null
 }
 
 interface MatchesPaginatedResponse {
@@ -195,7 +199,8 @@ export function MatchesTable() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Torneo / Categoría</TableHead>
+              <TableHead>Torneo</TableHead>
+              <TableHead>Grupo</TableHead>
               <TableHead>Fase</TableHead>
               <TableHead>Equipos</TableHead>
               <TableHead>Resultado</TableHead>
@@ -207,7 +212,7 @@ export function MatchesTable() {
           <TableBody>
             {matches.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                   No se encontraron partidos
                 </TableCell>
               </TableRow>
@@ -224,6 +229,15 @@ export function MatchesTable() {
                         {match.category.name}
                       </div>
                     </div>
+                  </TableCell>
+                  <TableCell>
+                    {match.zone ? (
+                      <Badge variant="secondary" className="font-mono">
+                        {match.zone.name}
+                      </Badge>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">-</span>
+                    )}
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline" className="font-mono">

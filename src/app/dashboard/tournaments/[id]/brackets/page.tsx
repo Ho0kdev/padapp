@@ -2,8 +2,7 @@ import { requireAuth } from "@/lib/rbac"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
-import { BracketGenerator } from "@/components/brackets/bracket-generator"
-import { BracketVisualization } from "@/components/brackets/bracket-visualization"
+import { BracketSection } from "@/components/brackets/bracket-section"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Trophy } from "lucide-react"
 import Link from "next/link"
@@ -102,18 +101,10 @@ export default async function BracketsPage({ params }: BracketsPageProps) {
           </div>
         ) : tournament.categories.length === 1 ? (
           // Si solo hay una categoría, mostrar directamente (sin tabs)
-          <div className="grid gap-6 lg:grid-cols-2">
-            <BracketGenerator
-              tournamentId={tournament.id}
-              categoryId={tournament.categories[0].categoryId}
-              categoryName={tournament.categories[0].category.name}
-              teamsCount={tournament.categories[0]._count?.teams || 0}
-            />
-            <BracketVisualization
-              tournamentId={tournament.id}
-              categoryId={tournament.categories[0].categoryId}
-            />
-          </div>
+          <BracketSection
+            tournament={tournament}
+            category={tournament.categories[0]}
+          />
         ) : (
           // Si hay múltiples categorías, usar tabs
           <Tabs defaultValue={tournament.categories[0].categoryId} className="space-y-4">
@@ -128,18 +119,10 @@ export default async function BracketsPage({ params }: BracketsPageProps) {
 
             {tournament.categories.map((cat) => (
               <TabsContent key={cat.id} value={cat.categoryId} className="space-y-6 mt-4">
-                <div className="grid gap-6 lg:grid-cols-2">
-                  <BracketGenerator
-                    tournamentId={tournament.id}
-                    categoryId={cat.categoryId}
-                    categoryName={cat.category.name}
-                    teamsCount={cat._count?.teams || 0}
-                  />
-                  <BracketVisualization
-                    tournamentId={tournament.id}
-                    categoryId={cat.categoryId}
-                  />
-                </div>
+                <BracketSection
+                  tournament={tournament}
+                  category={cat}
+                />
               </TabsContent>
             ))}
           </Tabs>
