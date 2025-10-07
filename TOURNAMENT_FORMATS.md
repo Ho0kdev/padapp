@@ -12,6 +12,7 @@ Este documento describe todos los formatos de torneo implementados y pendientes 
   - [Doble Eliminación](#doble-eliminación)
   - [Fase de Grupos + Eliminación](#fase-de-grupos--eliminación)
   - [Americano](#americano)
+  - [Americano Social](#americano-social)
 - [Formatos Pendientes](#formatos-pendientes)
   - [Sistema Suizo](#sistema-suizo)
 
@@ -429,26 +430,94 @@ Grupo D: 4, 5, 12, 13
 Cada grupo tiene una mezcla equilibrada de seeds altos, medios y bajos
 ```
 
+**Clasificación Automática** ⭐ NUEVO:
+
+El sistema ahora clasifica automáticamente los equipos a la fase eliminatoria cuando se completa la fase de grupos:
+
+1. **Detección automática**: Al cargar el último resultado de fase de grupos, el sistema detecta que todos los partidos están completados
+2. **Cálculo de tablas**: Automáticamente calcula las posiciones finales de todos los grupos usando `calculateGroupStandings()`
+3. **Clasificación**: Llama a `classifyTeamsToEliminationPhase()` para asignar equipos a la fase eliminatoria
+4. **Sin intervención manual**: Todo el proceso es automático, sin necesidad de clicks adicionales
+
+```typescript
+// Proceso automático en POST /api/matches/[id]/result
+if (allGroupMatchesCompleted) {
+  // 1. Calcular tablas de todos los grupos
+  for (const zone of zones) {
+    await BracketService.calculateGroupStandings(zone.id)
+  }
+
+  // 2. Clasificar a fase eliminatoria
+  await BracketService.classifyTeamsToEliminationPhase(tournamentId, categoryId)
+
+  // ✅ Los partidos de cuartos/semifinales ahora tienen equipos asignados
+}
+```
+
+**Tablas de Posiciones con Estadísticas Completas** ⭐ NUEVO:
+
+El endpoint `/api/tournaments/[id]/groups` ahora devuelve estadísticas completas:
+
+```json
+{
+  "zones": [
+    {
+      "id": "zone-1",
+      "name": "Grupo A",
+      "standings": [
+        {
+          "teamId": "team-1",
+          "teamName": "Team 1",
+          "matchesPlayed": 3,
+          "matchesWon": 3,
+          "matchesLost": 0,
+          "setsWon": 6,
+          "setsLost": 0,
+          "gamesWon": 36,
+          "gamesLost": 18,
+          "points": 6
+        }
+      ]
+    }
+  ]
+}
+```
+
+**Vista de Árbol Mejorada** ⭐ NUEVO:
+
+El componente `bracket-tree.tsx` ahora:
+- Muestra columna de grupos con todos los equipos y sus puntos
+- Marca en verde los equipos clasificados (según lógica del torneo)
+- Marca en gris los equipos no clasificados
+- Filtra partidos de grupos del árbol (solo muestra eliminatorias)
+- Orden correcto: Grupos → Semifinales → Final (izquierda a derecha)
+- Líneas conectoras corregidas
+
+**Walkovers**: Ahora se cuentan correctamente como partidos jugados en las estadísticas
+
 **Implementación**:
 - Función principal: `generateGroupStageEliminationBracket()` en `bracket-service.ts:481`
 - Configuración óptima: `calculateOptimalGroupConfiguration()` en `bracket-service.ts:353`
 - Cálculo de tablas: `calculateGroupStandings()` en `bracket-service.ts:1062`
 - Clasificación: `classifyTeamsToEliminationPhase()` en `bracket-service.ts:1218`
+- Clasificación automática: `src/app/api/matches/[id]/result/route.ts:224-266`
 - Asignación playoffs: `assignClassifiedTeamsToPlayoffs()` en `bracket-service.ts:1360`
 - Distribución serpiente: Líneas 521-548 en `generateGroupStageEliminationBracket()`
 
 **Componentes UI**:
 - Generador: `src/components/brackets/bracket-generator.tsx`
 - Visualización: `src/components/brackets/bracket-visualization.tsx`
+- Vista de árbol: `src/components/brackets/bracket-tree.tsx` ⭐ MEJORADO
+- Visualización de grupos: `src/components/brackets/groups-visualization.tsx` ⭐ MEJORADO
 - Tablas de grupos: `src/components/brackets/group-standings.tsx`
 - Página dashboard: `src/app/dashboard/tournaments/[id]/brackets/page.tsx`
 
 **APIs**:
 - Generar bracket: `POST /api/tournaments/[id]/generate-bracket`
 - Ver bracket: `GET /api/tournaments/[id]/bracket?categoryId=xxx`
-- Ver grupos: `GET /api/tournaments/[id]/groups?categoryId=xxx`
-- Clasificar: `POST /api/tournaments/[id]/classify`
-- Cargar resultado: `POST /api/matches/[id]/result`
+- Ver grupos: `GET /api/tournaments/[id]/groups?categoryId=xxx` ⭐ MEJORADO (incluye estadísticas)
+- Clasificar: `POST /api/tournaments/[id]/classify` (también automático al completar grupos)
+- Cargar resultado: `POST /api/matches/[id]/result` ⭐ MEJORADO (clasifica automáticamente)
 
 ---
 
@@ -556,6 +625,327 @@ Para equipos impares, se agrega un "bye" (equipo fantasma)
 - Generar bracket: `POST /api/tournaments/[id]/generate-bracket`
 - Ver bracket: `GET /api/tournaments/[id]/bracket?categoryId=xxx`
 - Cargar resultado: `POST /api/matches/[id]/result`
+
+---
+
+### ✅ Americano Social
+
+**Estado**: Completamente implementado
+
+**Descripción**:
+Variante del formato Americano diseñado específicamente para torneos sociales de pádel. A diferencia del Americano tradicional (equipos fijos), en el Americano Social los **jugadores individuales** se agrupan en pools de 4, donde cada jugador juega 3 partidos con diferentes compañeros contra diferentes rivales dentro del mismo pool.
+
+**Diferencia Clave con Americano Tradicional**:
+- **Americano**: Equipos fijos de 2 jugadores que juegan contra todos los demás equipos
+- **Americano Social**: Jugadores individuales que rotan compañeros y rivales dentro de pools de 4
+
+**Características Implementadas**:
+- Sistema de pools de exactamente 4 jugadores
+- Cada jugador juega 3 partidos con diferentes compañeros
+- Rotación automática de parejas dentro del pool
+- Ranking individual por pool y ranking global del torneo
+- Requiere múltiplo de 4 jugadores (4, 8, 12, 16, 20, etc.)
+- Sistema de puntos basado en games ganados
+
+**Estructura Real - Un Pool de 4 Jugadores [A, B, C, D]**:
+
+```
+POOL A - 4 Jugadores: Alice (A), Bob (B), Carol (C), David (D)
+
+Ronda 1:
+Pista 1: AB vs CD
+  • Alice + Bob (Team A)
+  • vs
+  • Carol + David (Team B)
+
+Ronda 2:
+Pista 1: AC vs BD
+  • Alice + Carol (Team A)
+  • vs
+  • Bob + David (Team B)
+
+Ronda 3:
+Pista 1: AD vs BC
+  • Alice + David (Team A)
+  • vs
+  • Bob + Carol (Team B)
+
+Cada jugador:
+✅ Juega 3 partidos
+✅ Juega con 3 compañeros diferentes (todos los demás del pool)
+✅ Juega contra todos los demás del pool
+
+Ranking del Pool (basado en games ganados):
+Pos  Jugador  PJ  Victorias  Games+  Games-  Diff  Puntos
+1    Alice    3   3          18      6       +12   18
+2    Carol    3   2          15      9       +6    15
+3    Bob      3   1          12      12      0     12
+4    David    3   0          6       18      -12   6
+```
+
+**Estructura Completa - Torneo con 12 Jugadores**:
+
+```
+12 Jugadores → 3 Pools de 4 jugadores
+
+POOL A (4 jugadores)
+- 3 rondas
+- 3 partidos totales
+
+POOL B (4 jugadores)
+- 3 rondas
+- 3 partidos totales
+
+POOL C (4 jugadores)
+- 3 rondas
+- 3 partidos totales
+
+Total de partidos: 9 partidos simultáneos (3 canchas)
+
+RANKING GLOBAL (todos los jugadores del torneo):
+Combina resultados de todos los pools
+Ordenado por: Games ganados → Games perdidos → Partidos ganados
+
+Pos  Jugador        Pool  PJ  Games+  Games-  Diff  Puntos
+1    Alice Silva    A     3   18      6       +12   18
+2    Juan Pérez     B     3   17      8       +9    17
+3    María López    C     3   16      9       +7    16
+4    Carol White    A     3   15      9       +6    15
+5    Pedro García   B     3   14      10      +4    14
+...
+```
+
+**Número de Partidos**:
+- Por pool de 4 jugadores: 3 partidos
+- Con N jugadores (múltiplo de 4):
+  - Número de pools: `N / 4`
+  - Total de partidos: `(N / 4) × 3`
+  - Ejemplos:
+    - 8 jugadores = 2 pools = 6 partidos
+    - 12 jugadores = 3 pools = 9 partidos
+    - 16 jugadores = 4 pools = 12 partidos
+    - 20 jugadores = 5 pools = 15 partidos
+
+**Sistema de Puntuación**:
+- **Puntos**: Cada game ganado = 1 punto
+- **Ranking por Pool**: Games ganados totales
+- **Ranking Global**: Combina todos los jugadores de todos los pools
+- **Desempate**:
+  1. Games ganados totales
+  2. Diferencia de games (ganados - perdidos)
+  3. Partidos ganados
+  4. Games perdidos (menos es mejor)
+
+**Ventajas**:
+- Formato social: conoces nuevos jugadores
+- Todos juegan la misma cantidad (3 partidos)
+- No hay eliminación: todos participan hasta el final
+- Equitativo: juegas con todos como compañero
+- Ranking justo basado en rendimiento individual
+- Ideal para torneos recreativos
+- Fácil de organizar en paralelo (múltiples pools)
+
+**Desventajas**:
+- Requiere exactamente múltiplo de 4 jugadores
+- No hay equipos fijos (puede no gustar a todos)
+- Depende mucho de los compañeros que te toquen
+- Rankings de pools diferentes no son directamente comparables
+
+**Casos de Uso**:
+- **Torneos sociales de club** (8-20 jugadores)
+- **Eventos recreativos** donde se quiere socializar
+- **Torneos de integración** para nuevos socios
+- **Formato "mixto"** (puede jugarse hombre-mujer)
+- **Ligas regulares** con rotación de compañeros
+- Ideal para **2-4 horas** de duración
+
+**Ejemplo Práctico: Torneo Social de 16 Jugadores**:
+
+```
+16 jugadores → 4 pools (A, B, C, D)
+4 canchas disponibles
+
+Horario:
+10:00 - 11:00: Ronda 1 de todos los pools (4 partidos simultáneos)
+11:15 - 12:15: Ronda 2 de todos los pools (4 partidos simultáneos)
+12:30 - 13:30: Ronda 3 de todos los pools (4 partidos simultáneos)
+13:30 - 14:00: Premiación según ranking global
+
+Total: 12 partidos en 3.5 horas
+Cada jugador: 3 partidos garantizados
+```
+
+**Implementación Técnica**:
+
+**Modelos de Base de Datos**:
+```prisma
+model AmericanoPool {
+  id           String
+  tournamentId String
+  categoryId   String
+  name         String  // "Pool A", "Pool B"
+  poolNumber   Int     // 1, 2, 3...
+
+  players      AmericanoPoolPlayer[]
+  matches      AmericanoPoolMatch[]
+}
+
+model AmericanoPoolPlayer {
+  id          String
+  poolId      String
+  playerId    String
+  position    Int     // 1-4
+  gamesWon    Int     // Total games ganados
+  gamesLost   Int     // Total games perdidos
+  matchesWon  Int     // Partidos ganados
+  matchesLost Int     // Partidos perdidos
+  totalPoints Int     // = gamesWon
+}
+
+model AmericanoPoolMatch {
+  id         String
+  poolId     String
+  roundNumber Int    // 1, 2, 3
+  player1Id  String  // Team A - Jugador 1
+  player2Id  String  // Team A - Jugador 2
+  player3Id  String  // Team B - Jugador 1
+  player4Id  String  // Team B - Jugador 2
+
+  teamAScore Int?    // Sets ganados por Team A
+  teamBScore Int?    // Sets ganados por Team B
+  winnerTeam String? // "A" o "B"
+  status     String  // SCHEDULED, COMPLETED
+
+  sets       AmericanoPoolMatchSet[]
+}
+
+model AmericanoGlobalRanking {
+  id           String
+  tournamentId String
+  categoryId   String
+  playerId     String
+  gamesWon     Int    // Acumulado de todos los pools
+  gamesLost    Int
+  matchesWon   Int
+  matchesLost  Int
+  totalPoints  Int    // = gamesWon
+}
+```
+
+**Servicio Principal**: `src/lib/services/americano-social-service.ts`
+
+**Métodos Principales**:
+```typescript
+// Generar pools y partidos
+AmericanoSocialService.generateAmericanoSocialPools(
+  tournamentId,
+  categoryId,
+  players // Array de jugadores inscritos
+)
+
+// Actualizar resultado de partido
+AmericanoSocialService.updateMatchResult(
+  matchId,
+  teamAScore, // Sets ganados por Team A
+  teamBScore, // Sets ganados por Team B
+  sets        // Array de SetResult
+)
+
+// Obtener rankings
+AmericanoSocialService.getPoolRankings(poolId)
+AmericanoSocialService.getGlobalRanking(tournamentId, categoryId)
+```
+
+**Validaciones**:
+- ✅ Número de jugadores debe ser múltiplo de 4
+- ✅ Mínimo 4 jugadores requeridos
+- ✅ Todos los jugadores deben estar inscritos en la categoría
+- ✅ Verifica que no existan pools previamente creados
+
+**Algoritmo de Rotación**:
+```typescript
+// Pool con jugadores: [A, B, C, D]
+// Partidos generados automáticamente:
+
+Partido 1: (A, B) vs (C, D)  // roundNumber: 1
+Partido 2: (A, C) vs (B, D)  // roundNumber: 2
+Partido 3: (A, D) vs (B, C)  // roundNumber: 3
+
+// Garantiza que:
+// - Cada jugador juega con todos los demás como compañero
+// - Cada jugador juega contra todos los demás como rival
+// - Total: 3 partidos por jugador
+```
+
+**Componentes UI**:
+- Vista principal: `src/app/dashboard/tournaments/[id]/americano-social/page.tsx`
+- Detalle de pools: `src/components/tournaments/americano-social/americano-social-detail.tsx`
+- Carga de resultados: `src/components/tournaments/americano-social/americano-match-result-dialog.tsx`
+- Tabla de pools: `src/components/tournaments/americano-social/pool-card.tsx`
+- Ranking global: `src/components/tournaments/americano-social/global-ranking-table.tsx`
+
+**APIs Implementadas**:
+- Generar pools: `POST /api/tournaments/[id]/americano-social/generate`
+- Ver pools: `GET /api/tournaments/[id]/americano-social/pools?categoryId=xxx`
+- Cargar resultado: `POST /api/americano-social/matches/[id]/result`
+
+**Ejemplo de Respuesta API - Pools**:
+```json
+{
+  "pools": [
+    {
+      "id": "pool-1",
+      "name": "Pool A",
+      "poolNumber": 1,
+      "players": [
+        {
+          "playerId": "player-1",
+          "firstName": "Alice",
+          "gamesWon": 18,
+          "gamesLost": 6,
+          "position": 1
+        },
+        // ... 3 más jugadores
+      ],
+      "matches": [
+        {
+          "roundNumber": 1,
+          "player1": { "firstName": "Alice" },
+          "player2": { "firstName": "Bob" },
+          "player3": { "firstName": "Carol" },
+          "player4": { "firstName": "David" },
+          "status": "COMPLETED",
+          "teamAScore": 2,
+          "teamBScore": 0
+        }
+        // ... 2 partidos más
+      ]
+    }
+    // ... más pools
+  ],
+  "globalRanking": [
+    {
+      "playerId": "player-1",
+      "firstName": "Alice",
+      "lastName": "Silva",
+      "gamesWon": 18,
+      "totalPoints": 18,
+      "position": 1
+    }
+    // ... más jugadores
+  ]
+}
+```
+
+**Flujo de Trabajo**:
+1. Admin selecciona categoría de torneo con tipo AMERICANO_SOCIAL
+2. Verifica número de jugadores inscritos (debe ser múltiplo de 4)
+3. Click en "Generar Pools" → Sistema crea pools y partidos automáticamente
+4. Jugadores se dividen aleatoriamente (o por ranking) en pools de 4
+5. Se generan 3 partidos por pool con rotación automática
+6. Admin/Árbitro carga resultados partido por partido
+7. Rankings se actualizan automáticamente (pool y global)
+8. Al final: Ranking global determina ganadores 1°, 2°, 3°
 
 ---
 
@@ -802,15 +1192,16 @@ await BracketService.progressWinner(
 
 ## 📊 Comparación de Formatos
 
-| Formato | Equipos Ideal | Partidos (16 equipos) | Duración | Justicia | Complejidad | Emoción | Estado |
-|---------|---------------|----------------------|----------|----------|-------------|---------|--------|
-| **Eliminación Simple** | 8-32 | 15 | 1 día | ⭐⭐ | ⭐ | ⭐⭐⭐⭐⭐ | ✅ |
-| **Round Robin** | 4-10 | 120 | Varios días | ⭐⭐⭐⭐⭐ | ⭐ | ⭐⭐ | ✅ |
-| **Doble Eliminación** | 8-16 | 30 | 2-3 días | ⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐ | ✅ |
-| **Grupos + Eliminación** | 12-32 | 31 | 2-3 días | ⭐⭐⭐⭐ | ⭐⭐ | ⭐⭐⭐⭐⭐ | ✅ |
-| **Americano** | 4-12 | 28 | 1-2 días | ⭐⭐⭐⭐ | ⭐⭐ | ⭐⭐⭐ | ✅ |
-| **Sistema Suizo** | 16-64 | 64 | 2-4 días | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐ | ⏳ |
-| **Grupos + RR Final** | 16-24 | 52 | 3-5 días | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐ | ⏳ |
+| Formato | Equipos/Jugadores Ideal | Partidos (16) | Duración | Justicia | Complejidad | Emoción | Estado |
+|---------|------------------------|---------------|----------|----------|-------------|---------|--------|
+| **Eliminación Simple** | 8-32 equipos | 15 | 1 día | ⭐⭐ | ⭐ | ⭐⭐⭐⭐⭐ | ✅ |
+| **Round Robin** | 4-10 equipos | 120 | Varios días | ⭐⭐⭐⭐⭐ | ⭐ | ⭐⭐ | ✅ |
+| **Doble Eliminación** | 8-16 equipos | 30 | 2-3 días | ⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐ | ✅ |
+| **Grupos + Eliminación** | 12-32 equipos | 31 | 2-3 días | ⭐⭐⭐⭐ | ⭐⭐ | ⭐⭐⭐⭐⭐ | ✅ |
+| **Americano** | 4-12 equipos | 28 | 1-2 días | ⭐⭐⭐⭐ | ⭐⭐ | ⭐⭐⭐ | ✅ |
+| **Americano Social** | 8-20 jugadores | 12 | 2-4 horas | ⭐⭐⭐⭐ | ⭐ | ⭐⭐⭐⭐ | ✅ |
+| **Sistema Suizo** | 16-64 equipos | 64 | 2-4 días | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐ | ⏳ |
+| **Grupos + RR Final** | 16-24 equipos | 52 | 3-5 días | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐ | ⏳ |
 
 ---
 
@@ -829,7 +1220,8 @@ await BracketService.progressWinner(
 - **16-32 equipos**: Sistema Suizo (pendiente)
 
 ### Para Eventos Sociales
-- **4-12 equipos**: Americano ⭐ **IDEAL PARA LIGA**
+- **8-20 jugadores individuales**: Americano Social ⭐ **IDEAL PARA INTEGRACIÓN**
+- **4-12 equipos fijos**: Americano ⭐ **IDEAL PARA LIGA**
 - **4-8 equipos**: Round Robin
 
 ---
@@ -1157,14 +1549,15 @@ await AuditLogger.log(session, {
 
 ## 🔮 Roadmap de Formatos
 
-### ✅ Implementados (5/6 - 83%)
+### ✅ Implementados (6/7 - 86%)
 - ✅ Eliminación Simple
 - ✅ Round Robin
 - ✅ Doble Eliminación
 - ✅ Fase de Grupos + Eliminación
-- ✅ Americano
+- ✅ Americano (equipos fijos)
+- ✅ Americano Social (jugadores individuales, pools)
 
-### ⏳ Pendientes (1/6 - 17%)
+### ⏳ Pendientes (1/7 - 14%)
 - ⏳ Sistema Suizo (para torneos grandes)
 
 ### Prioridad Baja (Formatos adicionales no planeados)
@@ -1227,5 +1620,5 @@ Cada partido puede tener asignada una cancha (`courtId`) y horario (`scheduledFo
 
 ---
 
-**Última actualización**: 2025-10-01
-**Versión**: 1.0.0
+**Última actualización**: 2025-10-07
+**Versión**: 1.1.0

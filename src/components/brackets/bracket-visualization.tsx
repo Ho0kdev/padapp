@@ -3,10 +3,15 @@
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Trophy, Calendar, MapPin, AlertCircle } from "lucide-react"
+import { Trophy, Calendar, MapPin, AlertCircle, Edit, RefreshCw } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { MatchResultDialog } from "@/components/matches/match-result-dialog"
+import { useAuth } from "@/hooks/use-auth"
+import { format } from "date-fns"
+import { es } from "date-fns/locale"
 
 interface Team {
   id: string
@@ -64,6 +69,9 @@ export function BracketVisualization({
   const [bracket, setBracket] = useState<BracketData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [selectedMatch, setSelectedMatch] = useState<Match | null>(null)
+  const [resultDialogOpen, setResultDialogOpen] = useState(false)
+  const { isAdminOrClubAdmin, isReferee } = useAuth()
 
   const fetchBracket = async () => {
     setIsLoading(true)
@@ -90,6 +98,31 @@ export function BracketVisualization({
   useEffect(() => {
     fetchBracket()
   }, [tournamentId, categoryId, refreshTrigger])
+
+  const canManageMatch = () => {
+    return isAdminOrClubAdmin || isReferee
+  }
+
+  const handleLoadResult = (match: Match) => {
+    // Convertir el match para que tenga la estructura esperada por el dialog
+    const matchForDialog = {
+      ...match,
+      tournament: {
+        id: tournamentId,
+        name: "" // Se obtiene del contexto
+      },
+      category: {
+        id: categoryId,
+        name: "" // Se obtiene del contexto
+      }
+    }
+    setSelectedMatch(matchForDialog)
+    setResultDialogOpen(true)
+  }
+
+  const handleResultSuccess = () => {
+    fetchBracket() // Recargar el bracket
+  }
 
   if (isLoading) {
     return (
@@ -180,9 +213,19 @@ export function BracketVisualization({
             Bracket - {bracket.totalRounds} Rondas
           </h3>
         </div>
-        <Badge variant="outline">
-          {bracket.totalMatches} Partidos
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline">
+            {bracket.totalMatches} Partidos
+          </Badge>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={fetchBracket}
+            disabled={isLoading}
+          >
+            <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
+          </Button>
+        </div>
       </div>
 
       {Object.entries(bracket.rounds)
@@ -205,12 +248,23 @@ export function BracketVisualization({
                     match={match}
                     getTeamDisplay={getTeamDisplay}
                     getStatusBadge={getStatusBadge}
+                    canManage={canManageMatch()}
+                    onLoadResult={() => handleLoadResult(match)}
                   />
                 ))}
               </div>
             </div>
           )
         })}
+
+      {selectedMatch && (
+        <MatchResultDialog
+          match={selectedMatch as any}
+          open={resultDialogOpen}
+          onOpenChange={setResultDialogOpen}
+          onSuccess={handleResultSuccess}
+        />
+      )}
     </div>
   )
 }
@@ -219,9 +273,11 @@ interface MatchCardProps {
   match: Match
   getTeamDisplay: (team?: Team | null) => string
   getStatusBadge: (status: string) => React.ReactNode
+  canManage: boolean
+  onLoadResult: () => void
 }
 
-function MatchCard({ match, getTeamDisplay, getStatusBadge }: MatchCardProps) {
+function MatchCard({ match, getTeamDisplay, getStatusBadge, canManage, onLoadResult }: MatchCardProps) {
   const isCompleted = match.status === "COMPLETED"
   const team1Won = match.winnerTeam?.id === match.team1?.id
   const team2Won = match.winnerTeam?.id === match.team2?.id
@@ -233,7 +289,19 @@ function MatchCard({ match, getTeamDisplay, getStatusBadge }: MatchCardProps) {
           <CardTitle className="text-sm font-medium">
             Partido {match.matchNumber}
           </CardTitle>
-          {getStatusBadge(match.status)}
+          <div className="flex items-center gap-2">
+            {getStatusBadge(match.status)}
+            {canManage && match.status !== "COMPLETED" && match.team1 && match.team2 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onLoadResult}
+                title="Cargar resultado"
+              >
+                <Edit className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-2">
@@ -271,24 +339,21 @@ function MatchCard({ match, getTeamDisplay, getStatusBadge }: MatchCardProps) {
           </div>
         </div>
 
-        {match.scheduledAt && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Calendar className="h-3 w-3" />
-            {new Date(match.scheduledAt).toLocaleDateString("es-AR", {
-              day: "2-digit",
-              month: "short",
-              hour: "2-digit",
-              minute: "2-digit"
-            })}
-          </div>
-        )}
+        <div className="mt-2 space-y-1">
+          {match.scheduledAt && (
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Calendar className="h-3 w-3" />
+              {format(new Date(match.scheduledAt), "dd/MM/yyyy HH:mm", { locale: es })}
+            </div>
+          )}
 
-        {match.court && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <MapPin className="h-3 w-3" />
-            {match.court.name} - {match.court.club.name}
-          </div>
-        )}
+          {match.court && (
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <MapPin className="h-3 w-3" />
+              {match.court.name} - {match.court.club.name}
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   )

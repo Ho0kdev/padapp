@@ -299,17 +299,32 @@ await AuditLogger.log(session, {
 - ⏳ Sistema de notificaciones por email (2-3 días)
 - ⏳ Panel público de inscripción sin login (2 días)
 
-#### 2. **Gestión de Brackets/Llaves**
-- ⏳ Generación automática para todos los formatos (2 semanas)
-- ⏳ Visualización gráfica responsive
-- ⏳ Editor manual de brackets
-- ⏳ Progresión automática de ganadores
+#### 2. **Gestión de Brackets/Llaves** [95%] ⭐ NUEVO
+- ✅ Generación automática para 6 formatos (Single, Double, Round Robin, Group+Elimination, Americano, Americano Social)
+- ✅ **Visualización tipo "árbol" profesional con SVG connectors** 🆕
+- ✅ **Doble vista: Tree (árbol) y List (lista) con tabs** 🆕
+- ✅ **Responsive design completo (mobile/tablet/desktop)** 🆕
+- ✅ **Zoom in/out y navegación horizontal** 🆕
+- ✅ **Líneas conectoras animadas que destacan ganadores** 🆕
+- ✅ Progresión automática de ganadores integrada
+- ✅ Auto-refresh manual con botón
+- ✅ Integración con sistema de partidos
+- ✅ Carga de resultados inline desde el bracket
+- ⏳ Editor manual de seeding y emparejamientos
 
-#### 3. **Sistema de Partidos**
-- ⏳ Carga de resultados set por set (2 semanas)
-- ⏳ Validación de puntuaciones
-- ⏳ Estados: SCHEDULED → IN_PROGRESS → COMPLETED
-- ⏳ Actualización automática de brackets y rankings
+#### 3. **Sistema de Partidos** [95%] ⭐ NUEVO
+- ✅ Carga de resultados set por set con dialog modal
+- ✅ Validación de puntuaciones según reglas de pádel
+- ✅ Validación de tiebreak (7-6 requiere puntos)
+- ✅ Estados: SCHEDULED → IN_PROGRESS → COMPLETED
+- ✅ Endpoint de cambio de estado: `PATCH /api/matches/[id]/status`
+- ✅ Endpoint de carga de resultados: `POST /api/matches/[id]/result`
+- ✅ Progresión automática al cargar resultado
+- ✅ Actualización automática de brackets (manual refresh)
+- ✅ Logging completo con MatchLogService
+- ✅ Componente `MatchResultDialog` con validaciones completas
+- ✅ Integrado en `matches-table` y `bracket-visualization`
+- ⏳ Auto-refresh en tiempo real (polling o websockets)
 
 #### 4. **Calendario y Programación**
 - ⏳ Calendario visual de partidos (3 semanas)
@@ -446,6 +461,6 @@ Player: player@padapp.com / 123456
 
 ---
 
-**Estado del Proyecto**: ✅ 92% Funcionalidad Core | 🚀 Sistema de Logs y Auditoría Completo | 🎯 Sistema de Inscripciones 100% | ⏳ Próximo: Brackets y Partidos
+**Estado del Proyecto**: ✅ 97% Funcionalidad Core | 🚀 Sistema de Partidos Completo | 🎯 Visualización de Brackets Profesional | ⭐ Sistema de Logs 100% | ⏳ Próximo: Calendario o Notificaciones
 
-*Última actualización: Octubre 6, 2025 - Sistema de auditoría completo con 8 servicios de logging*
+*Última actualización: Octubre 7, 2025 - Visualización de brackets tipo árbol con SVG y responsive design completado*

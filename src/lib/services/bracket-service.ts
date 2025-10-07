@@ -992,6 +992,23 @@ export class BracketService {
    * Obtiene el bracket completo de un torneo/categoría
    */
   static async getBracket(tournamentId: string, categoryId: string) {
+    // Obtener configuración del torneo
+    const tournament = await prisma.tournament.findUnique({
+      where: { id: tournamentId },
+      select: {
+        id: true,
+        name: true,
+        setsToWin: true,
+        gamesToWinSet: true,
+        tiebreakAt: true,
+        goldenPoint: true
+      }
+    })
+
+    if (!tournament) {
+      throw new Error("Torneo no encontrado")
+    }
+
     const matches = await prisma.match.findMany({
       where: {
         tournamentId,
@@ -1068,21 +1085,28 @@ export class BracketService {
       ]
     })
 
+    // Agregar info del torneo a cada match
+    const matchesWithTournament = matches.map(match => ({
+      ...match,
+      tournament
+    }))
+
     // Agrupar por ronda
-    const rounds = matches.reduce((acc, match) => {
+    const rounds = matchesWithTournament.reduce((acc, match) => {
       const round = match.roundNumber || 0
       if (!acc[round]) {
         acc[round] = []
       }
       acc[round].push(match)
       return acc
-    }, {} as Record<number, typeof matches>)
+    }, {} as Record<number, typeof matchesWithTournament>)
 
     return {
-      matches,
+      matches: matchesWithTournament,
       rounds,
       totalRounds: Object.keys(rounds).length,
-      totalMatches: matches.length
+      totalMatches: matchesWithTournament.length,
+      tournament
     }
   }
 
@@ -1208,13 +1232,15 @@ export class BracketService {
       throw new Error("Zona no encontrada")
     }
 
-    // Obtener partidos del grupo completados
+    // Obtener partidos del grupo completados (incluyendo walkovers)
     const matches = await prisma.match.findMany({
       where: {
         tournamentId: zone.tournamentId,
         categoryId: zone.categoryId,
         phaseType: PhaseType.GROUP_STAGE,
-        status: MatchStatus.COMPLETED
+        status: {
+          in: [MatchStatus.COMPLETED, MatchStatus.WALKOVER]
+        }
       },
       include: {
         team1: true,
@@ -1415,12 +1441,13 @@ export class BracketService {
       // Obtener standings completos para tener stats
       const standings = await this.calculateGroupStandings(zone.id)
 
+      // Clasificar primeros lugares (siempre)
       for (let pos = 1; pos <= groupConfig.qualifiedPerGroup; pos++) {
         const team = zone.teams.find(zt => zt.position === pos)
         const stats = standings.find(s => s.teamId === team?.teamId)
 
         if (team && stats) {
-          const classifiedTeam = {
+          classified.push({
             teamId: team.teamId,
             groupName: zone.name,
             position: pos,
@@ -1428,14 +1455,26 @@ export class BracketService {
             setDiff: stats.setsWon - stats.setsLost,
             gameDiff: stats.gamesWon - stats.gamesLost,
             setsWon: stats.setsWon
-          }
+          })
+        }
+      }
 
-          // Si es segundo y hay mejores segundos, guardarlo aparte
-          if (pos === 2 && groupConfig.bestThirdPlace > 0) {
-            secondPlaceTeams.push(classifiedTeam)
-          } else {
-            classified.push(classifiedTeam)
-          }
+      // Si hay mejores segundos/terceros, recolectar candidatos
+      if (groupConfig.bestThirdPlace > 0) {
+        const position = groupConfig.qualifiedPerGroup + 1 // Si clasifican 1, recolectar 2dos; si clasifican 2, recolectar 3eros
+        const team = zone.teams.find(zt => zt.position === position)
+        const stats = standings.find(s => s.teamId === team?.teamId)
+
+        if (team && stats) {
+          secondPlaceTeams.push({
+            teamId: team.teamId,
+            groupName: zone.name,
+            position,
+            points: stats.points,
+            setDiff: stats.setsWon - stats.setsLost,
+            gameDiff: stats.gamesWon - stats.gamesLost,
+            setsWon: stats.setsWon
+          })
         }
       }
     }

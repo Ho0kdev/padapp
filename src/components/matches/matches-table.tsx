@@ -26,7 +26,9 @@ import {
   Trophy,
   Calendar,
   MapPin,
-  Users
+  Users,
+  Play,
+  CheckCircle
 } from "lucide-react"
 import Link from "next/link"
 import { useToast } from "@/hooks/use-toast"
@@ -35,6 +37,7 @@ import { DataTablePagination } from "@/components/ui/data-table-pagination"
 import { getMatchStatusStyle, getMatchStatusLabel } from "@/lib/utils/status-styles"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
+import { MatchResultDialog } from "./match-result-dialog"
 
 interface Match {
   id: string
@@ -127,6 +130,9 @@ export function MatchesTable() {
     totalPages: 0
   })
   const [loading, setLoading] = useState(true)
+  const [selectedMatch, setSelectedMatch] = useState<Match | null>(null)
+  const [resultDialogOpen, setResultDialogOpen] = useState(false)
+  const [statusLoading, setStatusLoading] = useState<string | null>(null)
   const { toast } = useToast()
   const { isAdminOrClubAdmin, isReferee } = useAuth()
 
@@ -187,6 +193,45 @@ export function MatchesTable() {
     // REFEREE puede gestionar sus partidos asignados
     // (TODO: agregar lógica cuando tengamos refereeId en el session)
     return isReferee
+  }
+
+  const handleLoadResult = (match: Match) => {
+    setSelectedMatch(match)
+    setResultDialogOpen(true)
+  }
+
+  const handleResultSuccess = () => {
+    fetchMatches() // Recargar la tabla
+  }
+
+  const handleChangeStatus = async (matchId: string, newStatus: string) => {
+    try {
+      setStatusLoading(matchId)
+      const response = await fetch(`/api/matches/${matchId}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus })
+      })
+
+      if (!response.ok) {
+        throw new Error("Error al cambiar estado")
+      }
+
+      toast({
+        title: "✅ Estado actualizado",
+        description: "El estado del partido ha sido actualizado"
+      })
+
+      fetchMatches()
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "❌ Error",
+        description: "No se pudo actualizar el estado"
+      })
+    } finally {
+      setStatusLoading(null)
+    }
   }
 
   if (loading) {
@@ -309,11 +354,22 @@ export function MatchesTable() {
                         {canManageMatch(match) && match.status !== "COMPLETED" && (
                           <>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem asChild>
-                              <Link href={`/dashboard/matches/${match.id}/result`}>
-                                <Edit className="mr-2 h-4 w-4" />
-                                Cargar resultado
-                              </Link>
+
+                            {match.status === "SCHEDULED" && (
+                              <DropdownMenuItem
+                                onClick={() => handleChangeStatus(match.id, "IN_PROGRESS")}
+                                disabled={statusLoading === match.id}
+                              >
+                                <Play className="mr-2 h-4 w-4" />
+                                Iniciar partido
+                              </DropdownMenuItem>
+                            )}
+
+                            <DropdownMenuItem
+                              onClick={() => handleLoadResult(match)}
+                            >
+                              <CheckCircle className="mr-2 h-4 w-4" />
+                              Cargar resultado
                             </DropdownMenuItem>
                           </>
                         )}
@@ -335,6 +391,15 @@ export function MatchesTable() {
         basePath="/dashboard/matches"
         itemName="partidos"
       />
+
+      {selectedMatch && (
+        <MatchResultDialog
+          match={selectedMatch}
+          open={resultDialogOpen}
+          onOpenChange={setResultDialogOpen}
+          onSuccess={handleResultSuccess}
+        />
+      )}
     </div>
   )
 }

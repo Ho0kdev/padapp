@@ -24,6 +24,19 @@ interface Team {
   }
 }
 
+interface TeamStats {
+  teamId: string
+  teamName: string
+  matchesPlayed: number
+  matchesWon: number
+  matchesLost: number
+  setsWon: number
+  setsLost: number
+  gamesWon: number
+  gamesLost: number
+  points: number
+}
+
 interface Zone {
   id: string
   name: string
@@ -31,6 +44,7 @@ interface Zone {
     team: Team
     position: number | null
   }>
+  standings?: TeamStats[]
 }
 
 interface GroupsVisualizationProps {
@@ -139,31 +153,78 @@ export function GroupsVisualization({
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
-                {zone.teams
-                  .sort((a, b) => {
-                    // Ordenar por posición si existe, sino por ID
-                    if (a.position && b.position) {
-                      return a.position - b.position
-                    }
-                    return 0
-                  })
-                  .map(({ team, position }, index) => (
-                    <div
-                      key={team.id}
-                      className="flex items-start gap-2 p-2 rounded-md hover:bg-muted/50 transition-colors"
-                    >
-                      <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-medium flex-shrink-0">
-                        {position || index + 1}
+              {zone.standings && zone.standings.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left py-2 px-2 text-xs font-medium text-muted-foreground w-8">#</th>
+                        <th className="text-left py-2 px-2 text-xs font-medium text-muted-foreground">Equipo</th>
+                        <th className="text-center py-2 px-2 text-xs font-medium text-muted-foreground w-12">PJ</th>
+                        <th className="text-center py-2 px-2 text-xs font-medium text-muted-foreground w-12">PG</th>
+                        <th className="text-center py-2 px-2 text-xs font-medium text-muted-foreground w-16">Sets</th>
+                        <th className="text-center py-2 px-2 text-xs font-medium text-muted-foreground w-12">Pts</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {zone.standings.map((stats, index) => (
+                        <tr
+                          key={stats.teamId}
+                          className="border-b last:border-0 hover:bg-muted/50 transition-colors"
+                        >
+                          <td className="py-2 px-2">
+                            <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-medium">
+                              {index + 1}
+                            </div>
+                          </td>
+                          <td className="py-2 px-2">
+                            <p className="text-sm font-medium truncate">
+                              {stats.teamName}
+                            </p>
+                          </td>
+                          <td className="text-center py-2 px-2 text-sm">
+                            {stats.matchesPlayed}
+                          </td>
+                          <td className="text-center py-2 px-2 text-sm">
+                            {stats.matchesWon}
+                          </td>
+                          <td className="text-center py-2 px-2 text-sm text-muted-foreground">
+                            {stats.setsWon}-{stats.setsLost}
+                          </td>
+                          <td className="text-center py-2 px-2 text-sm font-semibold">
+                            {stats.points}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {zone.teams
+                    .sort((a, b) => {
+                      if (a.position && b.position) {
+                        return a.position - b.position
+                      }
+                      return 0
+                    })
+                    .map(({ team, position }, index) => (
+                      <div
+                        key={team.id}
+                        className="flex items-start gap-2 p-2 rounded-md hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-medium flex-shrink-0">
+                          {position || index + 1}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">
+                            {getTeamDisplay(team)}
+                          </p>
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">
-                          {getTeamDisplay(team)}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-              </div>
+                    ))}
+                </div>
+              )}
               <div className="mt-3 pt-3 border-t">
                 <p className="text-xs text-muted-foreground">
                   {zone.teams.length} equipo{zone.teams.length !== 1 ? 's' : ''}
