@@ -102,14 +102,15 @@ export const tournamentFilterSchema = z.object({
 
 export type TournamentFilters = z.infer<typeof tournamentFilterSchema>
 
+//TODO: mp23530 se inhabilitan los tipos de torneo no probados
 // Opciones para los selects del formulario
 export const tournamentTypeOptions = [
-  { value: "SINGLE_ELIMINATION", label: "Eliminación Simple" },
-  { value: "DOUBLE_ELIMINATION", label: "Eliminación Doble" },
-  { value: "ROUND_ROBIN", label: "Todos contra Todos" },
-  { value: "SWISS", label: "Sistema Suizo" },
+  // { value: "SINGLE_ELIMINATION", label: "Eliminación Simple" },
+  // { value: "DOUBLE_ELIMINATION", label: "Eliminación Doble" },
+  // { value: "ROUND_ROBIN", label: "Todos contra Todos" },
+  // { value: "SWISS", label: "Sistema Suizo" },
   { value: "GROUP_STAGE_ELIMINATION", label: "Grupos + Eliminatoria" },
-  { value: "AMERICANO", label: "Americano (Parejas Fijas)" },
+  // { value: "AMERICANO", label: "Americano (Parejas Fijas)" },
   { value: "AMERICANO_SOCIAL", label: "Americano Social (Pools con Rotación)" },
 ] as const
 
