@@ -41,7 +41,8 @@ import {
   UserPlus,
   UsersRound,
   Medal,
-  Building
+  Building,
+  Swords
 } from "lucide-react"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
@@ -97,6 +98,19 @@ interface SystemLog {
       name: string
     }
   }
+  match?: {
+    matchNumber: number
+    phaseType: string
+    team1?: {
+      name: string
+    }
+    team2?: {
+      name: string
+    }
+    tournament: {
+      name: string
+    }
+  }
 }
 
 const moduleIcons = {
@@ -107,7 +121,8 @@ const moduleIcons = {
   rankings: Medal,
   users: Users,
   registrations: UserPlus,
-  teams: UsersRound
+  teams: UsersRound,
+  matches: Swords
 }
 
 const moduleLabels = {
@@ -118,7 +133,8 @@ const moduleLabels = {
   rankings: "Rankings",
   users: "Usuarios",
   registrations: "Inscripciones",
-  teams: "Equipos"
+  teams: "Equipos",
+  matches: "Partidos"
 }
 
 const actionIcons: Record<string, any> = {
@@ -181,6 +197,14 @@ const actionIcons: Record<string, any> = {
   TEAM_STATUS_CHANGED: PlayCircle,
   TEAM_CONFIRMED: PlayCircle,
 
+  // Partidos
+  MATCH_CREATED: Swords,
+  MATCH_UPDATED: Edit,
+  MATCH_DELETED: Trash2,
+  MATCH_RESULT_ADDED: Trophy,
+  MATCH_WINNER_PROGRESSED: PlayCircle,
+  MATCH_STATUS_CHANGED: PlayCircle,
+
   // General
   USER_ACTION: User,
 }
@@ -228,15 +252,18 @@ const actionColors: Record<string, string> = {
   TEAM_STATUS_CHANGED: "bg-orange-100 text-orange-800",
   TEAM_CONFIRMED: "bg-purple-100 text-purple-800",
 
+  // Partidos
+  MATCH_CREATED: "bg-green-100 text-green-800",
+  MATCH_UPDATED: "bg-blue-100 text-blue-800",
+  MATCH_DELETED: "bg-red-100 text-red-800",
+  MATCH_RESULT_ADDED: "bg-emerald-100 text-emerald-800",
+  MATCH_WINNER_PROGRESSED: "bg-purple-100 text-purple-800",
+  MATCH_STATUS_CHANGED: "bg-orange-100 text-orange-800",
+
   // Equipos/Usuarios
   TEAM_REGISTERED: "bg-purple-100 text-purple-800",
   TEAM_UNREGISTERED: "bg-gray-100 text-gray-800",
   USER_ACTION: "bg-yellow-100 text-yellow-800",
-
-  // Partidos
-  MATCH_CREATED: "bg-cyan-100 text-cyan-800",
-  MATCH_UPDATED: "bg-indigo-100 text-indigo-800",
-  MATCH_RESULT_ADDED: "bg-emerald-100 text-emerald-800",
 
   // Rankings específicos
   POINTS_UPDATED: "bg-blue-100 text-blue-800",
@@ -260,7 +287,7 @@ const actionLabels: Record<string, string> = {
   // Clubes
   CLUB_CREATED: "Club Creado",
   CLUB_UPDATED: "Club Actualizado",
-  CLUB_DELETED: "Club Eliminado",
+  CLUB_DELETED: "Club Desactivado",
   CLUB_STATUS_CHANGED: "Estado de Club Cambiado",
 
   // Canchas
@@ -304,6 +331,14 @@ const actionLabels: Record<string, string> = {
   TEAM_DELETED: "Equipo Eliminado",
   TEAM_STATUS_CHANGED: "Estado de Equipo Cambiado",
   TEAM_CONFIRMED: "Equipo Confirmado",
+
+  // Partidos
+  MATCH_CREATED: "Partido Creado",
+  MATCH_UPDATED: "Partido Actualizado",
+  MATCH_DELETED: "Partido Eliminado",
+  MATCH_RESULT_ADDED: "Resultado Cargado",
+  MATCH_WINNER_PROGRESSED: "Ganador Progresado",
+  MATCH_STATUS_CHANGED: "Estado de Partido Cambiado",
 
   // General
   USER_ACTION: "Acción de Usuario",
@@ -410,6 +445,7 @@ export function SystemLogs() {
            (log.targetUser ? log.targetUser.name || log.targetUser.email : null) ||
            (log.registration ? `${log.registration.player.firstName} ${log.registration.player.lastName}` : null) ||
            (log.team ? log.team.name : null) ||
+           (log.match ? `Partido #${log.match.matchNumber}` : null) ||
            (log.player ? `${log.player.firstName} ${log.player.lastName}` : null) ||
            "-"
   }
@@ -472,6 +508,10 @@ export function SystemLogs() {
               <TabsTrigger value="rankings" className="flex items-center gap-1 flex-shrink-0">
                 <Medal className="h-3 w-3" />
                 <span className="hidden sm:inline">Rankings</span>
+              </TabsTrigger>
+              <TabsTrigger value="matches" className="flex items-center gap-1 flex-shrink-0">
+                <Swords className="h-3 w-3" />
+                <span className="hidden sm:inline">Partidos</span>
               </TabsTrigger>
             </TabsList>
           </Tabs>

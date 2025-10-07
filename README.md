@@ -240,7 +240,7 @@ padapp/
 - **Monitoreo en Tiempo Real**: Estado de torneos y actividad
 
 ### ✅ **Sistema de Logs y Auditoría**
-- **Logs Granulares**: Por cada entidad del sistema
+- **Logs Granulares**: Por cada entidad del sistema (9 módulos)
 - **Información Detallada**:
   - Acción realizada
   - Usuario responsable
@@ -253,7 +253,9 @@ padapp/
   - Clubes y Canchas
   - Categorías
   - Rankings y Puntos
-  - Acciones de Usuario
+  - Usuarios, Inscripciones, Equipos
+  - Partidos (creación, resultados, cambios)
+- **📄 [Documentación completa del sistema de logs](LOGGING_SYSTEM.md)**
 
 ### ✅ **Utilidades y Herramientas**
 - **Selector de Base de Datos**: Script para alternar entre local/remoto
@@ -1305,9 +1307,10 @@ console.log('Tournament created:', {
     - Solución: Agregado "all" a enum y lógica condicional para ignorarlo en queries
     - Aplica a status, tournamentId, categoryId
 
-### Octubre 6, 2025
-- **✅ Sistema de Logs Expandido** - Agregados logs para todos los módulos nuevos (Usuarios, Inscripciones, Equipos)
+### Octubre 7, 2025
+- **✅ Sistema de Logs Completo** - 9 módulos con logging (Usuarios, Inscripciones, Equipos, Torneos, Clubes, Canchas, Categorías, Rankings, Partidos)
 - **✅ Panel de Administración Mejorado** - Visualización completa de logs con filtros avanzados
+- **✅ Documentación LOGGING_SYSTEM.md** - Guía completa del sistema de auditoría
 
 ### Octubre 3, 2025
 - **✅ Migración de Inscripciones Completada** - Sistema desacoplado: inscripciones individuales + formación de equipos
@@ -1347,9 +1350,10 @@ Para preguntas, sugerencias o reportar problemas:
 ### 📊 Estadísticas del Proyecto
 - **26 archivos** con implementación RBAC completa
 - **9 módulos principales**: Torneos, Clubes, Usuarios, Categorías, Rankings, Inscripciones, Canchas, Pagos, Admin
+- **9 servicios de logging** con auditoría completa
 - **4 roles de usuario** con permisos granulares
 - **5 formatos de torneo implementados** (83% completado)
 - **Full TypeScript** con validaciones Zod
 - **100% validado** en backend y frontend
 
-*Última actualización: Octubre 6, 2025*
+*Última actualización: Octubre 7, 2025*

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { authorize, handleAuthError, Action, Resource, AuditLogger } from "@/lib/rbac"
 import { prisma } from "@/lib/prisma"
 import { BracketService } from "@/lib/services/bracket-service"
+import { MatchLogService } from "@/lib/services/match-log-service"
 import { z } from "zod"
 
 const matchResultSchema = z.object({
@@ -167,7 +168,7 @@ export async function POST(
       // No fallar la operación completa si la progresión falla
     }
 
-    // Registrar auditoría
+    // Registrar auditoría general
     await AuditLogger.log(
       session,
       {
@@ -183,6 +184,16 @@ export async function POST(
         }
       },
       request
+    )
+
+    // Registrar en log específico de matches
+    await MatchLogService.logMatchResultAdded(
+      {
+        userId: session.user.id,
+        matchId
+      },
+      updatedMatch,
+      validatedData
     )
 
     return NextResponse.json({

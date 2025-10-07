@@ -20,6 +20,7 @@ Sistema completo de logging y auditoría que registra automáticamente todas las
 6. **Canchas** - `CourtLog`
 7. **Categorías** - `CategoryLog`
 8. **Rankings** - `RankingLog`
+9. **Partidos** - `MatchLog`
 
 ---
 
@@ -110,6 +111,14 @@ enum LogAction {
   POINTS_CALCULATED
   SEASON_UPDATED
   MANUAL_ADJUSTMENT
+
+  // Partidos
+  MATCH_CREATED
+  MATCH_UPDATED
+  MATCH_RESULT_ADDED
+  MATCH_WINNER_PROGRESSED
+  MATCH_DELETED
+  MATCH_STATUS_CHANGED
 
   // General
   USER_ACTION
@@ -240,6 +249,36 @@ TeamLogService.getLogStats(days)
 **Utilizado en**:
 - Implementado pero pendiente de integración en endpoints API
 
+### 9. MatchLogService
+
+**Ubicación**: `src/lib/services/match-log-service.ts`
+
+**Utilizado en**:
+- `src/app/api/matches/[id]/result/route.ts` (POST)
+- `src/app/api/admin/logs/route.ts` (GET)
+
+**Métodos**:
+```typescript
+// Logs específicos
+MatchLogService.logMatchCreated(context, matchData)
+MatchLogService.logMatchUpdated(context, oldData, newData)
+MatchLogService.logMatchResultAdded(context, matchData, resultData)
+MatchLogService.logMatchDeleted(context, matchData)
+MatchLogService.logMatchStatusChanged(context, matchData, oldStatus, newStatus)
+
+// Consultas
+MatchLogService.getMatchLogs(matchId, limit)
+MatchLogService.getRecentLogs(limit)
+MatchLogService.getLogStats(days)
+```
+
+**Características**:
+- Registra creación y actualización de partidos
+- Tracking de cambios de horario, cancha y árbitro
+- Log detallado de resultados con score y ganador
+- Metadata con información del torneo y fase
+- Detección automática de cambios importantes
+
 ---
 
 ## 🔌 Integración en Endpoints
@@ -290,8 +329,12 @@ export async function POST(request: NextRequest) {
 - ✅ `PUT /api/teams/[id]` - logTeamUpdated + logTeamStatusChanged
 - ✅ `DELETE /api/teams/[id]` - logTeamDeleted
 
+#### Partidos
+- ✅ `POST /api/matches/[id]/result` - logMatchResultAdded
+
 #### Otros Módulos
-- ✅ Torneos, Clubes, Canchas, Categorías, Rankings (ya implementados previamente)
+- ✅ Torneos, Clubes, Canchas, Categorías, Rankings (servicios implementados)
+- ⏳ Integración pendiente en algunos endpoints para Clubes, Canchas, Categorías y Rankings
 
 ---
 
@@ -315,6 +358,7 @@ export async function POST(request: NextRequest) {
    - Canchas
    - Categorías
    - Rankings
+   - Partidos
 
 2. **Búsqueda por Texto**:
    - Descripción
@@ -370,7 +414,7 @@ GET /api/admin/logs?module={module}&limit={limit}
 ```
 
 Parámetros:
-- `module`: all, users, registrations, teams, tournaments, clubs, courts, categories, rankings
+- `module`: all, users, registrations, teams, tournaments, clubs, courts, categories, rankings, matches
 - `limit`: número de registros (default: 100)
 
 Respuesta:
@@ -592,13 +636,16 @@ Agregar el módulo a:
 
 ## ✅ Checklist de Implementación
 
-- [x] Modelos de log en Prisma (UserLog, RegistrationLog, TeamLog, etc.)
-- [x] Servicios de logging (8 servicios)
-- [x] Integración en endpoints API (usuarios, inscripciones, equipos)
-- [x] Panel de administración con filtros
+- [x] Modelos de log en Prisma (UserLog, RegistrationLog, TeamLog, MatchLog, etc.)
+- [x] Servicios de logging (9 servicios implementados)
+- [x] Integración en endpoints API (usuarios, inscripciones, equipos, partidos)
+- [x] Panel de administración con filtros (9 módulos)
 - [x] Sanitización de datos sensibles
 - [x] Índices de base de datos para performance
 - [x] Documentación completa
+- [x] MatchLogService integrado en endpoint de resultados
+- [x] Módulo "Partidos" agregado al panel de administración
+- [ ] Integración pendiente en endpoints de Clubes, Canchas, Categorías y Rankings
 
 ---
 

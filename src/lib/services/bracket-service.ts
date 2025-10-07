@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma"
 import { TournamentType, PhaseType, MatchStatus } from "@prisma/client"
+import { MatchLogService } from "./match-log-service"
 
 interface TeamData {
   id: string
