@@ -300,8 +300,10 @@ export function TeamsTable() {
       <DataTablePagination
         currentPage={pagination.page}
         totalPages={pagination.totalPages}
-        totalItems={pagination.total}
+        total={pagination.total}
         itemsPerPage={pagination.limit}
+        basePath="/dashboard/teams"
+        itemName="equipos"
       />
 
       {/* Dialog de confirmación de eliminación */}

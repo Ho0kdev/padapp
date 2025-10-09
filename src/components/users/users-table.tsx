@@ -399,7 +399,7 @@ export function UsersTable() {
                       <TableCell>
                         <div className="flex items-center space-x-3">
                           <Avatar className="h-10 w-10">
-                            <AvatarImage src={user.player?.profileImageUrl} />
+                            <AvatarImage src={(user.player as any)?.profileImageUrl} />
                             <AvatarFallback>{getUserInitials(user)}</AvatarFallback>
                           </Avatar>
                           <div>
@@ -446,7 +446,7 @@ export function UsersTable() {
                       <TableCell>
                         {activeTournaments.length > 0 ? (
                           <div className="space-y-1">
-                            {activeTournaments.slice(0, 2).map((tournament, i) => (
+                            {activeTournaments.slice(0, 2).map((tournament: any, i: number) => (
                               <Badge key={i} variant="outline" className="text-xs">
                                 {tournament}
                               </Badge>
@@ -553,7 +553,7 @@ export function UsersTable() {
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
-              disabled={userToDelete && getActiveTournaments(userToDelete).length > 0}
+              disabled={userToDelete ? getActiveTournaments(userToDelete).length > 0 : false}
               className="bg-red-600 hover:bg-red-700"
             >
               Desactivar

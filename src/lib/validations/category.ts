@@ -10,7 +10,7 @@ export const categoryFormSchema = z.object({
     "GENDER",
     "MIXED"
   ], {
-    required_error: "El tipo de categoría es requerido"
+    message: "El tipo de categoría es requerido"
   }),
   level: z.union([
     z.string().transform((val) => val === "" ? undefined : parseInt(val, 10)),

@@ -68,7 +68,7 @@ export default async function EditUserPage({ params }: Props) {
 
   // Transformar datos para el formulario
   // Dividir el nombre completo en firstName y lastName si el jugador no tiene valores
-  const nameParts = user.name.split(' ')
+  const nameParts = (user.name || '').split(' ')
   const userFirstName = user.player?.firstName || nameParts[0] || ''
   const userLastName = user.player?.lastName || nameParts.slice(1).join(' ') || ''
 
@@ -104,7 +104,7 @@ export default async function EditUserPage({ params }: Props) {
         </div>
 
         <UserForm
-          initialData={initialData}
+          initialData={initialData as any}
           userId={user.id}
         />
       </div>

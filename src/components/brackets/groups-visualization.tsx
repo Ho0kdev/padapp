@@ -81,7 +81,7 @@ export function GroupsVisualization({
       // Filtrar duplicados por ID
       const uniqueZones = Array.from(
         new Map(data.zones?.map((zone: Zone) => [zone.id, zone])).values()
-      )
+      ) as Zone[]
 
       setZones(uniqueZones)
     } catch (err) {

@@ -9,6 +9,11 @@ async function main() {
 
   // Limpiar datos existentes para evitar conflictos
   console.log('🗑️ Limpiando datos existentes...')
+  await prisma.americanoPoolMatchSet.deleteMany()
+  await prisma.americanoPoolMatch.deleteMany()
+  await prisma.americanoPoolPlayer.deleteMany()
+  await prisma.americanoPool.deleteMany()
+  await prisma.americanoGlobalRanking.deleteMany()
   await prisma.tournamentLog.deleteMany()
   await prisma.clubLog.deleteMany()
   await prisma.courtLog.deleteMany()
@@ -20,8 +25,9 @@ async function main() {
   await prisma.match.deleteMany()
   await prisma.zoneTeam.deleteMany()
   await prisma.tournamentZone.deleteMany()
-  await prisma.teamPayment.deleteMany()
+  await prisma.registrationPayment.deleteMany()
   await prisma.team.deleteMany()
+  await prisma.registration.deleteMany()
   await prisma.tournamentCategory.deleteMany()
   await prisma.tournamentClub.deleteMany()
   await prisma.tournament.deleteMany()
@@ -701,17 +707,33 @@ async function main() {
 
       // Crear equipos para categoría A
       if (femalePlayersA.length >= 4 && weFemeninoACat) {
-        await prisma.team.create({
+        // Crear registrations primero
+        const reg1 = await prisma.registration.create({
           data: {
             tournamentId: activeTournament.id,
             categoryId: weFemeninoACat.id,
-            name: 'Power Queens',
-            player1Id: femalePlayersA[0].id,
-            player2Id: femalePlayersA[1].id,
+            playerId: femalePlayersA[0].id,
             registrationStatus: 'PAID',
-            payments: {
+            payment: {
               create: {
-                amount: 30000,
+                amount: 15000,
+                paymentStatus: 'PAID',
+                paymentMethod: 'transferencia',
+                paidAt: new Date(),
+              }
+            }
+          }
+        })
+
+        const reg2 = await prisma.registration.create({
+          data: {
+            tournamentId: activeTournament.id,
+            categoryId: weFemeninoACat.id,
+            playerId: femalePlayersA[1].id,
+            registrationStatus: 'PAID',
+            payment: {
+              create: {
+                amount: 15000,
                 paymentStatus: 'PAID',
                 paymentMethod: 'transferencia',
                 paidAt: new Date(),
@@ -724,24 +746,71 @@ async function main() {
           data: {
             tournamentId: activeTournament.id,
             categoryId: weFemeninoACat.id,
-            name: 'Las Invencibles',
-            player1Id: femalePlayersA[2].id,
-            player2Id: femalePlayersA[3].id,
+            name: 'Power Queens',
+            registration1Id: reg1.id,
+            registration2Id: reg2.id,
+            status: 'CONFIRMED',
+          }
+        })
+
+        const reg3 = await prisma.registration.create({
+          data: {
+            tournamentId: activeTournament.id,
+            categoryId: weFemeninoACat.id,
+            playerId: femalePlayersA[2].id,
             registrationStatus: 'CONFIRMED',
+          }
+        })
+
+        const reg4 = await prisma.registration.create({
+          data: {
+            tournamentId: activeTournament.id,
+            categoryId: weFemeninoACat.id,
+            playerId: femalePlayersA[3].id,
+            registrationStatus: 'CONFIRMED',
+          }
+        })
+
+        await prisma.team.create({
+          data: {
+            tournamentId: activeTournament.id,
+            categoryId: weFemeninoACat.id,
+            name: 'Las Invencibles',
+            registration1Id: reg3.id,
+            registration2Id: reg4.id,
+            status: 'CONFIRMED',
           }
         })
       }
 
       // Crear equipos para categoría B
       if (femalePlayersB.length >= 2 && weFemeninoBCat) {
+        const regB1 = await prisma.registration.create({
+          data: {
+            tournamentId: activeTournament.id,
+            categoryId: weFemeninoBCat.id,
+            playerId: femalePlayersB[0].id,
+            registrationStatus: 'CONFIRMED',
+          }
+        })
+
+        const regB2 = await prisma.registration.create({
+          data: {
+            tournamentId: activeTournament.id,
+            categoryId: weFemeninoBCat.id,
+            playerId: femalePlayersB[1].id,
+            registrationStatus: 'CONFIRMED',
+          }
+        })
+
         await prisma.team.create({
           data: {
             tournamentId: activeTournament.id,
             categoryId: weFemeninoBCat.id,
             name: 'Nuevas Promesas',
-            player1Id: femalePlayersB[0].id,
-            player2Id: femalePlayersB[1].id,
-            registrationStatus: 'CONFIRMED',
+            registration1Id: regB1.id,
+            registration2Id: regB2.id,
+            status: 'CONFIRMED',
           }
         })
       }
@@ -791,14 +860,37 @@ async function main() {
         const teams = []
         for (let i = 0; i < 8; i += 2) {
           if (i + 1 < malePlayersForStats.length) {
+            // Crear registrations primero
+            const reg1Stats = await prisma.registration.create({
+              data: {
+                tournamentId: statsTournament.id,
+                categoryId: statsCategory.id,
+                playerId: malePlayersForStats[i].id,
+                registrationStatus: 'CONFIRMED'
+              }
+            })
+
+            const reg2Stats = await prisma.registration.create({
+              data: {
+                tournamentId: statsTournament.id,
+                categoryId: statsCategory.id,
+                playerId: malePlayersForStats[i + 1].id,
+                registrationStatus: 'CONFIRMED'
+              }
+            })
+
             const team = await prisma.team.create({
               data: {
                 tournamentId: statsTournament.id,
                 categoryId: statsCategory.id,
-                player1Id: malePlayersForStats[i].id,
-                player2Id: malePlayersForStats[i + 1].id,
+                registration1Id: reg1Stats.id,
+                registration2Id: reg2Stats.id,
                 name: `${malePlayersForStats[i].firstName} & ${malePlayersForStats[i + 1].firstName}`,
-                registrationStatus: 'CONFIRMED'
+                status: 'CONFIRMED'
+              },
+              include: {
+                registration1: { include: { player: true } },
+                registration2: { include: { player: true } }
               }
             })
             teams.push(team)
@@ -811,7 +903,7 @@ async function main() {
 
         let playerIndex = 0
         for (const team of teams) {
-          for (const playerId of [team.player1Id, team.player2Id]) {
+          for (const playerId of [team.registration1.playerId, team.registration2.playerId]) {
             const position = shuffledPositions[playerIndex] || playerIndex + 1
 
             // Generar estadísticas basadas en la posición

@@ -46,7 +46,7 @@ export function ClubForm({ initialData, clubId }: ClubFormProps) {
   const router = useRouter()
 
   const form = useForm<ClubEditData>({
-    resolver: zodResolver(clubId ? clubEditSchema : clubFormSchema),
+    resolver: zodResolver(clubId ? clubEditSchema : clubFormSchema) as any,
     defaultValues: {
       name: initialData?.name || "",
       description: initialData?.description || "",
@@ -63,7 +63,7 @@ export function ClubForm({ initialData, clubId }: ClubFormProps) {
       logoUrl: initialData?.logoUrl || "",
       // Solo incluir status para creación (cuando no hay clubId)
       ...(clubId ? {} : { status: initialData?.status || "ACTIVE" })
-    }
+    } as any
   })
 
   const onSubmit = async (data: ClubEditData | ClubFormData) => {

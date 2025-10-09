@@ -61,7 +61,7 @@ export function CourtForm({ initialData, courtId, clubId, clubName }: CourtFormP
   const router = useRouter()
 
   const form = useForm<CourtEditData | CourtFormData>({
-    resolver: zodResolver(courtId ? courtEditSchema : courtFormSchema),
+    resolver: zodResolver(courtId ? courtEditSchema : courtFormSchema) as any,
     defaultValues: {
       name: initialData?.name || "",
       surface: initialData?.surface || "CONCRETE",
@@ -75,7 +75,7 @@ export function CourtForm({ initialData, courtId, clubId, clubName }: CourtFormP
       notes: initialData?.notes || "",
       // Solo incluir clubId para creación
       ...(courtId ? {} : { clubId })
-    }
+    } as any
   })
 
   const onSubmit = async (data: CourtEditData | CourtFormData) => {

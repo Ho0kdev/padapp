@@ -207,7 +207,7 @@ export function AdminTournamentsDashboard({ stats }: AdminTournamentsDashboardPr
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={({ label, percent }) => `${label} ${(percent * 100).toFixed(0)}%`}
+                      label={({ label, percent }: any) => `${label} ${(percent * 100).toFixed(0)}%`}
                       outerRadius={80}
                       fill="#8884d8"
                       dataKey="count"
@@ -292,8 +292,12 @@ export function AdminTournamentsDashboard({ stats }: AdminTournamentsDashboardPr
                     <Tooltip />
                     <Bar
                       dataKey="count"
-                      fill={(entry: any) => entry.color}
-                    />
+                      fill="#8884d8"
+                    >
+                      {statusStatsWithLabels.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>

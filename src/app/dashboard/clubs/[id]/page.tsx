@@ -141,7 +141,7 @@ export default async function ClubDetailPage({ params }: ClubDetailPageProps) {
 
   return (
     <DashboardLayout>
-      <ClubDetail club={club} currentUserId={session.user.id} />
+      <ClubDetail club={club as any} currentUserId={session.user.id} />
     </DashboardLayout>
   )
 }

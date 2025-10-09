@@ -50,12 +50,12 @@ export default async function EditCategoryPage({ params }: EditCategoryPageProps
     name: category.name,
     description: category.description || undefined,
     type: category.type,
-    level: category.level,
-    minAge: category.minAge,
-    maxAge: category.maxAge,
+    level: category.level ?? undefined,
+    minAge: category.minAge ?? undefined,
+    maxAge: category.maxAge ?? undefined,
     genderRestriction: category.genderRestriction || undefined,
-    minRankingPoints: category.minRankingPoints,
-    maxRankingPoints: category.maxRankingPoints,
+    minRankingPoints: category.minRankingPoints ?? undefined,
+    maxRankingPoints: category.maxRankingPoints ?? undefined,
     isActive: category.isActive,
   }
 

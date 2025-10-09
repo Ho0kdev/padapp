@@ -22,7 +22,7 @@ async function getRanking(id: string) {
               email: true
             }
           },
-          team1Memberships: {
+          registrations: {
             include: {
               tournament: {
                 select: {
@@ -37,37 +37,6 @@ async function getRanking(id: string) {
                 select: {
                   id: true,
                   name: true
-                }
-              },
-              player2: {
-                select: {
-                  firstName: true,
-                  lastName: true
-                }
-              }
-            }
-          },
-          team2Memberships: {
-            include: {
-              tournament: {
-                select: {
-                  id: true,
-                  name: true,
-                  status: true,
-                  tournamentStart: true,
-                  tournamentEnd: true
-                }
-              },
-              category: {
-                select: {
-                  id: true,
-                  name: true
-                }
-              },
-              player1: {
-                select: {
-                  firstName: true,
-                  lastName: true
                 }
               }
             }
@@ -94,20 +63,12 @@ async function getRanking(id: string) {
     lastUpdated: ranking.lastUpdated.toISOString(),
     player: {
       ...ranking.player,
-      team1Memberships: ranking.player.team1Memberships.map(team => ({
-        ...team,
+      registrations: ranking.player.registrations.map(reg => ({
+        ...reg,
         tournament: {
-          ...team.tournament,
-          tournamentStart: team.tournament.tournamentStart.toISOString(),
-          tournamentEnd: team.tournament.tournamentEnd ? team.tournament.tournamentEnd.toISOString() : null
-        }
-      })),
-      team2Memberships: ranking.player.team2Memberships.map(team => ({
-        ...team,
-        tournament: {
-          ...team.tournament,
-          tournamentStart: team.tournament.tournamentStart.toISOString(),
-          tournamentEnd: team.tournament.tournamentEnd ? team.tournament.tournamentEnd.toISOString() : null
+          ...reg.tournament,
+          tournamentStart: reg.tournament.tournamentStart.toISOString(),
+          tournamentEnd: reg.tournament.tournamentEnd ? reg.tournament.tournamentEnd.toISOString() : null
         }
       }))
     }
@@ -130,7 +91,7 @@ export default async function RankingDetailPage({ params }: RankingDetailPagePro
 
   return (
     <DashboardLayout>
-      <RankingDetail ranking={ranking} currentUserId={session.user.id} />
+      <RankingDetail ranking={ranking as any} currentUserId={session.user.id} />
     </DashboardLayout>
   )
 }

@@ -196,9 +196,10 @@ export function BracketVisualization({
 
     if (team.name) return team.name
 
-    // @ts-expect-error - team might have registration1/registration2 with nested players
-    if (team.registration1?.player && team.registration2?.player) {
-      return `${team.registration1.player.firstName} ${team.registration1.player.lastName} / ${team.registration2.player.firstName} ${team.registration2.player.lastName}`
+    if ((team as any).registration1?.player && (team as any).registration2?.player) {
+      const reg1 = (team as any).registration1
+      const reg2 = (team as any).registration2
+      return `${reg1.player.firstName} ${reg1.player.lastName} / ${reg2.player.firstName} ${reg2.player.lastName}`
     }
 
     return "Equipo sin nombre"

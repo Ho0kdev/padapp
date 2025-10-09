@@ -41,7 +41,7 @@ export async function GET(
                 currentPoints: 'desc'
               }
             },
-            team1Memberships: {
+            registrations: {
               include: {
                 tournament: {
                   select: {
@@ -56,41 +56,21 @@ export async function GET(
                 category: {
                   select: {
                     id: true,
-                    name: true
-                  }
-                },
-                player2: {
-                  select: {
-                    id: true,
-                    firstName: true,
-                    lastName: true
-                  }
-                }
-              }
-            },
-            team2Memberships: {
-              include: {
-                tournament: {
-                  select: {
-                    id: true,
                     name: true,
-                    status: true,
                     type: true,
-                    tournamentStart: true,
-                    tournamentEnd: true
+                    genderRestriction: true,
+                    minAge: true,
+                    maxAge: true,
+                    minRankingPoints: true,
+                    maxRankingPoints: true
                   }
                 },
-                category: {
+                payment: {
                   select: {
                     id: true,
-                    name: true
-                  }
-                },
-                player1: {
-                  select: {
-                    id: true,
-                    firstName: true,
-                    lastName: true
+                    amount: true,
+                    paymentStatus: true,
+                    paidAt: true
                   }
                 }
               }
@@ -102,12 +82,6 @@ export async function GET(
                     id: true,
                     name: true,
                     status: true
-                  }
-                },
-                category: {
-                  select: {
-                    id: true,
-                    name: true
                   }
                 }
               }
@@ -252,7 +226,7 @@ export async function PUT(
 
     // Check if user is being deactivated and has active tournaments
     if (status === 'INACTIVE' && existingUser.status === 'ACTIVE') {
-      const activeTournaments = []
+      const activeTournaments: string[] = []
 
       // Check player registrations
       if (existingUser.player) {
@@ -493,8 +467,15 @@ export async function DELETE(
       include: {
         player: {
           include: {
-            team1Memberships: true,
-            team2Memberships: true
+            registrations: {
+              include: {
+                tournament: {
+                  select: {
+                    status: true
+                  }
+                }
+              }
+            }
           }
         },
         organizerTournaments: true
@@ -520,15 +501,14 @@ export async function DELETE(
       )
     }
 
-    // Check if player has active team memberships
-    const activeTeams = [
-      ...user.player?.team1Memberships || [],
-      ...user.player?.team2Memberships || []
-    ]
+    // Check if player has active registrations
+    const activeRegistrations = user.player?.registrations?.filter(
+      r => r.tournament.status !== 'CANCELLED' && r.tournament.status !== 'COMPLETED'
+    ) || []
 
-    if (activeTeams.length > 0) {
+    if (activeRegistrations.length > 0) {
       return NextResponse.json(
-        { error: 'No se puede eliminar un usuario con equipos activos' },
+        { error: 'No se puede eliminar un usuario con inscripciones activas en torneos' },
         { status: 400 }
       )
     }

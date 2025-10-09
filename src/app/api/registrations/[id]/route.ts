@@ -297,7 +297,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Datos inválidos", details: error.errors },
+        { error: "Datos inválidos", details: error.issues },
         { status: 400 }
       )
     }
@@ -420,7 +420,7 @@ async function handleTeamUpdate(
 
   // Separar datos de Team vs Registrations
   const teamUpdateData: Partial<{ name: string; seed: number; notes: string }> = {}
-  const registrationUpdateData: Partial<{ registrationStatus: string }> = {}
+  const registrationUpdateData: Partial<{ registrationStatus: 'PENDING' | 'CONFIRMED' | 'PAID' | 'CANCELLED' | 'WAITLIST' }> = {}
 
   if (validatedData.name !== undefined) {
     teamUpdateData.name = validatedData.name
@@ -534,7 +534,7 @@ async function handleIndividualRegistrationUpdate(
   }
 
   // Preparar datos de actualización (solo campos permitidos para Registration)
-  const updateData: Partial<{ registrationStatus: string; notes: string }> = {}
+  const updateData: Partial<{ registrationStatus: 'PENDING' | 'CONFIRMED' | 'PAID' | 'CANCELLED' | 'WAITLIST'; notes: string }> = {}
 
   if (validatedData.registrationStatus) {
     updateData.registrationStatus = validatedData.registrationStatus

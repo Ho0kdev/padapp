@@ -53,7 +53,7 @@ export function CategoryForm({ initialData, categoryId }: CategoryFormProps) {
   const router = useRouter()
 
   const form = useForm<CategoryEditData | CategoryFormData>({
-    resolver: zodResolver(categoryId ? categoryEditSchema : categoryFormSchema),
+    resolver: zodResolver(categoryId ? categoryEditSchema : categoryFormSchema) as any,
     defaultValues: {
       name: initialData?.name || "",
       description: initialData?.description || "",
@@ -65,7 +65,7 @@ export function CategoryForm({ initialData, categoryId }: CategoryFormProps) {
       minRankingPoints: initialData?.minRankingPoints?.toString() ?? "",
       maxRankingPoints: initialData?.maxRankingPoints?.toString() ?? "",
       isActive: initialData?.isActive ?? true
-    }
+    } as any
   })
 
 

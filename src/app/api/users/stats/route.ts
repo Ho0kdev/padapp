@@ -102,18 +102,7 @@ export async function GET(request: NextRequest) {
             name: true
           }
         },
-        team1Memberships: {
-          include: {
-            tournament: {
-              select: {
-                id: true,
-                name: true,
-                status: true
-              }
-            }
-          }
-        },
-        team2Memberships: {
+        registrations: {
           include: {
             tournament: {
               select: {
@@ -128,10 +117,9 @@ export async function GET(request: NextRequest) {
     })
 
     const playersWithTournamentCount = activePlayers.map(player => {
-      const tournaments = new Set([
-        ...player.team1Memberships.map(t => t.tournament.id),
-        ...player.team2Memberships.map(t => t.tournament.id)
-      ])
+      const tournaments = new Set(
+        player.registrations.map(r => r.tournament.id)
+      )
 
       return {
         id: player.id,

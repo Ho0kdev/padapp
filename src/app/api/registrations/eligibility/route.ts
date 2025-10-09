@@ -118,8 +118,8 @@ export async function POST(request: NextRequest) {
       where: {
         tournamentId: validatedData.tournamentId,
         categoryId: validatedData.categoryId,
-        registrationStatus: {
-          in: ['PENDING', 'CONFIRMED', 'PAID']
+        status: {
+          in: ['DRAFT', 'CONFIRMED']
         }
       }
     })
@@ -192,18 +192,18 @@ export async function POST(request: NextRequest) {
         OR: [
           {
             AND: [
-              { player1Id: validatedData.player1Id },
-              { player2Id: validatedData.player2Id }
+              { registration1: { playerId: validatedData.player1Id } },
+              { registration2: { playerId: validatedData.player2Id } }
             ]
           },
           {
             AND: [
-              { player1Id: validatedData.player2Id },
-              { player2Id: validatedData.player1Id }
+              { registration1: { playerId: validatedData.player2Id } },
+              { registration2: { playerId: validatedData.player1Id } }
             ]
           }
         ],
-        registrationStatus: {
+        status: {
           not: 'CANCELLED'
         }
       }
@@ -220,10 +220,10 @@ export async function POST(request: NextRequest) {
         tournamentId: validatedData.tournamentId,
         categoryId: validatedData.categoryId,
         OR: [
-          { player1Id: validatedData.player1Id },
-          { player2Id: validatedData.player1Id }
+          { registration1: { playerId: validatedData.player1Id } },
+          { registration2: { playerId: validatedData.player1Id } }
         ],
-        registrationStatus: {
+        status: {
           not: 'CANCELLED'
         }
       }
@@ -234,10 +234,10 @@ export async function POST(request: NextRequest) {
         tournamentId: validatedData.tournamentId,
         categoryId: validatedData.categoryId,
         OR: [
-          { player1Id: validatedData.player2Id },
-          { player2Id: validatedData.player2Id }
+          { registration1: { playerId: validatedData.player2Id } },
+          { registration2: { playerId: validatedData.player2Id } }
         ],
-        registrationStatus: {
+        status: {
           not: 'CANCELLED'
         }
       }
@@ -336,7 +336,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Datos inválidos", details: error.errors },
+        { error: "Datos inválidos", details: error.issues },
         { status: 400 }
       )
     }

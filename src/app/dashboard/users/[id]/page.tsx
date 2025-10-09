@@ -4,9 +4,9 @@ import { DashboardLayout } from '@/components/layout/dashboard-layout'
 import { UserDetail } from '@/components/users/user-detail'
 
 interface Props {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export const metadata: Metadata = {
@@ -145,7 +145,7 @@ export default async function UserPage({ params }: Props) {
 
   return (
     <DashboardLayout>
-      <UserDetail user={user} />
+      <UserDetail user={user as any} />
     </DashboardLayout>
   )
 }

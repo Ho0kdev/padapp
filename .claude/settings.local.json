@@ -3,7 +3,9 @@
     "allow": [
       "Bash(git reset:*)",
       "Bash(cat:*)",
-      "Bash(npx prisma:*)"
+      "Bash(npx prisma:*)",
+      "Bash(npm run build:*)",
+      "Bash(timeout 180 npm run build)"
     ],
     "deny": [],
     "ask": []

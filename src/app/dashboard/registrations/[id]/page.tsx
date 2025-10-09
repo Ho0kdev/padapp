@@ -98,7 +98,7 @@ export default async function RegistrationDetailPage({ params }: RegistrationDet
 
   return (
     <DashboardLayout>
-      <RegistrationDetail registration={registration} />
+      <RegistrationDetail registration={registration as any} />
     </DashboardLayout>
   )
 }

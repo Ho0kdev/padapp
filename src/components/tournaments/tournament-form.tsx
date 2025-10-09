@@ -103,7 +103,7 @@ export function TournamentForm({
   }, [])
 
   const form = useForm({
-    resolver: zodResolver(tournamentFormSchema),
+    resolver: zodResolver(tournamentFormSchema) as any,
     defaultValues,
   })
 
@@ -135,7 +135,7 @@ export function TournamentForm({
           : undefined
       }
 
-      form.reset(formData)
+      form.reset(formData as any)
     }
   }, [initialData, form, defaultValues])
 
@@ -163,7 +163,7 @@ export function TournamentForm({
         })
 
         // Actualizar la referencia del club principal anterior
-        previousMainClubIdRef.current = newMainClubId
+        previousMainClubIdRef.current = newMainClubId ?? null
       }
     })
     return () => subscription.unsubscribe()

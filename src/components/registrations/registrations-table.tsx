@@ -435,7 +435,7 @@ export function RegistrationsTable() {
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
-              disabled={registrationToDelete && ['IN_PROGRESS', 'COMPLETED'].includes(registrationToDelete.tournament.status)}
+              disabled={registrationToDelete ? ['IN_PROGRESS', 'COMPLETED'].includes(registrationToDelete.tournament.status) : false}
               className="bg-red-600 hover:bg-red-700"
             >
               Eliminar

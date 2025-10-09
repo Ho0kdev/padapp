@@ -218,7 +218,7 @@ export function GroupStandings({
                           <TableCell className="font-medium">
                             {index + 1}
                             {isClassified && (
-                              <Badge variant="success" className="ml-1 text-xs">
+                              <Badge variant="default" className="ml-1 text-xs bg-green-100 text-green-800">
                                 ✓
                               </Badge>
                             )}

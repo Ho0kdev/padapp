@@ -57,7 +57,7 @@ interface RankingWithDetails {
       name: string
       email: string
     }
-    team1Memberships: {
+    registrations: {
       id: string
       tournament: {
         id: string
@@ -69,28 +69,6 @@ interface RankingWithDetails {
       category: {
         id: string
         name: string
-      }
-      player2: {
-        firstName: string
-        lastName: string
-      }
-    }[]
-    team2Memberships: {
-      id: string
-      tournament: {
-        id: string
-        name: string
-        status: string
-        tournamentStart: string
-        tournamentEnd?: string | null
-      }
-      category: {
-        id: string
-        name: string
-      }
-      player1: {
-        firstName: string
-        lastName: string
       }
     }[]
   }
@@ -241,16 +219,12 @@ export function RankingDetail({ ranking, currentUserId }: RankingDetailProps) {
     }
   }
 
-  const allTournaments = [
-    ...ranking.player.team1Memberships.map(tm => ({
-      ...tm,
-      partner: `${tm.player2.firstName} ${tm.player2.lastName}`
-    })),
-    ...ranking.player.team2Memberships.map(tm => ({
-      ...tm,
-      partner: `${tm.player1.firstName} ${tm.player1.lastName}`
+  const allTournaments = ranking.player.registrations
+    .map(reg => ({
+      ...reg,
+      partner: 'Individual' // Registrations are individual, not team-based in this view
     }))
-  ].sort((a, b) => new Date(b.tournament.tournamentStart).getTime() - new Date(a.tournament.tournamentStart).getTime())
+    .sort((a, b) => new Date(b.tournament.tournamentStart).getTime() - new Date(a.tournament.tournamentStart).getTime())
 
   const activeTournaments = allTournaments.filter(t =>
     t.tournament.status !== "COMPLETED" && t.tournament.status !== "CANCELLED"

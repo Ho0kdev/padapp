@@ -265,9 +265,9 @@ export function ClubsTable() {
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <div className="flex-shrink-0">
-                          {club.logoUrl ? (
+                          {(club as any).logoUrl ? (
                             <img
-                              src={club.logoUrl}
+                              src={(club as any).logoUrl}
                               alt={`Logo de ${club.name}`}
                               className="h-10 w-10 rounded-full object-cover border"
                             />

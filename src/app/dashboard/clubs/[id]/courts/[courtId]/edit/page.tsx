@@ -95,8 +95,8 @@ export default async function EditCourtPage({ params }: PageProps) {
               hasConcreteWall: court.hasConcreteWall,
               hasNet4m: court.hasNet4m,
               status: court.status,
-              hourlyRate: court.hourlyRate,
-              notes: court.notes,
+              hourlyRate: court.hourlyRate ?? undefined,
+              notes: court.notes ?? undefined,
               clubId: court.clubId
             }}
             courtId={court.id}

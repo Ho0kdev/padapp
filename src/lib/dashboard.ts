@@ -247,7 +247,7 @@ export async function getRecentActivity() {
       })
     ])
 
-    const activities = []
+    const activities: any[] = []
 
     // Procesar equipos registrados
     recentTeams.forEach(team => {

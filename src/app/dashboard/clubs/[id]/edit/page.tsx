@@ -71,7 +71,7 @@ export default async function EditClubPage({ params }: EditClubPageProps) {
           </p>
         </div>
 
-        <ClubForm initialData={club} clubId={club.id} />
+        <ClubForm initialData={club as any} clubId={club.id} />
       </div>
     </DashboardLayout>
   )

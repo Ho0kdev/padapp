@@ -109,7 +109,7 @@ export async function POST(
     await AmericanoSocialService.generateAmericanoSocialPools(
       id,
       validatedData.categoryId,
-      players
+      players as any // Type assertion - service only uses player.id
     )
 
     const numPools = players.length / 4

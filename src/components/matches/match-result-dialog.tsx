@@ -43,8 +43,8 @@ const createSetSchema = (gamesToWinSet: number, tiebreakAt: number) => {
   const maxGames = gamesToWinSet + 1 // Si gamesToWinSet=6, max puede ser 7 (7-5)
 
   return z.object({
-    team1Games: z.number({ invalid_type_error: "Debe ingresar los games del equipo 1" }).int().min(0).max(maxGames, `Máximo ${maxGames} games por set`),
-    team2Games: z.number({ invalid_type_error: "Debe ingresar los games del equipo 2" }).int().min(0).max(maxGames, `Máximo ${maxGames} games por set`),
+    team1Games: z.number({ message: "Debe ingresar los games del equipo 1" }).int().min(0).max(maxGames, `Máximo ${maxGames} games por set`),
+    team2Games: z.number({ message: "Debe ingresar los games del equipo 2" }).int().min(0).max(maxGames, `Máximo ${maxGames} games por set`),
     team1TiebreakPoints: z.number().int().min(0).max(20).optional(),
     team2TiebreakPoints: z.number().int().min(0).max(20).optional(),
   }).superRefine((data, ctx) => {
@@ -157,7 +157,7 @@ const createResultSchema = (setsToWin: number, gamesToWinSet: number, tiebreakAt
   }).superRefine((data, ctx) => {
     // Validar que uno de los equipos haya ganado setsToWin sets
     // Considerar tiebreak points para determinar ganador del set
-    const team1Sets = data.sets.filter(s => {
+    const team1Sets = data.sets.filter((s: any) => {
       // Ignorar sets vacíos
       if (typeof s.team1Games !== 'number' || typeof s.team2Games !== 'number') return false
       if (s.team1Games > s.team2Games) return true
@@ -167,7 +167,7 @@ const createResultSchema = (setsToWin: number, gamesToWinSet: number, tiebreakAt
       return false
     }).length
 
-    const team2Sets = data.sets.filter(s => {
+    const team2Sets = data.sets.filter((s: any) => {
       // Ignorar sets vacíos
       if (typeof s.team1Games !== 'number' || typeof s.team2Games !== 'number') return false
       if (s.team2Games > s.team1Games) return true
@@ -188,7 +188,7 @@ const createResultSchema = (setsToWin: number, gamesToWinSet: number, tiebreakAt
   })
 }
 
-type ResultFormData = z.infer<typeof resultSchema>
+type ResultFormData = any // z.infer<typeof resultSchema> - defined dynamically in component
 
 interface Team {
   id: string
@@ -272,7 +272,7 @@ export function MatchResultDialog({
   // Calcular ganador actual basado en sets (memoizado para evitar re-cálculos)
   // Considerar tiebreak points para determinar ganador del set
   const winner = useMemo(() => {
-    const team1Sets = sets.filter(s => {
+    const team1Sets = sets.filter((s: any) => {
       // Ignorar sets vacíos
       if (typeof s.team1Games !== 'number' || typeof s.team2Games !== 'number') return false
       if (s.team1Games > s.team2Games) return true
@@ -282,7 +282,7 @@ export function MatchResultDialog({
       return false
     }).length
 
-    const team2Sets = sets.filter(s => {
+    const team2Sets = sets.filter((s: any) => {
       // Ignorar sets vacíos
       if (typeof s.team1Games !== 'number' || typeof s.team2Games !== 'number') return false
       if (s.team2Games > s.team1Games) return true
@@ -311,7 +311,7 @@ export function MatchResultDialog({
     if (currentSets.length > minSets) {
       form.setValue(
         "sets",
-        currentSets.filter((_, i) => i !== index)
+        currentSets.filter((_: any, i: number) => i !== index)
       )
     }
   }
@@ -509,10 +509,10 @@ export function MatchResultDialog({
 
       // Flujo normal para partidos jugados
       // Filtrar sets completos (que tengan valores numéricos)
-      const completeSets = data.sets.filter(s => typeof s.team1Games === 'number' && typeof s.team2Games === 'number')
+      const completeSets = data.sets.filter((s: any) => typeof s.team1Games === 'number' && typeof s.team2Games === 'number')
 
       // Determinar equipo ganador considerando tiebreak points
-      const team1Sets = completeSets.filter(s => {
+      const team1Sets = completeSets.filter((s: any) => {
         if (s.team1Games > s.team2Games) return true
         if (s.team1Games === s.team2Games && s.team1TiebreakPoints && s.team2TiebreakPoints) {
           return s.team1TiebreakPoints > s.team2TiebreakPoints
@@ -520,7 +520,7 @@ export function MatchResultDialog({
         return false
       }).length
 
-      const team2Sets = completeSets.filter(s => {
+      const team2Sets = completeSets.filter((s: any) => {
         if (s.team2Games > s.team1Games) return true
         if (s.team1Games === s.team2Games && s.team1TiebreakPoints && s.team2TiebreakPoints) {
           return s.team2TiebreakPoints > s.team1TiebreakPoints
@@ -766,12 +766,12 @@ export function MatchResultDialog({
                 <Alert variant="destructive">
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
-                    {form.formState.errors.sets.message}
+                    {String(form.formState.errors.sets.message)}
                   </AlertDescription>
                 </Alert>
               )}
 
-              {sets.map((_, index) => (
+              {sets.map((_: any, index: number) => (
                 <Card key={index}>
                   <CardContent className="pt-6">
                     <div className="space-y-4">
@@ -908,7 +908,7 @@ export function MatchResultDialog({
                 <Alert variant="destructive">
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
-                    {form.formState.errors.sets.root.message}
+                    {String(form.formState.errors.sets.root.message)}
                   </AlertDescription>
                 </Alert>
               )}

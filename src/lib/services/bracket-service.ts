@@ -105,23 +105,23 @@ export class BracketService {
     // Generar bracket según el tipo de torneo
     switch (tournament.type) {
       case TournamentType.SINGLE_ELIMINATION:
-        await this.generateSingleEliminationBracket(tournamentId, categoryId, teams)
+        await this.generateSingleEliminationBracket(tournamentId, categoryId, teams as any)
         break
 
       case TournamentType.DOUBLE_ELIMINATION:
-        await this.generateDoubleEliminationBracket(tournamentId, categoryId, teams)
+        await this.generateDoubleEliminationBracket(tournamentId, categoryId, teams as any)
         break
 
       case TournamentType.ROUND_ROBIN:
-        await this.generateRoundRobinBracket(tournamentId, categoryId, teams)
+        await this.generateRoundRobinBracket(tournamentId, categoryId, teams as any)
         break
 
       case TournamentType.GROUP_STAGE_ELIMINATION:
-        await this.generateGroupStageEliminationBracket(tournamentId, categoryId, teams)
+        await this.generateGroupStageEliminationBracket(tournamentId, categoryId, teams as any)
         break
 
       case TournamentType.AMERICANO:
-        await this.generateAmericanoBracket(tournamentId, categoryId, teams)
+        await this.generateAmericanoBracket(tournamentId, categoryId, teams as any)
         break
 
       default:

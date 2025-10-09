@@ -466,9 +466,9 @@ export function UserDetail({ user }: UserDetailProps) {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {user.player.primaryCategory
-                      ? user.player.rankings.find(r => r.category?.id === user.player.primaryCategory?.id)?.currentPoints || 0
-                      : user.player.rankingPoints
+                    {user.player?.primaryCategory
+                      ? user.player.rankings.find(r => r.category?.id === user.player?.primaryCategory?.id)?.currentPoints || 0
+                      : user.player?.rankingPoints
                     }
                   </div>
                   <p className="text-xs text-muted-foreground">
@@ -605,9 +605,9 @@ export function UserDetail({ user }: UserDetailProps) {
                           </div>
 
                           {/* Línea 2: Restricciones de la categoría */}
-                          {getCategoryRestrictionsArray(team.category).length > 0 && (
+                          {getCategoryRestrictionsArray(team.category as any).length > 0 && (
                             <div className="flex items-center gap-1 flex-wrap">
-                              {getCategoryRestrictionsArray(team.category).map((restriction, index) => (
+                              {getCategoryRestrictionsArray(team.category as any).map((restriction, index) => (
                                 <Badge
                                   key={`${restriction.type}-${index}`}
                                   variant="outline"

@@ -139,36 +139,41 @@ export async function PUT(
         newData: { status: validatedData.status },
       }, request)
     } else {
-      // Edición completa - verificar nombre duplicado
-      const duplicateCourt = await prisma.court.findFirst({
-        where: {
-          clubId,
-          name: validatedData.name,
-          id: { not: courtId }
-        }
-      })
+      // Edición completa - verificar nombre duplicado si se está cambiando el nombre
+      if ('name' in validatedData && typeof validatedData.name === 'string') {
+        const duplicateCourt = await prisma.court.findFirst({
+          where: {
+            clubId,
+            name: validatedData.name,
+            id: { not: courtId }
+          }
+        })
 
-      if (duplicateCourt) {
-        return NextResponse.json(
-          { error: "Ya existe otra cancha con ese nombre en este club" },
-          { status: 400 }
-        )
+        if (duplicateCourt) {
+          return NextResponse.json(
+            { error: "Ya existe otra cancha con ese nombre en este club" },
+            { status: 400 }
+          )
+        }
       }
+
+      // Type assertion needed because TS can't narrow the union type properly
+      const editData = validatedData as z.infer<typeof courtEditSchema>
 
       court = await prisma.court.update({
         where: { id: courtId },
         data: {
-          name: validatedData.name,
-          surface: validatedData.surface,
-          hasLighting: validatedData.hasLighting,
-          hasRoof: validatedData.hasRoof,
-          isOutdoor: validatedData.isOutdoor,
-          hasPanoramicGlass: validatedData.hasPanoramicGlass,
-          hasConcreteWall: validatedData.hasConcreteWall,
-          hasNet4m: validatedData.hasNet4m,
-          status: validatedData.status,
-          hourlyRate: validatedData.hourlyRate,
-          notes: validatedData.notes,
+          name: editData.name,
+          surface: editData.surface,
+          hasLighting: editData.hasLighting,
+          hasRoof: editData.hasRoof,
+          isOutdoor: editData.isOutdoor,
+          hasPanoramicGlass: editData.hasPanoramicGlass,
+          hasConcreteWall: editData.hasConcreteWall,
+          hasNet4m: editData.hasNet4m,
+          status: editData.status,
+          hourlyRate: editData.hourlyRate,
+          notes: editData.notes,
         },
         include: {
           club: {

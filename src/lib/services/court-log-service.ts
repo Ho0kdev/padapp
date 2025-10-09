@@ -37,7 +37,7 @@ export class CourtLogService {
 
       if (!ipAddress || !userAgent) {
         try {
-          const headersList = headers()
+          const headersList = await headers()
           ipAddress = ipAddress || headersList.get('x-forwarded-for')?.split(',')[0] ||
                      headersList.get('x-real-ip') || 'unknown'
           userAgent = userAgent || headersList.get('user-agent') || 'unknown'

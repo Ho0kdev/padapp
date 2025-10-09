@@ -3,7 +3,7 @@ import { z } from "zod"
 export const courtFormSchema = z.object({
   name: z.string().min(1, "El nombre es requerido").max(100, "El nombre no puede tener más de 100 caracteres"),
   surface: z.enum(["CONCRETE", "ARTIFICIAL_GRASS", "CERAMIC", "OTHER"], {
-    required_error: "La superficie es requerida"
+    message: "La superficie es requerida"
   }),
   hasLighting: z.boolean().default(false),
   hasRoof: z.boolean().default(false),

@@ -169,7 +169,7 @@ export default async function TournamentDetailPage({ params }: TournamentDetailP
 
   return (
     <DashboardLayout>
-      <TournamentDetail tournament={tournament} currentUserId={session.user.id} />
+      <TournamentDetail tournament={tournament as any} currentUserId={session.user.id} />
     </DashboardLayout>
   )
 }

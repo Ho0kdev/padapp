@@ -145,9 +145,6 @@ const actionIcons: Record<string, any> = {
   TOURNAMENT_STATUS_CHANGED: PlayCircle,
   TEAM_REGISTERED: User,
   TEAM_UNREGISTERED: User,
-  MATCH_CREATED: Calendar,
-  MATCH_UPDATED: Calendar,
-  MATCH_RESULT_ADDED: Calendar,
 
   // Clubes
   CLUB_CREATED: Building2,
@@ -280,9 +277,6 @@ const actionLabels: Record<string, string> = {
   TOURNAMENT_STATUS_CHANGED: "Estado de Torneo Cambiado",
   TEAM_REGISTERED: "Equipo Registrado",
   TEAM_UNREGISTERED: "Equipo Des-registrado",
-  MATCH_CREATED: "Partido Creado",
-  MATCH_UPDATED: "Partido Actualizado",
-  MATCH_RESULT_ADDED: "Resultado Agregado",
 
   // Clubes
   CLUB_CREATED: "Club Creado",

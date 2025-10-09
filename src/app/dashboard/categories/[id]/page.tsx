@@ -83,7 +83,7 @@ export default async function CategoryDetailPage({ params }: CategoryDetailPageP
 
   return (
     <DashboardLayout>
-      <CategoryDetail category={category} currentUserId={session.user.id} />
+      <CategoryDetail category={category as any} currentUserId={session.user.id} />
     </DashboardLayout>
   )
 }

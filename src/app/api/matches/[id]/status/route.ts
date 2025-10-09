@@ -6,7 +6,7 @@ import { z } from "zod"
 
 const statusSchema = z.object({
   status: z.enum(["SCHEDULED", "IN_PROGRESS", "COMPLETED", "CANCELLED", "WALKOVER"], {
-    errorMap: () => ({ message: "El status debe ser uno de: SCHEDULED, IN_PROGRESS, COMPLETED, CANCELLED, WALKOVER" })
+    message: "El status debe ser uno de: SCHEDULED, IN_PROGRESS, COMPLETED, CANCELLED, WALKOVER"
   })
 })
 

@@ -135,7 +135,7 @@ export default async function CourtDetailPage({ params }: PageProps) {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <CourtDetail court={court} currentUserId={session.user.id} />
+        <CourtDetail court={court as any} currentUserId={session.user.id} />
       </div>
     </DashboardLayout>
   )

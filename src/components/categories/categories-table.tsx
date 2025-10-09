@@ -363,9 +363,9 @@ export function CategoriesTable() {
             <AlertDialogTitle>¿Desactivar categoría?</AlertDialogTitle>
             <AlertDialogDescription>
               Esta acción desactivará la categoría "{categoryToDelete?.name}". La categoría no será eliminada pero no aparecerá en las listas activas.
-              {categoryToDelete?._count.tournamentCategories > 0 && (
+              {(categoryToDelete?._count?.tournamentCategories || 0) > 0 && (
                 <span className="block mt-2 text-red-600">
-                  No se puede desactivar esta categoría porque está siendo usada en {categoryToDelete._count.tournamentCategories} torneo(s) activos.
+                  No se puede desactivar esta categoría porque está siendo usada en {categoryToDelete?._count?.tournamentCategories} torneo(s) activos.
                 </span>
               )}
             </AlertDialogDescription>
@@ -374,7 +374,7 @@ export function CategoriesTable() {
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
-              disabled={categoryToDelete?._count.tournamentCategories > 0}
+              disabled={(categoryToDelete?._count?.tournamentCategories || 0) > 0}
               className="bg-red-600 hover:bg-red-700"
             >
               Desactivar

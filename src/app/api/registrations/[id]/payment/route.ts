@@ -7,7 +7,7 @@ const createPaymentSchema = z.object({
   amount: z.number().positive("El monto debe ser positivo"),
   paymentMethod: z.enum(["STRIPE", "CASH", "TRANSFER", "OTHER"]).default("STRIPE"),
   transactionId: z.string().optional(),
-  metadata: z.record(z.string()).optional(),
+  metadata: z.record(z.string(), z.any()).optional(),
 })
 
 interface RouteParams {
@@ -110,7 +110,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Datos inválidos", details: error.errors },
+        { error: "Datos inválidos", details: error.issues },
         { status: 400 }
       )
     }
@@ -136,9 +136,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       include: {
         registration1: {
           select: {
-            payment: {
-              orderBy: { createdAt: 'desc' }
-            }
+            payment: true
           }
         }
       }
@@ -218,13 +216,13 @@ async function handleTeamPayment(
   }
 
   // Determinar estado del pago según método
-  const paymentStatus = validatedData.paymentMethod === 'STRIPE' ? 'PENDING' : 'PAID'
+  const paymentStatus: 'PENDING' | 'PAID' = validatedData.paymentMethod === 'STRIPE' ? 'PENDING' : 'PAID'
   const paidAt = validatedData.paymentMethod !== 'STRIPE' ? new Date() : null
 
   // Crear payment para ambas registrations en una transacción
   const result = await prisma.$transaction(async (tx) => {
     // Crear payment para registration1
-    const payment1 = await tx.payment.create({
+    const payment1 = await tx.registrationPayment.create({
       data: {
         registrationId: team.registration1.id,
         amount: validatedData.amount,
@@ -236,7 +234,7 @@ async function handleTeamPayment(
     })
 
     // Crear payment para registration2 (mismo monto y datos)
-    await tx.payment.create({
+    await tx.registrationPayment.create({
       data: {
         registrationId: team.registration2.id,
         amount: validatedData.amount,
@@ -311,7 +309,7 @@ async function handleIndividualRegistrationPayment(
   }
 
   // Determinar estado del pago según método
-  const paymentStatus = validatedData.paymentMethod === 'STRIPE' ? 'PENDING' : 'PAID'
+  const paymentStatus: 'PENDING' | 'PAID' = validatedData.paymentMethod === 'STRIPE' ? 'PENDING' : 'PAID'
   const paidAt = validatedData.paymentMethod !== 'STRIPE' ? new Date() : null
 
   // Crear/actualizar payment
@@ -329,7 +327,7 @@ async function handleIndividualRegistrationPayment(
     let createdPayment
     if (registration.payment) {
       // Si ya existe, actualizar (suma el monto)
-      createdPayment = await tx.payment.update({
+      createdPayment = await tx.registrationPayment.update({
         where: { id: registration.payment.id },
         data: {
           amount: totalPaid + validatedData.amount,
@@ -339,7 +337,7 @@ async function handleIndividualRegistrationPayment(
       })
     } else {
       // Si no existe, crear
-      createdPayment = await tx.payment.create({
+      createdPayment = await tx.registrationPayment.create({
         data: paymentData
       })
     }

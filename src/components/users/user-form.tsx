@@ -92,10 +92,9 @@ export function UserForm({ initialData, userId }: UserFormProps) {
   const isEditing = !!userId
 
   const form = useForm<UserFormValues>({
-    resolver: zodResolver(userFormSchema),
+    resolver: zodResolver(userFormSchema) as any,
     defaultValues: {
       email: initialData?.email || '',
-      name: initialData?.name || '',
       password: initialData?.password || '',
       role: initialData?.role || 'PLAYER',
       status: initialData?.status || 'ACTIVE',

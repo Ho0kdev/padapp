@@ -41,7 +41,7 @@ export class TournamentLogService {
 
       if (!ipAddress || !userAgent) {
         try {
-          const headersList = headers()
+          const headersList = await headers()
           ipAddress = ipAddress || headersList.get('x-forwarded-for')?.split(',')[0] ||
                      headersList.get('x-real-ip') || 'unknown'
           userAgent = userAgent || headersList.get('user-agent') || 'unknown'
@@ -156,7 +156,7 @@ export class TournamentLogService {
       metadata: {
         tournamentName: tournamentData.name,
         statusTransition: `${oldStatus} → ${newStatus}`,
-        automatic: context.metadata?.automatic || false
+        automatic: (context as any).metadata?.automatic || false
       }
     })
   }

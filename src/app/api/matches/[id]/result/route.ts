@@ -17,7 +17,7 @@ const matchResultSchema = z.object({
   durationMinutes: z.number().int().positive("La duración debe ser positiva").optional(),
   notes: z.string().max(500, "Las notas no pueden tener más de 500 caracteres").optional(),
   status: z.enum(["COMPLETED", "WALKOVER"], {
-    errorMap: () => ({ message: "El status debe ser COMPLETED o WALKOVER" })
+    message: "El status debe ser COMPLETED o WALKOVER"
   }).optional()
 })
 

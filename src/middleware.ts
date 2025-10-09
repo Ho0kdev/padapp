@@ -8,7 +8,7 @@ import { checkRoleAccess } from "@/lib/navigation"
  * Usa el nuevo sistema RBAC para verificar permisos
  */
 export default withAuth(
-  function middleware(req: NextRequest) {
+  function middleware(req: any) {
     const { pathname } = req.nextUrl
     const token = req.nextauth.token
 

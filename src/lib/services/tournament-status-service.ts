@@ -125,14 +125,14 @@ export class TournamentStatusService {
       let suggestedStatus = tournament.status
 
       if (tournament.status === "PUBLISHED" &&
-          tournament.registrationStart <= now &&
-          tournament.registrationEnd >= now) {
+          tournament.registrationStart && tournament.registrationStart <= now &&
+          tournament.registrationEnd && tournament.registrationEnd >= now) {
         suggestedStatus = "REGISTRATION_OPEN"
       } else if (tournament.status === "REGISTRATION_OPEN" &&
-                 tournament.registrationEnd < now) {
+                 tournament.registrationEnd && tournament.registrationEnd < now) {
         suggestedStatus = "REGISTRATION_CLOSED"
       } else if (tournament.status === "REGISTRATION_CLOSED" &&
-                 tournament.tournamentStart <= now &&
+                 tournament.tournamentStart && tournament.tournamentStart <= now &&
                  tournament._count.teams > 0) {
         suggestedStatus = "IN_PROGRESS"
       }

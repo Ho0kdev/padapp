@@ -41,7 +41,7 @@ export class RankingsLogService {
 
       if (!ipAddress || !userAgent) {
         try {
-          const headersList = headers()
+          const headersList = await headers()
           ipAddress = ipAddress || headersList.get('x-forwarded-for')?.split(',')[0] ||
                      headersList.get('x-real-ip') || 'unknown'
           userAgent = userAgent || headersList.get('user-agent') || 'unknown'
@@ -360,8 +360,8 @@ export class RankingsLogService {
 
     const stats = await prisma.rankingLog.groupBy({
       by: ['categoryId'],
-      _sum: {
-        metadata: true // This would need custom aggregation for points from metadata
+      _count: {
+        id: true
       },
       where: {
         action: { in: ['POINTS_CALCULATED', 'POINTS_UPDATED', 'MANUAL_ADJUSTMENT'] },
@@ -370,7 +370,7 @@ export class RankingsLogService {
           lt: new Date(currentYear + 1, 0, 1)
         }
       }
-    })
+    } as any)
 
     return stats
   }

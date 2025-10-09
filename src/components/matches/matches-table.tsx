@@ -55,6 +55,10 @@ interface Match {
     name: string
     type: string
     status: string
+    setsToWin: number
+    gamesToWinSet: number
+    tiebreakAt: number
+    goldenPoint: boolean
   }
   category: {
     id: string

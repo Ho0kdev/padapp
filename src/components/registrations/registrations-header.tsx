@@ -44,7 +44,7 @@ export function RegistrationsHeader() {
       createButtonText="Nueva Inscripción"
       createButtonHref="/dashboard/registrations/new"
       filterLabel="Estado"
-      filterOptions={registrationStatusOptions}
+      filterOptions={registrationStatusOptions as any}
       secondaryFilter={{
         label: "Torneo",
         options: tournamentOptions,
