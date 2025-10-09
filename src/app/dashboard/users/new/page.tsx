@@ -38,7 +38,7 @@ export default async function NewUserPage() {
           </p>
         </div>
 
-        <UserForm />
+        <UserForm currentUserRole={session.user.role} />
       </div>
     </DashboardLayout>
   )
