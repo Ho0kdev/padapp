@@ -699,6 +699,13 @@ async function main() {
           seasonYear: currentYear,
         }
       })
+
+      // Actualizar el jugador con su categoría principal
+      await prisma.player.update({
+        where: { id: player.id },
+        data: { primaryCategoryId: category.id }
+      })
+
       rankingsCreated++
     }
   }
