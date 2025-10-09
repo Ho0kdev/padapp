@@ -1,19 +1,64 @@
 // prisma/seeds/index.ts
-import { PrismaClient, UserRole, Gender, CourtSurface, CourtStatus, TournamentType, TournamentStatus, CategoryType } from '@prisma/client'
+import { PrismaClient, UserRole, Gender, CourtSurface, CourtStatus } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 
 const prisma = new PrismaClient()
 
+// Nombres y apellidos argentinos comunes para generar usuarios
+const maleFirstNames = [
+  'Juan', 'Carlos', 'Diego', 'Martín', 'Sebastián', 'Fernando', 'Pablo', 'Alejandro',
+  'Miguel', 'Andrés', 'Ricardo', 'Gonzalo', 'Nicolás', 'Tomás', 'Eduardo', 'Javier',
+  'Roberto', 'Jorge', 'Luis', 'Mario', 'Emiliano', 'Mateo', 'Santiago', 'Manuel',
+  'Francisco', 'Ramiro', 'Facundo', 'Ezequiel', 'Gabriel', 'Rodrigo', 'Daniel', 'Maximiliano',
+  'Cristian', 'Federico', 'Gustavo', 'Hernán', 'Ignacio', 'Leonardo', 'Marcos', 'Adrián'
+]
+
+const femaleFirstNames = [
+  'María', 'Lucía', 'Valentina', 'Sofía', 'Carolina', 'Florencia', 'Camila', 'Victoria',
+  'Ana', 'Paula', 'Daniela', 'Gabriela', 'Andrea', 'Natalia', 'Mónica', 'Alejandra',
+  'Carmen', 'Isabel', 'Patricia', 'Sandra', 'Laura', 'Cecilia', 'Mariana', 'Silvina',
+  'Verónica', 'Lorena', 'Claudia', 'Jimena', 'Romina', 'Melisa', 'Rocío', 'Agustina',
+  'Belén', 'Carla', 'Delfina', 'Elena', 'Fernanda', 'Gisela', 'Helena', 'Inés'
+]
+
+const lastNames = [
+  'Pérez', 'López', 'Rodríguez', 'Gómez', 'Ruiz', 'Silva', 'Torres', 'Castro',
+  'Ramírez', 'Morales', 'Herrera', 'Vega', 'Paredes', 'Jiménez', 'Mendoza', 'Aguilar',
+  'Sánchez', 'Vargas', 'Ortega', 'Reyes', 'García', 'Fernández', 'Martín', 'Díaz',
+  'Ramos', 'Peña', 'Romero', 'Martínez', 'González', 'Cruz', 'Moreno', 'Rivera',
+  'Flores', 'Guerrero', 'Núñez', 'Medina', 'Campos', 'Vásquez', 'Lara', 'Ríos',
+  'Cabrera', 'Acosta', 'Álvarez', 'Benítez', 'Cáceres', 'Domínguez', 'Escobar', 'Figueroa'
+]
+
+function generateEmail(firstName: string, lastName: string, index: number): string {
+  return `${firstName.toLowerCase()}.${lastName.toLowerCase()}${index}@email.com`
+}
+
+function generatePhoneNumber(index: number): string {
+  const baseArea = 3874 + Math.floor(index / 100)
+  const number = (555000 + index).toString().padStart(6, '0')
+  return `+54 ${baseArea} ${number.slice(0, 3)}-${number.slice(3)}`
+}
+
+function generateBirthDate(yearOfBirth: number): Date {
+  return new Date(yearOfBirth, Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1)
+}
+
 async function main() {
   console.log('🌱 Iniciando seed de la base de datos...')
 
-  // Limpiar datos existentes para evitar conflictos
+  // Limpiar datos existentes
   console.log('🗑️ Limpiando datos existentes...')
   await prisma.americanoPoolMatchSet.deleteMany()
   await prisma.americanoPoolMatch.deleteMany()
   await prisma.americanoPoolPlayer.deleteMany()
   await prisma.americanoPool.deleteMany()
   await prisma.americanoGlobalRanking.deleteMany()
+  await prisma.matchLog.deleteMany()
+  await prisma.teamLog.deleteMany()
+  await prisma.registrationLog.deleteMany()
+  await prisma.userLog.deleteMany()
+  await prisma.rankingLog.deleteMany()
   await prisma.tournamentLog.deleteMany()
   await prisma.clubLog.deleteMany()
   await prisma.courtLog.deleteMany()
@@ -42,13 +87,9 @@ async function main() {
 
   console.log('🗑️ Datos anteriores limpiados')
 
-  // Base de datos limpia y lista
-  console.log('📂 Base de datos lista para seeding')
-
-  // 1. Crear usuarios y jugadores
+  // 1. Crear usuario administrador
   const hashedPassword = await bcrypt.hash('123456', 12)
 
-  // Admin principal
   const adminUser = await prisma.user.create({
     data: {
       email: 'admin@padapp.com',
@@ -65,463 +106,591 @@ async function main() {
     }
   })
 
-  // Jugadores de ejemplo - 40 usuarios variados
-  const playersData = [
-    // Hombres nivel alto (1200-1600 pts)
-    { firstName: 'Juan', lastName: 'Pérez', email: 'juan.perez@email.com', gender: Gender.MALE, birthYear: 1990, points: 1250 },
-    { firstName: 'Carlos', lastName: 'López', email: 'carlos.lopez@email.com', gender: Gender.MALE, birthYear: 1985, points: 1420 },
-    { firstName: 'Diego', lastName: 'Rodríguez', email: 'diego.rodriguez@email.com', gender: Gender.MALE, birthYear: 1987, points: 1320 },
-    { firstName: 'Martín', lastName: 'Gómez', email: 'martin.gomez@email.com', gender: Gender.MALE, birthYear: 1988, points: 1380 },
-    { firstName: 'Sebastián', lastName: 'Ruiz', email: 'sebastian.ruiz@email.com', gender: Gender.MALE, birthYear: 1992, points: 1290 },
-    { firstName: 'Fernando', lastName: 'Silva', email: 'fernando.silva@email.com', gender: Gender.MALE, birthYear: 1986, points: 1350 },
-    { firstName: 'Pablo', lastName: 'Torres', email: 'pablo.torres@email.com', gender: Gender.MALE, birthYear: 1991, points: 1240 },
-    { firstName: 'Alejandro', lastName: 'Castro', email: 'alejandro.castro@email.com', gender: Gender.MALE, birthYear: 1989, points: 1410 },
+  console.log(`👤 Creado usuario administrador`)
 
-    // Hombres nivel medio (800-1199 pts)
-    { firstName: 'Miguel', lastName: 'Ramírez', email: 'miguel.ramirez@email.com', gender: Gender.MALE, birthYear: 1993, points: 950 },
-    { firstName: 'Andrés', lastName: 'Morales', email: 'andres.morales@email.com', gender: Gender.MALE, birthYear: 1984, points: 1050 },
-    { firstName: 'Ricardo', lastName: 'Herrera', email: 'ricardo.herrera@email.com', gender: Gender.MALE, birthYear: 1995, points: 890 },
-    { firstName: 'Gonzalo', lastName: 'Vega', email: 'gonzalo.vega@email.com', gender: Gender.MALE, birthYear: 1987, points: 1120 },
-    { firstName: 'Nicolás', lastName: 'Paredes', email: 'nicolas.paredes@email.com', gender: Gender.MALE, birthYear: 1990, points: 1080 },
-    { firstName: 'Tomás', lastName: 'Jiménez', email: 'tomas.jimenez@email.com', gender: Gender.MALE, birthYear: 1994, points: 950 },
-    { firstName: 'Eduardo', lastName: 'Mendoza', email: 'eduardo.mendoza@email.com', gender: Gender.MALE, birthYear: 1983, points: 1150 },
-    { firstName: 'Javier', lastName: 'Aguilar', email: 'javier.aguilar@email.com', gender: Gender.MALE, birthYear: 1996, points: 820 },
+  // 2. Crear jugadores masculinos (75 total)
+  // - 16 categoría 8va (muy bajo nivel)
+  // - 32 categoría 7ma (bajo nivel)
+  // - 16 categoría 6ta (nivel medio)
+  // - 11 distribuidos en otras categorías (5ta y 4ta)
 
-    // Hombres veteranos (+45)
-    { firstName: 'Roberto', lastName: 'Sánchez', email: 'roberto.sanchez@email.com', gender: Gender.MALE, birthYear: 1975, points: 1100 },
-    { firstName: 'Jorge', lastName: 'Vargas', email: 'jorge.vargas@email.com', gender: Gender.MALE, birthYear: 1978, points: 980 },
-    { firstName: 'Luis', lastName: 'Ortega', email: 'luis.ortega@email.com', gender: Gender.MALE, birthYear: 1973, points: 1250 },
-    { firstName: 'Mario', lastName: 'Reyes', email: 'mario.reyes@email.com', gender: Gender.MALE, birthYear: 1976, points: 1050 },
+  const malePlayers = []
 
-    // Mujeres nivel alto (1000+ pts)
-    { firstName: 'María', lastName: 'García', email: 'maria.garcia@email.com', gender: Gender.FEMALE, birthYear: 1988, points: 1180 },
-    { firstName: 'Lucía', lastName: 'Fernández', email: 'lucia.fernandez@email.com', gender: Gender.FEMALE, birthYear: 1991, points: 1150 },
-    { firstName: 'Valentina', lastName: 'López', email: 'valentina.lopez@email.com', gender: Gender.FEMALE, birthYear: 1989, points: 1220 },
-    { firstName: 'Sofía', lastName: 'Martín', email: 'sofia.martin@email.com', gender: Gender.FEMALE, birthYear: 1990, points: 1080 },
-    { firstName: 'Carolina', lastName: 'Díaz', email: 'carolina.diaz@email.com', gender: Gender.FEMALE, birthYear: 1987, points: 1340 },
-    { firstName: 'Florencia', lastName: 'Ramos', email: 'florencia.ramos@email.com', gender: Gender.FEMALE, birthYear: 1992, points: 1120 },
-    { firstName: 'Camila', lastName: 'Peña', email: 'camila.pena@email.com', gender: Gender.FEMALE, birthYear: 1985, points: 1280 },
-    { firstName: 'Victoria', lastName: 'Romero', email: 'victoria.romero@email.com', gender: Gender.FEMALE, birthYear: 1993, points: 1050 },
+  // 16 jugadores 8va (nivel muy bajo) - años 1995-2003
+  for (let i = 0; i < 16; i++) {
+    const firstName = maleFirstNames[i % maleFirstNames.length]
+    const lastName = lastNames[i % lastNames.length]
+    const birthYear = 1995 + Math.floor(Math.random() * 9)
 
-    // Mujeres nivel medio (600-999 pts)
-    { firstName: 'Ana', lastName: 'Martínez', email: 'ana.martinez@email.com', gender: Gender.FEMALE, birthYear: 1992, points: 980 },
-    { firstName: 'Paula', lastName: 'González', email: 'paula.gonzalez@email.com', gender: Gender.FEMALE, birthYear: 1994, points: 750 },
-    { firstName: 'Daniela', lastName: 'Cruz', email: 'daniela.cruz@email.com', gender: Gender.FEMALE, birthYear: 1990, points: 820 },
-    { firstName: 'Gabriela', lastName: 'Moreno', email: 'gabriela.moreno@email.com', gender: Gender.FEMALE, birthYear: 1995, points: 680 },
-    { firstName: 'Andrea', lastName: 'Rivera', email: 'andrea.rivera@email.com', gender: Gender.FEMALE, birthYear: 1986, points: 920 },
-    { firstName: 'Natalia', lastName: 'Flores', email: 'natalia.flores@email.com', gender: Gender.FEMALE, birthYear: 1989, points: 850 },
-    { firstName: 'Mónica', lastName: 'Guerrero', email: 'monica.guerrero@email.com', gender: Gender.FEMALE, birthYear: 1991, points: 780 },
-    { firstName: 'Alejandra', lastName: 'Núñez', email: 'alejandra.nunez@email.com', gender: Gender.FEMALE, birthYear: 1993, points: 940 },
+    malePlayers.push({
+      firstName,
+      lastName,
+      email: generateEmail(firstName, lastName, i),
+      gender: Gender.MALE,
+      birthYear,
+      birthDate: generateBirthDate(birthYear),
+      phone: generatePhoneNumber(i),
+      points: Math.floor(Math.random() * 200) + 100, // 100-300 puntos
+      category: '8va'
+    })
+  }
 
-    // Mujeres veteranas
-    { firstName: 'Carmen', lastName: 'Medina', email: 'carmen.medina@email.com', gender: Gender.FEMALE, birthYear: 1977, points: 900 },
-    { firstName: 'Isabel', lastName: 'Campos', email: 'isabel.campos@email.com', gender: Gender.FEMALE, birthYear: 1974, points: 1100 },
-    { firstName: 'Patricia', lastName: 'Vásquez', email: 'patricia.vasquez@email.com', gender: Gender.FEMALE, birthYear: 1979, points: 850 },
-    { firstName: 'Sandra', lastName: 'Lara', email: 'sandra.lara@email.com', gender: Gender.FEMALE, birthYear: 1976, points: 980 },
+  // 32 jugadores 7ma (nivel bajo) - años 1990-1998
+  for (let i = 16; i < 48; i++) {
+    const firstName = maleFirstNames[i % maleFirstNames.length]
+    const lastName = lastNames[i % lastNames.length]
+    const birthYear = 1990 + Math.floor(Math.random() * 9)
 
-    // Jugadores jóvenes mixtos
-    { firstName: 'Emiliano', lastName: 'Ríos', email: 'emiliano.rios@email.com', gender: Gender.MALE, birthYear: 1997, points: 850 },
-    { firstName: 'Mateo', lastName: 'Cabrera', email: 'mateo.cabrera@email.com', gender: Gender.MALE, birthYear: 1998, points: 720 }
-  ]
+    malePlayers.push({
+      firstName,
+      lastName,
+      email: generateEmail(firstName, lastName, i),
+      gender: Gender.MALE,
+      birthYear,
+      birthDate: generateBirthDate(birthYear),
+      phone: generatePhoneNumber(i),
+      points: Math.floor(Math.random() * 300) + 300, // 300-600 puntos
+      category: '7ma'
+    })
+  }
 
-  const players = await Promise.all(
-    playersData.map(async (playerData, index) => {
-      const phoneNumber = `+54 9 11 ${(1000 + index).toString().padStart(4, '0')}-${(5000 + index).toString().padStart(4, '0')}`
-      const birthDate = new Date(playerData.birthYear, Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1)
+  // 16 jugadores 6ta (nivel medio) - años 1985-1993
+  for (let i = 48; i < 64; i++) {
+    const firstName = maleFirstNames[i % maleFirstNames.length]
+    const lastName = lastNames[i % lastNames.length]
+    const birthYear = 1985 + Math.floor(Math.random() * 9)
 
-      return prisma.user.create({
-        data: {
-          email: playerData.email,
-          password: hashedPassword,
-          name: `${playerData.firstName} ${playerData.lastName}`,
-          role: UserRole.PLAYER,
-          player: {
-            create: {
-              firstName: playerData.firstName,
-              lastName: playerData.lastName,
-              phone: phoneNumber,
-              dateOfBirth: birthDate,
-              gender: playerData.gender,
-              rankingPoints: playerData.points,
-            }
+    malePlayers.push({
+      firstName,
+      lastName,
+      email: generateEmail(firstName, lastName, i),
+      gender: Gender.MALE,
+      birthYear,
+      birthDate: generateBirthDate(birthYear),
+      phone: generatePhoneNumber(i),
+      points: Math.floor(Math.random() * 300) + 600, // 600-900 puntos
+      category: '6ta'
+    })
+  }
+
+  // 6 jugadores 5ta (nivel medio-alto) - años 1983-1990
+  for (let i = 64; i < 70; i++) {
+    const firstName = maleFirstNames[i % maleFirstNames.length]
+    const lastName = lastNames[i % lastNames.length]
+    const birthYear = 1983 + Math.floor(Math.random() * 8)
+
+    malePlayers.push({
+      firstName,
+      lastName,
+      email: generateEmail(firstName, lastName, i),
+      gender: Gender.MALE,
+      birthYear,
+      birthDate: generateBirthDate(birthYear),
+      phone: generatePhoneNumber(i),
+      points: Math.floor(Math.random() * 300) + 900, // 900-1200 puntos
+      category: '5ta'
+    })
+  }
+
+  // 5 jugadores 4ta (nivel alto) - años 1980-1988
+  for (let i = 70; i < 75; i++) {
+    const firstName = maleFirstNames[i % maleFirstNames.length]
+    const lastName = lastNames[i % lastNames.length]
+    const birthYear = 1980 + Math.floor(Math.random() * 9)
+
+    malePlayers.push({
+      firstName,
+      lastName,
+      email: generateEmail(firstName, lastName, i),
+      gender: Gender.MALE,
+      birthYear,
+      birthDate: generateBirthDate(birthYear),
+      phone: generatePhoneNumber(i),
+      points: Math.floor(Math.random() * 400) + 1200, // 1200-1600 puntos
+      category: '4ta'
+    })
+  }
+
+  console.log(`📝 Preparados 75 jugadores masculinos`)
+
+  // 3. Crear jugadores femeninos (75 total)
+  // - 16 categoría 7ma (bajo nivel)
+  // - 24 categoría 6ta (nivel medio)
+  // - El resto en 5ta (20) y 4ta (15)
+
+  const femalePlayers = []
+
+  // 16 jugadoras 7ma (nivel bajo) - años 1995-2003
+  for (let i = 0; i < 16; i++) {
+    const firstName = femaleFirstNames[i % femaleFirstNames.length]
+    const lastName = lastNames[(i + 10) % lastNames.length]
+    const birthYear = 1995 + Math.floor(Math.random() * 9)
+
+    femalePlayers.push({
+      firstName,
+      lastName,
+      email: generateEmail(firstName, lastName, i + 100),
+      gender: Gender.FEMALE,
+      birthYear,
+      birthDate: generateBirthDate(birthYear),
+      phone: generatePhoneNumber(i + 100),
+      points: Math.floor(Math.random() * 250) + 250, // 250-500 puntos
+      category: '7ma'
+    })
+  }
+
+  // 24 jugadoras 6ta (nivel medio) - años 1990-1998
+  for (let i = 16; i < 40; i++) {
+    const firstName = femaleFirstNames[i % femaleFirstNames.length]
+    const lastName = lastNames[(i + 10) % lastNames.length]
+    const birthYear = 1990 + Math.floor(Math.random() * 9)
+
+    femalePlayers.push({
+      firstName,
+      lastName,
+      email: generateEmail(firstName, lastName, i + 100),
+      gender: Gender.FEMALE,
+      birthYear,
+      birthDate: generateBirthDate(birthYear),
+      phone: generatePhoneNumber(i + 100),
+      points: Math.floor(Math.random() * 300) + 500, // 500-800 puntos
+      category: '6ta'
+    })
+  }
+
+  // 20 jugadoras 5ta (nivel medio-alto) - años 1988-1995
+  for (let i = 40; i < 60; i++) {
+    const firstName = femaleFirstNames[i % femaleFirstNames.length]
+    const lastName = lastNames[(i + 10) % lastNames.length]
+    const birthYear = 1988 + Math.floor(Math.random() * 8)
+
+    femalePlayers.push({
+      firstName,
+      lastName,
+      email: generateEmail(firstName, lastName, i + 100),
+      gender: Gender.FEMALE,
+      birthYear,
+      birthDate: generateBirthDate(birthYear),
+      phone: generatePhoneNumber(i + 100),
+      points: Math.floor(Math.random() * 300) + 800, // 800-1100 puntos
+      category: '5ta'
+    })
+  }
+
+  // 15 jugadoras 4ta (nivel alto) - años 1985-1992
+  for (let i = 60; i < 75; i++) {
+    const firstName = femaleFirstNames[i % femaleFirstNames.length]
+    const lastName = lastNames[(i + 10) % lastNames.length]
+    const birthYear = 1985 + Math.floor(Math.random() * 8)
+
+    femalePlayers.push({
+      firstName,
+      lastName,
+      email: generateEmail(firstName, lastName, i + 100),
+      gender: Gender.FEMALE,
+      birthYear,
+      birthDate: generateBirthDate(birthYear),
+      phone: generatePhoneNumber(i + 100),
+      points: Math.floor(Math.random() * 400) + 1100, // 1100-1500 puntos
+      category: '4ta'
+    })
+  }
+
+  console.log(`📝 Preparadas 75 jugadoras femeninas`)
+
+  // 4. Crear todos los usuarios en la base de datos
+  const allPlayersData = [...malePlayers, ...femalePlayers]
+  const createdPlayers = []
+
+  for (const playerData of allPlayersData) {
+    const user = await prisma.user.create({
+      data: {
+        email: playerData.email,
+        password: hashedPassword,
+        name: `${playerData.firstName} ${playerData.lastName}`,
+        role: UserRole.PLAYER,
+        player: {
+          create: {
+            firstName: playerData.firstName,
+            lastName: playerData.lastName,
+            phone: playerData.phone,
+            dateOfBirth: playerData.birthDate,
+            gender: playerData.gender,
+            rankingPoints: playerData.points,
           }
         }
-      })
-    })
-  )
-
-  console.log(`👥 Creados ${players.length + 1} usuarios (incluyendo admin)`)
-
-  // 2. Crear clubes y canchas - basado en datos reales de la DB
-  const clubs = await Promise.all([
-    prisma.club.create({
-      data: {
-        name: 'Ciudad Padel',
-        description: 'Club de pádel en el centro de Salta',
-        address: 'San Juan 2045',
-        city: 'Salta',
-        country: 'Argentina',
-        postalCode: '4400',
-        phone: '+543874000000',
-        email: 'info@ciudadpadel.com',
-        courts: {
-          create: [
-            {
-              name: 'Cancha 1',
-              surface: CourtSurface.ARTIFICIAL_GRASS,
-              hasLighting: true,
-              hasRoof: true,
-              hasPanoramicGlass: true,
-              hourlyRate: 12000,
-            },
-            {
-              name: 'Cancha 2',
-              surface: CourtSurface.ARTIFICIAL_GRASS,
-              hasLighting: true,
-              hasRoof: true,
-              hasPanoramicGlass: true,
-              hourlyRate: 12000,
-            },
-            {
-              name: 'Cancha 3',
-              surface: CourtSurface.ARTIFICIAL_GRASS,
-              hasLighting: true,
-              hasRoof: true,
-              hasPanoramicGlass: true,
-              hourlyRate: 12000,
-            },
-            {
-              name: 'Cancha 4',
-              surface: CourtSurface.CONCRETE,
-              hasLighting: true,
-              hasRoof: true,
-              hasPanoramicGlass: false,
-              hourlyRate: 9999,
-            }
-          ]
-        }
-      }
-    }),
-    prisma.club.create({
-      data: {
-        name: 'Ohana Club Salta',
-        description: 'Club premium en Villa San Lorenzo',
-        address: 'Manuel Castilla 578',
-        city: 'Villa San Lorenzo',
-        country: 'Argentina',
-        postalCode: '4401',
-        phone: '+543874874040',
-        email: 'contacto@ohanaclub.com',
-        courts: {
-          create: [
-            {
-              name: 'Cancha 1',
-              surface: CourtSurface.ARTIFICIAL_GRASS,
-              hasLighting: true,
-              hasRoof: true,
-              hasPanoramicGlass: true,
-              hourlyRate: 15000,
-            },
-            {
-              name: 'Cancha 2',
-              surface: CourtSurface.ARTIFICIAL_GRASS,
-              hasLighting: true,
-              hasRoof: true,
-              hasPanoramicGlass: true,
-              hourlyRate: 15000,
-            }
-          ]
-        }
-      }
-    }),
-    prisma.club.create({
-      data: {
-        name: 'Padel NOA',
-        description: 'Club tradicional de Salta',
-        address: 'España 1651',
-        city: 'Salta',
-        country: 'Argentina',
-        postalCode: '4400',
-        phone: '+543876125650',
-        email: 'info@padelnoa.com',
-        courts: {
-          create: [
-            {
-              name: 'Cancha 1',
-              surface: CourtSurface.ARTIFICIAL_GRASS,
-              hasLighting: true,
-              hasRoof: true,
-              hasPanoramicGlass: false,
-              hourlyRate: 9999,
-              status: CourtStatus.UNAVAILABLE,
-            },
-            {
-              name: 'Cancha 2',
-              surface: CourtSurface.ARTIFICIAL_GRASS,
-              hasLighting: true,
-              hasRoof: true,
-              hasPanoramicGlass: false,
-              hourlyRate: 9999,
-            }
-          ]
-        }
-      }
-    }),
-    prisma.club.create({
-      data: {
-        name: 'Pipo Padel',
-        description: 'Club accesible en Salta',
-        address: 'Av Asuncion 1650',
-        city: 'Salta',
-        country: 'Argentina',
-        postalCode: '4400',
-        phone: '+543874555666',
-        email: 'info@pipopadel.com',
-        courts: {
-          create: [
-            {
-              name: 'Cancha 1',
-              surface: CourtSurface.ARTIFICIAL_GRASS,
-              hasLighting: true,
-              hasRoof: false,
-              hasPanoramicGlass: true,
-              hourlyRate: 11000,
-            },
-            {
-              name: 'Cancha 2',
-              surface: CourtSurface.ARTIFICIAL_GRASS,
-              hasLighting: true,
-              hasRoof: true,
-              hasPanoramicGlass: true,
-              hourlyRate: 11000,
-            },
-            {
-              name: 'Cancha 3',
-              surface: CourtSurface.ARTIFICIAL_GRASS,
-              hasLighting: true,
-              hasRoof: true,
-              hasPanoramicGlass: true,
-              hourlyRate: 11000,
-            }
-          ]
-        }
-      }
-    }),
-    prisma.club.create({
-      data: {
-        name: 'Verbum Camp Padel',
-        description: 'Complejo deportivo en Villa San Lorenzo',
-        address: 'Au. Circunvalacion Oeste',
-        city: 'Villa San Lorenzo',
-        country: 'Argentina',
-        postalCode: '4401',
-        phone: '+543875292270',
-        email: 'info@verbumcamp.com',
-        courts: {
-          create: [
-            {
-              name: 'Cancha 1',
-              surface: CourtSurface.ARTIFICIAL_GRASS,
-              hasLighting: true,
-              hasRoof: false,
-              hasPanoramicGlass: true,
-              hourlyRate: 12000,
-            },
-            {
-              name: 'Cancha 2',
-              surface: CourtSurface.ARTIFICIAL_GRASS,
-              hasLighting: true,
-              hasRoof: false,
-              hasPanoramicGlass: true,
-              hourlyRate: 12000,
-            },
-            {
-              name: 'Cancha 3',
-              surface: CourtSurface.ARTIFICIAL_GRASS,
-              hasLighting: true,
-              hasRoof: false,
-              hasPanoramicGlass: true,
-              hourlyRate: 12000,
-            }
-          ]
-        }
+      },
+      include: {
+        player: true
       }
     })
-  ])
+    createdPlayers.push(user)
+  }
+
+  console.log(`👥 Creados 150 jugadores (75 masculinos, 75 femeninos)`)
+
+  // 5. Crear clubes con datos reales de la base de datos
+  const clubs = []
+
+  // Padel NOA
+  const padelNoa = await prisma.club.create({
+    data: {
+      name: 'Padel NOA',
+      description: 'Club Padel NOA',
+      address: 'España 1651',
+      city: 'Salta',
+      state: 'Salta',
+      country: 'Argentina',
+      postalCode: '4400',
+      phone: '+543876125650',
+      email: 'padel.noa@padapp.com',
+      latitude: -24.7875941,
+      longitude: -65.428035817,
+      status: 'ACTIVE',
+      logoUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRpa7z-HkYe0eZz6vLW9s1Pdl7pjOHgOw0HSw&s',
+      courts: {
+        create: [
+          {
+            name: 'Cancha 1',
+            surface: CourtSurface.ARTIFICIAL_GRASS,
+            hasLighting: true,
+            hasRoof: true,
+            status: CourtStatus.AVAILABLE,
+            hourlyRate: 10000,
+            notes: 'Pared Mixta: Concreto/Cristal',
+            hasConcreteWall: true,
+            hasNet4m: true,
+            hasPanoramicGlass: true,
+            isOutdoor: false,
+          },
+          {
+            name: 'Cancha 2',
+            surface: CourtSurface.ARTIFICIAL_GRASS,
+            hasLighting: true,
+            hasRoof: true,
+            status: CourtStatus.AVAILABLE,
+            hourlyRate: 10000,
+            hasConcreteWall: true,
+            hasNet4m: true,
+            hasPanoramicGlass: false,
+            isOutdoor: false,
+          }
+        ]
+      }
+    }
+  })
+  clubs.push(padelNoa)
+
+  // Ciudad Padel
+  const ciudadPadel = await prisma.club.create({
+    data: {
+      name: 'Ciudad Padel',
+      description: 'Club de pádel en el centro de Salta',
+      address: 'San Juan 2045',
+      city: 'Salta',
+      state: 'Salta',
+      country: 'Argentina',
+      postalCode: '4400',
+      phone: '+543874000000',
+      email: 'ciudad.padel@padapp.com',
+      website: 'https://www.padapp.com',
+      latitude: -24.7947983,
+      longitude: -65.433748217,
+      status: 'ACTIVE',
+      logoUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTLO3OWx2MCmD3hCb8yJbAMoEifF211clCUww&s',
+      courts: {
+        create: [
+          {
+            name: 'Cancha 1',
+            surface: CourtSurface.ARTIFICIAL_GRASS,
+            hasLighting: true,
+            hasRoof: true,
+            status: CourtStatus.AVAILABLE,
+            hourlyRate: 11500,
+            hasConcreteWall: false,
+            hasNet4m: true,
+            hasPanoramicGlass: true,
+            isOutdoor: false,
+          },
+          {
+            name: 'Cancha 2',
+            surface: CourtSurface.ARTIFICIAL_GRASS,
+            hasLighting: true,
+            hasRoof: true,
+            status: CourtStatus.AVAILABLE,
+            hourlyRate: 11500,
+            hasConcreteWall: false,
+            hasNet4m: true,
+            hasPanoramicGlass: true,
+            isOutdoor: false,
+          },
+          {
+            name: 'Cancha 3',
+            surface: CourtSurface.ARTIFICIAL_GRASS,
+            hasLighting: true,
+            hasRoof: true,
+            status: CourtStatus.AVAILABLE,
+            hourlyRate: 11500,
+            hasConcreteWall: false,
+            hasNet4m: true,
+            hasPanoramicGlass: true,
+            isOutdoor: false,
+          },
+          {
+            name: 'Cancha 4',
+            surface: CourtSurface.CONCRETE,
+            hasLighting: true,
+            hasRoof: true,
+            status: CourtStatus.AVAILABLE,
+            hourlyRate: 11000,
+            hasConcreteWall: true,
+            hasNet4m: true,
+            hasPanoramicGlass: false,
+            isOutdoor: false,
+          }
+        ]
+      }
+    }
+  })
+  clubs.push(ciudadPadel)
+
+  // Pipo Padel
+  const pipoPadel = await prisma.club.create({
+    data: {
+      name: 'Pipo Padel',
+      description: 'Club accesible en Salta',
+      address: 'Av. Asunción 1650',
+      city: 'Salta',
+      state: 'Salta',
+      country: 'Argentina',
+      postalCode: '4400',
+      phone: '+543874555666',
+      email: 'pipo.padel@padapp.com',
+      latitude: -24.7995751,
+      longitude: -65.391268417,
+      status: 'ACTIVE',
+      logoUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTcZK0j1HxIqKU05jmp_G-nlhNtbYtBQp9eZA&s',
+      courts: {
+        create: [
+          {
+            name: 'Cancha 1',
+            surface: CourtSurface.ARTIFICIAL_GRASS,
+            hasLighting: true,
+            hasRoof: false,
+            status: CourtStatus.AVAILABLE,
+            hourlyRate: 9800,
+            notes: 'Cesped Rojo',
+            hasConcreteWall: true,
+            hasNet4m: true,
+            hasPanoramicGlass: false,
+            isOutdoor: false,
+          },
+          {
+            name: 'Cancha 2',
+            surface: CourtSurface.ARTIFICIAL_GRASS,
+            hasLighting: true,
+            hasRoof: false,
+            status: CourtStatus.AVAILABLE,
+            hourlyRate: 9800,
+            notes: 'Cesped Rojo',
+            hasConcreteWall: true,
+            hasNet4m: true,
+            hasPanoramicGlass: false,
+            isOutdoor: false,
+          }
+        ]
+      }
+    }
+  })
+  clubs.push(pipoPadel)
 
   console.log(`🏟️  Creados ${clubs.length} clubes con sus canchas`)
 
-  // 3. Crear categorías - basado en datos reales de la DB
-  const categories = await Promise.all([
-    prisma.category.create({
+  // 6. Crear categorías con datos reales
+  const categories = []
+
+  // Categorías Femeninas
+  categories.push(
+    await prisma.category.create({
       data: {
         name: 'Femenino 4ta',
         description: 'Categoría femenina 4ta división',
-        type: CategoryType.GENDER,
+        type: 'SKILL',
+        level: 4,
         genderRestriction: Gender.FEMALE,
+        isActive: true,
       }
-    }),
-    prisma.category.create({
+    })
+  )
+
+  categories.push(
+    await prisma.category.create({
       data: {
         name: 'Femenino 5ta',
         description: 'Categoría femenina 5ta división',
-        type: CategoryType.GENDER,
+        type: 'SKILL',
+        level: 5,
         genderRestriction: Gender.FEMALE,
+        isActive: true,
       }
-    }),
-    prisma.category.create({
+    })
+  )
+
+  categories.push(
+    await prisma.category.create({
       data: {
         name: 'Femenino 6ta',
         description: 'Categoría femenina 6ta división',
-        type: CategoryType.GENDER,
+        type: 'SKILL',
+        level: 6,
         genderRestriction: Gender.FEMALE,
+        isActive: true,
       }
-    }),
-    prisma.category.create({
+    })
+  )
+
+  categories.push(
+    await prisma.category.create({
       data: {
         name: 'Femenino 7ma',
         description: 'Categoría femenina 7ma división',
-        type: CategoryType.GENDER,
+        type: 'SKILL',
+        level: 7,
         genderRestriction: Gender.FEMALE,
+        isActive: true,
       }
-    }),
-    prisma.category.create({
+    })
+  )
+
+  categories.push(
+    await prisma.category.create({
       data: {
         name: 'Femenino 8va',
         description: 'Categoría femenina 8va división',
-        type: CategoryType.GENDER,
+        type: 'SKILL',
+        level: 8,
         genderRestriction: Gender.FEMALE,
-      }
-    }),
-    prisma.category.create({
-      data: {
-        name: 'Femenino A',
-        description: 'CAT A FEM.',
-        type: CategoryType.SKILL,
-        minRankingPoints: 501,
-        maxRankingPoints: 1000,
-        genderRestriction: Gender.FEMALE,
-      }
-    }),
-    prisma.category.create({
-      data: {
-        name: 'Femenino B',
-        description: 'CAT B FEM.',
-        type: CategoryType.SKILL,
-        minRankingPoints: 1,
-        maxRankingPoints: 500,
-        genderRestriction: Gender.FEMALE,
-      }
-    }),
-    prisma.category.create({
-      data: {
-        name: 'Femenino Suma 15',
-        description: 'Suma 15 ( 8va + 7ma)',
-        type: CategoryType.SKILL,
-        genderRestriction: Gender.FEMALE,
-      }
-    }),
-    prisma.category.create({
-      data: {
-        name: 'Masculino 3ra',
-        description: 'Categoría masculina 3ra división',
-        type: CategoryType.GENDER,
-        genderRestriction: Gender.MALE,
-      }
-    }),
-    prisma.category.create({
-      data: {
-        name: 'Masculino +45',
-        description: 'Categoría para jugadores mayores de 45 años',
-        type: CategoryType.AGE,
-        minAge: 45,
-        genderRestriction: Gender.MALE,
-      }
-    }),
-    prisma.category.create({
-      data: {
-        name: 'Masculino 4ta',
-        description: 'Categoría masculina 4ta división',
-        type: CategoryType.GENDER,
-        genderRestriction: Gender.MALE,
-      }
-    }),
-    prisma.category.create({
-      data: {
-        name: 'Masculino 5ta',
-        description: 'Categoría masculina 5ta división',
-        type: CategoryType.GENDER,
-        genderRestriction: Gender.MALE,
-      }
-    }),
-    prisma.category.create({
-      data: {
-        name: 'Masculino 6ta',
-        description: 'Categoría masculina 6ta división',
-        type: CategoryType.GENDER,
-        genderRestriction: Gender.MALE,
-      }
-    }),
-    prisma.category.create({
-      data: {
-        name: 'Masculino 7ma',
-        description: 'Categoría masculina 7ma división',
-        type: CategoryType.GENDER,
-        genderRestriction: Gender.MALE,
-      }
-    }),
-    prisma.category.create({
-      data: {
-        name: 'Masculino 8va',
-        description: 'Categoría masculina 8va división',
-        type: CategoryType.GENDER,
-        genderRestriction: Gender.MALE,
-      }
-    }),
-    prisma.category.create({
-      data: {
-        name: 'Masculino A',
-        description: 'Categoría masculina nivel avanzado',
-        type: CategoryType.SKILL,
-        genderRestriction: Gender.MALE,
-      }
-    }),
-    prisma.category.create({
-      data: {
-        name: 'Masculino B',
-        description: 'Categoría masculina nivel intermedio',
-        type: CategoryType.SKILL,
-        genderRestriction: Gender.MALE,
-      }
-    }),
-    prisma.category.create({
-      data: {
-        name: 'Mixto Suma 15',
-        description: 'Mixto (8va y 7ma)',
-        type: CategoryType.SKILL,
-        genderRestriction: Gender.MIXED,
+        isActive: true,
       }
     })
-  ])
+  )
+
+  categories.push(
+    await prisma.category.create({
+      data: {
+        name: 'Femenino A',
+        description: 'Categoría femenina nivel avanzado',
+        type: 'SKILL',
+        genderRestriction: Gender.FEMALE,
+        isActive: true,
+      }
+    })
+  )
+
+  categories.push(
+    await prisma.category.create({
+      data: {
+        name: 'Femenino B',
+        description: 'Categoría femenina nivel intermedio',
+        type: 'SKILL',
+        level: 5,
+        genderRestriction: Gender.FEMALE,
+        isActive: true,
+      }
+    })
+  )
+
+  // Categorías Masculinas
+  categories.push(
+    await prisma.category.create({
+      data: {
+        name: 'Caballeros 4ta',
+        description: 'Categoría masculina 4ta división',
+        type: 'SKILL',
+        level: 4,
+        genderRestriction: Gender.MALE,
+        isActive: true,
+      }
+    })
+  )
+
+  categories.push(
+    await prisma.category.create({
+      data: {
+        name: 'Caballeros 5ta',
+        description: 'Categoría masculina 5ta división',
+        type: 'SKILL',
+        level: 5,
+        genderRestriction: Gender.MALE,
+        isActive: true,
+      }
+    })
+  )
+
+  categories.push(
+    await prisma.category.create({
+      data: {
+        name: 'Caballeros 6ta',
+        description: 'Categoría masculina 6ta división',
+        type: 'SKILL',
+        level: 6,
+        genderRestriction: Gender.MALE,
+        isActive: true,
+      }
+    })
+  )
+
+  categories.push(
+    await prisma.category.create({
+      data: {
+        name: 'Caballeros 7ma',
+        description: 'Categoría masculina 7ma división',
+        type: 'SKILL',
+        level: 7,
+        genderRestriction: Gender.MALE,
+        isActive: true,
+      }
+    })
+  )
+
+  categories.push(
+    await prisma.category.create({
+      data: {
+        name: 'Caballeros 8va',
+        description: 'Categoría masculina 8va división',
+        type: 'SKILL',
+        level: 8,
+        genderRestriction: Gender.MALE,
+        isActive: true,
+      }
+    })
+  )
 
   console.log(`🏷️  Creadas ${categories.length} categorías`)
 
-  // 4. Crear rankings para jugadores
+  // 7. Crear rankings para los jugadores según sus categorías
   const currentYear = new Date().getFullYear()
-  const allPlayers = await prisma.player.findMany()
+  const allPlayers = await prisma.player.findMany({
+    include: {
+      user: true
+    }
+  })
 
-  for (const player of allPlayers) {
-    if (player.firstName === 'Administrador') continue // Skip admin
+  let rankingsCreated = 0
+  for (let i = 0; i < allPlayersData.length; i++) {
+    const playerData = allPlayersData[i]
+    const player = allPlayers.find(p => p.firstName === playerData.firstName && p.lastName === playerData.lastName)
 
-    // Determinar categorías apropiadas según género y puntos
-    const applicableCategories = categories.filter(cat => {
-      const genderMatch = cat.genderRestriction === player.gender || cat.genderRestriction === Gender.MIXED
-      const pointsMatch = (!cat.minRankingPoints || player.rankingPoints >= cat.minRankingPoints) &&
-                         (!cat.maxRankingPoints || player.rankingPoints <= cat.maxRankingPoints)
-      return genderMatch && pointsMatch
-    })
+    if (!player || player.firstName === 'Administrador') continue
 
-    for (const category of applicableCategories) {
+    // Asignar categoría según el nivel del jugador
+    const categoryName = player.gender === Gender.MALE
+      ? `Caballeros ${playerData.category}`
+      : `Femenino ${playerData.category}`
+
+    const category = categories.find(c => c.name === categoryName)
+
+    if (category) {
       await prisma.playerRanking.create({
         data: {
           playerId: player.id,
@@ -530,482 +699,36 @@ async function main() {
           seasonYear: currentYear,
         }
       })
+      rankingsCreated++
     }
   }
 
-  console.log('📊 Rankings creados para todos los jugadores')
-
-  // 4.1. Crear rankings adicionales para años anteriores (integrado desde seed-rankings.ts)
-  const previousYears = [currentYear - 1, currentYear - 2]
-
-  for (const year of previousYears) {
-    console.log(`📅 Creando algunos rankings para ${year}`)
-
-    // Solo crear rankings para algunas categorías y algunos jugadores
-    const someCategories = categories.slice(0, 3)
-    const somePlayersForPrevYear = allPlayers.slice(0, 5)
-
-    for (const category of someCategories) {
-      for (let i = 0; i < somePlayersForPrevYear.length; i++) {
-        const player = somePlayersForPrevYear[i]
-
-        // Skip admin
-        if (player.firstName === 'Administrador') continue
-
-        // Verificar si ya existe ranking
-        const existingRanking = await prisma.playerRanking.findUnique({
-          where: {
-            playerId_categoryId_seasonYear: {
-              playerId: player.id,
-              categoryId: category.id,
-              seasonYear: year
-            }
-          }
-        })
-
-        if (!existingRanking) {
-          const points = Math.max(50, 800 - (i * 150) + Math.floor(Math.random() * 100))
-
-          await prisma.playerRanking.create({
-            data: {
-              playerId: player.id,
-              categoryId: category.id,
-              currentPoints: points,
-              seasonYear: year
-            }
-          })
-
-          console.log(`  ✅ ${year}: ${player.firstName} ${player.lastName}: ${points} puntos en ${category.name}`)
-        }
-      }
-    }
-  }
-
-  console.log('📊 Rankings históricos creados')
-
-  // 5. Crear torneos - basado en datos reales de la DB
-  const tournaments = []
-
-  // Torneo 1: We Need Padel OCT-25 (ACTIVO)
-  const weFemeninoACat = categories.find(c => c.name === 'Femenino A')
-  const weFemeninoBCat = categories.find(c => c.name === 'Femenino B')
-  const ciudadPadelClub = clubs.find(c => c.name === 'Ciudad Padel')
-
-  if (weFemeninoACat && weFemeninoBCat && ciudadPadelClub) {
-    const weNeedPadel = await prisma.tournament.create({
-      data: {
-        name: 'We Need Padel OCT-25',
-        description: 'Torneo Femenino CAT A y B.',
-        type: TournamentType.GROUP_STAGE_ELIMINATION,
-        status: TournamentStatus.REGISTRATION_OPEN,
-        registrationStart: new Date('2025-09-22T23:07:23.005Z'),
-        registrationEnd: new Date('2025-09-30T03:00:00.000Z'),
-        tournamentStart: new Date('2025-10-01T03:00:00.000Z'),
-        tournamentEnd: new Date('2025-10-05T03:00:00.000Z'),
-        maxParticipants: 60,
-        registrationFee: 30000,
-        prizePool: 80000,
-        rankingPoints: 1000,
-        organizerId: adminUser.id,
-        mainClubId: ciudadPadelClub.id,
-        categories: {
-          create: [
-            { categoryId: weFemeninoACat.id },
-            { categoryId: weFemeninoBCat.id }
-          ]
-        },
-        clubs: {
-          create: [
-            { clubId: ciudadPadelClub.id }
-          ]
-        }
-      }
-    })
-    tournaments.push(weNeedPadel)
-  }
-
-  // Torneo 2: Padel Noa OCT-25
-  const masc7maCat = categories.find(c => c.name === 'Masculino 7ma')
-  const padelNoaClub = clubs.find(c => c.name === 'Padel NOA')
-
-  if (masc7maCat && padelNoaClub) {
-    const padelNoa = await prisma.tournament.create({
-      data: {
-        name: 'Padel Noa OCT-25',
-        description: 'Torneo a desarrollarse los miercoles del mes de octubre',
-        type: TournamentType.SINGLE_ELIMINATION,
-        status: TournamentStatus.DRAFT,
-        registrationStart: new Date('2025-09-23T03:00:00.000Z'),
-        registrationEnd: new Date('2025-09-30T03:00:00.000Z'),
-        tournamentStart: new Date('2025-10-01T03:00:00.000Z'),
-        tournamentEnd: new Date('2025-10-31T03:00:00.000Z'),
-        maxParticipants: 10,
-        registrationFee: 3000,
-        prizePool: 12000,
-        rankingPoints: 500,
-        organizerId: adminUser.id,
-        mainClubId: padelNoaClub.id,
-        categories: {
-          create: [
-            { categoryId: masc7maCat.id }
-          ]
-        },
-        clubs: {
-          create: [
-            { clubId: padelNoaClub.id }
-          ]
-        }
-      }
-    })
-    tournaments.push(padelNoa)
-  }
-
-  // Torneo 3: Encuentro de Padel
-  const femSuma15Cat = categories.find(c => c.name === 'Femenino Suma 15')
-  const pipoPadelClub = clubs.find(c => c.name === 'Pipo Padel')
-
-  if (femSuma15Cat && pipoPadelClub) {
-    const encuentroPadel = await prisma.tournament.create({
-      data: {
-        name: 'Encuentro de Padel',
-        description: 'DAMAS - Suma 15.\nCategorias 7ma y 8va',
-        type: TournamentType.GROUP_STAGE_ELIMINATION,
-        status: TournamentStatus.DRAFT,
-        registrationStart: new Date('2025-09-23T16:24:10.362Z'),
-        registrationEnd: new Date('2025-09-26T03:00:00.000Z'),
-        tournamentStart: new Date('2025-09-27T03:00:00.000Z'),
-        tournamentEnd: new Date('2025-09-27T03:00:00.000Z'),
-        registrationFee: 20000,
-        rankingPoints: 250,
-        organizerId: adminUser.id,
-        mainClubId: pipoPadelClub.id,
-        categories: {
-          create: [
-            { categoryId: femSuma15Cat.id }
-          ]
-        },
-        clubs: {
-          create: [
-            { clubId: pipoPadelClub.id }
-          ]
-        }
-      }
-    })
-    tournaments.push(encuentroPadel)
-  }
-
-  // Crear algunos equipos de ejemplo para el torneo activo
-  if (tournaments.length > 0) {
-    const activeTournament = tournaments.find(t => t.status === TournamentStatus.REGISTRATION_OPEN)
-    if (activeTournament) {
-      const femalePlayersA = allPlayers.filter(p =>
-        p.gender === Gender.FEMALE && p.rankingPoints >= 501 && p.rankingPoints <= 1000
-      )
-      const femalePlayersB = allPlayers.filter(p =>
-        p.gender === Gender.FEMALE && p.rankingPoints >= 1 && p.rankingPoints <= 500
-      )
-
-      // Crear equipos para categoría A
-      if (femalePlayersA.length >= 4 && weFemeninoACat) {
-        // Crear registrations primero
-        const reg1 = await prisma.registration.create({
-          data: {
-            tournamentId: activeTournament.id,
-            categoryId: weFemeninoACat.id,
-            playerId: femalePlayersA[0].id,
-            registrationStatus: 'PAID',
-            payment: {
-              create: {
-                amount: 15000,
-                paymentStatus: 'PAID',
-                paymentMethod: 'transferencia',
-                paidAt: new Date(),
-              }
-            }
-          }
-        })
-
-        const reg2 = await prisma.registration.create({
-          data: {
-            tournamentId: activeTournament.id,
-            categoryId: weFemeninoACat.id,
-            playerId: femalePlayersA[1].id,
-            registrationStatus: 'PAID',
-            payment: {
-              create: {
-                amount: 15000,
-                paymentStatus: 'PAID',
-                paymentMethod: 'transferencia',
-                paidAt: new Date(),
-              }
-            }
-          }
-        })
-
-        await prisma.team.create({
-          data: {
-            tournamentId: activeTournament.id,
-            categoryId: weFemeninoACat.id,
-            name: 'Power Queens',
-            registration1Id: reg1.id,
-            registration2Id: reg2.id,
-            status: 'CONFIRMED',
-          }
-        })
-
-        const reg3 = await prisma.registration.create({
-          data: {
-            tournamentId: activeTournament.id,
-            categoryId: weFemeninoACat.id,
-            playerId: femalePlayersA[2].id,
-            registrationStatus: 'CONFIRMED',
-          }
-        })
-
-        const reg4 = await prisma.registration.create({
-          data: {
-            tournamentId: activeTournament.id,
-            categoryId: weFemeninoACat.id,
-            playerId: femalePlayersA[3].id,
-            registrationStatus: 'CONFIRMED',
-          }
-        })
-
-        await prisma.team.create({
-          data: {
-            tournamentId: activeTournament.id,
-            categoryId: weFemeninoACat.id,
-            name: 'Las Invencibles',
-            registration1Id: reg3.id,
-            registration2Id: reg4.id,
-            status: 'CONFIRMED',
-          }
-        })
-      }
-
-      // Crear equipos para categoría B
-      if (femalePlayersB.length >= 2 && weFemeninoBCat) {
-        const regB1 = await prisma.registration.create({
-          data: {
-            tournamentId: activeTournament.id,
-            categoryId: weFemeninoBCat.id,
-            playerId: femalePlayersB[0].id,
-            registrationStatus: 'CONFIRMED',
-          }
-        })
-
-        const regB2 = await prisma.registration.create({
-          data: {
-            tournamentId: activeTournament.id,
-            categoryId: weFemeninoBCat.id,
-            playerId: femalePlayersB[1].id,
-            registrationStatus: 'CONFIRMED',
-          }
-        })
-
-        await prisma.team.create({
-          data: {
-            tournamentId: activeTournament.id,
-            categoryId: weFemeninoBCat.id,
-            name: 'Nuevas Promesas',
-            registration1Id: regB1.id,
-            registration2Id: regB2.id,
-            status: 'CONFIRMED',
-          }
-        })
-      }
-    }
-  }
-
-  console.log(`🏆 Creados ${tournaments.length} torneos con equipos de ejemplo`)
-
-  // 5.1. Crear estadísticas de torneo de ejemplo (integrado desde seed-tournament-stats.ts)
-  if (tournaments.length > 0) {
-    const completedTournaments = tournaments.filter(t => t.status === TournamentStatus.COMPLETED)
-
-    // Si no hay torneos completados, crear uno para las estadísticas
-    if (completedTournaments.length === 0) {
-      console.log('📊 Creando torneo de ejemplo con estadísticas...')
-
-      // Crear torneo completado para estadísticas
-      const statsCategory = categories.find(c => c.name === 'Masculino 5ta')
-      const statsClub = clubs[0] // Usar primer club
-
-      if (statsCategory && statsClub && allPlayers.length >= 8) {
-        const statsTournament = await prisma.tournament.create({
-          data: {
-            name: 'Torneo de Prueba - Estadísticas Automáticas',
-            description: 'Torneo para probar el sistema de cálculo automático de puntos',
-            type: TournamentType.SINGLE_ELIMINATION,
-            status: TournamentStatus.COMPLETED,
-            tournamentStart: new Date('2025-01-15'),
-            tournamentEnd: new Date('2025-01-16'),
-            rankingPoints: 750,
-            organizerId: adminUser.id,
-            mainClubId: statsClub.id,
-            categories: {
-              create: {
-                categoryId: statsCategory.id,
-                maxTeams: 8
-              }
-            }
-          }
-        })
-
-        // Crear equipos para este torneo
-        const malePlayersForStats = allPlayers.filter(p =>
-          p.gender === Gender.MALE && p.firstName !== 'Administrador'
-        ).slice(0, 8)
-
-        const teams = []
-        for (let i = 0; i < 8; i += 2) {
-          if (i + 1 < malePlayersForStats.length) {
-            // Crear registrations primero
-            const reg1Stats = await prisma.registration.create({
-              data: {
-                tournamentId: statsTournament.id,
-                categoryId: statsCategory.id,
-                playerId: malePlayersForStats[i].id,
-                registrationStatus: 'CONFIRMED'
-              }
-            })
-
-            const reg2Stats = await prisma.registration.create({
-              data: {
-                tournamentId: statsTournament.id,
-                categoryId: statsCategory.id,
-                playerId: malePlayersForStats[i + 1].id,
-                registrationStatus: 'CONFIRMED'
-              }
-            })
-
-            const team = await prisma.team.create({
-              data: {
-                tournamentId: statsTournament.id,
-                categoryId: statsCategory.id,
-                registration1Id: reg1Stats.id,
-                registration2Id: reg2Stats.id,
-                name: `${malePlayersForStats[i].firstName} & ${malePlayersForStats[i + 1].firstName}`,
-                status: 'CONFIRMED'
-              },
-              include: {
-                registration1: { include: { player: true } },
-                registration2: { include: { player: true } }
-              }
-            })
-            teams.push(team)
-          }
-        }
-
-        // Crear estadísticas del torneo
-        const positions = [1, 2, 3, 4, 5, 6, 7, 8]
-        const shuffledPositions = positions.sort(() => 0.5 - Math.random())
-
-        let playerIndex = 0
-        for (const team of teams) {
-          for (const playerId of [team.registration1.playerId, team.registration2.playerId]) {
-            const position = shuffledPositions[playerIndex] || playerIndex + 1
-
-            // Generar estadísticas basadas en la posición
-            const matchesPlayed = position <= 2 ? 6 : position <= 4 ? 5 : position <= 8 ? 4 : 3
-            const matchesWon = position <= 2 ? 5 : position <= 4 ? 3 : position <= 8 ? 2 : 1
-            const setsWon = matchesWon * 2 + Math.floor(Math.random() * 3)
-            const setsLost = (matchesPlayed - matchesWon) * 2 + Math.floor(Math.random() * 2)
-            const gamesWon = setsWon * 6 + Math.floor(Math.random() * 20)
-            const gamesLost = setsLost * 6 + Math.floor(Math.random() * 15)
-
-            await prisma.tournamentStats.create({
-              data: {
-                tournamentId: statsTournament.id,
-                playerId,
-                matchesPlayed,
-                matchesWon,
-                setsWon,
-                setsLost,
-                gamesWon,
-                gamesLost,
-                finalPosition: position,
-                pointsEarned: 0 // Se calculará automáticamente
-              }
-            })
-
-            const player = await prisma.player.findUnique({
-              where: { id: playerId },
-              select: { firstName: true, lastName: true }
-            })
-
-            console.log(`  ✅ ${player?.firstName} ${player?.lastName}: Position ${position}, ${matchesWon}W/${matchesPlayed-matchesWon}L`)
-            playerIndex++
-          }
-        }
-
-        tournaments.push(statsTournament)
-        console.log(`📊 Torneo con estadísticas creado: ${statsTournament.name}`)
-      }
-    }
-  }
-
-  // 6. Crear notificaciones de ejemplo
-  if (tournaments.length > 0) {
-    const activeTournament = tournaments.find(t => t.status === TournamentStatus.REGISTRATION_OPEN)
-    if (activeTournament && players.length >= 2) {
-      await Promise.all([
-        prisma.notification.create({
-          data: {
-            userId: players[0].id,
-            tournamentId: activeTournament.id,
-            type: 'REGISTRATION_CONFIRMED',
-            title: 'Inscripción confirmada',
-            message: `Tu equipo ha sido inscrito exitosamente en ${activeTournament.name}`,
-            status: 'SENT',
-            sentAt: new Date(),
-          }
-        }),
-        prisma.notification.create({
-          data: {
-            userId: players[1].id,
-            type: 'TOURNAMENT_UPDATE',
-            title: 'Nuevo torneo disponible',
-            message: `Se ha abierto la inscripción para ${activeTournament.name}`,
-            status: 'PENDING',
-          }
-        })
-      ])
-    }
-  }
-
-  console.log('🔔 Notificaciones de ejemplo creadas')
+  console.log(`📊 Creados ${rankingsCreated} rankings para jugadores`)
 
   console.log('✅ Seed completado exitosamente!')
   console.log('\n📋 Resumen de datos creados:')
-  console.log(`   • ${players.length + 1} usuarios (1 admin, ${players.length} jugadores)`)
+  console.log(`   • 1 administrador + 150 jugadores (75 masculinos, 75 femeninos)`)
   console.log(`   • ${clubs.length} clubes con sus canchas`)
-  console.log(`   • ${categories.length} categorías (sistema de divisiones completo)`)
-  console.log(`   • ${tournaments.length} torneos con equipos inscritos`)
-  console.log(`   • Rankings y notificaciones de ejemplo`)
+  console.log(`   • ${categories.length} categorías`)
+  console.log(`   • ${rankingsCreated} rankings`)
+  console.log('\n👥 Distribución de jugadores masculinos:')
+  console.log('   • 16 jugadores en 8va categoría (100-300 pts)')
+  console.log('   • 32 jugadores en 7ma categoría (300-600 pts)')
+  console.log('   • 16 jugadores en 6ta categoría (600-900 pts)')
+  console.log('   • 6 jugadores en 5ta categoría (900-1200 pts)')
+  console.log('   • 5 jugadores en 4ta categoría (1200-1600 pts)')
+  console.log('\n👥 Distribución de jugadoras femeninas:')
+  console.log('   • 16 jugadoras en 7ma categoría (250-500 pts)')
+  console.log('   • 24 jugadoras en 6ta categoría (500-800 pts)')
+  console.log('   • 20 jugadoras en 5ta categoría (800-1100 pts)')
+  console.log('   • 15 jugadoras en 4ta categoría (1100-1500 pts)')
   console.log('\n🏟️ Clubes incluidos:')
-  console.log('   • Ciudad Padel (4 canchas)')
-  console.log('   • Ohana Club Salta (2 canchas)')
   console.log('   • Padel NOA (2 canchas)')
-  console.log('   • Pipo Padel (3 canchas)')
-  console.log('   • Verbum Camp Padel (3 canchas)')
-  console.log('\n🏆 Torneos incluidos:')
-  console.log('   • We Need Padel OCT-25 (ACTIVO - Fem A y B)')
-  console.log('   • Padel Noa OCT-25 (BORRADOR - Masc 7ma)')
-  console.log('   • Encuentro de Padel (BORRADOR - Fem Suma 15)')
-  console.log('\n👥 Distribución de jugadores:')
-  console.log('   • 8 hombres nivel alto (1200-1600 pts)')
-  console.log('   • 8 hombres nivel medio (800-1199 pts)')
-  console.log('   • 4 hombres veteranos +45')
-  console.log('   • 8 mujeres nivel alto (1000+ pts)')
-  console.log('   • 8 mujeres nivel medio (600-999 pts)')
-  console.log('   • 4 mujeres veteranas +45')
-  console.log('   • 2 jugadores jóvenes mixtos')
+  console.log('   • Ciudad Padel (4 canchas)')
+  console.log('   • Pipo Padel (2 canchas)')
   console.log('\n🔑 Credenciales de prueba:')
   console.log('   Admin: admin@padapp.com / 123456')
-  console.log('   Ejemplos: juan.perez@email.com / 123456')
-  console.log('            maria.garcia@email.com / 123456')
-  console.log('            carolina.diaz@email.com / 123456 (fem alta)')
+  console.log('   Jugadores: [nombre].[apellido][numero]@email.com / 123456')
   console.log('   (Todos los usuarios tienen contraseña: 123456)')
 }
 

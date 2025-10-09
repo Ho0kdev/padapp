@@ -7,11 +7,16 @@ import { z } from "zod"
 // GET /api/categories - Obtener lista de categorías
 export async function GET(request: NextRequest) {
   try {
-    await requireAuth()
-
     const { searchParams } = new URL(request.url)
+    const forRegistration = searchParams.get("forRegistration") === "true"
+
+    // Solo requerir autenticación si no es para registro
+    if (!forRegistration) {
+      await requireAuth()
+    }
+
     const page = parseInt(searchParams.get("page") || "1")
-    const limit = parseInt(searchParams.get("limit") || "10")
+    const limit = parseInt(searchParams.get("limit") || forRegistration ? "100" : "10")
     const type = searchParams.get("type")
     const isActive = searchParams.get("isActive")
     const search = searchParams.get("search")
@@ -26,6 +31,9 @@ export async function GET(request: NextRequest) {
 
     if (isActive !== null && isActive !== "") {
       where.isActive = isActive === "true"
+    } else if (forRegistration) {
+      // Para registro, solo mostrar categorías activas
+      where.isActive = true
     }
 
     if (search) {

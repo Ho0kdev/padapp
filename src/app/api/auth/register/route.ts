@@ -11,6 +11,8 @@ const registerSchema = z.object({
   firstName: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
   lastName: z.string().min(2, "El apellido debe tener al menos 2 caracteres"),
   phone: z.string().optional(),
+  gender: z.enum(["MALE", "FEMALE"]),
+  primaryCategoryId: z.string().min(1, "Debes seleccionar una categoría principal"),
 })
 
 export async function POST(request: NextRequest) {
@@ -23,7 +25,7 @@ export async function POST(request: NextRequest) {
     if (rateLimitResponse) return rateLimitResponse
 
     const body = await request.json()
-    const { email, password, firstName, lastName, phone } = registerSchema.parse(body)
+    const { email, password, firstName, lastName, phone, gender, primaryCategoryId } = registerSchema.parse(body)
 
     // Verificar si el usuario ya existe
     const existingUser = await prisma.user.findUnique({
@@ -58,6 +60,8 @@ export async function POST(request: NextRequest) {
           firstName,
           lastName,
           phone,
+          gender,
+          primaryCategoryId,
           rankingPoints: 0,
         }
       })

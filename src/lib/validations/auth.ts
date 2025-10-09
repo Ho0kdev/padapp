@@ -12,6 +12,10 @@ export const registerSchema = z.object({
   firstName: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
   lastName: z.string().min(2, "El apellido debe tener al menos 2 caracteres"),
   phone: z.string().optional(),
+  gender: z.enum(["MALE", "FEMALE"], {
+    message: "El género es requerido",
+  }),
+  primaryCategoryId: z.string().min(1, "Debes seleccionar una categoría principal"),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Las contraseñas no coinciden",
   path: ["confirmPassword"],

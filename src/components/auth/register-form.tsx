@@ -1,7 +1,7 @@
 // src/components/auth/register-form.tsx
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -12,7 +12,14 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Eye, EyeOff, Loader2 } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { registerSchema, type RegisterFormData } from "@/lib/validations/auth"
+
+type Category = {
+  id: string
+  name: string
+  genderRestriction: "MALE" | "FEMALE" | null
+}
 
 export function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false)
@@ -20,15 +27,46 @@ export function RegisterForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string>("")
   const [success, setSuccess] = useState(false)
-  
+  const [categories, setCategories] = useState<Category[]>([])
+  const [selectedGender, setSelectedGender] = useState<"MALE" | "FEMALE" | "">("")
+  const [loadingCategories, setLoadingCategories] = useState(true)
+
   const router = useRouter()
-  
+
   const {
     register,
     handleSubmit,
     formState: { errors },
+    setValue,
+    watch,
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
+  })
+
+  const gender = watch("gender")
+
+  // Cargar categorías al montar el componente
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch("/api/categories?forRegistration=true&limit=100")
+        if (response.ok) {
+          const data = await response.json()
+          setCategories(data.categories || [])
+        }
+      } catch (error) {
+        console.error("Error al cargar categorías:", error)
+      } finally {
+        setLoadingCategories(false)
+      }
+    }
+    fetchCategories()
+  }, [])
+
+  // Filtrar categorías por género seleccionado
+  const filteredCategories = categories.filter(cat => {
+    if (!gender) return false
+    return cat.genderRestriction === gender || cat.genderRestriction === null
   })
 
   const onSubmit = async (data: RegisterFormData) => {
@@ -47,6 +85,8 @@ export function RegisterForm() {
           firstName: data.firstName,
           lastName: data.lastName,
           phone: data.phone,
+          gender: data.gender,
+          primaryCategoryId: data.primaryCategoryId,
         }),
       })
 
@@ -149,7 +189,64 @@ export function RegisterForm() {
               {...register("phone")}
             />
           </div>
-          
+
+          <div className="space-y-2">
+            <Label htmlFor="gender">Género</Label>
+            <Select
+              onValueChange={(value) => {
+                setValue("gender", value as "MALE" | "FEMALE")
+                // Reset category when gender changes
+                setValue("primaryCategoryId", "")
+              }}
+            >
+              <SelectTrigger className={errors.gender ? "border-red-500" : ""}>
+                <SelectValue placeholder="Selecciona tu género" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="MALE">Masculino</SelectItem>
+                <SelectItem value="FEMALE">Femenino</SelectItem>
+              </SelectContent>
+            </Select>
+            {errors.gender && (
+              <p className="text-sm text-red-500">{errors.gender.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="primaryCategoryId">Categoría Principal</Label>
+            <Select
+              onValueChange={(value) => setValue("primaryCategoryId", value)}
+              disabled={!gender || loadingCategories}
+            >
+              <SelectTrigger className={errors.primaryCategoryId ? "border-red-500" : ""}>
+                <SelectValue
+                  placeholder={
+                    !gender
+                      ? "Primero selecciona tu género"
+                      : loadingCategories
+                      ? "Cargando categorías..."
+                      : "Selecciona tu categoría"
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {filteredCategories.map((category) => (
+                  <SelectItem key={category.id} value={category.id}>
+                    {category.name}
+                  </SelectItem>
+                ))}
+                {filteredCategories.length === 0 && gender && !loadingCategories && (
+                  <SelectItem value="none" disabled>
+                    No hay categorías disponibles
+                  </SelectItem>
+                )}
+              </SelectContent>
+            </Select>
+            {errors.primaryCategoryId && (
+              <p className="text-sm text-red-500">{errors.primaryCategoryId.message}</p>
+            )}
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="password">Contraseña</Label>
             <div className="relative">
