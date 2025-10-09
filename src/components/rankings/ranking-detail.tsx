@@ -280,12 +280,14 @@ export function RankingDetail({ ranking, currentUserId }: RankingDetailProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem asChild>
-                <Link href={`/dashboard/users/${ranking.player.user.id}`}>
-                  <User className="mr-2 h-4 w-4" />
-                  Ver perfil completo
-                </Link>
-              </DropdownMenuItem>
+              {(isAdminOrClubAdmin || ranking.player.user.id === currentUserId) && (
+                <DropdownMenuItem asChild>
+                  <Link href={`/dashboard/users/${ranking.player.user.id}`}>
+                    <User className="mr-2 h-4 w-4" />
+                    Ver perfil completo
+                  </Link>
+                </DropdownMenuItem>
+              )}
               {isAdminOrClubAdmin && (
                 <>
                   <DropdownMenuSeparator />
