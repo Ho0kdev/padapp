@@ -79,9 +79,11 @@ interface Category {
 interface UserFormProps {
   initialData?: Partial<UserFormValues>
   userId?: string
+  currentUserRole?: string
+  isOwnProfile?: boolean
 }
 
-export function UserForm({ initialData, userId }: UserFormProps) {
+export function UserForm({ initialData, userId, currentUserRole, isOwnProfile }: UserFormProps) {
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [categories, setCategories] = useState<Category[]>([])
@@ -90,6 +92,8 @@ export function UserForm({ initialData, userId }: UserFormProps) {
   const router = useRouter()
 
   const isEditing = !!userId
+  const isAdmin = currentUserRole === 'ADMIN'
+  const canEditSensitiveFields = isAdmin
 
   const form = useForm<UserFormValues>({
     resolver: zodResolver(userFormSchema) as any,
@@ -367,7 +371,7 @@ export function UserForm({ initialData, userId }: UserFormProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Rol *</FormLabel>
-                      <Select onValueChange={handleRoleChange} defaultValue={field.value}>
+                      <Select onValueChange={handleRoleChange} defaultValue={field.value} disabled={!canEditSensitiveFields}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Selecciona un rol" />
@@ -380,6 +384,11 @@ export function UserForm({ initialData, userId }: UserFormProps) {
                           <SelectItem value="ADMIN">Administrador</SelectItem>
                         </SelectContent>
                       </Select>
+                      {!canEditSensitiveFields && (
+                        <FormDescription className="text-amber-600">
+                          Solo administradores pueden modificar el rol
+                        </FormDescription>
+                      )}
                       <FormMessage />
                     </FormItem>
                   )}
@@ -394,6 +403,7 @@ export function UserForm({ initialData, userId }: UserFormProps) {
                         <Checkbox
                           checked={field.value}
                           onCheckedChange={handleCreatePlayerChange}
+                          disabled={!canEditSensitiveFields}
                         />
                       </FormControl>
                       <div className="space-y-1 leading-none">
@@ -401,7 +411,10 @@ export function UserForm({ initialData, userId }: UserFormProps) {
                           Es jugador
                         </FormLabel>
                         <FormDescription>
-                          Solo Usuarios ACTIVOS pueden ser jugadores
+                          {!canEditSensitiveFields ?
+                            "Solo administradores pueden modificar este campo." :
+                            "Solo Usuarios ACTIVOS pueden ser jugadores"
+                          }
                         </FormDescription>
                       </div>
                     </FormItem>
@@ -462,7 +475,7 @@ export function UserForm({ initialData, userId }: UserFormProps) {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Género *</FormLabel>
-                          <Select onValueChange={handleGenderChange} defaultValue={field.value}>
+                          <Select onValueChange={handleGenderChange} defaultValue={field.value} disabled={!canEditSensitiveFields}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Selecciona género" />
@@ -473,6 +486,11 @@ export function UserForm({ initialData, userId }: UserFormProps) {
                               <SelectItem value="FEMALE">Femenino</SelectItem>
                             </SelectContent>
                           </Select>
+                          {!canEditSensitiveFields && (
+                            <FormDescription className="text-amber-600">
+                              Solo administradores pueden modificar el género
+                            </FormDescription>
+                          )}
                           <FormMessage />
                         </FormItem>
                       )}
@@ -511,11 +529,12 @@ export function UserForm({ initialData, userId }: UserFormProps) {
                         <Select
                           onValueChange={field.onChange}
                           defaultValue={field.value}
-                          disabled={loadingCategories || !selectedGender}
+                          disabled={loadingCategories || !selectedGender || !canEditSensitiveFields}
                         >
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder={
+                                !canEditSensitiveFields ? "Solo administradores pueden cambiar categoría" :
                                 loadingCategories ? "Cargando..." :
                                 !selectedGender ? "Primero selecciona un género" :
                                 filteredCategories.length === 0 ? "No hay categorías disponibles" :
@@ -540,9 +559,11 @@ export function UserForm({ initialData, userId }: UserFormProps) {
                           </SelectContent>
                         </Select>
                         <FormDescription>
-                          {!selectedGender ?
-                            "Selecciona género para ver las categorías disponibles." :
-                            "Categoría principal del jugador."
+                          {!canEditSensitiveFields ?
+                            "Solo administradores pueden modificar la categoría principal." :
+                            !selectedGender ?
+                              "Selecciona género para ver las categorías disponibles." :
+                              "Categoría principal del jugador."
                           }
                         </FormDescription>
                         <FormMessage />
@@ -581,11 +602,15 @@ export function UserForm({ initialData, userId }: UserFormProps) {
                             {...field}
                             type="number"
                             min="0"
+                            disabled={!canEditSensitiveFields}
                             onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                           />
                         </FormControl>
                         <FormDescription>
-                          Puntos iniciales del jugador
+                          {!canEditSensitiveFields ?
+                            "Solo administradores pueden modificar los puntos de ranking." :
+                            "Puntos iniciales del jugador"
+                          }
                         </FormDescription>
                         <FormMessage />
                       </FormItem>

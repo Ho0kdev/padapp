@@ -106,6 +106,8 @@ export default async function EditUserPage({ params }: Props) {
         <UserForm
           initialData={initialData as any}
           userId={user.id}
+          currentUserRole={session.user.role}
+          isOwnProfile={session.user.id === user.id}
         />
       </div>
     </DashboardLayout>

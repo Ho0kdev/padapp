@@ -221,8 +221,14 @@ export async function PUT(
       )
     }
 
-    // Verificar permisos usando el nuevo sistema RBAC
-    await authorize(Action.UPDATE, Resource.USER, existingUser)
+    // Verificar permisos: Admins pueden editar cualquier usuario, usuarios pueden editar su propio perfil
+    const isOwnProfile = session.user.id === id
+    const isAdmin = session.user.role === UserRole.ADMIN
+
+    if (!isAdmin && !isOwnProfile) {
+      // Si no es admin y no es su propio perfil, usar el sistema RBAC normal
+      await authorize(Action.UPDATE, Resource.USER, existingUser)
+    }
 
     // Check if user is being deactivated and has active tournaments
     if (status === 'INACTIVE' && existingUser.status === 'ACTIVE') {
@@ -313,14 +319,21 @@ export async function PUT(
     if (lastName !== undefined) playerUpdate.lastName = lastName
     if (phone !== undefined) playerUpdate.phone = phone
     if (dateOfBirth !== undefined) playerUpdate.dateOfBirth = new Date(dateOfBirth)
-    if (gender !== undefined) playerUpdate.gender = gender
+
+    // Solo admins pueden cambiar género
+    if (isAdmin && gender !== undefined) {
+      playerUpdate.gender = gender
+    }
+
     if (dominantHand !== undefined) playerUpdate.dominantHand = dominantHand
     if (profileImageUrl !== undefined) playerUpdate.profileImageUrl = profileImageUrl
     if (emergencyContactName !== undefined) playerUpdate.emergencyContactName = emergencyContactName
     if (emergencyContactPhone !== undefined) playerUpdate.emergencyContactPhone = emergencyContactPhone
     if (bloodType !== undefined) playerUpdate.bloodType = bloodType
     if (medicalNotes !== undefined) playerUpdate.medicalNotes = medicalNotes
-    if (session.user.role === UserRole.ADMIN && rankingPoints !== undefined) {
+
+    // Solo admins pueden cambiar puntos de ranking
+    if (isAdmin && rankingPoints !== undefined) {
       playerUpdate.rankingPoints = rankingPoints
     }
 
@@ -349,7 +362,8 @@ export async function PUT(
     })
 
     // Handle primary category change if specified and player exists
-    if (categoryId && user.player) {
+    // Solo admins pueden cambiar la categoría principal
+    if (isAdmin && categoryId && user.player) {
       // Update the primary category
       await prisma.player.update({
         where: { id: user.player.id },

@@ -2,6 +2,7 @@
 "use client"
 
 import { signOut } from "next-auth/react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -17,9 +18,22 @@ import { useAuth } from "@/hooks/use-auth"
 
 export function Header() {
   const { user } = useAuth()
+  const router = useRouter()
 
   const handleSignOut = () => {
     signOut({ callbackUrl: "/auth/login" })
+  }
+
+  const handleProfileClick = () => {
+    if (user?.id) {
+      router.push(`/dashboard/users/${user.id}`)
+    }
+  }
+
+  const handleSettingsClick = () => {
+    if (user?.id) {
+      router.push(`/dashboard/users/${user.id}/edit`)
+    }
   }
 
   const userInitials = user?.name
@@ -61,16 +75,16 @@ export function Header() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onSelect={handleProfileClick}>
               <User className="mr-2 h-4 w-4" />
               <span>Perfil</span>
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem onSelect={handleSettingsClick}>
               <Settings className="mr-2 h-4 w-4" />
               <span>Configuración</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleSignOut}>
+            <DropdownMenuItem onSelect={handleSignOut}>
               <LogOut className="mr-2 h-4 w-4" />
               <span>Cerrar sesión</span>
             </DropdownMenuItem>

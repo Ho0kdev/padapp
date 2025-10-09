@@ -114,9 +114,11 @@ export const navigation: NavigationItem[] = [
  * basándose en la configuración de navegación
  */
 export function checkRoleAccess(pathname: string, userRole?: string, userId?: string): boolean {
-  // Excepción especial: Los jugadores pueden acceder a su propio perfil (solo lectura)
-  if (userRole === 'PLAYER' && userId && pathname === `/dashboard/users/${userId}`) {
-    return true
+  // Excepción especial: Los jugadores pueden acceder a su propio perfil (lectura y edición)
+  if (userRole === 'PLAYER' && userId) {
+    if (pathname === `/dashboard/users/${userId}` || pathname === `/dashboard/users/${userId}/edit`) {
+      return true
+    }
   }
 
   // Buscar la ruta en la configuración de navegación
