@@ -386,14 +386,14 @@ export function RankingsTable() {
                             Ver detalle
                           </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link href={`/dashboard/users/${ranking.player.user.id}`}>
-                            <Eye className="mr-2 h-4 w-4" />
-                            Ver jugador
-                          </Link>
-                        </DropdownMenuItem>
                         {isAdminOrClubAdmin && (
                           <>
+                            <DropdownMenuItem asChild>
+                              <Link href={`/dashboard/users/${ranking.player.user.id}`}>
+                                <Eye className="mr-2 h-4 w-4" />
+                                Ver jugador
+                              </Link>
+                            </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                               onClick={() => {
