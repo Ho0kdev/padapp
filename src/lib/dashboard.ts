@@ -4,10 +4,6 @@ import { TournamentStatus, MatchStatus } from "@prisma/client"
 
 export async function getDashboardStats() {
   try {
-    console.log('[getDashboardStats] Starting...');
-    // Test connection first
-    await prisma.$queryRaw`SELECT 1`;
-    console.log('[getDashboardStats] Database connection verified');
     // Estadísticas de torneos
     const [
       totalTournaments,
@@ -113,7 +109,7 @@ export async function getDashboardStats() {
       }
     })
 
-    const result = {
+    return {
       tournaments: {
         total: totalTournaments,
         active: activeTournaments,
@@ -134,8 +130,6 @@ export async function getDashboardStats() {
         pendingPayments: pendingPayments._sum.amount || 0,
       },
     }
-    console.log('[getDashboardStats] Success:', result);
-    return result;
   } catch (error) {
     console.error('[getDashboardStats] Error fetching dashboard stats:', error)
     throw new Error('Failed to fetch dashboard statistics')
@@ -144,7 +138,6 @@ export async function getDashboardStats() {
 
 export async function getRecentTournaments() {
   try {
-    console.log('[getRecentTournaments] Starting...');
     const tournaments = await prisma.tournament.findMany({
       take: 5,
       orderBy: {
@@ -161,7 +154,7 @@ export async function getRecentTournaments() {
       }
     })
 
-    const result = tournaments.map(tournament => ({
+    return tournaments.map(tournament => ({
       id: tournament.id,
       name: tournament.name,
       status: tournament.status,
@@ -171,8 +164,6 @@ export async function getRecentTournaments() {
       prize: tournament.prizePool,
       registrationEnd: tournament.registrationEnd,
     }))
-    console.log('[getRecentTournaments] Success, count:', result.length);
-    return result;
   } catch (error) {
     console.error('[getRecentTournaments] Error fetching recent tournaments:', error)
     throw new Error('Failed to fetch recent tournaments')
@@ -181,7 +172,6 @@ export async function getRecentTournaments() {
 
 export async function getRecentActivity() {
   try {
-    console.log('[getRecentActivity] Starting...');
     // Actividad reciente basada en diferentes eventos
     const [
       recentTeams,
@@ -343,12 +333,9 @@ export async function getRecentActivity() {
     })
 
     // Ordenar por timestamp y tomar los más recientes
-    const result = activities
+    return activities
       .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
       .slice(0, 6)
-
-    console.log('[getRecentActivity] Success, activities count:', result.length);
-    return result;
 
   } catch (error) {
     console.error('[getRecentActivity] Error fetching recent activity:', error)
