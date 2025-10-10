@@ -40,6 +40,7 @@ import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/hooks/use-auth"
+import { getTournamentStatusStyle, getTournamentStatusLabel } from "@/lib/utils/status-styles"
 
 interface RankingWithDetails {
   id: string
@@ -143,27 +144,6 @@ export function RankingDetail({ ranking, currentUserId }: RankingDetailProps) {
     )
   }
 
-  const getStatusBadge = (status: string) => {
-    const variants: Record<string, string> = {
-      DRAFT: "bg-gray-100 text-gray-800",
-      UPCOMING: "bg-blue-100 text-blue-800",
-      ACTIVE: "bg-green-100 text-green-800",
-      COMPLETED: "bg-purple-100 text-purple-800",
-      CANCELLED: "bg-red-100 text-red-800",
-    }
-    const labels: Record<string, string> = {
-      DRAFT: "Borrador",
-      UPCOMING: "Próximo",
-      ACTIVE: "Activo",
-      COMPLETED: "Completado",
-      CANCELLED: "Cancelado",
-    }
-    return (
-      <Badge variant="outline" className={variants[status] || variants.DRAFT}>
-        {labels[status] || status}
-      </Badge>
-    )
-  }
 
   const handleEditPoints = async () => {
     try {
@@ -449,7 +429,9 @@ export function RankingDetail({ ranking, currentUserId }: RankingDetailProps) {
                           >
                             {tournament.tournament.name}
                           </Link>
-                          {getStatusBadge(tournament.tournament.status)}
+                          <Badge variant="outline" className={getTournamentStatusStyle(tournament.tournament.status)}>
+                            {getTournamentStatusLabel(tournament.tournament.status)}
+                          </Badge>
                         </div>
                         <Badge variant="outline">
                           {tournament.category.name}

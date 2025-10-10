@@ -86,7 +86,12 @@ interface Registration {
   }
 }
 
-export function RegistrationForm() {
+interface RegistrationFormProps {
+  isAdmin?: boolean
+  currentPlayerId?: string | null
+}
+
+export function RegistrationForm({ isAdmin = false, currentPlayerId = null }: RegistrationFormProps) {
   const [loading, setLoading] = useState(false)
   const [dataLoading, setDataLoading] = useState(true)
   const [tournaments, setTournaments] = useState<Tournament[]>([])
@@ -116,6 +121,16 @@ export function RegistrationForm() {
     fetchData()
   }, [])
 
+  // Si es jugador (no admin), preseleccionar su jugador automáticamente
+  useEffect(() => {
+    if (!isAdmin && currentPlayerId && players.length > 0) {
+      const currentPlayer = players.find(p => p.id === currentPlayerId)
+      if (currentPlayer) {
+        form.setValue('playerId', currentPlayerId)
+      }
+    }
+  }, [isAdmin, currentPlayerId, players, form])
+
   // Verificar jugadores inscritos cuando cambian tournament o category
   useEffect(() => {
     const tournamentId = form.watch('tournamentId')
@@ -127,10 +142,51 @@ export function RegistrationForm() {
   }, [form.watch('tournamentId'), form.watch('categoryId')]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Manejar cambio de torneo
-  const handleTournamentChange = (tournamentId: string) => {
+  const handleTournamentChange = async (tournamentId: string) => {
     const tournament = tournaments.find(t => t.id === tournamentId)
     setSelectedTournament(tournament || null)
-    setAvailableCategories(tournament?.categories || [])
+
+    // Filtrar categorías según el jugador actual
+    let categories = tournament?.categories || []
+
+    if (!isAdmin && currentPlayerId) {
+      const currentPlayer = players.find(p => p.id === currentPlayerId)
+      if (currentPlayer) {
+        // Obtener las categorías en las que el jugador ya está inscrito en este torneo
+        const playerRegistrations = await fetch(`/api/registrations?tournamentId=${tournamentId}&playerId=${currentPlayerId}`)
+        const registrationsData = await playerRegistrations.json()
+        const registeredCategoryIds = new Set(
+          registrationsData.registrations?.map((r: any) => r.categoryId) || []
+        )
+
+        categories = categories.filter(cat => {
+          // Filtrar categorías en las que ya está inscrito
+          if (registeredCategoryIds.has(cat.categoryId)) {
+            return false
+          }
+
+          // Filtrar por restricción de género
+          if (cat.category.genderRestriction) {
+            if (cat.category.genderRestriction !== currentPlayer.gender) {
+              return false
+            }
+          }
+
+          // Filtrar por nivel (el jugador puede jugar en su categoría o categorías superiores)
+          // Números más bajos = mejor nivel (categorías superiores)
+          // Un jugador de 7ma (nivel 7) puede jugar en 7ma, 6ta, 5ta, 4ta, pero NO en 8va (nivel 8)
+          if (cat.category.level !== null && currentPlayer.primaryCategory?.level !== null) {
+            if (cat.category.level > currentPlayer.primaryCategory.level) {
+              return false
+            }
+          }
+
+          return true
+        })
+      }
+    }
+
+    setAvailableCategories(categories)
 
     // Resetear categoría cuando cambia el torneo
     form.setValue('categoryId', '')
@@ -181,6 +237,9 @@ export function RegistrationForm() {
   // Filtrar jugadores disponibles según género, nivel y registrados
   const getAvailablePlayers = () => {
     return players.filter(player => {
+      // Si no es admin, solo mostrar el jugador actual
+      if (!isAdmin && currentPlayerId && player.id !== currentPlayerId) return false
+
       // No mostrar jugadores ya registrados
       if (registeredPlayerIds.has(player.id)) return false
 
@@ -244,7 +303,13 @@ export function RegistrationForm() {
           gender: user.player.gender,
           rankingPoints: user.player.rankingPoints || 0,
           primaryCategory: user.player.primaryCategory || null,
-        })) || []
+        }))
+        .sort((a, b) => {
+          // Ordenar por apellido primero, luego por nombre
+          const lastNameCompare = a.lastName.localeCompare(b.lastName)
+          if (lastNameCompare !== 0) return lastNameCompare
+          return a.firstName.localeCompare(b.firstName)
+        }) || []
 
       setPlayers(playersFromUsers)
 
@@ -294,17 +359,21 @@ export function RegistrationForm() {
         variant: "success"
       })
 
-      // Resetear el formulario manteniendo torneo y categoría seleccionados
+      // Resetear el formulario completamente
       form.reset({
-        tournamentId: data.tournamentId,
-        categoryId: data.categoryId,
+        tournamentId: "",
+        categoryId: "",
         playerId: "",
         notes: "",
         acceptTerms: false,
       })
 
-      // Recargar jugadores inscritos
-      await checkRegisteredPlayers(data.tournamentId, data.categoryId)
+      // Limpiar estado
+      setSelectedTournament(null)
+      setAvailableCategories([])
+      setRegisteredPlayerIds(new Set())
+      setGenderRestriction(null)
+      setCategoryLevel(null)
 
     } catch (error) {
       console.error("Error processing registration:", error)
@@ -567,29 +636,45 @@ export function RegistrationForm() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Jugador *</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecciona el jugador a inscribir" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {getAvailablePlayers().length === 0 ? (
-                            <SelectItem value="none" disabled>
-                              No hay jugadores disponibles para esta categoría
-                            </SelectItem>
-                          ) : (
-                            getAvailablePlayers().map((player) => (
-                              <SelectItem key={player.id} value={player.id}>
-                                {player.firstName} {player.lastName}
-                                <span className="ml-2 text-muted-foreground">
-                                  ({player.rankingPoints} pts)
-                                </span>
+                      {!isAdmin && currentPlayerId ? (
+                        // Si es jugador, mostrar solo como texto (ya está preseleccionado)
+                        <div className="flex items-center gap-2 p-3 border rounded-md bg-muted">
+                          <User className="h-4 w-4 text-muted-foreground" />
+                          <span>
+                            {getAvailablePlayers()[0]?.firstName} {getAvailablePlayers()[0]?.lastName}
+                            {getAvailablePlayers()[0] && (
+                              <span className="ml-2 text-muted-foreground text-sm">
+                                ({getAvailablePlayers()[0].rankingPoints} pts)
+                              </span>
+                            )}
+                          </span>
+                        </div>
+                      ) : (
+                        // Si es admin, mostrar el select normal
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecciona el jugador a inscribir" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {getAvailablePlayers().length === 0 ? (
+                              <SelectItem value="none" disabled>
+                                No hay jugadores disponibles para esta categoría
                               </SelectItem>
-                            ))
-                          )}
-                        </SelectContent>
-                      </Select>
+                            ) : (
+                              getAvailablePlayers().map((player) => (
+                                <SelectItem key={player.id} value={player.id}>
+                                  {player.firstName} {player.lastName}
+                                  <span className="ml-2 text-muted-foreground">
+                                    ({player.rankingPoints} pts)
+                                  </span>
+                                </SelectItem>
+                              ))
+                            )}
+                          </SelectContent>
+                        </Select>
+                      )}
                       <FormMessage />
                     </FormItem>
                   )}

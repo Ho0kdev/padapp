@@ -12,15 +12,27 @@ export default async function NewRegistrationPage() {
     redirect("/login")
   }
 
-  // Verificar que sea admin
+  // Obtener información del usuario
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { role: true }
+    select: {
+      role: true,
+      player: {
+        select: {
+          id: true
+        }
+      }
+    }
   })
 
-  if (user?.role !== "ADMIN") {
+  if (!user) {
     redirect("/dashboard")
   }
+
+  // Los admins pueden inscribir a cualquier jugador
+  // Los jugadores solo pueden inscribirse a sí mismos
+  const isAdmin = user.role === "ADMIN" || user.role === "CLUB_ADMIN"
+  const currentPlayerId = user.player?.id || null
 
   return (
     <DashboardLayout>
@@ -28,11 +40,13 @@ export default async function NewRegistrationPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Nueva Inscripción</h1>
           <p className="text-muted-foreground">
-            Inscribir un jugador en un torneo. Para torneos convencionales, después podrás formar equipos.
+            {isAdmin
+              ? "Inscribir un jugador en un torneo. Para torneos convencionales, después podrás formar equipos."
+              : "Inscribite en un torneo. Para torneos convencionales, después podrás formar equipo con otro jugador."}
           </p>
         </div>
 
-        <RegistrationForm />
+        <RegistrationForm isAdmin={isAdmin} currentPlayerId={currentPlayerId} />
       </div>
     </DashboardLayout>
   )
