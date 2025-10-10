@@ -4,6 +4,10 @@ import { RecentTournamentsReal } from "@/components/dashboard/recent-tournaments
 import { ActivityFeedReal } from "@/components/dashboard/activity-feed-real"
 import { getDashboardStats, getRecentTournaments, getRecentActivity } from "@/lib/dashboard"
 
+// Forzar que la página sea dinámica y no use caché
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export default async function DashboardPage() {
   try {
     console.log('[DashboardPage] Starting to load dashboard...');
