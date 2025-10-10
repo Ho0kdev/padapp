@@ -4,9 +4,10 @@ import { TournamentStatus, MatchStatus } from "@prisma/client"
 
 export async function getDashboardStats() {
   try {
+    console.log('[getDashboardStats] Starting...');
     // Test connection first
     await prisma.$queryRaw`SELECT 1`;
-    console.log('Database connection verified');
+    console.log('[getDashboardStats] Database connection verified');
     // Estadísticas de torneos
     const [
       totalTournaments,
@@ -112,7 +113,7 @@ export async function getDashboardStats() {
       }
     })
 
-    return {
+    const result = {
       tournaments: {
         total: totalTournaments,
         active: activeTournaments,
@@ -133,14 +134,17 @@ export async function getDashboardStats() {
         pendingPayments: pendingPayments._sum.amount || 0,
       },
     }
+    console.log('[getDashboardStats] Success:', result);
+    return result;
   } catch (error) {
-    console.error('Error fetching dashboard stats:', error)
+    console.error('[getDashboardStats] Error fetching dashboard stats:', error)
     throw new Error('Failed to fetch dashboard statistics')
   }
 }
 
 export async function getRecentTournaments() {
   try {
+    console.log('[getRecentTournaments] Starting...');
     const tournaments = await prisma.tournament.findMany({
       take: 5,
       orderBy: {
@@ -157,7 +161,7 @@ export async function getRecentTournaments() {
       }
     })
 
-    return tournaments.map(tournament => ({
+    const result = tournaments.map(tournament => ({
       id: tournament.id,
       name: tournament.name,
       status: tournament.status,
@@ -167,14 +171,17 @@ export async function getRecentTournaments() {
       prize: tournament.prizePool,
       registrationEnd: tournament.registrationEnd,
     }))
+    console.log('[getRecentTournaments] Success, count:', result.length);
+    return result;
   } catch (error) {
-    console.error('Error fetching recent tournaments:', error)
+    console.error('[getRecentTournaments] Error fetching recent tournaments:', error)
     throw new Error('Failed to fetch recent tournaments')
   }
 }
 
 export async function getRecentActivity() {
   try {
+    console.log('[getRecentActivity] Starting...');
     // Actividad reciente basada en diferentes eventos
     const [
       recentTeams,
@@ -251,23 +258,26 @@ export async function getRecentActivity() {
 
     // Procesar equipos registrados
     recentTeams.forEach(team => {
-      activities.push({
-        id: `team-${team.id}`,
-        user: {
-          name: `${team.registration1.player.firstName} ${team.registration1.player.lastName}`,
-          initials: `${team.registration1.player.firstName[0]}${team.registration1.player.lastName[0]}`
-        },
-        action: 'formó equipo en',
-        target: team.tournament.name,
-        time: formatRelativeTime(team.createdAt),
-        timestamp: team.createdAt,
-      })
+      const player = team.registration1?.player
+      if (player && player.firstName && player.lastName && team.tournament) {
+        activities.push({
+          id: `team-${team.id}`,
+          user: {
+            name: `${player.firstName} ${player.lastName}`,
+            initials: `${player.firstName[0]}${player.lastName[0]}`
+          },
+          action: 'formó equipo en',
+          target: team.tournament.name,
+          time: formatRelativeTime(team.createdAt),
+          timestamp: team.createdAt,
+        })
+      }
     })
 
     // Procesar torneos creados
     recentTournaments.forEach(tournament => {
-      const organizer = tournament.organizer.player
-      if (organizer) {
+      const organizer = tournament.organizer?.player
+      if (organizer && organizer.firstName && organizer.lastName) {
         activities.push({
           id: `tournament-${tournament.id}`,
           user: {
@@ -284,20 +294,29 @@ export async function getRecentActivity() {
 
     // Procesar partidos completados
     recentMatches.forEach(match => {
-      if (match.team1 && match.team2 && match.winnerTeam) {
-        const winnerName = match.winnerTeam.name ||
-          `${match.winnerTeam === match.team1 ? match.team1.registration1.player.firstName : match.team2!.registration1.player.firstName} & ${match.winnerTeam === match.team1 ? match.team1.registration2.player.firstName : match.team2!.registration2.player.firstName}`
+      if (match.team1 && match.team2 && match.winnerTeam &&
+          match.team1.registration1?.player && match.team1.registration2?.player &&
+          match.team2.registration1?.player && match.team2.registration2?.player) {
+
+        const winnerTeam = match.winnerTeam === match.team1 ? match.team1 : match.team2
+        const loserTeam = match.winnerTeam === match.team1 ? match.team2 : match.team1
+
+        const winnerName = winnerTeam.name ||
+          `${winnerTeam.registration1.player.firstName} & ${winnerTeam.registration2.player.firstName}`
+        const loserName = loserTeam.name ||
+          `${loserTeam.registration1.player.firstName} & ${loserTeam.registration2.player.firstName}`
+
+        const firstPlayerName = winnerName.split(' & ')[0]
+        const initials = firstPlayerName.split(' ').map((n: string) => n[0]).join('')
 
         activities.push({
           id: `match-${match.id}`,
           user: {
-            name: winnerName.split(' & ')[0],
-            initials: winnerName.split(' & ')[0].split(' ').map((n: string) => n[0]).join('')
+            name: firstPlayerName,
+            initials: initials || 'XX'
           },
           action: 'ganó el partido contra',
-          target: match.winnerTeam === match.team1 ?
-            (match.team2.name || `${match.team2.registration1.player.firstName} & ${match.team2.registration2.player.firstName}`) :
-            (match.team1.name || `${match.team1.registration1.player.firstName} & ${match.team1.registration2.player.firstName}`),
+          target: loserName,
           time: formatRelativeTime(match.updatedAt),
           timestamp: match.updatedAt,
         })
@@ -306,15 +325,17 @@ export async function getRecentActivity() {
 
     // Procesar pagos
     recentPayments.forEach(payment => {
-      if (payment.paidAt) {
+      const player = payment.registration?.player
+      const tournament = payment.registration?.tournament
+      if (payment.paidAt && player && player.firstName && player.lastName && tournament) {
         activities.push({
           id: `payment-${payment.id}`,
           user: {
-            name: `${payment.registration.player.firstName} ${payment.registration.player.lastName}`,
-            initials: `${payment.registration.player.firstName[0]}${payment.registration.player.lastName[0]}`
+            name: `${player.firstName} ${player.lastName}`,
+            initials: `${player.firstName[0]}${player.lastName[0]}`
           },
           action: 'pagó la inscripción para',
-          target: payment.registration.tournament.name,
+          target: tournament.name,
           time: formatRelativeTime(payment.paidAt),
           timestamp: payment.paidAt,
         })
@@ -322,12 +343,15 @@ export async function getRecentActivity() {
     })
 
     // Ordenar por timestamp y tomar los más recientes
-    return activities
+    const result = activities
       .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
       .slice(0, 6)
 
+    console.log('[getRecentActivity] Success, activities count:', result.length);
+    return result;
+
   } catch (error) {
-    console.error('Error fetching recent activity:', error)
+    console.error('[getRecentActivity] Error fetching recent activity:', error)
     throw new Error('Failed to fetch recent activity')
   }
 }

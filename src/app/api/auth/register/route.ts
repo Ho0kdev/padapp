@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
         }
       })
 
-      await tx.player.create({
+      const newPlayer = await tx.player.create({
         data: {
           userId: newUser.id,
           firstName,
@@ -63,6 +63,16 @@ export async function POST(request: NextRequest) {
           gender,
           primaryCategoryId,
           rankingPoints: 0,
+        }
+      })
+
+      // Crear el ranking del jugador en su categoría principal
+      await tx.playerRanking.create({
+        data: {
+          playerId: newPlayer.id,
+          categoryId: primaryCategoryId,
+          currentPoints: 0,
+          seasonYear: new Date().getFullYear()
         }
       })
 

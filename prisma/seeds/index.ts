@@ -324,7 +324,7 @@ async function main() {
         player: true
       }
     })
-    createdPlayers.push(user)
+    createdPlayers.push({ user, playerData })
   }
 
   console.log(`👥 Creados 150 jugadores (75 masculinos, 75 femeninos)`)
@@ -670,18 +670,12 @@ async function main() {
 
   // 7. Crear rankings para los jugadores según sus categorías
   const currentYear = new Date().getFullYear()
-  const allPlayers = await prisma.player.findMany({
-    include: {
-      user: true
-    }
-  })
 
   let rankingsCreated = 0
-  for (let i = 0; i < allPlayersData.length; i++) {
-    const playerData = allPlayersData[i]
-    const player = allPlayers.find(p => p.firstName === playerData.firstName && p.lastName === playerData.lastName)
+  for (const { user, playerData } of createdPlayers) {
+    const player = user.player
 
-    if (!player || player.firstName === 'Administrador') continue
+    if (!player) continue
 
     // Asignar categoría según el nivel del jugador
     const categoryName = player.gender === Gender.MALE
@@ -691,6 +685,7 @@ async function main() {
     const category = categories.find(c => c.name === categoryName)
 
     if (category) {
+      // Crear ranking del jugador
       await prisma.playerRanking.create({
         data: {
           playerId: player.id,
