@@ -186,22 +186,28 @@ export function TeamsTable() {
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-16">
           <Users className="h-12 w-12 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold mb-2">No hay equipos</h3>
+          <h3 className="text-lg font-semibold mb-2">
+            {isAdmin ? "No hay equipos" : "No tienes equipos formados"}
+          </h3>
           <p className="text-muted-foreground text-center mb-4">
-            Todavía no se han formado equipos. Comienza inscribiendo jugadores individualmente.
+            {isAdmin
+              ? "Todavía no se han formado equipos. Comienza inscribiendo jugadores individualmente."
+              : "Aún no eres parte de ningún equipo. Una vez que te inscribas en un torneo, el administrador podrá formar tu equipo."}
           </p>
-          <div className="flex gap-2">
-            <Link href="/dashboard/registrations/new">
-              <Button variant="outline">
-                Inscribir Jugadores
-              </Button>
-            </Link>
-            <Link href="/dashboard/teams/new">
-              <Button>
-                Formar Equipo
-              </Button>
-            </Link>
-          </div>
+          {isAdmin && (
+            <div className="flex gap-2">
+              <Link href="/dashboard/registrations/new">
+                <Button variant="outline">
+                  Inscribir Jugadores
+                </Button>
+              </Link>
+              <Link href="/dashboard/teams/new">
+                <Button>
+                  Formar Equipo
+                </Button>
+              </Link>
+            </div>
+          )}
         </CardContent>
       </Card>
     )

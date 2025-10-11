@@ -236,7 +236,15 @@ export function TeamFormationForm() {
       })
 
       console.log('Filtered available partners:', available)
-      setAvailablePartners(available)
+
+      // Ordenar alfabéticamente por nombre y luego apellido
+      const sorted = available.sort((a: Registration, b: Registration) => {
+        const nameCompare = a.player.firstName.localeCompare(b.player.firstName)
+        if (nameCompare !== 0) return nameCompare
+        return a.player.lastName.localeCompare(b.player.lastName)
+      })
+
+      setAvailablePartners(sorted)
 
     } catch (error) {
       console.error("Error loading available partners:", error)
@@ -285,7 +293,12 @@ export function TeamFormationForm() {
       }
     }
 
-    return filtered
+    // Ordenar alfabéticamente por nombre y luego apellido
+    return filtered.sort((a, b) => {
+      const nameCompare = a.player.firstName.localeCompare(b.player.firstName)
+      if (nameCompare !== 0) return nameCompare
+      return a.player.lastName.localeCompare(b.player.lastName)
+    })
   }
 
   const onSubmit = async (data: TeamFormationData) => {
@@ -546,9 +559,6 @@ export function TeamFormationForm() {
                             getMyRegistrationsForCategory().map((registration) => (
                               <SelectItem key={registration.id} value={registration.id}>
                                 {registration.player.firstName} {registration.player.lastName}
-                                <span className="ml-2 text-muted-foreground">
-                                  ({registration.player.rankingPoints} pts)
-                                </span>
                                 <Badge className={`ml-2 ${getRegistrationStatusStyle(registration.registrationStatus)}`}>
                                   {getRegistrationStatusLabel(registration.registrationStatus)}
                                 </Badge>
@@ -584,9 +594,6 @@ export function TeamFormationForm() {
                               availablePartners.map((registration) => (
                                 <SelectItem key={registration.id} value={registration.id}>
                                   {registration.player.firstName} {registration.player.lastName}
-                                  <span className="ml-2 text-muted-foreground">
-                                    ({registration.player.rankingPoints} pts)
-                                  </span>
                                   <Badge className={`ml-2 ${getRegistrationStatusStyle(registration.registrationStatus)}`}>
                                     {getRegistrationStatusLabel(registration.registrationStatus)}
                                   </Badge>

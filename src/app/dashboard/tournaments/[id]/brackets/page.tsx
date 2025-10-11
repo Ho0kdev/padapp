@@ -34,9 +34,12 @@ export default async function BracketsPage({ params }: BracketsPageProps) {
               type: true
             }
           },
-          _count: {
+          teams: {
+            where: {
+              status: "CONFIRMED"
+            },
             select: {
-              teams: true
+              id: true
             }
           }
         }
@@ -112,7 +115,7 @@ export default async function BracketsPage({ params }: BracketsPageProps) {
               {tournament.categories.map((cat) => (
                 <TabsTrigger key={cat.id} value={cat.categoryId}>
                   {cat.category.name}
-                  {cat._count && ` (${cat._count.teams})`}
+                  {` (${cat.teams.length})`}
                 </TabsTrigger>
               ))}
             </TabsList>

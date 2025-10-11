@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast"
 import { Trophy, AlertCircle, CheckCircle2, Sparkles } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
+import { BracketPreview } from "./bracket-preview"
 
 interface BracketGeneratorProps {
   tournamentId: string
@@ -293,7 +294,21 @@ export function BracketGenerator({
             </AlertDescription>
           </Alert>
         )}
+      </CardContent>
 
+      {/* Vista previa de configuración (solo para GROUP_STAGE_ELIMINATION) */}
+      {tournamentType === "GROUP_STAGE_ELIMINATION" && teamsCount >= 2 && (
+        <div className="px-6 pb-6">
+          <BracketPreview
+            tournamentId={tournamentId}
+            categoryId={categoryId}
+            teamsCount={teamsCount}
+            tournamentType={tournamentType}
+          />
+        </div>
+      )}
+
+      <CardContent className="space-y-4 pt-0">
         {/* Botón de generar */}
         <Button
           onClick={handleGenerate}

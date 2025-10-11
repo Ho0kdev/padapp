@@ -19,6 +19,7 @@ import {
   getGenderRestrictionLabel
 } from "@/lib/utils/status-styles"
 import { TeamDetailActions } from "@/components/teams/team-detail-actions"
+import { TeamStatusManager } from "@/components/teams/team-status-manager"
 
 interface TeamDetailPageProps {
   params: Promise<{
@@ -173,9 +174,17 @@ export default async function TeamDetailPage({ params }: TeamDetailPageProps) {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Badge className={getTeamStatusStyle(team.status)}>
-              {getTeamStatusLabel(team.status)}
-            </Badge>
+            {isAdmin ? (
+              <TeamStatusManager
+                teamId={team.id}
+                currentStatus={team.status}
+                tournamentStatus={team.tournament.status}
+              />
+            ) : (
+              <Badge className={getTeamStatusStyle(team.status)}>
+                {getTeamStatusLabel(team.status)}
+              </Badge>
+            )}
             {isAdmin && (
               <TeamDetailActions
                 teamId={team.id}

@@ -383,8 +383,10 @@ export class BracketService {
    * Calcula la configuración óptima de grupos según el número de equipos
    * Retorna una configuración que resulte en un número de clasificados que sea potencia de 2
    * REGLA: Máximo 4 equipos por grupo
+   *
+   * Esta función es pública para permitir preview de configuración antes de generar el bracket
    */
-  private static calculateOptimalGroupConfiguration(numTeams: number): {
+  static calculateOptimalGroupConfiguration(numTeams: number): {
     numGroups: number
     groupSizes: number[]
     qualifiedPerGroup: number

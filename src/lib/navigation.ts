@@ -79,8 +79,8 @@ export const navigation: NavigationItem[] = [
   {
     name: "Equipos",
     href: "/dashboard/teams",
-    icon: UsersRound,
-    roles: ["ADMIN", "CLUB_ADMIN"] // Admins y administradores de club pueden gestionar equipos
+    icon: UsersRound
+    // Sin roles = todos pueden ver equipos (jugadores ven sus equipos, admins gestionan todos)
   },
   {
     name: "Partidos",

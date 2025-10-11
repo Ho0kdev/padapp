@@ -21,9 +21,7 @@ interface BracketSectionProps {
       name: string
       type: string
     }
-    _count?: {
-      teams: number
-    }
+    teams: Array<{ id: string }>
   }
 }
 
@@ -72,7 +70,7 @@ export function BracketSection({ tournament, category }: BracketSectionProps) {
         tournamentId={tournament.id}
         categoryId={category.categoryId}
         categoryName={category.category.name}
-        teamsCount={category._count?.teams || 0}
+        teamsCount={category.teams.length}
         tournamentType={tournament.type}
         onBracketGenerated={handleBracketGenerated}
       />

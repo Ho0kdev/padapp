@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { DataTableHeader } from "@/components/ui/data-table-header"
 import { teamStatusOptions } from "@/lib/validations/team"
+import { useAuth } from "@/hooks/use-auth"
 
 interface Tournament {
   id: string
@@ -11,6 +12,9 @@ interface Tournament {
 
 export function TeamsHeader() {
   const [tournaments, setTournaments] = useState<Tournament[]>([])
+  const { user } = useAuth()
+
+  const isAdmin = user?.role === "ADMIN" || user?.role === "CLUB_ADMIN"
 
   useEffect(() => {
     const fetchTournaments = async () => {
@@ -44,10 +48,10 @@ export function TeamsHeader() {
   return (
     <DataTableHeader
       title="Equipos"
-      description="Gestiona los equipos formados en torneos"
+      description={isAdmin ? "Gestiona los equipos formados en torneos" : "Tus equipos en torneos"}
       searchPlaceholder="Buscar equipos..."
-      createButtonText="Formar Equipo"
-      createButtonHref="/dashboard/teams/new"
+      createButtonText={isAdmin ? "Formar Equipo" : undefined}
+      createButtonHref={isAdmin ? "/dashboard/teams/new" : undefined}
       filterLabel="Estado"
       filterOptions={statusOptions}
       secondaryFilter={{
