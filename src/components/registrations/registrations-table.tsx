@@ -368,22 +368,22 @@ export function RegistrationsTable() {
                             Ver detalles
                           </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link href={`/dashboard/registrations/${registration.id}/edit`}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Editar
-                          </Link>
-                        </DropdownMenuItem>
-                        {(registration.tournamentCategory?.registrationFee || 0) > 0 && (
-                          <DropdownMenuItem asChild>
-                            <Link href={`/dashboard/registrations/${registration.id}/payment`}>
-                              <CreditCard className="mr-2 h-4 w-4" />
-                              Gestionar Pago
-                            </Link>
-                          </DropdownMenuItem>
-                        )}
                         {isAdmin && (
                           <>
+                            <DropdownMenuItem asChild>
+                              <Link href={`/dashboard/registrations/${registration.id}/edit`}>
+                                <Edit className="mr-2 h-4 w-4" />
+                                Editar
+                              </Link>
+                            </DropdownMenuItem>
+                            {(registration.tournamentCategory?.registrationFee || 0) > 0 && (
+                              <DropdownMenuItem asChild>
+                                <Link href={`/dashboard/registrations/${registration.id}/payment`}>
+                                  <CreditCard className="mr-2 h-4 w-4" />
+                                  Gestionar Pago
+                                </Link>
+                              </DropdownMenuItem>
+                            )}
                             <DropdownMenuItem
                               className="text-destructive"
                               disabled={['IN_PROGRESS', 'COMPLETED'].includes(registration.tournament.status)}

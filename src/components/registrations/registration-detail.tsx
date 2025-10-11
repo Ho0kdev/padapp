@@ -112,9 +112,10 @@ interface RegistrationWithDetails {
 
 interface RegistrationDetailProps {
   registration: RegistrationWithDetails
+  isAdmin?: boolean
 }
 
-export function RegistrationDetail({ registration }: RegistrationDetailProps) {
+export function RegistrationDetail({ registration, isAdmin = false }: RegistrationDetailProps) {
   const router = useRouter()
   const { toast } = useToast()
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -216,11 +217,14 @@ export function RegistrationDetail({ registration }: RegistrationDetailProps) {
         <div className="space-y-1">
           <div className="flex items-center gap-3">
             <h1 className="text-3xl font-bold tracking-tight">{getPlayerName()}</h1>
-            <RegistrationStatusManager
-              registrationId={registration.id}
-              currentStatus={registration.registrationStatus}
-              tournamentStatus={registration.tournament.status}
-            />
+            {isAdmin && (
+              <RegistrationStatusManager
+                registrationId={registration.id}
+                currentStatus={registration.registrationStatus}
+                tournamentStatus={registration.tournament.status}
+              />
+            )}
+            {!isAdmin && getStatusBadge(registration.registrationStatus)}
             {getPaymentStatusBadge()}
           </div>
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
@@ -245,38 +249,40 @@ export function RegistrationDetail({ registration }: RegistrationDetailProps) {
             Copiar enlace
           </Button>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem asChild>
-                <Link href={`/dashboard/registrations/${registration.id}/edit`}>
-                  <Edit className="mr-2 h-4 w-4" />
-                  Editar
-                </Link>
-              </DropdownMenuItem>
-              {registrationFee > 0 && (
+          {isAdmin && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
                 <DropdownMenuItem asChild>
-                  <Link href={`/dashboard/registrations/${registration.id}/payment`}>
-                    <CreditCard className="mr-2 h-4 w-4" />
-                    Gestionar Pago
+                  <Link href={`/dashboard/registrations/${registration.id}/edit`}>
+                    <Edit className="mr-2 h-4 w-4" />
+                    Editar
                   </Link>
                 </DropdownMenuItem>
-              )}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className="text-red-600"
-                onClick={() => setDeleteDialogOpen(true)}
-                disabled={!canDelete}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Eliminar
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                {registrationFee > 0 && (
+                  <DropdownMenuItem asChild>
+                    <Link href={`/dashboard/registrations/${registration.id}/payment`}>
+                      <CreditCard className="mr-2 h-4 w-4" />
+                      Gestionar Pago
+                    </Link>
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="text-red-600"
+                  onClick={() => setDeleteDialogOpen(true)}
+                  disabled={!canDelete}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Eliminar
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </div>
 

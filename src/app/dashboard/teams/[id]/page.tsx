@@ -138,6 +138,18 @@ export default async function TeamDetailPage({ params }: TeamDetailPageProps) {
 
   const isAdmin = session.user.role === 'ADMIN' || session.user.role === 'CLUB_ADMIN'
 
+  // Verificar que el usuario tenga permiso para ver este equipo
+  // Admins pueden ver cualquier equipo, jugadores solo pueden ver sus propios equipos
+  if (!isAdmin) {
+    const isPartOfTeam =
+      team.registration1.player.user.id === session.user.id ||
+      team.registration2.player.user.id === session.user.id
+
+    if (!isPartOfTeam) {
+      redirect("/dashboard")
+    }
+  }
+
   return (
     <DashboardLayout>
       <div className="space-y-6">

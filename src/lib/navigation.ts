@@ -119,6 +119,11 @@ export function checkRoleAccess(pathname: string, userRole?: string, userId?: st
     if (pathname === `/dashboard/users/${userId}` || pathname === `/dashboard/users/${userId}/edit`) {
       return true
     }
+
+    // Excepción especial: Los jugadores pueden ver equipos específicos (la validación de que sea SU equipo se hace en la página)
+    if (pathname.match(/^\/dashboard\/teams\/[a-zA-Z0-9]+$/)) {
+      return true
+    }
   }
 
   // Buscar la ruta en la configuración de navegación
