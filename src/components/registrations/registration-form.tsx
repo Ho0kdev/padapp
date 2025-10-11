@@ -175,8 +175,8 @@ export function RegistrationForm({ isAdmin = false, currentPlayerId = null }: Re
           // Filtrar por nivel (el jugador puede jugar en su categoría o categorías superiores)
           // Números más bajos = mejor nivel (categorías superiores)
           // Un jugador de 7ma (nivel 7) puede jugar en 7ma, 6ta, 5ta, 4ta, pero NO en 8va (nivel 8)
-          if (cat.category.level !== null && currentPlayer.primaryCategory?.level !== null) {
-            if (cat.category.level > currentPlayer.primaryCategory.level) {
+          if (cat.category.level !== null && currentPlayer.primaryCategory?.level !== null && currentPlayer.primaryCategory?.level !== undefined) {
+            if (cat.category.level > currentPlayer.primaryCategory?.level) {
               return false
             }
           }
@@ -304,7 +304,7 @@ export function RegistrationForm({ isAdmin = false, currentPlayerId = null }: Re
           rankingPoints: user.player.rankingPoints || 0,
           primaryCategory: user.player.primaryCategory || null,
         }))
-        .sort((a, b) => {
+        .sort((a: Player, b: Player) => {
           // Ordenar por apellido primero, luego por nombre
           const lastNameCompare = a.lastName.localeCompare(b.lastName)
           if (lastNameCompare !== 0) return lastNameCompare
