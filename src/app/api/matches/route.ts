@@ -71,7 +71,11 @@ export async function GET(request: NextRequest) {
               id: true,
               name: true,
               type: true,
-              status: true
+              status: true,
+              setsToWin: true,
+              gamesToWinSet: true,
+              tiebreakAt: true,
+              goldenPoint: true
             }
           },
           category: {

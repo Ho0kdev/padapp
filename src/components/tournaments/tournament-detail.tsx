@@ -53,7 +53,9 @@ import {
   getCategoryLevelStyle,
   formatCategoryLevel,
   getRegistrationStatusStyle,
-  getRegistrationStatusLabel
+  getRegistrationStatusLabel,
+  getTeamStatusStyle,
+  getTeamStatusLabel
 } from "@/lib/utils/status-styles"
 
 interface TournamentDetailProps {
@@ -143,7 +145,7 @@ export function TournamentDetail({ tournament, currentUserId }: TournamentDetail
             </div>
             <div className="flex items-center gap-1">
               <Users className="h-4 w-4" />
-              {tournament._count.teams} equipos
+              {tournament.teams.length} equipos
             </div>
             <div className="flex items-center gap-1">
               <Calendar className="h-4 w-4" />
@@ -193,7 +195,7 @@ export function TournamentDetail({ tournament, currentUserId }: TournamentDetail
                 <DropdownMenuItem
                   className="text-red-600"
                   onClick={() => setDeleteDialogOpen(true)}
-                  disabled={tournament._count.teams > 0}
+                  disabled={tournament.teams.length > 0}
                 >
                   <Trash2 className="mr-2 h-4 w-4" />
                   Eliminar
@@ -213,7 +215,7 @@ export function TournamentDetail({ tournament, currentUserId }: TournamentDetail
               <div className="ml-3">
                 <p className="text-sm font-medium text-muted-foreground">Equipos</p>
                 <p className="text-2xl font-bold">
-                  {tournament._count.teams}
+                  {tournament.teams.length}
                   {tournament.maxParticipants && ` / ${tournament.maxParticipants}`}
                 </p>
               </div>
@@ -488,8 +490,8 @@ export function TournamentDetail({ tournament, currentUserId }: TournamentDetail
                                   <p className="font-medium">
                                     {team.name || `${team.registration1.player.firstName} ${team.registration1.player.lastName} / ${team.registration2.player.firstName} ${team.registration2.player.lastName}`}
                                   </p>
-                                  <Badge className={getRegistrationStatusStyle(team.registration1.registrationStatus)}>
-                                    {getRegistrationStatusLabel(team.registration1.registrationStatus)}
+                                  <Badge className={getTeamStatusStyle(team.status)}>
+                                    {getTeamStatusLabel(team.status)}
                                   </Badge>
                                 </div>
                                 <div className="space-y-2">

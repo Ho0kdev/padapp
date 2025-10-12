@@ -48,14 +48,14 @@ interface Match {
       name: string
     }
   } | null
-  tournament: {
+  tournament?: {
     id: string
     name: string
     setsToWin: number
     gamesToWinSet: number
     tiebreakAt: number
     goldenPoint: boolean
-  }
+  } | null
 }
 
 interface BracketTreeProps {

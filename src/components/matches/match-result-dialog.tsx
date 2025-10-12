@@ -43,11 +43,53 @@ const createSetSchema = (gamesToWinSet: number, tiebreakAt: number) => {
   const maxGames = gamesToWinSet + 1 // Si gamesToWinSet=6, max puede ser 7 (7-5)
 
   return z.object({
-    team1Games: z.number({ message: "Debe ingresar los games del equipo 1" }).int().min(0).max(maxGames, `Máximo ${maxGames} games por set`),
-    team2Games: z.number({ message: "Debe ingresar los games del equipo 2" }).int().min(0).max(maxGames, `Máximo ${maxGames} games por set`),
-    team1TiebreakPoints: z.number().int().min(0).max(20).optional(),
-    team2TiebreakPoints: z.number().int().min(0).max(20).optional(),
+    team1Games: z.union([
+      z.number({ message: "Debe ingresar los games del equipo 1" }).int().min(0, "No puede ser negativo").max(maxGames, `Máximo ${maxGames} games por set`),
+      z.literal(undefined),
+      z.literal(null)
+    ]).transform(val => {
+      if (val === null || val === undefined) return undefined
+      if (typeof val === 'number' && isNaN(val)) return undefined
+      return val
+    }),
+    team2Games: z.union([
+      z.number({ message: "Debe ingresar los games del equipo 2" }).int().min(0, "No puede ser negativo").max(maxGames, `Máximo ${maxGames} games por set`),
+      z.literal(undefined),
+      z.literal(null)
+    ]).transform(val => {
+      if (val === null || val === undefined) return undefined
+      if (typeof val === 'number' && isNaN(val)) return undefined
+      return val
+    }),
+    team1TiebreakPoints: z.union([
+      z.number().int().min(0).max(20),
+      z.literal(undefined),
+      z.literal(null)
+    ]).transform(val => {
+      if (val === null || val === undefined) return undefined
+      if (typeof val === 'number' && isNaN(val)) return undefined
+      return val
+    }).optional(),
+    team2TiebreakPoints: z.union([
+      z.number().int().min(0).max(20),
+      z.literal(undefined),
+      z.literal(null)
+    ]).transform(val => {
+      if (val === null || val === undefined) return undefined
+      if (typeof val === 'number' && isNaN(val)) return undefined
+      return val
+    }).optional(),
   }).superRefine((data, ctx) => {
+    // Si algún valor es undefined o no es un número válido, no validar (set incompleto)
+    if (data.team1Games === undefined ||
+        data.team2Games === undefined ||
+        typeof data.team1Games !== 'number' ||
+        typeof data.team2Games !== 'number' ||
+        isNaN(data.team1Games) ||
+        isNaN(data.team2Games)) {
+      return
+    }
+
     const maxGamesInSet = Math.max(data.team1Games, data.team2Games)
     const minGamesInSet = Math.min(data.team1Games, data.team2Games)
 
@@ -158,8 +200,9 @@ const createResultSchema = (setsToWin: number, gamesToWinSet: number, tiebreakAt
     // Validar que uno de los equipos haya ganado setsToWin sets
     // Considerar tiebreak points para determinar ganador del set
     const team1Sets = data.sets.filter((s: any) => {
-      // Ignorar sets vacíos
+      // Ignorar sets vacíos o inválidos
       if (typeof s.team1Games !== 'number' || typeof s.team2Games !== 'number') return false
+      if (isNaN(s.team1Games) || isNaN(s.team2Games)) return false
       if (s.team1Games > s.team2Games) return true
       if (s.team1Games === s.team2Games && s.team1TiebreakPoints && s.team2TiebreakPoints) {
         return s.team1TiebreakPoints > s.team2TiebreakPoints
@@ -168,8 +211,9 @@ const createResultSchema = (setsToWin: number, gamesToWinSet: number, tiebreakAt
     }).length
 
     const team2Sets = data.sets.filter((s: any) => {
-      // Ignorar sets vacíos
+      // Ignorar sets vacíos o inválidos
       if (typeof s.team1Games !== 'number' || typeof s.team2Games !== 'number') return false
+      if (isNaN(s.team1Games) || isNaN(s.team2Games)) return false
       if (s.team2Games > s.team1Games) return true
       if (s.team1Games === s.team2Games && s.team1TiebreakPoints && s.team2TiebreakPoints) {
         return s.team2TiebreakPoints > s.team1TiebreakPoints
@@ -259,8 +303,8 @@ export function MatchResultDialog({
     reValidateMode: "onSubmit", // Re-validar solo al hacer submit
     defaultValues: {
       sets: [
-        { team1Games: "" as any, team2Games: "" as any },
-        { team1Games: "" as any, team2Games: "" as any }
+        { team1Games: undefined, team2Games: undefined, team1TiebreakPoints: undefined, team2TiebreakPoints: undefined },
+        { team1Games: undefined, team2Games: undefined, team1TiebreakPoints: undefined, team2TiebreakPoints: undefined }
       ],
       durationMinutes: undefined,
       notes: ""
@@ -273,8 +317,9 @@ export function MatchResultDialog({
   // Considerar tiebreak points para determinar ganador del set
   const winner = useMemo(() => {
     const team1Sets = sets.filter((s: any) => {
-      // Ignorar sets vacíos
+      // Ignorar sets vacíos o inválidos
       if (typeof s.team1Games !== 'number' || typeof s.team2Games !== 'number') return false
+      if (isNaN(s.team1Games) || isNaN(s.team2Games)) return false
       if (s.team1Games > s.team2Games) return true
       if (s.team1Games === s.team2Games && s.team1TiebreakPoints && s.team2TiebreakPoints) {
         return s.team1TiebreakPoints > s.team2TiebreakPoints
@@ -283,8 +328,9 @@ export function MatchResultDialog({
     }).length
 
     const team2Sets = sets.filter((s: any) => {
-      // Ignorar sets vacíos
+      // Ignorar sets vacíos o inválidos
       if (typeof s.team1Games !== 'number' || typeof s.team2Games !== 'number') return false
+      if (isNaN(s.team1Games) || isNaN(s.team2Games)) return false
       if (s.team2Games > s.team1Games) return true
       if (s.team1Games === s.team2Games && s.team1TiebreakPoints && s.team2TiebreakPoints) {
         return s.team2TiebreakPoints > s.team1TiebreakPoints
@@ -301,7 +347,7 @@ export function MatchResultDialog({
     const currentSets = form.getValues("sets")
     const maxSets = (match.tournament.setsToWin * 2) - 1
     if (currentSets.length < maxSets) {
-      form.setValue("sets", [...currentSets, { team1Games: "" as any, team2Games: "" as any }])
+      form.setValue("sets", [...currentSets, { team1Games: undefined, team2Games: undefined, team1TiebreakPoints: undefined, team2TiebreakPoints: undefined }])
     }
   }
 
@@ -470,12 +516,13 @@ export function MatchResultDialog({
           throw new Error("Debe seleccionar qué equipo gana por walkover")
         }
 
-        // Crear sets automáticos 6-0 para el ganador
+        // Crear sets automáticos 6-0 para el ganador (walkover siempre se registra con 6-0)
         const setsCount = match.tournament.setsToWin
+        const walkoverGames = 6 // Walkover siempre es 6-0 por estándar de pádel
         const walkoverSets = Array.from({ length: setsCount }, () =>
           walkoverWinner === match.team1?.id
-            ? { team1Games: 6, team2Games: 0 }
-            : { team1Games: 0, team2Games: 6 }
+            ? { team1Games: walkoverGames, team2Games: 0 }
+            : { team1Games: 0, team2Games: walkoverGames }
         )
 
         const payload = {
@@ -508,8 +555,13 @@ export function MatchResultDialog({
       }
 
       // Flujo normal para partidos jugados
-      // Filtrar sets completos (que tengan valores numéricos)
-      const completeSets = data.sets.filter((s: any) => typeof s.team1Games === 'number' && typeof s.team2Games === 'number')
+      // Filtrar sets completos (que tengan valores numéricos válidos)
+      const completeSets = data.sets.filter((s: any) =>
+        typeof s.team1Games === 'number' &&
+        typeof s.team2Games === 'number' &&
+        !isNaN(s.team1Games) &&
+        !isNaN(s.team2Games)
+      )
 
       // Determinar equipo ganador considerando tiebreak points
       const team1Sets = completeSets.filter((s: any) => {
@@ -801,12 +853,19 @@ export function MatchResultDialog({
                                 <Input
                                   type="number"
                                   min={0}
-                                  max={match.tournament.gamesToWinSet + 1}
+                                  {...(typeof match.tournament.gamesToWinSet === 'number' && !isNaN(match.tournament.gamesToWinSet)
+                                    ? { max: match.tournament.gamesToWinSet + 1 }
+                                    : {})}
                                   placeholder=""
-                                  value={field.value === "" ? "" : field.value}
+                                  value={field.value === undefined || field.value === null ? "" : field.value}
                                   onChange={(e) => {
                                     const value = e.target.value
-                                    field.onChange(value === "" ? "" : parseInt(value))
+                                    if (value === "") {
+                                      field.onChange(undefined)
+                                    } else {
+                                      const num = parseInt(value)
+                                      field.onChange(isNaN(num) ? undefined : num)
+                                    }
                                   }}
                                 />
                               </FormControl>
@@ -825,12 +884,19 @@ export function MatchResultDialog({
                                 <Input
                                   type="number"
                                   min={0}
-                                  max={match.tournament.gamesToWinSet + 1}
+                                  {...(typeof match.tournament.gamesToWinSet === 'number' && !isNaN(match.tournament.gamesToWinSet)
+                                    ? { max: match.tournament.gamesToWinSet + 1 }
+                                    : {})}
                                   placeholder=""
-                                  value={field.value === "" ? "" : field.value}
+                                  value={field.value === undefined || field.value === null ? "" : field.value}
                                   onChange={(e) => {
                                     const value = e.target.value
-                                    field.onChange(value === "" ? "" : parseInt(value))
+                                    if (value === "") {
+                                      field.onChange(undefined)
+                                    } else {
+                                      const num = parseInt(value)
+                                      field.onChange(isNaN(num) ? undefined : num)
+                                    }
                                   }}
                                 />
                               </FormControl>
@@ -843,15 +909,20 @@ export function MatchResultDialog({
                       {(() => {
                         const tiebreakAt = match.tournament.tiebreakAt
                         const gamesToWin = match.tournament.gamesToWinSet
-                        const t1 = sets[index].team1Games
-                        const t2 = sets[index].team2Games
+                        const t1 = sets[index]?.team1Games
+                        const t2 = sets[index]?.team2Games
+
+                        // Solo chequear si ambos valores son números válidos
+                        if (typeof t1 !== 'number' || typeof t2 !== 'number' || isNaN(t1) || isNaN(t2)) {
+                          return false
+                        }
 
                         // Mostrar tiebreak si:
                         // 1. Están empatados en tiebreakAt (ej: 6-6)
-                        // 2. Uno tiene gamesToWin+1 y el otro tiebreakAt (ej: 7-6 o 6-7)
+                        // 2. Uno tiene 7 y el otro 6 (ej: 7-6 o 6-7) cuando gamesToWin es 6
                         const showTiebreak = (t1 === tiebreakAt && t2 === tiebreakAt) ||
-                                            (t1 === gamesToWin + 1 && t2 === tiebreakAt) ||
-                                            (t2 === gamesToWin + 1 && t1 === tiebreakAt)
+                                            (t1 === (gamesToWin + 1) && t2 === gamesToWin) ||
+                                            (t2 === (gamesToWin + 1) && t1 === gamesToWin)
 
                         return showTiebreak
                       })() ? (
@@ -868,9 +939,16 @@ export function MatchResultDialog({
                                     min={0}
                                     max={20}
                                     placeholder="Pts"
-                                    {...field}
-                                    value={field.value ?? ''}
-                                    onChange={(e) => field.onChange(e.target.value === '' ? undefined : parseInt(e.target.value))}
+                                    value={field.value === undefined || field.value === null ? "" : field.value}
+                                    onChange={(e) => {
+                                      const value = e.target.value
+                                      if (value === "") {
+                                        field.onChange(undefined)
+                                      } else {
+                                        const num = parseInt(value)
+                                        field.onChange(isNaN(num) ? undefined : num)
+                                      }
+                                    }}
                                   />
                                 </FormControl>
                               </FormItem>
@@ -889,9 +967,16 @@ export function MatchResultDialog({
                                     min={0}
                                     max={20}
                                     placeholder="Pts"
-                                    {...field}
-                                    value={field.value ?? ''}
-                                    onChange={(e) => field.onChange(e.target.value === '' ? undefined : parseInt(e.target.value))}
+                                    value={field.value === undefined || field.value === null ? "" : field.value}
+                                    onChange={(e) => {
+                                      const value = e.target.value
+                                      if (value === "") {
+                                        field.onChange(undefined)
+                                      } else {
+                                        const num = parseInt(value)
+                                        field.onChange(isNaN(num) ? undefined : num)
+                                      }
+                                    }}
                                   />
                                 </FormControl>
                               </FormItem>

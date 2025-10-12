@@ -46,6 +46,14 @@ interface Match {
       name: string
     }
   } | null
+  tournament?: {
+    id: string
+    name: string
+    setsToWin: number
+    gamesToWinSet: number
+    tiebreakAt: number
+    goldenPoint: boolean
+  } | null
 }
 
 interface BracketData {
@@ -103,20 +111,9 @@ export function BracketVisualization({
     return isAdminOrClubAdmin || isReferee
   }
 
-  const handleLoadResult = (match: Match) => {
-    // Convertir el match para que tenga la estructura esperada por el dialog
-    const matchForDialog = {
-      ...match,
-      tournament: {
-        id: tournamentId,
-        name: "" // Se obtiene del contexto
-      },
-      category: {
-        id: categoryId,
-        name: "" // Se obtiene del contexto
-      }
-    }
-    setSelectedMatch(matchForDialog)
+  const handleLoadResult = (match: any) => {
+    // El match ya viene con toda la información del torneo desde la API
+    setSelectedMatch(match)
     setResultDialogOpen(true)
   }
 

@@ -23,6 +23,9 @@ async function getTournament(id: string) {
         include: {
           category: true,
           teams: {
+            where: {
+              status: "CONFIRMED"
+            },
             include: {
               registration1: {
                 select: {
@@ -50,7 +53,14 @@ async function getTournament(id: string) {
         }
       },
       teams: {
-        include: {
+        where: {
+          status: "CONFIRMED"
+        },
+        select: {
+          id: true,
+          name: true,
+          status: true,
+          categoryId: true,
           registration1: {
             select: {
               registrationStatus: true,
