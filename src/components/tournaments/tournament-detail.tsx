@@ -1,14 +1,24 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import { TournamentStatusManager } from "./tournament-status-manager"
+import { GroupStandingsAndMatches } from "@/components/brackets/group-standings-and-matches"
+import { BracketTree } from "@/components/brackets/bracket-tree"
+import { BracketVisualization } from "@/components/brackets/bracket-visualization"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -40,7 +50,9 @@ import {
   Download,
   Copy,
   Share2,
-  GitBranch
+  GitBranch,
+  CalendarDays,
+  LayoutList
 } from "lucide-react"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
@@ -265,7 +277,7 @@ export function TournamentDetail({ tournament, currentUserId }: TournamentDetail
         <TabsList>
           <TabsTrigger value="info">Información</TabsTrigger>
           <TabsTrigger value="teams">Equipos</TabsTrigger>
-          <TabsTrigger value="matches">Partidos</TabsTrigger>
+          <TabsTrigger value="matches">Clasificación</TabsTrigger>
           <TabsTrigger value="bracket">Llaves</TabsTrigger>
         </TabsList>
 
@@ -516,20 +528,21 @@ export function TournamentDetail({ tournament, currentUserId }: TournamentDetail
         <TabsContent value="matches">
           <Card>
             <CardHeader>
-              <CardTitle>Partidos</CardTitle>
+              <CardTitle>Clasificación</CardTitle>
             </CardHeader>
             <CardContent>
-              {tournament.matches.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">
-                  No hay partidos programados aún
-                </p>
-              ) : (
-                <div className="space-y-4">
-                  {/* Lista de partidos aquí */}
+              {tournament.type === 'GROUP_STAGE_ELIMINATION' || tournament.type === 'ROUND_ROBIN' ? (
+                tournament.categories.length === 0 ? (
                   <p className="text-center text-muted-foreground py-8">
-                    Funcionalidad de partidos en desarrollo
+                    No hay categorías disponibles
                   </p>
-                </div>
+                ) : (
+                  <ClassificationView tournament={tournament} />
+                )
+              ) : (
+                <p className="text-center text-muted-foreground py-8">
+                  La clasificación por grupos solo está disponible para torneos de tipo Round Robin o Grupos + Eliminación
+                </p>
               )}
             </CardContent>
           </Card>
@@ -541,9 +554,13 @@ export function TournamentDetail({ tournament, currentUserId }: TournamentDetail
               <CardTitle>Llaves del Torneo</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-center text-muted-foreground py-8">
-                Funcionalidad de llaves en desarrollo
-              </p>
+              {tournament.categories.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">
+                  No hay categorías disponibles
+                </p>
+              ) : (
+                <BracketView tournament={tournament} />
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -570,6 +587,247 @@ export function TournamentDetail({ tournament, currentUserId }: TournamentDetail
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+    </div>
+  )
+}
+
+// Componente interno para manejar la selección de categoría y zona
+function ClassificationView({ tournament }: { tournament: TournamentWithDetails }) {
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>(
+    tournament.categories[0]?.categoryId || ""
+  )
+  const [zones, setZones] = useState<Array<{ id: string; name: string }>>([])
+  const [selectedZoneId, setSelectedZoneId] = useState<string>("")
+  const [isLoadingZones, setIsLoadingZones] = useState(false)
+
+  // Cargar zonas cuando cambia la categoría
+  const fetchZones = async (categoryId: string) => {
+    if (!categoryId) return
+
+    setIsLoadingZones(true)
+    try {
+      const response = await fetch(
+        `/api/tournaments/${tournament.id}/groups?categoryId=${categoryId}`
+      )
+
+      if (!response.ok) {
+        throw new Error("Error al cargar los grupos")
+      }
+
+      const data = await response.json()
+      const zoneList = data.zones.map((z: any) => ({ id: z.id, name: z.name }))
+      setZones(zoneList)
+
+      // Seleccionar la primera zona automáticamente
+      if (zoneList.length > 0) {
+        setSelectedZoneId(zoneList[0].id)
+      }
+    } catch (error) {
+      console.error("Error fetching zones:", error)
+      setZones([])
+      setSelectedZoneId("")
+    } finally {
+      setIsLoadingZones(false)
+    }
+  }
+
+  // Cargar zonas al montar el componente
+  useEffect(() => {
+    if (selectedCategoryId) {
+      fetchZones(selectedCategoryId)
+    }
+  }, [])
+
+  const handleCategoryChange = (categoryId: string) => {
+    setSelectedCategoryId(categoryId)
+    fetchZones(categoryId)
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Selectores */}
+      <div className="flex gap-4">
+        <div className="flex-1">
+          <label className="text-sm font-medium mb-2 block">Categoría</label>
+          <Select value={selectedCategoryId} onValueChange={handleCategoryChange}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecciona una categoría" />
+            </SelectTrigger>
+            <SelectContent>
+              {tournament.categories.map((category) => (
+                <SelectItem key={category.id} value={category.categoryId}>
+                  {category.category.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex-1">
+          <label className="text-sm font-medium mb-2 block">Grupo</label>
+          <Select
+            value={selectedZoneId}
+            onValueChange={setSelectedZoneId}
+            disabled={isLoadingZones || zones.length === 0}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Selecciona un grupo" />
+            </SelectTrigger>
+            <SelectContent>
+              {zones.map((zone) => (
+                <SelectItem key={zone.id} value={zone.id}>
+                  {zone.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Mostrar clasificación de la zona seleccionada */}
+      {selectedCategoryId && selectedZoneId && (
+        <GroupStandingsAndMatches
+          tournamentId={tournament.id}
+          categoryId={selectedCategoryId}
+          selectedZoneId={selectedZoneId}
+        />
+      )}
+
+      {!selectedZoneId && !isLoadingZones && zones.length === 0 && selectedCategoryId && (
+        <p className="text-center text-muted-foreground py-8">
+          No hay grupos creados para esta categoría. Genera el bracket primero.
+        </p>
+      )}
+    </div>
+  )
+}
+
+// Componente interno para mostrar las llaves con selector de categoría
+function BracketView({ tournament }: { tournament: TournamentWithDetails }) {
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>(
+    tournament.categories[0]?.categoryId || ""
+  )
+  const [bracketData, setBracketData] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [viewMode, setViewMode] = useState<"tree" | "list">("tree")
+
+  const fetchBracketData = async (categoryId: string) => {
+    if (!categoryId) return
+
+    setIsLoading(true)
+    try {
+      const response = await fetch(
+        `/api/tournaments/${tournament.id}/bracket?categoryId=${categoryId}`
+      )
+
+      if (!response.ok) {
+        throw new Error("Error al cargar las llaves")
+      }
+
+      const data = await response.json()
+      setBracketData(data)
+    } catch (error) {
+      console.error("Error fetching bracket:", error)
+      setBracketData(null)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (selectedCategoryId) {
+      fetchBracketData(selectedCategoryId)
+    }
+  }, [selectedCategoryId])
+
+  const handleCategoryChange = (categoryId: string) => {
+    setSelectedCategoryId(categoryId)
+  }
+
+  const selectedCategory = tournament.categories.find(
+    c => c.categoryId === selectedCategoryId
+  )
+
+  // Determinar si debe mostrar vista de árbol
+  const shouldShowTree = [
+    'SINGLE_ELIMINATION',
+    'DOUBLE_ELIMINATION',
+    'GROUP_STAGE_ELIMINATION'
+  ].includes(tournament.type)
+
+  return (
+    <div className="space-y-4">
+      {/* Selector de Categoría */}
+      <div className="flex gap-4 items-end">
+        <div className="flex-1">
+          <label className="text-sm font-medium mb-2 block">Categoría</label>
+          <Select value={selectedCategoryId} onValueChange={handleCategoryChange}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecciona una categoría" />
+            </SelectTrigger>
+            <SelectContent>
+              {tournament.categories.map((category) => (
+                <SelectItem key={category.id} value={category.categoryId}>
+                  {category.category.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Toggle Vista - Solo si debe mostrar árbol */}
+        {shouldShowTree && bracketData && bracketData.matches.length > 0 && (
+          <div className="flex gap-2">
+            <Button
+              variant={viewMode === "tree" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setViewMode("tree")}
+            >
+              <GitBranch className="h-4 w-4 mr-2" />
+              Árbol
+            </Button>
+            <Button
+              variant={viewMode === "list" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setViewMode("list")}
+            >
+              <LayoutList className="h-4 w-4 mr-2" />
+              Lista
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {/* Contenido */}
+      {isLoading ? (
+        <div className="flex justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      ) : !bracketData || bracketData.matches.length === 0 ? (
+        <p className="text-center text-muted-foreground py-8">
+          No hay llaves generadas para esta categoría. Ve a "Gestionar Brackets" para generarlas.
+        </p>
+      ) : (
+        <div className="mt-6">
+          {shouldShowTree && viewMode === "tree" ? (
+            <BracketTree
+              tournamentId={tournament.id}
+              categoryId={selectedCategoryId}
+              categoryName={selectedCategory?.category.name || ""}
+              matches={bracketData.matches}
+              rounds={bracketData.rounds}
+              totalRounds={bracketData.totalRounds}
+              onRefresh={() => fetchBracketData(selectedCategoryId)}
+            />
+          ) : (
+            <BracketVisualization
+              tournamentId={tournament.id}
+              categoryId={selectedCategoryId}
+              refreshTrigger={0}
+            />
+          )}
+        </div>
+      )}
     </div>
   )
 }

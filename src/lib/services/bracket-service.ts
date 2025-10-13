@@ -1079,6 +1079,16 @@ export class BracketService {
               }
             }
           }
+        },
+        sets: {
+          select: {
+            setNumber: true,
+            team1Games: true,
+            team2Games: true
+          },
+          orderBy: {
+            setNumber: 'asc'
+          }
         }
       },
       orderBy: [
@@ -1321,14 +1331,32 @@ export class BracketService {
       })
 
       // Victorias y puntos
+      // Sistema de puntuación:
+      // - 2 puntos por victoria
+      // - 1 punto por derrota (partido jugado)
+      // - 0 puntos por derrota por walkover
       if (match.winnerTeamId === match.team1Id) {
         team1Stats.matchesWon++
         team2Stats.matchesLost++
         team1Stats.points += 2 // 2 puntos por victoria
+
+        // Equipo 2 perdió: 1 punto si jugó, 0 si fue walkover
+        if (match.status === MatchStatus.WALKOVER) {
+          team2Stats.points += 0 // 0 puntos por walkover
+        } else {
+          team2Stats.points += 1 // 1 punto por derrota normal
+        }
       } else if (match.winnerTeamId === match.team2Id) {
         team2Stats.matchesWon++
         team1Stats.matchesLost++
-        team2Stats.points += 2
+        team2Stats.points += 2 // 2 puntos por victoria
+
+        // Equipo 1 perdió: 1 punto si jugó, 0 si fue walkover
+        if (match.status === MatchStatus.WALKOVER) {
+          team1Stats.points += 0 // 0 puntos por walkover
+        } else {
+          team1Stats.points += 1 // 1 punto por derrota normal
+        }
       }
     })
 

@@ -94,7 +94,9 @@ export async function POST(
 
     // Parsear y validar body
     const body = await request.json()
+    console.log('📝 Body recibido en API:', body)
     const validatedData = matchResultSchema.parse(body)
+    console.log('✅ Datos validados:', validatedData)
 
     // Obtener el partido con todas las relaciones necesarias
     const match = await prisma.match.findUnique({
@@ -143,6 +145,13 @@ export async function POST(
     // Calcular sets ganados por cada equipo
     const team1SetsWon = validatedData.sets.filter(set => set.team1Games > set.team2Games).length
     const team2SetsWon = validatedData.sets.filter(set => set.team2Games > set.team1Games).length
+
+    console.log('📊 Sets calculados:', {
+      team1SetsWon,
+      team2SetsWon,
+      sets: validatedData.sets,
+      status: validatedData.status
+    })
 
     // Eliminar sets anteriores si existen (para permitir re-cargar resultado)
     await prisma.matchSet.deleteMany({

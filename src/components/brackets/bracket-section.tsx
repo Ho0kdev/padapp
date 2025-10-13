@@ -5,8 +5,9 @@ import { BracketGenerator } from "./bracket-generator"
 import { BracketVisualization } from "./bracket-visualization"
 import { BracketTree } from "./bracket-tree"
 import { GroupsVisualization } from "./groups-visualization"
+import { GroupStandingsAndMatches } from "./group-standings-and-matches"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { LayoutList, GitBranch } from "lucide-react"
+import { LayoutList, GitBranch, Trophy } from "lucide-react"
 
 interface BracketSectionProps {
   tournament: {
@@ -75,19 +76,55 @@ export function BracketSection({ tournament, category }: BracketSectionProps) {
         onBracketGenerated={handleBracketGenerated}
       />
 
-      {/* Visualización de Grupos (solo para GROUP_STAGE_ELIMINATION) */}
-      {tournament.type === 'GROUP_STAGE_ELIMINATION' && (
-        <GroupsVisualization
-          tournamentId={tournament.id}
-          categoryId={category.categoryId}
-          refreshTrigger={refreshTrigger}
-        />
-      )}
-
       {/* Visualización de Bracket */}
       {bracketData && bracketData.matches.length > 0 && (
         <>
-          {shouldShowTree ? (
+          {tournament.type === 'GROUP_STAGE_ELIMINATION' ? (
+            <Tabs defaultValue="standings" className="w-full">
+              <TabsList className="grid w-full max-w-2xl grid-cols-3">
+                <TabsTrigger value="standings" className="flex items-center gap-2">
+                  <Trophy className="h-4 w-4" />
+                  Clasificación
+                </TabsTrigger>
+                <TabsTrigger value="tree" className="flex items-center gap-2">
+                  <GitBranch className="h-4 w-4" />
+                  Vista Árbol
+                </TabsTrigger>
+                <TabsTrigger value="list" className="flex items-center gap-2">
+                  <LayoutList className="h-4 w-4" />
+                  Partidos
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="standings" className="mt-6">
+                <GroupStandingsAndMatches
+                  tournamentId={tournament.id}
+                  categoryId={category.categoryId}
+                  refreshTrigger={refreshTrigger}
+                />
+              </TabsContent>
+
+              <TabsContent value="tree" className="mt-6">
+                <BracketTree
+                  tournamentId={tournament.id}
+                  categoryId={category.categoryId}
+                  categoryName={category.category?.name || ""}
+                  matches={bracketData.matches}
+                  rounds={bracketData.rounds}
+                  totalRounds={bracketData.totalRounds}
+                  onRefresh={fetchBracketData}
+                />
+              </TabsContent>
+
+              <TabsContent value="list" className="mt-6">
+                <BracketVisualization
+                  tournamentId={tournament.id}
+                  categoryId={category.categoryId}
+                  refreshTrigger={refreshTrigger}
+                />
+              </TabsContent>
+            </Tabs>
+          ) : shouldShowTree ? (
             <Tabs defaultValue="tree" className="w-full">
               <TabsList className="grid w-full max-w-md grid-cols-2">
                 <TabsTrigger value="tree" className="flex items-center gap-2">

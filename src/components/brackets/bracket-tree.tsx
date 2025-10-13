@@ -644,7 +644,7 @@ function MatchCard({
   canManage,
   onLoadResult
 }: MatchCardProps) {
-  const isCompleted = match.status === "COMPLETED"
+  const isCompleted = match.status === "COMPLETED" || match.status === "WALKOVER"
   const team1Won = match.winnerTeam?.id === match.team1?.id
   const team2Won = match.winnerTeam?.id === match.team2?.id
 
@@ -663,7 +663,7 @@ function MatchCard({
               {getStatusLabel(match.status)}
             </Badge>
           </div>
-          {canManage && match.status !== "COMPLETED" && match.team1 && match.team2 && (
+          {canManage && match.status !== "COMPLETED" && match.status !== "WALKOVER" && match.team1 && match.team2 && (
             <Button
               variant="ghost"
               size="sm"

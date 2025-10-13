@@ -125,15 +125,16 @@ const createSetSchema = (gamesToWinSet: number, tiebreakAt: number) => {
         return // 7-5 es válido
       }
 
-      // O gamesToWinSet+1 vs tiebreakAt con tiebreak (ej: 7-6 con tiebreak)
-      if (minGamesInSet === tiebreakAt) {
+      // O gamesToWinSet+1 vs gamesToWinSet con tiebreak (ej: 7-6 con tiebreak)
+      // Nota: gamesToWinSet normalmente es igual a tiebreakAt
+      if (minGamesInSet === gamesToWinSet) {
         // Debe haber puntos de tiebreak
         const hasTiebreak = (data.team1TiebreakPoints !== undefined && data.team1TiebreakPoints >= 0) ||
                            (data.team2TiebreakPoints !== undefined && data.team2TiebreakPoints >= 0)
         if (!hasTiebreak) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: `${gamesToWinSet + 1}-${tiebreakAt} requiere puntos de tiebreak`,
+            message: `${gamesToWinSet + 1}-${gamesToWinSet} requiere puntos de tiebreak`,
             path: ["team1TiebreakPoints"]
           })
         }
@@ -143,7 +144,7 @@ const createSetSchema = (gamesToWinSet: number, tiebreakAt: number) => {
       // Cualquier otro caso es inválido
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: `${maxGamesInSet}-${minGamesInSet} inválido. Solo se permite ${gamesToWinSet + 1}-${gamesToWinSet - 1}`,
+        message: `${maxGamesInSet}-${minGamesInSet} inválido. Solo se permite ${gamesToWinSet + 1}-${gamesToWinSet - 1} o ${gamesToWinSet + 1}-${gamesToWinSet} con tiebreak`,
         path: ["team1Games"]
       })
       return
@@ -531,6 +532,13 @@ export function MatchResultDialog({
           notes: data.notes || "Walkover",
           status: "WALKOVER"
         }
+
+        console.log('📝 Enviando walkover:', {
+          winnerTeamId: walkoverWinner,
+          setsCount,
+          walkoverSets,
+          payload
+        })
 
         const response = await fetch(`/api/matches/${match.id}/result`, {
           method: "POST",

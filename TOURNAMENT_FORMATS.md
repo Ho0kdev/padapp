@@ -93,7 +93,10 @@ Formato de liga donde cada equipo juega contra todos los demás equipos exactame
 - Máxima justicia deportiva: todos juegan la misma cantidad de partidos
 - Todos los equipos se enfrentan entre sí
 - Sin eliminación: todos juegan hasta el final
-- Sistema de puntos: 2 puntos por victoria
+- Sistema de puntos:
+  - **2 puntos por victoria**
+  - **1 punto por derrota** (partido jugado)
+  - **0 puntos por derrota por walkover**
 - Tie-breaking: puntos → diff sets → diff juegos → sets ganados
 
 **Estructura**:
@@ -223,6 +226,10 @@ Sistema híbrido que combina una fase de grupos inicial (round robin por grupos)
 - Distribución serpiente para balancear grupos
 - Sistema de mejores terceros cuando es necesario
 - Clasificación siempre a potencia de 2 (4, 8, 16, 32)
+- Sistema de puntos en fase de grupos:
+  - **2 puntos por victoria**
+  - **1 punto por derrota** (partido jugado)
+  - **0 puntos por derrota por walkover**
 
 **Configuración Automática (Máximo 4 equipos por grupo)**:
 
@@ -1602,8 +1609,13 @@ await AuditLogger.log(session, {
 No. El bracket se genera una sola vez. Si necesitas cambiar, debes regenerar (se eliminan todos los resultados).
 
 ### ¿Qué pasa si hay empate en la tabla de grupos?
-Se aplican criterios de desempate en orden:
-1. Puntos
+**Sistema de puntuación**:
+- 2 puntos por victoria
+- 1 punto por derrota (partido jugado)
+- 0 puntos por derrota por walkover
+
+**Criterios de desempate** (en orden):
+1. Puntos totales
 2. Diferencia de sets
 3. Diferencia de juegos
 4. Sets ganados totales
@@ -1620,5 +1632,5 @@ Cada partido puede tener asignada una cancha (`courtId`) y horario (`scheduledFo
 
 ---
 
-**Última actualización**: 2025-10-07
-**Versión**: 1.1.0
+**Última actualización**: 2025-10-13
+**Versión**: 1.2.0
