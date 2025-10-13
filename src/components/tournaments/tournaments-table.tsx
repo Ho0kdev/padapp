@@ -38,9 +38,11 @@ import { tournamentStatusOptions, tournamentTypeOptions } from "@/lib/validation
 import { tournamentStatusOptions as statusStyles } from "@/lib/utils/status-styles"
 import { DataTablePagination } from "@/components/ui/data-table-pagination"
 import { useToast } from "@/hooks/use-toast"
+import { useAuth } from "@/hooks/use-auth"
 
 export function TournamentsTable() {
   const searchParams = useSearchParams()
+  const { isAdminOrClubAdmin } = useAuth()
   const [tournaments, setTournaments] = useState<TournamentListItem[]>([])
   const [pagination, setPagination] = useState({
     page: 1,
@@ -228,21 +230,25 @@ export function TournamentsTable() {
                             Ver detalle
                           </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link href={`/dashboard/tournaments/${tournament.id}/edit`}>
-                            <Pencil className="mr-2 h-4 w-4" />
-                            Editar
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          className="text-red-600"
-                          onClick={() => setDeleteId(tournament.id)}
-                          disabled={tournament._count.teams > 0}
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Eliminar
-                        </DropdownMenuItem>
+                        {isAdminOrClubAdmin && (
+                          <>
+                            <DropdownMenuItem asChild>
+                              <Link href={`/dashboard/tournaments/${tournament.id}/edit`}>
+                                <Pencil className="mr-2 h-4 w-4" />
+                                Editar
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="text-red-600"
+                              onClick={() => setDeleteId(tournament.id)}
+                              disabled={tournament._count.teams > 0}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Eliminar
+                            </DropdownMenuItem>
+                          </>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>

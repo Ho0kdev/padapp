@@ -68,7 +68,7 @@ export const navigation: NavigationItem[] = [
     name: "Torneos",
     href: "/dashboard/tournaments",
     icon: Trophy,
-    roles: ["ADMIN", "CLUB_ADMIN"] // Admins y administradores de club pueden crear/gestionar torneos
+    roles: ["ADMIN", "CLUB_ADMIN", "PLAYER", "REFEREE"] // Todos pueden ver torneos, solo admins/club admins pueden crear/gestionar
   },
   {
     name: "Inscripciones",

@@ -2,6 +2,7 @@
 
 import { DataTableHeader } from "@/components/ui/data-table-header"
 import { tournamentStatusOptions } from "@/lib/validations/tournament"
+import { useAuth } from "@/hooks/use-auth"
 
 const statusOptions = tournamentStatusOptions.map(option => ({
   value: option.value,
@@ -9,6 +10,8 @@ const statusOptions = tournamentStatusOptions.map(option => ({
 }))
 
 export function TournamentsHeader() {
+  const { isAdminOrClubAdmin } = useAuth()
+
   return (
     <DataTableHeader
       title="Torneos"
@@ -16,6 +19,7 @@ export function TournamentsHeader() {
       searchPlaceholder="Buscar torneos..."
       createButtonText="Nuevo Torneo"
       createButtonHref="/dashboard/tournaments/new"
+      showCreateButton={isAdminOrClubAdmin}
       filterLabel="Estado"
       filterOptions={statusOptions}
       basePath="/dashboard/tournaments"
