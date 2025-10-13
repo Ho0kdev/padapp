@@ -65,33 +65,10 @@ interface User {
         type: string
       }
     }>
-    team1Memberships: Array<{
+    teams?: Array<{
       id: string
-      name: string
-      registrationStatus: string
-      tournament: {
-        id: string
-        name: string
-        status: string
-        type: string
-        tournamentStart?: string
-        tournamentEnd?: string
-      }
-      category: {
-        id: string
-        name: string
-        type: string
-      }
-      player2: {
-        id: string
-        firstName: string
-        lastName: string
-      }
-    }>
-    team2Memberships: Array<{
-      id: string
-      name: string
-      registrationStatus: string
+      name: string | null
+      status: string
       tournament: {
         id: string
         name: string
@@ -110,10 +87,21 @@ interface User {
         minRankingPoints?: number | null
         maxRankingPoints?: number | null
       }
-      player1: {
-        id: string
-        firstName: string
-        lastName: string
+      registration1: {
+        playerId: string
+        player: {
+          id: string
+          firstName: string
+          lastName: string
+        }
+      }
+      registration2: {
+        playerId: string
+        player: {
+          id: string
+          firstName: string
+          lastName: string
+        }
       }
     }>
     tournamentStats: Array<{
@@ -129,16 +117,6 @@ interface User {
         id: string
         name: string
         status: string
-      }
-      category: {
-        id: string
-        name: string
-        type: string
-        genderRestriction?: string | null
-        minAge?: number | null
-        maxAge?: number | null
-        minRankingPoints?: number | null
-        maxRankingPoints?: number | null
       }
     }>
   }
@@ -243,12 +221,14 @@ export function UserDetail({ user }: UserDetailProps) {
     return user.name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U'
   }
 
-  const getTeamPartnername = (team: any) => {
-    if (team.registration1?.player) {
-      return `${team.registration1.player.firstName} ${team.registration1.player.lastName}`
-    }
-    if (team.registration2?.player) {
+  const getTeamPartnername = (team: any, currentPlayerId: string) => {
+    // Si el jugador actual es player1, el compañero es player2
+    if (team.registration1?.playerId === currentPlayerId && team.registration2?.player) {
       return `${team.registration2.player.firstName} ${team.registration2.player.lastName}`
+    }
+    // Si el jugador actual es player2, el compañero es player1
+    if (team.registration2?.playerId === currentPlayerId && team.registration1?.player) {
+      return `${team.registration1.player.firstName} ${team.registration1.player.lastName}`
     }
     return 'Sin compañero'
   }
@@ -300,10 +280,7 @@ export function UserDetail({ user }: UserDetailProps) {
     : 0
 
   // Get all teams
-  const allTeams = [
-    ...(user.player?.team1Memberships || []),
-    ...(user.player?.team2Memberships || [])
-  ]
+  const allTeams = user.player?.teams || []
 
   return (
     <div className="space-y-6">
@@ -623,7 +600,9 @@ export function UserDetail({ user }: UserDetailProps) {
                           <h4 className="text-md text-muted-foreground">{team.name}</h4>
 
                           {/* Línea 4: Compañero */}
-                          <p className="text-sm text-muted-foreground">{getTeamPartnername(team)}</p>
+                          <p className="text-sm text-muted-foreground">
+                            Compañero: {user.player && getTeamPartnername(team, user.player.id)}
+                          </p>
 
                           {/* Línea 5: Fechas del torneo */}
                           {formatTournamentDates(team.tournament.tournamentStart, team.tournament.tournamentEnd) && (
@@ -659,9 +638,6 @@ export function UserDetail({ user }: UserDetailProps) {
                           <div className="flex items-center justify-between">
                             <div>
                               <h4 className="font-medium">{stat.tournament.name}</h4>
-                              <p className="text-sm text-muted-foreground">
-                                Categoría: {stat.category?.name || 'No especificada'}
-                              </p>
                             </div>
                             {getTournamentStatusBadge(stat.tournament.status)}
                           </div>

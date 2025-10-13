@@ -127,7 +127,82 @@ async function getUser(id: string) {
       return null
     }
 
-    return user
+    // Get teams where the player is either player1 or player2
+    let teams: any[] = []
+    if (user.player) {
+      teams = await prisma.team.findMany({
+        where: {
+          OR: [
+            {
+              registration1: {
+                playerId: user.player.id
+              }
+            },
+            {
+              registration2: {
+                playerId: user.player.id
+              }
+            }
+          ]
+        },
+        include: {
+          tournament: {
+            select: {
+              id: true,
+              name: true,
+              status: true,
+              type: true,
+              tournamentStart: true,
+              tournamentEnd: true
+            }
+          },
+          category: {
+            select: {
+              id: true,
+              name: true,
+              type: true,
+              genderRestriction: true,
+              minAge: true,
+              maxAge: true,
+              minRankingPoints: true,
+              maxRankingPoints: true
+            }
+          },
+          registration1: {
+            select: {
+              playerId: true,
+              player: {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true
+                }
+              }
+            }
+          },
+          registration2: {
+            select: {
+              playerId: true,
+              player: {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true
+                }
+              }
+            }
+          }
+        }
+      })
+    }
+
+    return {
+      ...user,
+      player: user.player ? {
+        ...user.player,
+        teams
+      } : undefined
+    }
 
   } catch (error) {
     console.error('Error fetching user:', error)
