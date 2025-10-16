@@ -38,6 +38,7 @@ import { getMatchStatusStyle, getMatchStatusLabel } from "@/lib/utils/status-sty
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import { MatchResultDialog } from "./match-result-dialog"
+import { MatchScheduleDialog } from "./match-schedule-dialog"
 
 interface Match {
   id: string
@@ -136,6 +137,7 @@ export function MatchesTable() {
   const [loading, setLoading] = useState(true)
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null)
   const [resultDialogOpen, setResultDialogOpen] = useState(false)
+  const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false)
   const [statusLoading, setStatusLoading] = useState<string | null>(null)
   const { toast } = useToast()
   const { isAdminOrClubAdmin, isReferee } = useAuth()
@@ -204,7 +206,16 @@ export function MatchesTable() {
     setResultDialogOpen(true)
   }
 
+  const handleScheduleMatch = (match: Match) => {
+    setSelectedMatch(match)
+    setScheduleDialogOpen(true)
+  }
+
   const handleResultSuccess = () => {
+    fetchMatches() // Recargar la tabla
+  }
+
+  const handleScheduleSuccess = () => {
     fetchMatches() // Recargar la tabla
   }
 
@@ -359,6 +370,13 @@ export function MatchesTable() {
                           <>
                             <DropdownMenuSeparator />
 
+                            <DropdownMenuItem
+                              onClick={() => handleScheduleMatch(match)}
+                            >
+                              <Calendar className="mr-2 h-4 w-4" />
+                              Programar partido
+                            </DropdownMenuItem>
+
                             {match.status === "SCHEDULED" && (
                               <DropdownMenuItem
                                 onClick={() => handleChangeStatus(match.id, "IN_PROGRESS")}
@@ -397,12 +415,20 @@ export function MatchesTable() {
       />
 
       {selectedMatch && (
-        <MatchResultDialog
-          match={selectedMatch}
-          open={resultDialogOpen}
-          onOpenChange={setResultDialogOpen}
-          onSuccess={handleResultSuccess}
-        />
+        <>
+          <MatchResultDialog
+            match={selectedMatch}
+            open={resultDialogOpen}
+            onOpenChange={setResultDialogOpen}
+            onSuccess={handleResultSuccess}
+          />
+          <MatchScheduleDialog
+            match={selectedMatch}
+            open={scheduleDialogOpen}
+            onOpenChange={setScheduleDialogOpen}
+            onSuccess={handleScheduleSuccess}
+          />
+        </>
       )}
     </div>
   )

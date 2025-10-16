@@ -93,7 +93,20 @@ export async function GET(
           select: { id: true, name: true, email: true }
         },
         mainClub: {
-          select: { id: true, name: true, address: true, city: true }
+          select: {
+            id: true,
+            name: true,
+            address: true,
+            city: true,
+            courts: {
+              select: {
+                id: true,
+                name: true,
+                deleted: true,
+                status: true
+              }
+            }
+          }
         },
         categories: {
           include: {
@@ -121,7 +134,18 @@ export async function GET(
         clubs: {
           include: {
             club: {
-              select: { id: true, name: true }
+              select: {
+                id: true,
+                name: true,
+                courts: {
+                  select: {
+                    id: true,
+                    name: true,
+                    deleted: true,
+                    status: true
+                  }
+                }
+              }
             }
           }
         },
