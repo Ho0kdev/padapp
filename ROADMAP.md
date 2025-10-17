@@ -1,6 +1,6 @@
 # 🗺️ ROADMAP - PadApp Sistema de Gestión Integral de Pádel
 
-*Actualizado: Octubre 6, 2025*
+*Actualizado: Octubre 17, 2025*
 
 ## 🎯 **Visión General**
 
@@ -102,17 +102,18 @@ src/app/api/registrations/
 
 ---
 
-### 2. 🎪 **Gestión de Brackets/Llaves** [✅ 83% COMPLETADO]
+### 2. 🎪 **Gestión de Brackets/Llaves** [✅ 86% COMPLETADO]
 **Estimado: 2 semanas** | **Completado**: Oct 1, 2024
 
-#### ✅ Formatos Implementados (5/6):
+#### ✅ Formatos Implementados (6/7):
 - ✅ **Single Elimination** - Eliminación simple con byes automáticos
 - ✅ **Double Elimination** - Upper/Lower brackets con Gran Final
 - ✅ **Round Robin** - Todos contra todos con tabla de posiciones
 - ✅ **Group Stage + Elimination** - Fase de grupos + playoffs
-- ✅ **Americano** - Round-Robin Circle Method (Oct 1, 2024) ⭐ NUEVO
+- ✅ **Americano** - Round-Robin Circle Method con equipos fijos
+- ✅ **Americano Social** - Jugadores individuales en pools de 4 ⭐ NUEVO
 
-#### ⏳ Formato Pendiente (1/6):
+#### ⏳ Formato Pendiente (1/7):
 - ⏳ **Swiss System** - Para torneos grandes (16-64 equipos)
 
 #### Funcionalidades Implementadas:
@@ -512,9 +513,9 @@ El sistema de inscripciones está mayormente completado. Lo que falta:
 - CRUD de Usuarios (100%)
 - Sistema de Rankings (100%)
 - Sistema de Puntos con Configuración Flexible (100%) ⭐
-- Panel Administrativo (100%)
+- Panel Administrativo con Sistema de Logs (100%) ⭐
 - Sistema de Inscripciones (90%)
-- Gestión de Brackets - 5 Formatos (83%) ⭐ ACTUALIZADO
+- Gestión de Brackets - 6 Formatos (86%) ⭐ ACTUALIZADO
 
 ### **En Progreso** 🟡
 - Integración de Pagos (0%)
@@ -560,8 +561,16 @@ El sistema de inscripciones está mayormente completado. Lo que falta:
   - Sistema de bye automático para número impar de equipos
   - Generación adaptativa de 4-10 rondas según número de equipos
   - Garantiza que todos los equipos jueguen entre sí exactamente una vez
+
+- ✅ **Formato Americano Social Implementado**: Sistema de pools para jugadores individuales ⭐ NUEVO
+  - Servicio completo `AmericanoSocialService` en `src/lib/services/americano-social-service.ts`
+  - Pools de exactamente 4 jugadores con rotación de compañeros
+  - 3 partidos por jugador (AB vs CD, AC vs BD, AD vs BC)
+  - Ranking individual por pool y ranking global del torneo
+  - Sistema de puntos basado en games ganados
+  - APIs completas: generar pools, ver pools, cargar resultados
   - Documentación completa en `TOURNAMENT_FORMATS.md`
-  - Progreso de brackets: **5/6 formatos implementados (83%)**
+  - Progreso de brackets: **6/7 formatos implementados (86%)**
   - Solo falta Sistema Suizo para completar todos los formatos
 
 ### **Septiembre 30, 2024**

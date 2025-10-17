@@ -161,12 +161,13 @@ padapp/
 
 ### ✅ **Gestión de Torneos**
 - **CRUD Completo**: Crear, editar, eliminar torneos
-- **Múltiples Formatos Implementados** (5/6 - 83%):
+- **Múltiples Formatos Implementados** (6/7 - 86%):
   - ✅ Single Elimination (Eliminación Simple)
   - ✅ Double Elimination (Eliminación Doble)
   - ✅ Round Robin (Todos contra Todos)
   - ✅ Group Stage + Elimination (Fase de Grupos + Eliminación)
-  - ✅ Americano (Round-Robin Circle Method)
+  - ✅ Americano (Round-Robin Circle Method - Equipos fijos)
+  - ✅ Americano Social (Jugadores individuales en pools de 4)
   - ⏳ Swiss System (Pendiente)
 - **Estados de Torneo**: Draft → Published → Registration → In Progress → Completed
 - **Configuración Avanzada**:
@@ -1352,8 +1353,8 @@ Para preguntas, sugerencias o reportar problemas:
 - **9 módulos principales**: Torneos, Clubes, Usuarios, Categorías, Rankings, Inscripciones, Canchas, Pagos, Admin
 - **9 servicios de logging** con auditoría completa
 - **4 roles de usuario** con permisos granulares
-- **5 formatos de torneo implementados** (83% completado)
+- **6 formatos de torneo implementados** (86% completado)
 - **Full TypeScript** con validaciones Zod
 - **100% validado** en backend y frontend
 
-*Última actualización: Octubre 7, 2025*
+*Última actualización: Octubre 17, 2025*

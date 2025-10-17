@@ -1,6 +1,6 @@
 # 📝 Sistema de Logs y Auditoría - PadApp
 
-*Última actualización: Octubre 5, 2025*
+*Última actualización: Octubre 17, 2025*
 
 ## 🎯 Resumen
 
@@ -10,17 +10,17 @@ Sistema completo de logging y auditoría que registra automáticamente todas las
 
 ## 📊 Cobertura del Sistema
 
-### Módulos con Logging Completo
+### Módulos con Logging Completo (9 servicios)
 
-1. **Usuarios** - `UserLog`
-2. **Inscripciones** - `RegistrationLog`
-3. **Equipos** - `TeamLog`
-4. **Torneos** - `TournamentLog`
-5. **Clubes** - `ClubLog`
-6. **Canchas** - `CourtLog`
-7. **Categorías** - `CategoryLog`
-8. **Rankings** - `RankingLog`
-9. **Partidos** - `MatchLog`
+1. **Usuarios** - `UserLog` + `UserLogService`
+2. **Inscripciones** - `RegistrationLog` + `RegistrationLogService`
+3. **Equipos** - `TeamLog` + `TeamLogService`
+4. **Torneos** - `TournamentLog` + `TournamentLogService`
+5. **Clubes** - `ClubLog` + `ClubLogService`
+6. **Canchas** - `CourtLog` + `CourtLogService`
+7. **Categorías** - `CategoryLog` + `CategoryLogService`
+8. **Rankings** - `RankingLog` + `RankingsLogService`
+9. **Partidos** - `MatchLog` + `MatchLogService` ✅
 
 ---
 

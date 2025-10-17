@@ -1,6 +1,6 @@
 # 📋 PadApp - Context para Desarrollo Rápido
 
-*Última actualización: Octubre 6, 2025 (16:30)*
+*Última actualización: Octubre 17, 2025*
 
 ## 🎯 Resumen Ejecutivo del Proyecto
 
@@ -30,7 +30,12 @@
 
 #### 2. **Gestión de Torneos** [100%]
 - **CRUD completo**: Crear, editar, eliminar, listar
-- **6 formatos**: Single/Double Elimination, Round Robin, Swiss, Group Stage, Americano
+- **7 formatos (6 implementados - 86%)**:
+  - ✅ Single Elimination, Double Elimination, Round Robin
+  - ✅ Group Stage + Elimination
+  - ✅ Americano (equipos fijos)
+  - ✅ Americano Social (jugadores individuales en pools)
+  - ⏳ Swiss System (pendiente)
 - **Estados**: DRAFT → PUBLISHED → REGISTRATION_OPEN → REGISTRATION_CLOSED → IN_PROGRESS → COMPLETED → CANCELLED
 - **Configuración avanzada**: Fechas, participantes, tarifas, premios, reglas de sets/games, golden point
 - **Validaciones Zod**: Completas en frontend y backend
@@ -408,13 +413,13 @@ Player: player@padapp.com / 123456
 
 ## 📊 Estadísticas Actuales
 
-- **60+ componentes React** implementados
-- **40+ API endpoints** funcionando
-- **18+ tablas de BD** con relaciones (incluyendo 8 tablas de logs)
+- **91+ componentes React** implementados
+- **45+ API endpoints** funcionando
+- **30+ tablas de BD** con relaciones (incluyendo 9 tablas de logs)
 - **30 archivos** con RBAC implementado
-- **8 servicios de logging** completos
+- **9 servicios de logging** completos
 - **4 roles** de usuario con permisos granulares
-- **6 formatos** de torneos soportados (5 implementados)
+- **7 formatos** de torneos soportados (6 implementados - 86%)
 - **100% inscripciones** completadas (sistema desacoplado)
 - **100% rankings y puntos** funcionales
 - **100% auditoría y logs** implementados
@@ -461,6 +466,6 @@ Player: player@padapp.com / 123456
 
 ---
 
-**Estado del Proyecto**: ✅ 97% Funcionalidad Core | 🚀 Sistema de Partidos Completo | 🎯 Visualización de Brackets Profesional | ⭐ Sistema de Logs 100% | ⏳ Próximo: Calendario o Notificaciones
+**Estado del Proyecto**: ✅ 97% Funcionalidad Core | 🚀 6/7 Formatos de Torneos (86%) | 🎯 Sistema de Partidos y Brackets | ⭐ Sistema de Logs 100% | ⏳ Próximo: Sistema Suizo o Calendario
 
-*Última actualización: Octubre 7, 2025 - Visualización de brackets tipo árbol con SVG y responsive design completado*
+*Última actualización: Octubre 17, 2025 - Sistema completo con 6 formatos de torneos incluyendo Americano Social*
