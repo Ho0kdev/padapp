@@ -1,16 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
-import { UserRole, UserStatus, Gender } from '@prisma/client'
+import { authorize, handleAuthError, Action, Resource } from '@/lib/rbac'
+import { UserStatus } from '@prisma/client'
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-
-    if (!session || session.user.role !== UserRole.ADMIN) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
-    }
+    // Solo admins pueden ver estadísticas de usuarios
+    await authorize(Action.READ, Resource.DASHBOARD, undefined, request)
 
     // Get basic user stats
     const totalUsers = await prisma.user.count()
@@ -180,10 +176,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(stats)
 
   } catch (error) {
-    console.error('Error fetching user stats:', error)
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    )
+    return handleAuthError(error, request)
   }
 }

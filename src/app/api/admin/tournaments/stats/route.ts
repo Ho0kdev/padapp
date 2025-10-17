@@ -1,28 +1,12 @@
-import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { NextRequest, NextResponse } from "next/server"
+import { authorize, handleAuthError, Action, Resource } from "@/lib/rbac"
 import { prisma } from "@/lib/prisma"
 
 // GET /api/admin/tournaments/stats - Estadísticas de torneos para admins
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-    }
-
-    // Verificar que sea admin
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { role: true }
-    })
-
-    if (user?.role !== "ADMIN") {
-      return NextResponse.json(
-        { error: "Acceso denegado. Solo administradores." },
-        { status: 403 }
-      )
-    }
+    // Solo admins pueden ver estadísticas de torneos
+    await authorize(Action.READ, Resource.DASHBOARD, undefined, request)
 
     // Obtener estadísticas por estado
     const statusStats = await prisma.tournament.groupBy({
@@ -236,10 +220,6 @@ export async function GET() {
     })
 
   } catch (error) {
-    console.error("Error fetching tournament stats:", error)
-    return NextResponse.json(
-      { error: "Error interno del servidor" },
-      { status: 500 }
-    )
+    return handleAuthError(error, request)
   }
 }

@@ -7,6 +7,8 @@ import { Action, Resource, AuthorizationContext } from './types'
 import { UnauthorizedError, ForbiddenError } from './policies/BasePolicy'
 import { UserPolicy } from './policies/UserPolicy'
 import { TournamentPolicy } from './policies/TournamentPolicy'
+import { SecurityLogService } from '@/lib/services/security-log-service'
+import { checkRateLimit, RateLimitError, RateLimitType } from './rate-limit'
 
 /**
  * Obtener la sesión del usuario actual
@@ -17,8 +19,17 @@ export async function getCurrentSession(): Promise<Session | null> {
 
 /**
  * Verificar si el usuario está autenticado
+ * Opcionalmente aplica rate limiting si se proporciona un request
  */
-export async function requireAuth(): Promise<Session> {
+export async function requireAuth(
+  request?: NextRequest,
+  rateLimitType: RateLimitType = 'read'
+): Promise<Session> {
+  // Aplicar rate limiting si se proporciona request
+  if (request) {
+    await checkRateLimit(request, rateLimitType)
+  }
+
   const session = await getCurrentSession()
 
   if (!session?.user) {
@@ -41,18 +52,35 @@ export function createAuthContext(session: Session): AuthorizationContext {
 
 /**
  * Verificar permisos del usuario
+ * Opcionalmente aplica rate limiting si se proporciona un request
  */
 export async function authorize(
   action: Action,
   resource: Resource,
-  subject?: any
+  subject?: any,
+  request?: NextRequest
 ): Promise<Session> {
+  // Aplicar rate limiting basado en el tipo de acción
+  if (request) {
+    const rateLimitType = [Action.CREATE, Action.UPDATE, Action.DELETE].includes(action)
+      ? 'write'
+      : 'read'
+    await checkRateLimit(request, rateLimitType)
+  }
+
   const session = await requireAuth()
 
   if (!(await checkPermission(session, action, resource, subject))) {
-    throw new ForbiddenError(
+    // Crear error con contexto para logging
+    const error: any = new ForbiddenError(
       `No tienes permiso para realizar esta acción`
     )
+    error.context = {
+      userId: session.user.id,
+      resource,
+      action,
+    }
+    throw error
   }
 
   return session
@@ -97,14 +125,15 @@ export async function getPolicies() {
  * Wrapper para handlers de API con autorización automática
  */
 export function withAuth<T = any>(
-  handler: (request: NextRequest, context: T, session: Session) => Promise<Response>
+  handler: (request: NextRequest, context: T, session: Session) => Promise<Response>,
+  rateLimitType: RateLimitType = 'read'
 ) {
   return async (request: NextRequest, context: T) => {
     try {
-      const session = await requireAuth()
+      const session = await requireAuth(request, rateLimitType)
       return await handler(request, context, session)
     } catch (error) {
-      return handleAuthError(error)
+      return handleAuthError(error, request)
     }
   }
 }
@@ -126,22 +155,46 @@ export function withPermission<T = any>(
         ? await options.getSubject(request, context)
         : undefined
 
-      const session = await authorize(action, resource, subject)
+      const session = await authorize(action, resource, subject, request)
       return await handler(request, context, session)
     } catch (error) {
-      return handleAuthError(error)
+      return handleAuthError(error, request)
     }
   }
 }
 
 /**
  * Manejar errores de autorización
+ * Registra automáticamente accesos denegados y rate limits excedidos
  */
-export function handleAuthError(error: unknown): NextResponse {
+export function handleAuthError(error: unknown, request?: NextRequest): NextResponse {
   console.error('Authorization error:', error)
+
+  const ip = request?.headers.get('x-forwarded-for') || undefined
+  const userAgent = request?.headers.get('user-agent') || undefined
+
+  // Error 429 - Rate limit excedido
+  if (error instanceof RateLimitError) {
+    return NextResponse.json(
+      { error: error.message, retryAfter: error.retryAfter },
+      {
+        status: 429,
+        headers: {
+          'Retry-After': error.retryAfter.toString(),
+        },
+      }
+    )
+  }
 
   // Error 401 - No autenticado
   if (error instanceof UnauthorizedError) {
+    // Registrar token inválido
+    SecurityLogService.logInvalidToken({
+      ip,
+      userAgent,
+      reason: error.message,
+    }).catch(err => console.error('Failed to log security event:', err))
+
     return NextResponse.json(
       { error: error.message },
       { status: error.statusCode }
@@ -150,6 +203,19 @@ export function handleAuthError(error: unknown): NextResponse {
 
   // Error 403 - Sin permisos
   if (error instanceof ForbiddenError) {
+    // Extraer contexto si está disponible
+    const errorData = (error as any).context || {}
+
+    // Registrar acceso denegado
+    SecurityLogService.logAccessDenied({
+      userId: errorData.userId,
+      resource: errorData.resource || 'unknown',
+      action: errorData.action || 'unknown',
+      ip,
+      userAgent,
+      reason: error.message,
+    }).catch(err => console.error('Failed to log security event:', err))
+
     return NextResponse.json(
       { error: error.message },
       { status: error.statusCode }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { requireAuth } from "@/lib/rbac"
+import { authorize, handleAuthError, Action, Resource } from "@/lib/rbac"
 import { prisma } from "@/lib/prisma"
 import { updateTeamStatusSchema } from "@/lib/validations/team"
 
@@ -15,18 +15,9 @@ interface RouteContext {
  */
 export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
-    const session = await requireAuth()
     const { id } = await context.params
 
-    // Solo admins pueden cambiar estados
-    if (session.user.role !== "ADMIN" && session.user.role !== "CLUB_ADMIN") {
-      return NextResponse.json(
-        { error: "No tienes permisos para cambiar el estado de equipos" },
-        { status: 403 }
-      )
-    }
-
-    // Obtener equipo
+    // Obtener equipo con relaciones necesarias para RBAC
     const team = await prisma.team.findUnique({
       where: { id },
       include: {
@@ -36,6 +27,24 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
             name: true,
             status: true,
             organizerId: true
+          }
+        },
+        registration1: {
+          include: {
+            player: {
+              select: {
+                userId: true
+              }
+            }
+          }
+        },
+        registration2: {
+          include: {
+            player: {
+              select: {
+                userId: true
+              }
+            }
           }
         }
       }
@@ -48,16 +57,8 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       )
     }
 
-    // Verificar que sea organizador o ADMIN
-    const isOrganizer = team.tournament.organizerId === session.user.id
-    const isAdmin = session.user.role === "ADMIN"
-
-    if (!isAdmin && !isOrganizer) {
-      return NextResponse.json(
-        { error: "No tienes permisos para gestionar este equipo" },
-        { status: 403 }
-      )
-    }
+    // El sistema RBAC verifica automáticamente ownership y permisos
+    await authorize(Action.UPDATE, Resource.TEAM, team, request)
 
     // Validar datos
     const body = await request.json()
@@ -106,10 +107,6 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     })
 
   } catch (error) {
-    console.error("Error updating team status:", error)
-    return NextResponse.json(
-      { error: "Error al actualizar el estado del equipo" },
-      { status: 500 }
-    )
+    return handleAuthError(error, request)
   }
 }

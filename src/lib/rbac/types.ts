@@ -32,6 +32,7 @@ export enum Resource {
   NOTIFICATION = 'Notification',
   REPORT = 'Report',
   DASHBOARD = 'Dashboard',
+  LOG = 'Log',
 }
 
 /**

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { UserRole, UserStatus, Gender } from '@prisma/client'
 import { requireAuth, authorize, handleAuthError, Action, Resource, AuditLogger } from '@/lib/rbac'
-import { rateLimit, RateLimitPresets } from '@/lib/rbac/rate-limit'
+import { checkRateLimit } from '@/lib/rbac/rate-limit'
 import { UserLogService } from '@/lib/services/user-log-service'
 
 export async function GET(request: NextRequest) {
@@ -149,9 +149,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    // Rate limiting moderado: 20 intentos por minuto
-    const rateLimitResponse = await rateLimit(request, RateLimitPresets.MODERATE)
-    if (rateLimitResponse) return rateLimitResponse
+    // Rate limiting para escritura
+    await checkRateLimit(request, 'write')
 
     // Verificar que el usuario puede crear usuarios
     const session = await authorize(Action.CREATE, Resource.USER)

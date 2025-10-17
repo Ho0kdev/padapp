@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { UserRole, UserStatus, Gender } from '@prisma/client'
 import { requireAuth, authorize, handleAuthError, Action, Resource, AuditLogger } from '@/lib/rbac'
 import { invalidateUserCache } from '@/lib/rbac/cache'
-import { rateLimit, RateLimitPresets } from '@/lib/rbac/rate-limit'
+import { checkRateLimit } from '@/lib/rbac/rate-limit'
 import { UserLogService } from '@/lib/services/user-log-service'
 
 interface RouteContext {
@@ -148,9 +148,8 @@ export async function PUT(
   { params }: RouteContext
 ) {
   try {
-    // Rate limiting moderado: 20 intentos por minuto
-    const rateLimitResponse = await rateLimit(request, RateLimitPresets.MODERATE)
-    if (rateLimitResponse) return rateLimitResponse
+    // Rate limiting para escritura
+    await checkRateLimit(request, 'write')
 
     const session = await requireAuth()
 
@@ -466,9 +465,8 @@ export async function DELETE(
   { params }: RouteContext
 ) {
   try {
-    // Rate limiting estricto para DELETE: 5 intentos por minuto
-    const rateLimitResponse = await rateLimit(request, RateLimitPresets.STRICT)
-    if (rateLimitResponse) return rateLimitResponse
+    // Rate limiting para escritura
+    await checkRateLimit(request, 'write')
 
     // Verificar que sea ADMIN
     const session = await authorize(Action.DELETE, Resource.USER)

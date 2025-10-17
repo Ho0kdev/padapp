@@ -63,6 +63,7 @@ model User {
   registrationLogs     RegistrationLog[]
   teamLogs             TeamLog[]
   matchLogs            MatchLog[]
+  securityLogs         SecurityLog[]     @relation("SecurityLogUser")
 
   @@map("users")
 }
@@ -710,6 +711,28 @@ model MatchLog {
   @@index([action])
   @@index([createdAt])
   @@map("match_logs")
+}
+
+model SecurityLog {
+  id         String   @id @default(cuid())
+  type       String   // ACCESS_DENIED, RATE_LIMIT_EXCEEDED, INVALID_TOKEN, BRUTE_FORCE_ATTEMPT, SUSPICIOUS_ACTIVITY
+  severity   String   // low, medium, high, critical
+  message    String
+  ipAddress  String?
+  userAgent  String?
+  userId     String?
+  resource   String?
+  action     String?
+  metadata   Json?
+  timestamp  DateTime @default(now())
+  user       User?    @relation("SecurityLogUser", fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([timestamp])
+  @@index([type])
+  @@index([severity])
+  @@index([ipAddress])
+  @@index([userId])
+  @@map("security_logs")
 }
 
 enum UserRole {

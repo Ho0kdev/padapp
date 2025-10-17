@@ -6,7 +6,9 @@
       "Bash(npx prisma:*)",
       "Bash(npm run build:*)",
       "Bash(timeout 180 npm run build)",
-      "Bash(npx tsx:*)"
+      "Bash(npx tsx:*)",
+      "mcp__context7__resolve-library-id",
+      "Bash(npm run type-check:*)"
     ],
     "deny": [],
     "ask": []

@@ -196,20 +196,32 @@ export function defineAbilitiesFor(context: AuthorizationContext): Ability {
         Resource.NOTIFICATION,
         Resource.REPORT,
         Resource.DASHBOARD,
+        Resource.LOG,
       ])
       break
 
     case UserRole.CLUB_ADMIN:
-      // CLUB_ADMIN puede gestionar su club y sus recursos
+      // CLUB_ADMIN - Principio de mínimo privilegio aplicado
       ability.can([Action.READ, Action.LIST], Resource.USER)
       ability.can([Action.READ, Action.UPDATE], Resource.USER, ownsUser(userId))
 
-      ability.can(Action.MANAGE, [
+      // Puede crear, leer y actualizar (no DELETE global sin ownership)
+      ability.can([Action.CREATE, Action.READ, Action.LIST, Action.UPDATE], [
         Resource.CLUB,
         Resource.COURT,
         Resource.TOURNAMENT,
         Resource.CATEGORY,
       ])
+
+      // DELETE solo con ownership (torneos propios)
+      ability.can(Action.DELETE, Resource.TOURNAMENT, (tournament: any) => {
+        return tournament.organizerId === userId
+      })
+
+      // DELETE solo con ownership contextual (clubs, courts propios)
+      ability.can(Action.DELETE, Resource.CLUB, (club: any) => {
+        return club.adminId === userId
+      })
 
       ability.can([Action.READ, Action.LIST, Action.APPROVE, Action.REJECT], Resource.REGISTRATION)
       ability.can([Action.READ, Action.LIST, Action.UPDATE], Resource.TEAM)

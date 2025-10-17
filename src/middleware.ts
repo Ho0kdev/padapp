@@ -4,15 +4,67 @@ import { NextRequest, NextResponse } from "next/server"
 import { checkRoleAccess } from "@/lib/navigation"
 
 /**
+ * Agregar headers de seguridad HTTP a la respuesta
+ */
+function addSecurityHeaders(response: NextResponse): NextResponse {
+  // Prevenir MIME type sniffing
+  response.headers.set('X-Content-Type-Options', 'nosniff')
+
+  // Prevenir clickjacking
+  response.headers.set('X-Frame-Options', 'SAMEORIGIN')
+
+  // Protección XSS para navegadores legacy
+  response.headers.set('X-XSS-Protection', '1; mode=block')
+
+  // Controlar información de referrer
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+
+  // Deshabilitar APIs del navegador no utilizadas
+  response.headers.set(
+    'Permissions-Policy',
+    'camera=(), microphone=(), geolocation=(), interest-cohort=()'
+  )
+
+  // HSTS: Forzar HTTPS en producción
+  if (process.env.NODE_ENV === 'production') {
+    response.headers.set(
+      'Strict-Transport-Security',
+      'max-age=31536000; includeSubDomains; preload'
+    )
+  }
+
+  // Content Security Policy básico
+  const cspHeader = [
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: blob: https:",
+    "font-src 'self' data:",
+    "connect-src 'self' https:",
+    "frame-ancestors 'self'",
+    "base-uri 'self'",
+    "form-action 'self'",
+  ].join('; ')
+
+  response.headers.set('Content-Security-Policy', cspHeader)
+
+  return response
+}
+
+/**
  * Middleware mejorado con separación de autenticación y autorización
  * Usa el nuevo sistema RBAC para verificar permisos
+ * Incluye headers de seguridad HTTP
  */
 export default withAuth(
   function middleware(req: any) {
     const { pathname } = req.nextUrl
     const token = req.nextauth.token
 
-    if (!token) return NextResponse.next()
+    if (!token) {
+      const response = NextResponse.next()
+      return addSecurityHeaders(response)
+    }
 
     const userId = token.sub as string
     const userRole = token.role as string
@@ -22,7 +74,8 @@ export default withAuth(
       if (pathname === '/dashboard') {
         const url = req.nextUrl.clone()
         url.pathname = `/dashboard/users/${userId}`
-        return NextResponse.redirect(url)
+        const response = NextResponse.redirect(url)
+        return addSecurityHeaders(response)
       }
 
       // Verificar acceso usando el sistema de navegación
@@ -32,7 +85,8 @@ export default withAuth(
       ) {
         const url = req.nextUrl.clone()
         url.pathname = `/dashboard/users/${userId}`
-        return NextResponse.redirect(url)
+        const response = NextResponse.redirect(url)
+        return addSecurityHeaders(response)
       }
     }
 
@@ -43,11 +97,13 @@ export default withAuth(
       if (!hasAccess) {
         const url = req.nextUrl.clone()
         url.pathname = '/dashboard'
-        return NextResponse.redirect(url)
+        const response = NextResponse.redirect(url)
+        return addSecurityHeaders(response)
       }
     }
 
-    return NextResponse.next()
+    const response = NextResponse.next()
+    return addSecurityHeaders(response)
   },
   {
     callbacks: {

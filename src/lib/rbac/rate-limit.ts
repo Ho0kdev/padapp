@@ -1,134 +1,62 @@
 // src/lib/rbac/rate-limit.ts
-import { NextRequest, NextResponse } from 'next/server'
+import { RateLimiterMemory } from 'rate-limiter-flexible'
+import { NextRequest } from 'next/server'
+import { SecurityLogService } from '@/lib/services/security-log-service'
 
 /**
- * Configuración de rate limit por endpoint
+ * Configuraciones de rate limiting por tipo de endpoint
  */
-export interface RateLimitConfig {
-  /**
-   * Número máximo de requests permitidos en el período
-   */
-  maxRequests: number
-
-  /**
-   * Ventana de tiempo en milisegundos
-   */
-  windowMs: number
-
-  /**
-   * Mensaje de error personalizado
-   */
-  message?: string
-
-  /**
-   * Clave para identificar al cliente (por defecto: IP)
-   */
-  keyGenerator?: (request: NextRequest) => string
+const RATE_LIMITS = {
+  // Autenticación: muy estricto
+  auth: {
+    points: 5,           // 5 intentos
+    duration: 60,        // por minuto
+    blockDuration: 900,  // bloqueo de 15 minutos
+  },
+  // Escritura: estricto
+  write: {
+    points: 30,          // 30 operaciones
+    duration: 60,        // por minuto
+    blockDuration: 300,  // bloqueo de 5 minutos
+  },
+  // Lectura: moderado
+  read: {
+    points: 100,         // 100 consultas
+    duration: 60,        // por minuto
+    blockDuration: 60,   // bloqueo de 1 minuto
+  },
 }
 
 /**
- * Entrada en el store de rate limiting
+ * Limitadores por tipo
  */
-interface RateLimitEntry {
-  count: number
-  resetTime: number
+const authLimiter = new RateLimiterMemory(RATE_LIMITS.auth)
+const writeLimiter = new RateLimiterMemory(RATE_LIMITS.write)
+const readLimiter = new RateLimiterMemory(RATE_LIMITS.read)
+
+/**
+ * Tipos de rate limiting disponibles
+ */
+export type RateLimitType = 'auth' | 'write' | 'read'
+
+/**
+ * Error personalizado para rate limiting
+ */
+export class RateLimitError extends Error {
+  statusCode = 429
+  retryAfter: number
+
+  constructor(message: string, retryAfter: number = 60) {
+    super(message)
+    this.name = 'RateLimitError'
+    this.retryAfter = retryAfter
+  }
 }
 
 /**
- * Store en memoria para rate limiting
- * Para producción, considerar Redis o similar
+ * Obtener IP del request
  */
-class RateLimitStore {
-  private store: Map<string, RateLimitEntry> = new Map()
-  private cleanupInterval?: NodeJS.Timeout
-
-  constructor() {
-    // Limpiar entradas expiradas cada minuto
-    if (typeof window === 'undefined') {
-      this.cleanupInterval = setInterval(() => {
-        this.cleanup()
-      }, 60000)
-    }
-  }
-
-  /**
-   * Incrementar contador para una clave
-   */
-  increment(key: string, windowMs: number): { count: number; resetTime: number } {
-    const now = Date.now()
-    const entry = this.store.get(key)
-
-    // Si no existe o expiró, crear nueva entrada
-    if (!entry || now > entry.resetTime) {
-      const newEntry: RateLimitEntry = {
-        count: 1,
-        resetTime: now + windowMs,
-      }
-      this.store.set(key, newEntry)
-      return newEntry
-    }
-
-    // Incrementar contador existente
-    entry.count++
-    this.store.set(key, entry)
-    return entry
-  }
-
-  /**
-   * Resetear contador para una clave
-   */
-  reset(key: string): void {
-    this.store.delete(key)
-  }
-
-  /**
-   * Limpiar entradas expiradas
-   */
-  private cleanup(): void {
-    const now = Date.now()
-    for (const [key, entry] of this.store.entries()) {
-      if (now > entry.resetTime) {
-        this.store.delete(key)
-      }
-    }
-  }
-
-  /**
-   * Obtener estadísticas del store
-   */
-  getStats() {
-    return {
-      size: this.store.size,
-      entries: Array.from(this.store.entries()),
-    }
-  }
-
-  /**
-   * Destruir el store y limpiar recursos
-   */
-  destroy(): void {
-    if (this.cleanupInterval) {
-      clearInterval(this.cleanupInterval)
-      this.cleanupInterval = undefined
-    }
-    this.store.clear()
-  }
-}
-
-// Instancia global del store (Singleton)
-const rateLimitStore = new RateLimitStore()
-
-// Cleanup al cerrar el proceso
-if (typeof window === 'undefined') {
-  process.on('beforeExit', () => {
-    rateLimitStore.destroy()
-  })
-}
-
-/**
- * Obtener IP del cliente
- */
-function getClientIp(request: NextRequest): string {
+function getIpAddress(request: NextRequest): string {
   return (
     request.headers.get('x-forwarded-for')?.split(',')[0] ||
     request.headers.get('x-real-ip') ||
@@ -137,137 +65,135 @@ function getClientIp(request: NextRequest): string {
 }
 
 /**
- * Generador de clave por defecto (IP + endpoint)
+ * Verificar rate limit para una petición
  */
-function defaultKeyGenerator(request: NextRequest): string {
-  const ip = getClientIp(request)
-  const pathname = request.nextUrl.pathname
-  return `${ip}:${pathname}`
-}
-
-/**
- * Middleware de rate limiting
- *
- * @example
- * ```typescript
- * export async function POST(request: NextRequest) {
- *   const rateLimitResponse = await rateLimit(request, {
- *     maxRequests: 5,
- *     windowMs: 60000, // 5 requests por minuto
- *   })
- *
- *   if (rateLimitResponse) return rateLimitResponse
- *
- *   // Procesar request normalmente...
- * }
- * ```
- */
-export async function rateLimit(
+export async function checkRateLimit(
   request: NextRequest,
-  config: RateLimitConfig
-): Promise<NextResponse | null> {
-  const {
-    maxRequests,
-    windowMs,
-    message = 'Demasiadas solicitudes. Por favor intenta de nuevo más tarde.',
-    keyGenerator = defaultKeyGenerator,
-  } = config
+  type: RateLimitType = 'read',
+  identifier?: string
+): Promise<void> {
+  // Usar IP como identificador por defecto
+  const ip = identifier || getIpAddress(request)
 
-  const key = keyGenerator(request)
-  const { count, resetTime } = rateLimitStore.increment(key, windowMs)
+  // Seleccionar limiter según tipo
+  const limiter = type === 'auth' ? authLimiter :
+                  type === 'write' ? writeLimiter :
+                  readLimiter
 
-  // Agregar headers informativos
-  const headers = {
-    'X-RateLimit-Limit': maxRequests.toString(),
-    'X-RateLimit-Remaining': Math.max(0, maxRequests - count).toString(),
-    'X-RateLimit-Reset': new Date(resetTime).toISOString(),
-  }
+  try {
+    await limiter.consume(ip)
+  } catch (error) {
+    // Log del evento
+    await SecurityLogService.logRateLimitExceeded({
+      ip,
+      endpoint: request.nextUrl.pathname,
+      limit: RATE_LIMITS[type].points,
+    })
 
-  // Si excede el límite, retornar 429
-  if (count > maxRequests) {
-    return NextResponse.json(
-      {
-        error: message,
-        retryAfter: Math.ceil((resetTime - Date.now()) / 1000),
-      },
-      {
-        status: 429,
-        headers,
-      }
+    const retryAfter = RATE_LIMITS[type].blockDuration
+
+    throw new RateLimitError(
+      `Demasiadas peticiones. Intenta de nuevo en ${Math.ceil(retryAfter / 60)} minutos.`,
+      retryAfter
     )
   }
-
-  // No excede el límite, continuar
-  return null
 }
 
 /**
- * Wrapper para handlers con rate limiting automático
+ * Wrapper para aplicar rate limiting a rutas
  */
-export function withRateLimit<T = any>(
-  config: RateLimitConfig,
-  handler: (request: NextRequest, context: T) => Promise<Response>
-) {
-  return async (request: NextRequest, context: T) => {
-    const rateLimitResponse = await rateLimit(request, config)
-    if (rateLimitResponse) return rateLimitResponse
-
-    return await handler(request, context)
+export function withRateLimit(type: RateLimitType = 'read') {
+  return function <T = any>(
+    handler: (request: NextRequest, context: T) => Promise<Response>
+  ) {
+    return async (request: NextRequest, context: T) => {
+      try {
+        await checkRateLimit(request, type)
+        return await handler(request, context)
+      } catch (error) {
+        if (error instanceof RateLimitError) {
+          return new Response(
+            JSON.stringify({
+              error: error.message,
+              retryAfter: error.retryAfter,
+            }),
+            {
+              status: 429,
+              headers: {
+                'Content-Type': 'application/json',
+                'Retry-After': error.retryAfter.toString(),
+                'X-RateLimit-Limit': RATE_LIMITS[type].points.toString(),
+                'X-RateLimit-Reset': new Date(Date.now() + error.retryAfter * 1000).toISOString(),
+              },
+            }
+          )
+        }
+        throw error
+      }
+    }
   }
 }
 
 /**
- * Presets de configuración comunes
+ * Obtener información de rate limit restante
+ */
+export async function getRateLimitInfo(
+  request: NextRequest,
+  type: RateLimitType = 'read'
+): Promise<{ remaining: number; total: number; resetAt: Date }> {
+  const ip = getIpAddress(request)
+  const limiter = type === 'auth' ? authLimiter :
+                  type === 'write' ? writeLimiter :
+                  readLimiter
+
+  try {
+    const res = await limiter.get(ip)
+    const remaining = res ? RATE_LIMITS[type].points - res.consumedPoints : RATE_LIMITS[type].points
+    const resetAt = res ? new Date((res.msBeforeNext || 0) + Date.now()) : new Date()
+
+    return {
+      remaining: Math.max(0, remaining),
+      total: RATE_LIMITS[type].points,
+      resetAt,
+    }
+  } catch {
+    return {
+      remaining: RATE_LIMITS[type].points,
+      total: RATE_LIMITS[type].points,
+      resetAt: new Date(Date.now() + RATE_LIMITS[type].duration * 1000),
+    }
+  }
+}
+
+/**
+ * Resetear rate limit para un IP específico (solo para testing o admin)
+ */
+export async function resetRateLimit(
+  ip: string,
+  type?: RateLimitType
+): Promise<void> {
+  if (type) {
+    const limiter = type === 'auth' ? authLimiter :
+                    type === 'write' ? writeLimiter :
+                    readLimiter
+    await limiter.delete(ip)
+  } else {
+    // Resetear todos los tipos
+    await Promise.all([
+      authLimiter.delete(ip),
+      writeLimiter.delete(ip),
+      readLimiter.delete(ip),
+    ])
+  }
+}
+
+/**
+ * Presets de configuración (mantenidos por compatibilidad)
+ * @deprecated Use RateLimitType instead
  */
 export const RateLimitPresets = {
-  /**
-   * Estricto - Para endpoints críticos como login, registro
-   * 5 requests por minuto
-   */
-  STRICT: {
-    maxRequests: 5,
-    windowMs: 60000,
-  },
-
-  /**
-   * Moderado - Para endpoints de escritura
-   * 20 requests por minuto
-   */
-  MODERATE: {
-    maxRequests: 20,
-    windowMs: 60000,
-  },
-
-  /**
-   * Permisivo - Para endpoints de lectura
-   * 100 requests por minuto
-   */
-  LENIENT: {
-    maxRequests: 100,
-    windowMs: 60000,
-  },
-
-  /**
-   * API - Para uso general de API
-   * 1000 requests por hora
-   */
-  API: {
-    maxRequests: 1000,
-    windowMs: 3600000,
-  },
+  STRICT: RATE_LIMITS.auth,
+  MODERATE: RATE_LIMITS.write,
+  LENIENT: RATE_LIMITS.read,
+  API: RATE_LIMITS.read,
 } as const
-
-/**
- * Resetear rate limit para una IP específica (útil para testing)
- */
-export function resetRateLimit(ip: string, pathname?: string): void {
-  const key = pathname ? `${ip}:${pathname}` : ip
-  rateLimitStore.reset(key)
-}
-
-/**
- * Obtener estadísticas del rate limiter
- */
-export function getRateLimitStats() {
-  return rateLimitStore.getStats()
-}

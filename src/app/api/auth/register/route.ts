@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
-import { rateLimit, RateLimitPresets } from "@/lib/rbac/rate-limit"
+import { checkRateLimit } from "@/lib/rbac/rate-limit"
 
 const registerSchema = z.object({
   email: z.string().email("Email inválido"),
@@ -17,12 +17,8 @@ const registerSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    // Rate limiting estricto: 5 intentos por minuto
-    const rateLimitResponse = await rateLimit(request, {
-      ...RateLimitPresets.STRICT,
-      message: 'Demasiados intentos de registro. Por favor intenta de nuevo más tarde.',
-    })
-    if (rateLimitResponse) return rateLimitResponse
+    // Rate limiting estricto: 5 intentos por minuto (tipo auth)
+    await checkRateLimit(request, 'auth')
 
     const body = await request.json()
     const { email, password, firstName, lastName, phone, gender, primaryCategoryId } = registerSchema.parse(body)

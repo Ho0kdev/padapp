@@ -39,6 +39,7 @@ export const RESOURCE_LABELS: Record<Resource, string> = {
   [Resource.NOTIFICATION]: 'Notificación',
   [Resource.REPORT]: 'Reporte',
   [Resource.DASHBOARD]: 'Panel de Control',
+  [Resource.LOG]: 'Log del Sistema',
 }
 
 /**

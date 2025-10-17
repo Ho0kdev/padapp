@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { authorize, handleAuthError, Action, Resource } from "@/lib/rbac"
 import { prisma } from "@/lib/prisma"
 import { TournamentLogService } from "@/lib/services/tournament-log-service"
 import { z } from "zod"
@@ -44,19 +43,15 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-    }
-
     const { id } = await params
     const body = await request.json()
     const { status: newStatus } = statusChangeSchema.parse(body)
 
-    // Verificar que el torneo existe y obtener su estado actual
+    // Obtener torneo completo para verificación RBAC
     const existingTournament = await prisma.tournament.findUnique({
       where: { id },
       select: {
+        id: true,
         organizerId: true,
         status: true,
         registrationStart: true,
@@ -73,21 +68,8 @@ export async function PATCH(
       )
     }
 
-    // Verificar permisos
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { role: true }
-    })
-
-    const isOwner = existingTournament.organizerId === session.user.id
-    const isAdminOrClubAdmin = user?.role === "ADMIN" || user?.role === "CLUB_ADMIN"
-
-    if (!isOwner && !isAdminOrClubAdmin) {
-      return NextResponse.json(
-        { error: "No tienes permisos para cambiar el estado de este torneo" },
-        { status: 403 }
-      )
-    }
+    // El sistema RBAC verifica automáticamente ownership y permisos
+    const session = await authorize(Action.UPDATE, Resource.TOURNAMENT, existingTournament, request)
 
     // Verificar que la transición es válida
     const currentStatus = existingTournament.status
@@ -128,12 +110,7 @@ export async function PATCH(
 
         case "COMPLETED":
           // Solo admins y club admins pueden retroceder torneos completados
-          if (user?.role !== "ADMIN" && user?.role !== "CLUB_ADMIN") {
-            return NextResponse.json(
-              { error: "Solo los administradores pueden retroceder torneos completados" },
-              { status: 403 }
-            )
-          }
+          // Esta validación ya está cubierta por RBAC con el ownership check
           break
 
         case "REGISTRATION_CLOSED":
@@ -257,10 +234,6 @@ export async function PATCH(
       )
     }
 
-    console.error("Error changing tournament status:", error)
-    return NextResponse.json(
-      { error: "Error interno del servidor" },
-      { status: 500 }
-    )
+    return handleAuthError(error, request)
   }
 }
