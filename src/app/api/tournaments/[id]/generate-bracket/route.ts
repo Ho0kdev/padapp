@@ -4,7 +4,8 @@ import { BracketService } from "@/lib/services/bracket-service"
 import { z } from "zod"
 
 const generateBracketSchema = z.object({
-  categoryId: z.string().min(1, "La categoría es requerida")
+  categoryId: z.string().min(1, "La categoría es requerida"),
+  force: z.boolean().optional().default(false)
 })
 
 /**
@@ -28,7 +29,7 @@ export async function POST(
     const { id: tournamentId } = await params
 
     const body = await request.json()
-    const { categoryId } = generateBracketSchema.parse(body)
+    const { categoryId, force } = generateBracketSchema.parse(body)
 
     // Validar que el torneo existe y el usuario tiene permisos
     const tournament = await BracketService.validateBracketGeneration(tournamentId, categoryId)
@@ -40,7 +41,24 @@ export async function POST(
       }, { status: 400 })
     }
 
-    // Generar bracket
+    // Verificar si hay partidos con resultados
+    const existingMatches = await BracketService.checkExistingMatches(tournamentId, categoryId)
+
+    if (existingMatches.hasMatches && !force) {
+      return NextResponse.json({
+        error: "CONFIRMATION_REQUIRED",
+        message: "Ya existen partidos en esta categoría",
+        details: {
+          totalMatches: existingMatches.totalMatches,
+          completedMatches: existingMatches.completedMatches,
+          inProgressMatches: existingMatches.inProgressMatches,
+          scheduledMatches: existingMatches.scheduledMatches
+        },
+        requiresConfirmation: true
+      }, { status: 409 })
+    }
+
+    // Generar bracket (se borrarán todos los partidos existentes)
     await BracketService.generateBracket(tournamentId, categoryId)
 
     // Obtener bracket generado

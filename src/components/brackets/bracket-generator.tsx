@@ -10,8 +10,18 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { useToast } from "@/hooks/use-toast"
-import { Trophy, AlertCircle, CheckCircle2, Sparkles } from "lucide-react"
+import { Trophy, AlertCircle, CheckCircle2, Sparkles, AlertTriangle } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { BracketPreview } from "./bracket-preview"
@@ -35,6 +45,13 @@ export function BracketGenerator({
 }: BracketGeneratorProps) {
   const [isGenerating, setIsGenerating] = useState(false)
   const [validationErrors, setValidationErrors] = useState<string[]>([])
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false)
+  const [existingMatchesInfo, setExistingMatchesInfo] = useState<{
+    totalMatches: number
+    completedMatches: number
+    inProgressMatches: number
+    scheduledMatches: number
+  } | null>(null)
   const { toast } = useToast()
   const router = useRouter()
 
@@ -169,7 +186,7 @@ export function BracketGenerator({
 
   const bracketInfo = getBracketStructure()
 
-  const handleGenerate = async () => {
+  const generateBracket = async (force = false) => {
     setIsGenerating(true)
     setValidationErrors([])
 
@@ -182,7 +199,8 @@ export function BracketGenerator({
             "Content-Type": "application/json"
           },
           body: JSON.stringify({
-            categoryId
+            categoryId,
+            force
           })
         }
       )
@@ -190,6 +208,14 @@ export function BracketGenerator({
       const data = await response.json()
 
       if (!response.ok) {
+        // Código 409: requiere confirmación
+        if (response.status === 409 && data.requiresConfirmation) {
+          setExistingMatchesInfo(data.details)
+          setShowConfirmDialog(true)
+          return
+        }
+
+        // Otros errores de validación
         if (data.details && Array.isArray(data.details)) {
           setValidationErrors(data.details)
         } else {
@@ -204,8 +230,10 @@ export function BracketGenerator({
         variant: "success",
       })
 
-      // Limpiar errores previos
+      // Limpiar errores previos y cerrar diálogo
       setValidationErrors([])
+      setShowConfirmDialog(false)
+      setExistingMatchesInfo(null)
 
       // Llamar callback para refrescar componentes
       if (onBracketGenerated) {
@@ -226,6 +254,13 @@ export function BracketGenerator({
     } finally {
       setIsGenerating(false)
     }
+  }
+
+  const handleGenerate = () => generateBracket(false)
+
+  const handleConfirmRegenerate = () => {
+    setShowConfirmDialog(false)
+    generateBracket(true)
   }
 
   return (
@@ -351,6 +386,78 @@ export function BracketGenerator({
           </Alert>
         )}
       </CardContent>
+
+      {/* Diálogo de confirmación para regeneración */}
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-orange-500" />
+              ¿Regenerar bracket?
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <div className="text-base">
+                  Ya existen partidos en esta categoría. Si continúas, se eliminarán{" "}
+                  <strong>todos los partidos existentes</strong> y sus resultados.
+                </div>
+
+                {existingMatchesInfo && (
+                  <div className="bg-orange-50 dark:bg-orange-950 border border-orange-200 dark:border-orange-800 rounded-lg p-4 space-y-2">
+                    <div className="font-semibold text-orange-900 dark:text-orange-100">
+                      Partidos que se eliminarán:
+                    </div>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-orange-800 dark:text-orange-200">Total de partidos:</span>
+                        <Badge variant="secondary">{existingMatchesInfo.totalMatches}</Badge>
+                      </div>
+                      {existingMatchesInfo.completedMatches > 0 && (
+                        <div className="flex justify-between">
+                          <span className="text-orange-800 dark:text-orange-200">Completados:</span>
+                          <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">
+                            {existingMatchesInfo.completedMatches}
+                          </Badge>
+                        </div>
+                      )}
+                      {existingMatchesInfo.inProgressMatches > 0 && (
+                        <div className="flex justify-between">
+                          <span className="text-orange-800 dark:text-orange-200">En progreso:</span>
+                          <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100">
+                            {existingMatchesInfo.inProgressMatches}
+                          </Badge>
+                        </div>
+                      )}
+                      {existingMatchesInfo.scheduledMatches > 0 && (
+                        <div className="flex justify-between">
+                          <span className="text-orange-800 dark:text-orange-200">Programados:</span>
+                          <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100">
+                            {existingMatchesInfo.scheduledMatches}
+                          </Badge>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                <div className="text-sm text-muted-foreground">
+                  Esta acción <strong>no se puede deshacer</strong>. Se perderán todos los
+                  resultados cargados hasta el momento.
+                </div>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmRegenerate}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              Sí, eliminar y regenerar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   )
 }

@@ -724,8 +724,10 @@ export class BracketService {
 
     // Primera ronda eliminatoria (Cuartos, Octavos, etc.)
     const firstRoundMatches = Math.pow(2, eliminationRounds - 1)
+    let previousRoundMatchNumbers: number[] = []
 
     for (let i = 0; i < firstRoundMatches; i++) {
+      previousRoundMatchNumbers.push(eliminationMatchNumber)
       allMatches.push({
         roundNumber: 10, // Ronda 10 = Primera ronda eliminatoria
         matchNumber: eliminationMatchNumber++,
@@ -739,19 +741,27 @@ export class BracketService {
     // Rondas eliminatorias siguientes
     for (let round = 2; round <= eliminationRounds; round++) {
       const matchesInRound = Math.pow(2, eliminationRounds - round)
+      const currentRoundMatchNumbers: number[] = []
+      const previousRoundNumber = 10 + round - 2 // Número de ronda anterior
 
       for (let match = 0; match < matchesInRound; match++) {
-        const prevMatch1 = match * 2
-        const prevMatch2 = match * 2 + 1
+        const prevMatch1Index = match * 2
+        const prevMatch2Index = match * 2 + 1
+
+        currentRoundMatchNumbers.push(eliminationMatchNumber)
 
         allMatches.push({
           roundNumber: 10 + round - 1,
           matchNumber: eliminationMatchNumber++,
           phaseType: this.getPhaseType(eliminationRounds, round),
-          team1FromMatchId: `R10M${5000 + prevMatch1}`,
-          team2FromMatchId: `R10M${5000 + prevMatch2}`
+          // Referenciar a la ronda ANTERIOR, no siempre a la ronda 10
+          team1FromMatchId: `R${previousRoundNumber}M${previousRoundMatchNumbers[prevMatch1Index]}`,
+          team2FromMatchId: `R${previousRoundNumber}M${previousRoundMatchNumbers[prevMatch2Index]}`
         })
       }
+
+      // Actualizar para la siguiente iteración
+      previousRoundMatchNumbers = currentRoundMatchNumbers
     }
 
     // Crear todos los matches
@@ -901,13 +911,15 @@ export class BracketService {
     const nextMatches = [...currentMatch.nextMatchesTeam1, ...currentMatch.nextMatchesTeam2]
 
     for (const nextMatch of nextMatches) {
-      if (nextMatch.team1FromMatchId === matchId) {
+      // Solo progresar si el slot está vacío (team1Id o team2Id es null)
+      // Esto evita sobrescribir equipos ya asignados y evita progresiones prematuras
+      if (nextMatch.team1FromMatchId === matchId && nextMatch.team1Id === null) {
         await prisma.match.update({
           where: { id: nextMatch.id },
           data: { team1Id: winnerTeamId }
         })
         console.log(`✅ Ganador progresado a match ${nextMatch.id} como Team1`)
-      } else if (nextMatch.team2FromMatchId === matchId) {
+      } else if (nextMatch.team2FromMatchId === matchId && nextMatch.team2Id === null) {
         await prisma.match.update({
           where: { id: nextMatch.id },
           data: { team2Id: winnerTeamId }
@@ -1204,6 +1216,36 @@ export class BracketService {
     return {
       valid: errors.length === 0,
       errors
+    }
+  }
+
+  /**
+   * Verifica si existen partidos en una categoría y su estado
+   */
+  static async checkExistingMatches(tournamentId: string, categoryId: string): Promise<{
+    hasMatches: boolean
+    totalMatches: number
+    completedMatches: number
+    inProgressMatches: number
+    scheduledMatches: number
+  }> {
+    const matches = await prisma.match.findMany({
+      where: {
+        tournamentId,
+        categoryId
+      }
+    })
+
+    const completedMatches = matches.filter(m => m.status === MatchStatus.COMPLETED || m.status === MatchStatus.WALKOVER).length
+    const inProgressMatches = matches.filter(m => m.status === MatchStatus.IN_PROGRESS).length
+    const scheduledMatches = matches.filter(m => m.status === MatchStatus.SCHEDULED).length
+
+    return {
+      hasMatches: matches.length > 0,
+      totalMatches: matches.length,
+      completedMatches,
+      inProgressMatches,
+      scheduledMatches
     }
   }
 
