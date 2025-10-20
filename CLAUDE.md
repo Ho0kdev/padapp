@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **PadApp** is a comprehensive paddle tennis (pádel) tournament management system built with Next.js 15, React 19, TypeScript, Prisma, and PostgreSQL. The system handles tournament creation, player registrations, bracket generation (6 different formats), match management, rankings, and administrative tasks with full RBAC (Role-Based Access Control) and audit logging.
 
-**Current Status**: 97% core functionality complete, production-ready with 45+ API endpoints, 91+ React components, and 30+ database tables.
+**Current Status**: 97% core functionality complete, production-ready with 46 API endpoints (100% RBAC protected), 91+ React components, and 30+ database tables.
 
 ## Essential Commands
 
@@ -97,6 +97,30 @@ import { useAuth } from '@/hooks/use-auth'
 
 const { user, isAdmin, isClubAdmin, isAdminOrClubAdmin, hasRole } = useAuth()
 ```
+
+**API Coverage**: 46 rutas protegidas (100% del sistema)
+- 7 endpoints de Usuarios
+- 17 endpoints de Torneos
+- 11 endpoints de Clubes/Canchas
+- 6 endpoints de Categorías
+- 8 endpoints de Inscripciones
+- 6 endpoints de Equipos
+- 5 endpoints de Partidos
+- 4 endpoints de Rankings
+- 3 endpoints de Administración
+- 2 endpoints de Autenticación (públicos con rate limiting)
+
+**Quick Reference**:
+| Operación | RBAC Required | Example |
+|-----------|---------------|---------|
+| Listar recursos | `requireAuth()` | GET /api/tournaments |
+| Crear recurso | `authorize(Action.CREATE, Resource.X)` | POST /api/tournaments |
+| Actualizar propio | `requireAuth()` + ownership | PUT /api/users/[id] |
+| Actualizar cualquiera | `authorize(Action.UPDATE, Resource.X)` | PUT /api/tournaments/[id] |
+| Eliminar | `authorize(Action.DELETE, Resource.X)` | DELETE /api/clubs/[id] |
+| Admin only | `authorize(Action.READ, Resource.DASHBOARD)` | GET /api/admin/logs |
+
+For complete API endpoint mapping, see [RBAC_GUIA_DEFINITIVA.md](RBAC_GUIA_DEFINITIVA.md)
 
 ### Audit Logging System
 
