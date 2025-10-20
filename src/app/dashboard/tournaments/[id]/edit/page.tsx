@@ -81,6 +81,7 @@ export default async function EditTournamentPage({ params }: EditTournamentPageP
     mainClubId: tournament.mainClubId || undefined,
     rules: tournament.rules || undefined,
     prizesDescription: tournament.prizesDescription || undefined,
+    logoUrl: tournament.logoUrl || undefined,
   }
 
   return (

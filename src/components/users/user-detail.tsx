@@ -14,7 +14,8 @@ import {
   UserCheck,
   Users,
   TrendingUp,
-  Award
+  Award,
+  MapPin
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -26,6 +27,8 @@ import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
 import { useAuth } from '@/hooks/use-auth'
 import { getCategoryTypeStyle, getCategoryTypeLabel, getTournamentStatusStyle, getTournamentStatusLabel, getCategoryRestrictionsArray, getPlayerStatusStyle, getPlayerStatusLabel } from '@/lib/utils/status-styles'
+import { cn } from '@/lib/utils'
+import { MatchCard as SharedMatchCard } from '@/components/matches/match-card'
 
 interface User {
   id: string
@@ -118,6 +121,69 @@ interface User {
         name: string
         status: string
       }
+    }>
+    upcomingMatches?: Array<{
+      id: string
+      scheduledAt: string | null
+      status: string
+      phaseType: string
+      roundNumber: number | null
+      matchNumber: number | null
+      tournament: {
+        id: string
+        name: string
+        status: string
+        type: string
+      }
+      category: {
+        id: string
+        name: string
+        type: string
+      }
+      team1: {
+        id: string
+        name: string | null
+        registration1: {
+          player: {
+            id: string
+            firstName: string
+            lastName: string
+          }
+        }
+        registration2: {
+          player: {
+            id: string
+            firstName: string
+            lastName: string
+          }
+        }
+      } | null
+      team2: {
+        id: string
+        name: string | null
+        registration1: {
+          player: {
+            id: string
+            firstName: string
+            lastName: string
+          }
+        }
+        registration2: {
+          player: {
+            id: string
+            firstName: string
+            lastName: string
+          }
+        }
+      } | null
+      court: {
+        id: string
+        name: string
+        club: {
+          id: string
+          name: string
+        }
+      } | null
     }>
   }
   organizerTournaments: Array<{
@@ -506,10 +572,13 @@ export function UserDetail({ user }: UserDetailProps) {
       </div>
 
       {/* Detailed Information Tabs */}
-      <Tabs defaultValue="rankings" className="space-y-4">
+      <Tabs defaultValue="matches" className="space-y-4">
         <TabsList>
           {user.player && (
             <>
+              {user.player.upcomingMatches && user.player.upcomingMatches.length > 0 && (
+                <TabsTrigger value="matches">Próximos Partidos</TabsTrigger>
+              )}
               <TabsTrigger value="rankings">Rankings</TabsTrigger>
               <TabsTrigger value="teams">Equipos</TabsTrigger>
               <TabsTrigger value="stats">Estadísticas</TabsTrigger>
@@ -523,6 +592,29 @@ export function UserDetail({ user }: UserDetailProps) {
 
         {user.player && (
           <>
+            {user.player.upcomingMatches && user.player.upcomingMatches.length > 0 && (
+              <TabsContent value="matches">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Próximos Partidos</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {user.player.upcomingMatches.map((match) => (
+                        <SharedMatchCard
+                          key={match.id}
+                          match={match as any}
+                          showTournamentInfo={true}
+                          tournament={match.tournament}
+                          category={match.category}
+                        />
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            )}
+
             <TabsContent value="rankings">
               <Card>
                 <CardHeader>

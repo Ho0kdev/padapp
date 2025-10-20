@@ -288,39 +288,57 @@ export function TournamentDetail({ tournament, currentUserId }: TournamentDetail
               <CardHeader>
                 <CardTitle>Información General</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Organizador</p>
-                  <p>{tournament.organizer.name || tournament.organizer.email}</p>
-                </div>
+              <CardContent>
+                <div className="grid gap-6 md:grid-cols-2">
+                  {/* Left: Info */}
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Organizador</p>
+                      <p>{tournament.organizer.name || tournament.organizer.email}</p>
+                    </div>
 
-                {tournament.mainClub && (
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Club Principal</p>
-                    <div className="flex items-center gap-1">
-                      <MapPin className="h-3 w-3" />
-                      <span>{tournament.mainClub.name}, {tournament.mainClub.city}</span>
+                    {tournament.mainClub && (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Club Principal</p>
+                        <div className="flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />
+                          <span>{tournament.mainClub.name}, {tournament.mainClub.city}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Fechas Importantes</p>
+                      <div className="space-y-1 text-sm">
+                        {tournament.registrationStart && (
+                          <div>Inscripciones: {format(new Date(tournament.registrationStart), "dd/MM/yyyy", { locale: es })} - {format(new Date(tournament.registrationEnd!), "dd/MM/yyyy", { locale: es })}</div>
+                        )}
+                        <div>Torneo: {format(new Date(tournament.tournamentStart), "dd/MM/yyyy", { locale: es })}{tournament.tournamentEnd && ` - ${format(new Date(tournament.tournamentEnd), "dd/MM/yyyy", { locale: es })}`}</div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Participación</p>
+                      <div className="space-y-1 text-sm">
+                        <div>Mínimo: {tournament.minParticipants} equipos</div>
+                        {tournament.maxParticipants && <div>Máximo: {tournament.maxParticipants} equipos</div>}
+                        <div>Tarifa: ${tournament.registrationFee}</div>
+                      </div>
                     </div>
                   </div>
-                )}
 
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Fechas Importantes</p>
-                  <div className="space-y-1 text-sm">
-                    {tournament.registrationStart && (
-                      <div>Inscripciones: {format(new Date(tournament.registrationStart), "dd/MM/yyyy", { locale: es })} - {format(new Date(tournament.registrationEnd!), "dd/MM/yyyy", { locale: es })}</div>
-                    )}
-                    <div>Torneo: {format(new Date(tournament.tournamentStart), "dd/MM/yyyy", { locale: es })}{tournament.tournamentEnd && ` - ${format(new Date(tournament.tournamentEnd), "dd/MM/yyyy", { locale: es })}`}</div>
-                  </div>
-                </div>
-
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Participación</p>
-                  <div className="space-y-1 text-sm">
-                    <div>Mínimo: {tournament.minParticipants} equipos</div>
-                    {tournament.maxParticipants && <div>Máximo: {tournament.maxParticipants} equipos</div>}
-                    <div>Tarifa: ${tournament.registrationFee}</div>
-                  </div>
+                  {/* Right: Flyer */}
+                  {tournament.logoUrl && (
+                    <div className="flex items-center justify-center">
+                      <div className="relative w-full aspect-[3/4] max-w-sm overflow-hidden rounded-lg border bg-muted">
+                        <img
+                          src={tournament.logoUrl}
+                          alt={`Flyer ${tournament.name}`}
+                          className="object-cover w-full h-full"
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

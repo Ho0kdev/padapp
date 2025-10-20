@@ -46,6 +46,7 @@ export const tournamentFormSchema = z.object({
   mainClubId: z.string().optional(),
   rules: z.string().optional(),
   prizesDescription: z.string().optional(),
+  logoUrl: z.string().url("Debe ser una URL válida").optional().or(z.literal("")),
   categories: z.array(z.object({
     categoryId: z.string(),
     maxTeams: z.number().int().positive().optional(),

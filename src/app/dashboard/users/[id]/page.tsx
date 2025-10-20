@@ -129,6 +129,7 @@ async function getUser(id: string) {
 
     // Get teams where the player is either player1 or player2
     let teams: any[] = []
+    let upcomingMatches: any[] = []
     if (user.player) {
       teams = await prisma.team.findMany({
         where: {
@@ -194,13 +195,120 @@ async function getUser(id: string) {
           }
         }
       })
+
+      // Get upcoming matches for the player's teams
+      const teamIds = teams.map(team => team.id)
+      if (teamIds.length > 0) {
+        upcomingMatches = await prisma.match.findMany({
+          where: {
+            OR: [
+              { team1Id: { in: teamIds } },
+              { team2Id: { in: teamIds } }
+            ],
+            status: {
+              in: ['SCHEDULED', 'IN_PROGRESS']
+            }
+          },
+          include: {
+            tournament: {
+              select: {
+                id: true,
+                name: true,
+                status: true,
+                type: true
+              }
+            },
+            category: {
+              select: {
+                id: true,
+                name: true,
+                type: true
+              }
+            },
+            team1: {
+              select: {
+                id: true,
+                name: true,
+                registration1: {
+                  select: {
+                    player: {
+                      select: {
+                        id: true,
+                        firstName: true,
+                        lastName: true
+                      }
+                    }
+                  }
+                },
+                registration2: {
+                  select: {
+                    player: {
+                      select: {
+                        id: true,
+                        firstName: true,
+                        lastName: true
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            team2: {
+              select: {
+                id: true,
+                name: true,
+                registration1: {
+                  select: {
+                    player: {
+                      select: {
+                        id: true,
+                        firstName: true,
+                        lastName: true
+                      }
+                    }
+                  }
+                },
+                registration2: {
+                  select: {
+                    player: {
+                      select: {
+                        id: true,
+                        firstName: true,
+                        lastName: true
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            court: {
+              select: {
+                id: true,
+                name: true,
+                club: {
+                  select: {
+                    id: true,
+                    name: true
+                  }
+                }
+              }
+            }
+          },
+          orderBy: [
+            { scheduledAt: 'asc' },
+            { createdAt: 'asc' }
+          ],
+          take: 10 // Limit to next 10 matches
+        })
+      }
     }
 
     return {
       ...user,
       player: user.player ? {
         ...user.player,
-        teams
+        teams,
+        upcomingMatches
       } : undefined
     }
 

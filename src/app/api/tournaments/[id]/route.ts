@@ -42,6 +42,7 @@ const updateTournamentSchema = z.object({
   mainClubId: z.string().min(1, "El club principal es requerido"),
   rules: z.string().optional(),
   prizesDescription: z.string().optional(),
+  logoUrl: z.string().url("Debe ser una URL válida").optional().or(z.literal("")),
   categories: z.array(z.object({
     categoryId: z.string(),
     maxTeams: z.number().int().positive().optional(),

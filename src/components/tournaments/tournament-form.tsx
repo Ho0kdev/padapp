@@ -99,6 +99,7 @@ export function TournamentForm({
       mainClubId: "",
       rules: "",
       prizesDescription: "",
+      logoUrl: "",
     }
   }, [])
 
@@ -873,6 +874,27 @@ export function TournamentForm({
                         {...field}
                       />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="logoUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>URL del Flyer/Logo</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="url"
+                        placeholder="https://ejemplo.com/imagen-torneo.jpg"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      URL de la imagen del flyer o logo del torneo (se mostrará en la página de detalles)
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

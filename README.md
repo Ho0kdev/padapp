@@ -279,90 +279,122 @@ padapp/
 - **Reglas de Negocio**: Un jugador puede inscribirse en múltiples categorías, pero solo un equipo por categoría
 - **Protección RBAC**: Permisos granulares por rol
 
+### ✅ **Sistema de Equipos**
+- **Formación de Equipos**: 2 jugadores registrados forman un equipo
+- **CRUD Completo**: Gestión completa de equipos
+- **Validaciones de Negocio**: Un jugador solo puede estar en un equipo por categoría
+- **Logs Completos**: TeamLogService con auditoría total
+- **Estadísticas**: Tracking de partidos, victorias, sets ganados
+- **API Protegida**: 6 endpoints con RBAC completo
+
+### ✅ **Gestión de Brackets/Llaves**
+- **Generación Automática**: BracketService de 1,700+ líneas
+- **Visualización Gráfica**: Componentes para todos los formatos
+- **Progresión Automática**: `progressWinner()` avanza ganadores automáticamente
+- **6 Formatos Soportados**:
+  - ✅ Single Elimination (con byes)
+  - ✅ Double Elimination (upper/lower brackets)
+  - ✅ Round Robin completo
+  - ✅ Group Stage + Elimination (clasificación automática)
+  - ✅ Americano (Circle Method rotation)
+  - ✅ Americano Social (pools de 4 jugadores)
+- **Seeding Inteligente**: Distribución óptima de byes
+- **Referencias de Progresión**: `team1FromMatchId`/`team2FromMatchId`
+- **Edición Manual**: Modificación de brackets cuando es necesario
+
+### ✅ **Sistema de Partidos**
+- **Carga de Resultados**: `POST /api/matches/[id]/result`
+- **Seguimiento Detallado**: Sets, games y tiebreaks
+- **Validación Completa**: Scores, winners, formato de sets
+- **Progresión Automática**: Winners avanzan en eliminatorias
+- **Clasificación de Grupos**: Automática al completar fase de grupos
+- **Historial Completo**: Todos los partidos con resultados
+- **Estadísticas**: Tracking automático por jugador/equipo
+- **Logs de Auditoría**: MatchLogService con todos los cambios
+- **5 Endpoints API**: Con protección RBAC completa
+
+### ✅ **Programación y Calendario**
+- **Calendario de Partidos**: Visualización de matches programados
+- **Gestión de Horarios**: Asignación de fechas a partidos
+- **Asignación de Canchas**: Manual a través de court_id
+- **Filtros**: Por torneo, fecha, cancha, estado
+- ⏳ **Pendiente**: Asignación automática de canchas, detección de conflictos, notificaciones de cambios
+
 ## 📋 Funcionalidades Pendientes por Desarrollar
 
 ### 🔶 **Prioridad Alta - Próximas Implementaciones**
 
 #### 1. **Confirmación de Pagos**
-- Integración con pasarelas de pago
-- Confirmación manual de pagos
-- Notificaciones de estado de pago
+- Integración con pasarelas de pago (Stripe, MercadoPago, PayPal)
+- Confirmación manual de pagos por administradores
+- Notificaciones automáticas de estado de pago
+- Gestión de reembolsos
+- Facturación automática
 
-#### 2. **Gestión de Brackets/Llaves**
-- Visualización gráfica de eliminatorias
-- Generación automática de enfrentamientos
-- Progresión automática de ganadores
-- Brackets editables manualmente
-- Soporte para todos los formatos de torneo
+#### 2. **Mejoras en Programación de Partidos**
+- Asignación automática de canchas basada en disponibilidad
+- Detección automática de conflictos de horarios
+- Notificaciones push de cambios de horario
+- Algoritmo de optimización de uso de canchas
+- Vista de calendario completo del torneo
 
-#### 3. **Sistema de Partidos**
-- Carga de resultados en tiempo real
-- Seguimiento set por set
-- Validación de puntuaciones
-- Historial completo de partidos
-- Estadísticas automáticas
-
-#### 4. **Programación y Calendario**
-- Asignación automática de canchas
-- Calendario de partidos
-- Gestión de horarios
-- Conflictos de programación
-- Notificaciones de horarios
+#### 3. **Sistema Swiss (7mo formato de torneo)**
+- Implementación del formato Swiss System
+- Emparejamiento automático por ranking
+- Prevención de rematches
+- Cálculo de tie-breaks
 
 ### 🔷 **Prioridad Media - Mejoras del Sistema**
 
-#### 5. **Sistema de Pagos**
-- Integración con pasarelas de pago
-- Gestión de reembolsos
-- Facturación automática
-- Reportes financieros
-- Control de pagos pendientes
-
-#### 6. **Mejoras en Rankings**
+#### 4. **Mejoras en Rankings**
 - Rankings históricos detallados
 - Comparación entre temporadas
 - Rankings por región/club
 - Exportación de datos
 - Gráficos de evolución
 
-#### 7. **Sistema de Notificaciones**
-- Notificaciones push
-- Emails automáticos
-- SMS (opcional)
-- Notificaciones personalizables
-- Centro de notificaciones
+#### 5. **Sistema de Notificaciones Completo**
+- Notificaciones push web y móvil
+- Emails automáticos transaccionales
+- SMS para confirmaciones críticas (opcional)
+- Centro de notificaciones en la app
+- Notificaciones personalizables por usuario
+- Webhooks para integraciones externas
 
-#### 8. **Reportes y Estadísticas**
+#### 6. **Reportes y Estadísticas Avanzadas**
 - Reportes por torneo
 - Estadísticas de jugadores
 - Análisis de rendimiento
 - Exportación a PDF/Excel
-- Dashboards personalizados
+- Dashboards personalizados por rol
+- Analytics en tiempo real
 
 ### 🔸 **Funcionalidades Avanzadas - Futuro**
 
-#### 9. **Aplicación Móvil**
+#### 7. **Aplicación Móvil**
 - PWA (Progressive Web App)
 - App nativa (React Native)
 - Sincronización offline
 - Notificaciones push nativas
 - Cámara para fotos de resultados
 
-#### 10. **Integraciones Externas**
-- APIs de federaciones
-- Integración con otros sistemas
-- Importación/Exportación de datos
-- APIs públicas para desarrolladores
-- Webhooks para eventos
+#### 8. **Integraciones Externas**
+- APIs de federaciones nacionales/internacionales
+- Integración con sistemas de gestión de clubes
+- Importación/Exportación masiva de datos
+- APIs públicas REST para desarrolladores externos
+- Webhooks configurables para eventos del sistema
+- Integración con plataformas de streaming (transmisión de partidos)
 
-#### 11. **Funcionalidades Sociales**
-- Perfiles públicos de jugadores
-- Comentarios y reviews
-- Galería de fotos
-- Sharing en redes sociales
-- Foros de discusión
+#### 9. **Funcionalidades Sociales**
+- Perfiles públicos de jugadores con bio y stats
+- Sistema de comentarios en torneos y partidos
+- Galería de fotos por torneo
+- Sharing automático en redes sociales
+- Foros de discusión por comunidad
+- Sistema de badges y logros
 
-#### 12. **Optimizaciones y Rendimiento**
+#### 10. **Optimizaciones y Rendimiento**
 - Cache avanzado
 - Optimización de consultas
 - CDN para imágenes
@@ -1241,6 +1273,16 @@ console.log('Tournament created:', {
 
 ## 🔧 Changelog - Mejoras Recientes
 
+### 🆕 Octubre 20, 2025 - Actualización del README con Funcionalidades Implementadas
+- ✅ **Nueva sección "Sistema de Equipos"** - Documentada gestión completa con 6 endpoints
+- ✅ **Nueva sección "Gestión de Brackets/Llaves"** - Documentado BracketService completo (1,700+ líneas)
+- ✅ **Nueva sección "Sistema de Partidos"** - Documentada carga de resultados y progresión automática
+- ✅ **Nueva sección "Programación y Calendario"** - Documentadas funcionalidades básicas implementadas
+- ✅ **Reorganización de funcionalidades pendientes** - Eliminados duplicados, actualizadas prioridades
+- ✅ **Estadísticas del proyecto actualizadas** - Desglose detallado por categorías (Backend, Frontend, RBAC, Core)
+- ✅ **Changelog actualizado** - Reflejando estado real del proyecto (97% core completo)
+- 📊 **10 funcionalidades principales completadas** - Torneos, Brackets, Partidos, Equipos, Inscripciones, Clubes, Rankings, RBAC, Logs, Puntos
+
 ### 🆕 Octubre 19, 2025 - Documentación Completa del Sistema RBAC
 - ✅ **46 rutas API documentadas** - Mapeo completo de todo el sistema
 - ✅ **100% de cobertura RBAC** - Todas las rutas protegidas
@@ -1389,13 +1431,44 @@ Para preguntas, sugerencias o reportar problemas:
 **🏓 PadApp** - Sistema completo de gestión de torneos de pádel desarrollado con las mejores prácticas y tecnologías modernas.
 
 ### 📊 Estadísticas del Proyecto
+
+#### Backend & API
 - **46 rutas API** con implementación RBAC completa (100% de cobertura)
 - **10 módulos principales**: Torneos (17), Clubes (11), Inscripciones (8), Usuarios (7), Equipos (6), Categorías (6), Partidos (5), Rankings (4), Admin (3), Utilidades (1)
-- **9 servicios de logging** con auditoría completa
-- **4 roles de usuario** con permisos granulares
-- **6 formatos de torneo implementados** (86% completado)
-- **Full TypeScript** con validaciones Zod
-- **100% validado** en backend y frontend
+- **9 servicios de logging** con auditoría completa (User, Tournament, Club, Court, Category, Registration, Team, Match, Rankings)
+- **1 servicio de brackets** (1,700+ líneas) con generación automática y progresión de ganadores
+- **4 servicios especializados**: Points Calculation, Americano Social, Group Classification, Match Progression
+
+#### Sistema de Autenticación y Permisos
+- **4 roles de usuario** con permisos granulares (ADMIN, CLUB_ADMIN, PLAYER, REFEREE)
+- **9 acciones** (CREATE, READ, UPDATE, DELETE, MANAGE, LIST, APPROVE, REJECT, DASHBOARD)
+- **11 recursos** (TOURNAMENT, CLUB, USER, CATEGORY, REGISTRATION, PAYMENT, RANKING, MATCH, TEAM, COURT, LOG)
 - **0 rutas sin protección** - Sistema completamente seguro
 
-*Última actualización: Octubre 19, 2025*
+#### Funcionalidades Core
+- **6 de 7 formatos de torneo implementados** (86% completado):
+  - ✅ Single Elimination
+  - ✅ Double Elimination
+  - ✅ Round Robin
+  - ✅ Group Stage + Elimination
+  - ✅ Americano (fixed teams)
+  - ✅ Americano Social (individual players)
+  - ⏳ Swiss System (pendiente)
+- **Sistema de puntos configurable** con 4 niveles de torneo (100-5,000 pts)
+- **Gestión completa de partidos** con sets, games, tiebreaks y progresión automática
+- **Sistema de equipos** con validación anti-duplicados
+- **Programación y calendario** con asignación de canchas
+
+#### Frontend & Componentes
+- **91+ componentes React 19** organizados por módulos
+- **30+ tablas en base de datos** con relaciones complejas
+- **Full TypeScript** con modo strict
+- **Validaciones Zod** en todas las operaciones (100% validado en backend y frontend)
+- **shadcn/ui + Radix UI** para componentes accesibles
+
+#### Progreso General
+- **🎯 97% de funcionalidad core completa**
+- **📈 100% RBAC implementado y documentado**
+- **📝 5 documentos técnicos** (README, RBAC_GUIA_DEFINITIVA, LOGGING_SYSTEM, POINTS_CALCULATION, TOURNAMENT_FORMATS)
+
+*Última actualización: Octubre 20, 2025*

@@ -1,17 +1,15 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Trophy, Calendar, MapPin, AlertCircle, Edit, RefreshCw } from "lucide-react"
+import { Trophy, AlertCircle, RefreshCw } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { MatchResultDialog } from "@/components/matches/match-result-dialog"
+import { MatchCard as SharedMatchCard } from "@/components/matches/match-card"
 import { useAuth } from "@/hooks/use-auth"
-import { format } from "date-fns"
-import { es } from "date-fns/locale"
 
 interface Team {
   id: string
@@ -164,44 +162,6 @@ export function BracketVisualization({
     return labels[phaseType] || `Ronda ${phaseType}`
   }
 
-  const getStatusBadge = (status: string) => {
-    const styles: Record<string, string> = {
-      SCHEDULED: "bg-blue-100 text-blue-800 border-blue-200",
-      IN_PROGRESS: "bg-yellow-100 text-yellow-800 border-yellow-200",
-      COMPLETED: "bg-green-100 text-green-800 border-green-200",
-      CANCELLED: "bg-red-100 text-red-800 border-red-200",
-      WALKOVER: "bg-purple-100 text-purple-800 border-purple-200"
-    }
-
-    const labels: Record<string, string> = {
-      SCHEDULED: "Programado",
-      IN_PROGRESS: "En Progreso",
-      COMPLETED: "Completado",
-      CANCELLED: "Cancelado",
-      WALKOVER: "Walkover"
-    }
-
-    return (
-      <Badge variant="outline" className={`text-xs ${styles[status] || styles.SCHEDULED}`}>
-        {labels[status] || status}
-      </Badge>
-    )
-  }
-
-  const getTeamDisplay = (team?: Team | null): string => {
-    if (!team) return "Por definir"
-
-    if (team.name) return team.name
-
-    if ((team as any).registration1?.player && (team as any).registration2?.player) {
-      const reg1 = (team as any).registration1
-      const reg2 = (team as any).registration2
-      return `${reg1.player.firstName} ${reg1.player.lastName} / ${reg2.player.firstName} ${reg2.player.lastName}`
-    }
-
-    return "Equipo sin nombre"
-  }
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -239,13 +199,11 @@ export function BracketVisualization({
               <h4 className="font-medium text-sm text-muted-foreground">
                 {phaseLabel}
               </h4>
-              <div className="grid gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {matches.map((match) => (
-                  <MatchCard
+                  <SharedMatchCard
                     key={match.id}
-                    match={match}
-                    getTeamDisplay={getTeamDisplay}
-                    getStatusBadge={getStatusBadge}
+                    match={match as any}
                     canManage={canManageMatch()}
                     onLoadResult={() => handleLoadResult(match)}
                   />
@@ -264,95 +222,5 @@ export function BracketVisualization({
         />
       )}
     </div>
-  )
-}
-
-interface MatchCardProps {
-  match: Match
-  getTeamDisplay: (team?: Team | null) => string
-  getStatusBadge: (status: string) => React.ReactNode
-  canManage: boolean
-  onLoadResult: () => void
-}
-
-function MatchCard({ match, getTeamDisplay, getStatusBadge, canManage, onLoadResult }: MatchCardProps) {
-  const isCompleted = match.status === "COMPLETED" || match.status === "WALKOVER"
-  const team1Won = match.winnerTeam?.id === match.team1?.id
-  const team2Won = match.winnerTeam?.id === match.team2?.id
-
-  return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-medium">
-            Partido {match.matchNumber}
-          </CardTitle>
-          <div className="flex items-center gap-2">
-            {getStatusBadge(match.status)}
-            {canManage && match.status !== "COMPLETED" && match.status !== "WALKOVER" && match.team1 && match.team2 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onLoadResult}
-                title="Cargar resultado"
-              >
-                <Edit className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-2">
-        <div className="space-y-1">
-          <div
-            className={cn(
-              "flex items-center justify-between p-2 rounded-md",
-              team1Won && "bg-green-50 dark:bg-green-950"
-            )}
-          >
-            <span className={cn("text-sm", team1Won && "font-semibold")}>
-              {getTeamDisplay(match.team1)}
-            </span>
-            {isCompleted && (
-              <span className="font-mono text-sm">
-                {match.team1SetsWon}
-              </span>
-            )}
-          </div>
-
-          <div
-            className={cn(
-              "flex items-center justify-between p-2 rounded-md",
-              team2Won && "bg-green-50 dark:bg-green-950"
-            )}
-          >
-            <span className={cn("text-sm", team2Won && "font-semibold")}>
-              {getTeamDisplay(match.team2)}
-            </span>
-            {isCompleted && (
-              <span className="font-mono text-sm">
-                {match.team2SetsWon}
-              </span>
-            )}
-          </div>
-        </div>
-
-        <div className="mt-2 space-y-1">
-          {match.scheduledAt && (
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <Calendar className="h-3 w-3" />
-              {format(new Date(match.scheduledAt), "dd/MM/yyyy HH:mm", { locale: es })}
-            </div>
-          )}
-
-          {match.court && (
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <MapPin className="h-3 w-3" />
-              {match.court.name} - {match.court.club.name}
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
   )
 }
