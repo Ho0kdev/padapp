@@ -297,7 +297,7 @@ export function MatchScheduleDialog({
     } catch (error) {
       toast({
         title: "❌ Error",
-        description: error instanceof Error ? error.message : "No se pudo programar el partido"
+        description: error instanceof Error ? error.message : "No se pudo programar el partido",
         variant: "destructive",
       })
     } finally {
