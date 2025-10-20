@@ -161,7 +161,7 @@ export function MatchesTable() {
       }
     } catch (error) {
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: "No se pudieron cargar los partidos",
         variant: "destructive",
       })
@@ -234,15 +234,16 @@ export function MatchesTable() {
 
       toast({
         title: "✅ Estado actualizado",
-        description: "El estado del partido ha sido actualizado"
+        description: "El estado del partido ha sido actualizado",
+        variant: "success",
       })
 
       fetchMatches()
     } catch (error) {
       toast({
-        variant: "destructive",
         title: "❌ Error",
-        description: "No se pudo actualizar el estado"
+        description: "No se pudo actualizar el estado",
+        variant: "destructive",
       })
     } finally {
       setStatusLoading(null)

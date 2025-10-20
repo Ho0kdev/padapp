@@ -89,7 +89,7 @@ export function ClubForm({ initialData, clubId }: ClubFormProps) {
       const club = await response.json()
 
       toast({
-        title: clubId ? "Club actualizado" : "Club creado",
+        title: clubId ? "✅ Club actualizado" : "✅ Club creado",
         description: `El club "${club.name}" ha sido ${clubId ? "actualizado" : "creado"} exitosamente.`,
         variant: "success",
       })
@@ -97,7 +97,7 @@ export function ClubForm({ initialData, clubId }: ClubFormProps) {
       router.push("/dashboard/clubs")
     } catch (error) {
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: error instanceof Error ? error.message : "Error al guardar club",
         variant: "destructive",
       })

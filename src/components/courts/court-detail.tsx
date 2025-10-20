@@ -154,14 +154,15 @@ export function CourtDetail({ court, currentUserId }: CourtDetailProps) {
       }
 
       toast({
-        title: "Cancha desactivada",
+        title: "✅ Cancha desactivada",
         description: "La cancha ha sido desactivada exitosamente",
+        variant: "success",
       })
 
       router.push(`/dashboard/clubs/${court.club.id}`)
     } catch (error) {
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: error instanceof Error ? error.message : "Error al desactivar cancha",
         variant: "destructive",
       })
@@ -185,15 +186,16 @@ export function CourtDetail({ court, currentUserId }: CourtDetailProps) {
       }
 
       toast({
-        title: "Cancha activada",
+        title: "✅ Cancha activada",
         description: "La cancha ha sido activada exitosamente",
+        variant: "success",
       })
 
       // Recargar la página para mostrar el nuevo estado
       window.location.reload()
     } catch (error) {
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: error instanceof Error ? error.message : "Error al activar cancha",
         variant: "destructive",
       })

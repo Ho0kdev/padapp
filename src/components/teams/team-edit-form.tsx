@@ -90,7 +90,7 @@ export function TeamEditForm({ initialData, teamId, tournamentStatus }: TeamEdit
       }
 
       toast({
-        title: "Éxito",
+        title: "✅ Éxito",
         description: "Equipo actualizado correctamente",
         variant: "success",
       })
@@ -99,7 +99,7 @@ export function TeamEditForm({ initialData, teamId, tournamentStatus }: TeamEdit
     } catch (error) {
       console.error("Error updating team:", error)
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: error instanceof Error ? error.message : "Error al actualizar el equipo",
         variant: "destructive",
       })

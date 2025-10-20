@@ -127,7 +127,7 @@ export function CategoryDetail({ category, currentUserId }: CategoryDetailProps)
       }
 
       toast({
-        title: "Éxito",
+        title: "✅ Éxito",
         description: "Categoría desactivada correctamente",
         variant: "success",
       })
@@ -135,7 +135,7 @@ export function CategoryDetail({ category, currentUserId }: CategoryDetailProps)
       router.push("/dashboard/categories")
     } catch (error) {
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: error instanceof Error ? error.message : "Error al desactivar categoría",
         variant: "destructive",
       })
@@ -149,13 +149,13 @@ export function CategoryDetail({ category, currentUserId }: CategoryDetailProps)
     try {
       await navigator.clipboard.writeText(window.location.href)
       toast({
-        title: "Enlace copiado",
+        title: "✅ Enlace copiado",
         description: "El enlace de la categoría ha sido copiado al portapapeles",
         variant: "success",
       })
     } catch (error) {
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: "No se pudo copiar el enlace",
         variant: "destructive",
       })

@@ -130,7 +130,7 @@ export function TeamsTable() {
     } catch (error) {
       console.error("Error fetching teams:", error)
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: "No se pudieron cargar los equipos",
         variant: "destructive"
       })
@@ -153,7 +153,7 @@ export function TeamsTable() {
       }
 
       toast({
-        title: "Equipo eliminado",
+        title: "✅ Equipo eliminado",
         description: "El equipo ha sido disuelto. Las inscripciones individuales se mantienen.",
         variant: "success"
       })
@@ -161,7 +161,7 @@ export function TeamsTable() {
       fetchTeams()
     } catch (error) {
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: error instanceof Error ? error.message : "No se pudo eliminar el equipo",
         variant: "destructive"
       })

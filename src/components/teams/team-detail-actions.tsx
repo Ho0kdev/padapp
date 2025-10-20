@@ -50,7 +50,7 @@ export function TeamDetailActions({ teamId, teamName, tournamentStatus }: TeamDe
       }
 
       toast({
-        title: "Equipo eliminado",
+        title: "✅ Equipo eliminado",
         description: "El equipo ha sido disuelto. Las inscripciones individuales se mantienen.",
         variant: "success"
       })
@@ -58,7 +58,7 @@ export function TeamDetailActions({ teamId, teamName, tournamentStatus }: TeamDe
       router.push("/dashboard/teams")
     } catch (error) {
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: error instanceof Error ? error.message : "No se pudo eliminar el equipo",
         variant: "destructive"
       })

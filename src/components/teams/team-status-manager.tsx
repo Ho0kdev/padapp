@@ -87,7 +87,7 @@ export function TeamStatusManager({
       }
 
       toast({
-        title: "Estado actualizado",
+        title: "✅ Estado actualizado",
         description: `El equipo ahora está en estado: ${teamStatusOptions.find(s => s.value === selectedStatus)?.label}`,
         variant: "success",
       })
@@ -98,7 +98,7 @@ export function TeamStatusManager({
       router.refresh()
     } catch (error) {
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: error instanceof Error ? error.message : "Error al cambiar estado",
         variant: "destructive",
       })

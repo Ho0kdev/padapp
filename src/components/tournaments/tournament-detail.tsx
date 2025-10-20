@@ -98,7 +98,7 @@ export function TournamentDetail({ tournament, currentUserId }: TournamentDetail
       }
 
       toast({
-        title: "Éxito",
+        title: "✅ Éxito",
         description: "Torneo eliminado correctamente",
         variant: "success",
       })
@@ -106,7 +106,7 @@ export function TournamentDetail({ tournament, currentUserId }: TournamentDetail
       router.push("/dashboard/tournaments")
     } catch (error) {
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: error instanceof Error ? error.message : "Error al eliminar torneo",
         variant: "destructive",
       })
@@ -120,13 +120,13 @@ export function TournamentDetail({ tournament, currentUserId }: TournamentDetail
     try {
       await navigator.clipboard.writeText(window.location.href)
       toast({
-        title: "Enlace copiado",
+        title: "✅ Enlace copiado",
         description: "El enlace del torneo ha sido copiado al portapapeles",
         variant: "success",
       })
     } catch (error) {
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: "No se pudo copiar el enlace",
         variant: "destructive",
       })

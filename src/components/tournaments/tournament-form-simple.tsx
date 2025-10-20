@@ -64,14 +64,15 @@ export function TournamentFormSimple() {
       const tournament = await response.json()
 
       toast({
-        title: "Éxito",
+        title: "✅ Éxito",
         description: "Torneo creado correctamente",
+        variant: "success",
       })
 
       router.push(`/dashboard/tournaments/${tournament.id}`)
     } catch (error) {
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: error instanceof Error ? error.message : "Error al crear torneo",
         variant: "destructive",
       })

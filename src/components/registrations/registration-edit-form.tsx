@@ -84,7 +84,7 @@ export function RegistrationEditForm({
       }
 
       toast({
-        title: "Éxito",
+        title: "✅ Éxito",
         description: "Inscripción actualizada correctamente",
         variant: "success"
       })
@@ -93,7 +93,7 @@ export function RegistrationEditForm({
     } catch (error) {
       console.error("Error updating registration:", error)
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: error instanceof Error ? error.message : "Error al actualizar la inscripción",
         variant: "destructive"
       })

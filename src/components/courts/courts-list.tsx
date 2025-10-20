@@ -125,7 +125,7 @@ export function CourtsList({ clubId }: CourtsListProps) {
       }
     } catch (error) {
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: "No se pudieron cargar las canchas",
         variant: "destructive",
       })
@@ -144,7 +144,7 @@ export function CourtsList({ clubId }: CourtsListProps) {
 
       if (response.ok) {
         toast({
-          title: "Cancha desactivada",
+          title: "✅ Cancha desactivada",
           description: "La cancha ha sido desactivada exitosamente",
           variant: "success",
         })
@@ -155,7 +155,7 @@ export function CourtsList({ clubId }: CourtsListProps) {
       }
     } catch (error) {
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: error instanceof Error ? error.message : "Error al desactivar cancha",
         variant: "destructive",
       })
@@ -179,7 +179,7 @@ export function CourtsList({ clubId }: CourtsListProps) {
 
       if (response.ok) {
         toast({
-          title: "Cancha activada",
+          title: "✅ Cancha activada",
           description: "La cancha ha sido puesta como disponible exitosamente",
           variant: "success",
         })
@@ -190,7 +190,7 @@ export function CourtsList({ clubId }: CourtsListProps) {
       }
     } catch (error) {
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: error instanceof Error ? error.message : "Error al activar cancha",
         variant: "destructive",
       })
@@ -214,7 +214,7 @@ export function CourtsList({ clubId }: CourtsListProps) {
 
       if (response.ok) {
         toast({
-          title: "Cancha en mantenimiento",
+          title: "✅ Cancha en mantenimiento",
           description: "La cancha ha sido puesta en mantenimiento exitosamente",
           variant: "success",
         })
@@ -225,7 +225,7 @@ export function CourtsList({ clubId }: CourtsListProps) {
       }
     } catch (error) {
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: error instanceof Error ? error.message : "Error al poner cancha en mantenimiento",
         variant: "destructive",
       })
@@ -249,7 +249,7 @@ export function CourtsList({ clubId }: CourtsListProps) {
 
       if (response.ok) {
         toast({
-          title: "Cancha reservada",
+          title: "✅ Cancha reservada",
           description: "La cancha ha sido reservada exitosamente",
           variant: "success",
         })
@@ -260,7 +260,7 @@ export function CourtsList({ clubId }: CourtsListProps) {
       }
     } catch (error) {
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: error instanceof Error ? error.message : "Error al reservar cancha",
         variant: "destructive",
       })
@@ -280,7 +280,7 @@ export function CourtsList({ clubId }: CourtsListProps) {
 
       if (response.ok) {
         toast({
-          title: "Cancha eliminada",
+          title: "✅ Cancha eliminada",
           description: "La cancha ha sido eliminada permanentemente",
           variant: "success",
         })
@@ -291,7 +291,7 @@ export function CourtsList({ clubId }: CourtsListProps) {
       }
     } catch (error) {
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: error instanceof Error ? error.message : "Error al eliminar cancha",
         variant: "destructive",
       })

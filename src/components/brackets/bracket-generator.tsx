@@ -199,8 +199,9 @@ export function BracketGenerator({
       }
 
       toast({
-        title: "✓ Bracket generado exitosamente",
+        title: "✅ Bracket generado exitosamente",
         description: `Se crearon ${data.data.totalMatches} partidos en ${data.data.totalRounds} rondas`,
+        variant: "success",
       })
 
       // Limpiar errores previos
@@ -218,7 +219,7 @@ export function BracketGenerator({
 
     } catch (error) {
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: error instanceof Error ? error.message : "Error desconocido",
         variant: "destructive"
       })

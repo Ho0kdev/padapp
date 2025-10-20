@@ -161,7 +161,7 @@ export function RankingDetail({ ranking, currentUserId }: RankingDetailProps) {
 
       if (response.ok) {
         toast({
-          title: "Puntos actualizados",
+          title: "✅ Puntos actualizados",
           description: "Los puntos del ranking han sido actualizados exitosamente",
           variant: "success",
         })
@@ -173,7 +173,7 @@ export function RankingDetail({ ranking, currentUserId }: RankingDetailProps) {
       }
     } catch (error) {
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: error instanceof Error ? error.message : "Error al actualizar puntos",
         variant: "destructive",
       })
@@ -186,13 +186,13 @@ export function RankingDetail({ ranking, currentUserId }: RankingDetailProps) {
     try {
       await navigator.clipboard.writeText(window.location.href)
       toast({
-        title: "Enlace copiado",
+        title: "✅ Enlace copiado",
         description: "El enlace del ranking ha sido copiado al portapapeles",
         variant: "success",
       })
     } catch (error) {
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: "No se pudo copiar el enlace",
         variant: "destructive",
       })

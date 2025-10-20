@@ -125,14 +125,15 @@ export function ClubDetail({ club, currentUserId }: ClubDetailProps) {
       }
 
       toast({
-        title: "Club desactivado",
+        title: "✅ Club desactivado",
         description: "El club ha sido desactivado exitosamente",
+        variant: "success",
       })
 
       router.push("/dashboard/clubs")
     } catch (error) {
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: error instanceof Error ? error.message : "Error al desactivar club",
         variant: "destructive",
       })
@@ -150,8 +151,9 @@ export function ClubDetail({ club, currentUserId }: ClubDetailProps) {
 
       if (response.ok) {
         toast({
-          title: "Club activado",
+          title: "✅ Club activado",
           description: "El club ha sido activado exitosamente",
+          variant: "success",
         })
         window.location.reload()
       } else {
@@ -160,7 +162,7 @@ export function ClubDetail({ club, currentUserId }: ClubDetailProps) {
       }
     } catch (error) {
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: error instanceof Error ? error.message : "Error al activar club",
         variant: "destructive",
       })
@@ -181,8 +183,9 @@ export function ClubDetail({ club, currentUserId }: ClubDetailProps) {
 
       if (response.ok) {
         toast({
-          title: "Club en mantenimiento",
+          title: "✅ Club en mantenimiento",
           description: "El club ha sido puesto en modo mantenimiento exitosamente",
+          variant: "success",
         })
         window.location.reload()
       } else {
@@ -191,7 +194,7 @@ export function ClubDetail({ club, currentUserId }: ClubDetailProps) {
       }
     } catch (error) {
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: error instanceof Error ? error.message : "Error al poner club en mantenimiento",
         variant: "destructive",
       })

@@ -245,7 +245,7 @@ export function TournamentForm({
       const tournament = await response.json()
 
       toast({
-        title: "Éxito",
+        title: "✅ Éxito",
         description: tournamentId ? "Torneo actualizado correctamente" : "Torneo creado correctamente",
         variant: "success",
       })
@@ -258,7 +258,7 @@ export function TournamentForm({
       }
     } catch (error) {
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: error instanceof Error ? error.message : "Error al guardar torneo",
         variant: "destructive",
       })

@@ -317,7 +317,7 @@ export function RegistrationForm({ isAdmin = false, currentPlayerId = null }: Re
       console.error("Error fetching data:", error)
       setError("Error al cargar la información necesaria para crear la inscripción")
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: "Error al cargar datos",
         variant: "destructive"
       })
@@ -354,7 +354,7 @@ export function RegistrationForm({ isAdmin = false, currentPlayerId = null }: Re
       const registration = await response.json()
       setRecentRegistration(registration)
       toast({
-        title: "Inscripción creada",
+        title: "✅ Inscripción creada",
         description: "Inscripción creada exitosamente",
         variant: "success"
       })
@@ -378,7 +378,7 @@ export function RegistrationForm({ isAdmin = false, currentPlayerId = null }: Re
     } catch (error) {
       console.error("Error processing registration:", error)
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: error instanceof Error ? error.message : "Error al procesar la inscripción",
         variant: "destructive"
       })

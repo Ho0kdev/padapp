@@ -233,7 +233,7 @@ export function UserForm({ initialData, userId, currentUserRole, isOwnProfile }:
       }
 
       toast({
-        title: isEditing ? "Usuario actualizado" : "Usuario creado",
+        title: isEditing ? "✅ Usuario actualizado" : "✅ Usuario creado",
         description: `El usuario ha sido ${isEditing ? "actualizado" : "creado"} exitosamente.`,
         variant: "success",
       })
@@ -247,7 +247,7 @@ export function UserForm({ initialData, userId, currentUserRole, isOwnProfile }:
     } catch (error) {
       console.error(`Error ${isEditing ? 'updating' : 'creating'} user:`, error)
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: error instanceof Error ? error.message : `Error al ${isEditing ? 'actualizar' : 'crear'} usuario`,
         variant: "destructive",
       })

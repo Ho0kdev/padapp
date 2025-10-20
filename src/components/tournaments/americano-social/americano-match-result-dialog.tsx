@@ -118,8 +118,9 @@ export function AmericanoMatchResultDialog({
       }
 
       toast({
-        title: "¡Resultado cargado!",
-        description: "El resultado se ha guardado exitosamente"
+        title: "✅ ¡Resultado cargado!",
+        description: "El resultado se ha guardado exitosamente",
+        variant: "success",
       })
 
       form.reset()
@@ -127,7 +128,7 @@ export function AmericanoMatchResultDialog({
     } catch (error) {
       console.error("Error:", error)
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: error instanceof Error ? error.message : "Error cargando resultado",
         variant: "destructive"
       })

@@ -232,15 +232,16 @@ export function GroupStandingsAndMatches({
 
       toast({
         title: "✅ Partido iniciado",
-        description: "El partido ha sido marcado como en progreso"
+        description: "El partido ha sido marcado como en progreso",
+        variant: "success",
       })
 
       fetchGroupsAndMatches()
     } catch (error) {
       toast({
-        variant: "destructive",
         title: "❌ Error",
-        description: "No se pudo iniciar el partido"
+        description: "No se pudo iniciar el partido",
+        variant: "destructive",
       })
     } finally {
       setStatusLoading(null)

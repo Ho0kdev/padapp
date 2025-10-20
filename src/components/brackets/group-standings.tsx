@@ -100,8 +100,9 @@ export function GroupStandings({
       }
 
       toast({
-        title: "Clasificación completada",
+        title: "✅ Clasificación completada",
         description: "Los equipos han sido asignados a la fase eliminatoria",
+        variant: "success",
       })
 
       if (onClassify) {
@@ -109,7 +110,7 @@ export function GroupStandings({
       }
     } catch (err) {
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: err instanceof Error ? err.message : "Error desconocido",
         variant: "destructive"
       })

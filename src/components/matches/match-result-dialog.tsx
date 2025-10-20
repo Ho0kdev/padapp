@@ -403,6 +403,7 @@ export function MatchResultDialog({
         toast({
           title: "✅ Partido cancelado",
           description: "El partido ha sido marcado como cancelado",
+          variant: "success"
         })
 
         onSuccess()
@@ -410,9 +411,9 @@ export function MatchResultDialog({
 
       } catch (error) {
         toast({
-          variant: "destructive",
           title: "❌ Error",
-          description: error instanceof Error ? error.message : "No se pudo cancelar el partido"
+          description: error instanceof Error ? error.message : "No se pudo cancelar el partido",
+          variant: "destructive",
         })
       } finally {
         setLoading(false)
@@ -438,6 +439,7 @@ export function MatchResultDialog({
       toast({
         title: "✅ Status actualizado",
         description: `El partido ahora está ${getMatchStatusLabel(newStatus).toLowerCase()}`,
+        variant: "success"
       })
 
       onSuccess()
@@ -445,9 +447,9 @@ export function MatchResultDialog({
 
     } catch (error) {
       toast({
-        variant: "destructive",
         title: "❌ Error",
-        description: error instanceof Error ? error.message : "No se pudo cambiar el status"
+        description: error instanceof Error ? error.message : "No se pudo cambiar el status",
+        variant: "destructive",
       })
     } finally {
       setLoading(false)
@@ -501,9 +503,9 @@ export function MatchResultDialog({
       : "Por favor revisa los datos ingresados"
 
     toast({
-      variant: "destructive",
       title: "❌ Error de validación",
-      description: errorMessage
+      description: errorMessage,
+      variant: "destructive",
     })
   }
 
@@ -554,6 +556,7 @@ export function MatchResultDialog({
         toast({
           title: "✅ Walkover registrado",
           description: "El partido ha sido marcado como walkover y actualizado en el bracket.",
+          variant: "success",
         })
 
         form.reset()
@@ -615,6 +618,7 @@ export function MatchResultDialog({
       toast({
         title: "✅ Resultado cargado",
         description: "El resultado se ha guardado exitosamente y el bracket ha sido actualizado.",
+        variant: "success",
       })
 
       form.reset()
@@ -623,9 +627,9 @@ export function MatchResultDialog({
 
     } catch (error) {
       toast({
-        variant: "destructive",
         title: "❌ Error",
-        description: error instanceof Error ? error.message : "No se pudo cargar el resultado"
+        description: error instanceof Error ? error.message : "No se pudo cargar el resultado",
+        variant: "destructive",
       })
     } finally {
       setLoading(false)

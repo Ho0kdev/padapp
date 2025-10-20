@@ -136,7 +136,7 @@ export function RankingsTable() {
       }
     } catch (error) {
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: "No se pudieron cargar los rankings",
         variant: "destructive",
       })
@@ -163,7 +163,7 @@ export function RankingsTable() {
 
       if (response.ok) {
         toast({
-          title: "Puntos actualizados",
+          title: "✅ Puntos actualizados",
           description: "Los puntos del ranking han sido actualizados exitosamente",
           variant: "success",
         })
@@ -177,7 +177,7 @@ export function RankingsTable() {
       }
     } catch (error) {
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: error instanceof Error ? error.message : "Error al actualizar puntos",
         variant: "destructive",
       })
@@ -198,7 +198,7 @@ export function RankingsTable() {
       if (response.ok) {
         const data = await response.json()
         toast({
-          title: "Ranking eliminado",
+          title: "✅ Ranking eliminado",
           description: `${data.deletedRanking.playerName} ha sido eliminado del ranking de ${data.deletedRanking.categoryName}`,
           variant: "success",
         })
@@ -211,7 +211,7 @@ export function RankingsTable() {
       }
     } catch (error) {
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: error instanceof Error ? error.message : "Error al eliminar ranking",
         variant: "destructive",
       })

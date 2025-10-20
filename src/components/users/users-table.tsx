@@ -167,7 +167,7 @@ export function UsersTable() {
       }
     } catch (error) {
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: "No se pudieron cargar los usuarios",
         variant: "destructive",
       })
@@ -279,7 +279,7 @@ export function UsersTable() {
 
       if (response.ok) {
         toast({
-          title: "Usuario desactivado",
+          title: "✅ Usuario desactivado",
           description: "El usuario ha sido desactivado exitosamente",
           variant: "success",
         })
@@ -290,7 +290,7 @@ export function UsersTable() {
       }
     } catch (error) {
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: error instanceof Error ? error.message : "Error al desactivar usuario",
         variant: "destructive",
       })
@@ -310,7 +310,7 @@ export function UsersTable() {
 
       if (response.ok) {
         toast({
-          title: "Usuario activado",
+          title: "✅ Usuario activado",
           description: "El usuario ha sido activado exitosamente",
           variant: "success",
         })
@@ -321,7 +321,7 @@ export function UsersTable() {
       }
     } catch (error) {
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: error instanceof Error ? error.message : "Error al activar usuario",
         variant: "destructive",
       })

@@ -94,7 +94,7 @@ export function CategoryForm({ initialData, categoryId }: CategoryFormProps) {
       const category = await response.json()
 
       toast({
-        title: categoryId ? "Categoría actualizada" : "Categoría creada",
+        title: categoryId ? "✅ Categoría actualizada" : "✅ Categoría creada",
         description: `La categoría "${category.name}" ha sido ${categoryId ? "actualizada" : "creada"} exitosamente.`,
         variant: "success",
       })
@@ -102,7 +102,7 @@ export function CategoryForm({ initialData, categoryId }: CategoryFormProps) {
       router.push(`/dashboard/categories`)
     } catch (error) {
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: error instanceof Error ? error.message : "Error al guardar categoría",
         variant: "destructive",
       })

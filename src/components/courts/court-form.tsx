@@ -109,14 +109,15 @@ export function CourtForm({ initialData, courtId, clubId, clubName }: CourtFormP
       const court = await response.json()
 
       toast({
-        title: courtId ? "Cancha actualizada" : "Cancha creada",
+        title: courtId ? "✅ Cancha actualizada" : "✅ Cancha creada",
         description: `La cancha "${court.name}" ha sido ${courtId ? "actualizada" : "creada"} exitosamente.`,
+        variant: "success",
       })
 
       router.push(`/dashboard/clubs/${clubId}`)
     } catch (error) {
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: error instanceof Error ? error.message : "Error al guardar cancha",
         variant: "destructive",
       })

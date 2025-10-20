@@ -103,7 +103,7 @@ export function AmericanoSocialDetail({
     } catch (error) {
       console.error("Error:", error)
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: error instanceof Error ? error.message : "No se pudieron cargar los datos",
         variant: "destructive"
       })
@@ -149,15 +149,16 @@ export function AmericanoSocialDetail({
       }
 
       toast({
-        title: "¡Pools generados!",
-        description: data.message
+        title: "✅ ¡Pools generados!",
+        description: data.message,
+        variant: "success",
       })
 
       await loadData()
     } catch (error) {
       console.error("Error:", error)
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: error instanceof Error ? error.message : "Error generando pools",
         variant: "destructive"
       })
@@ -179,7 +180,7 @@ export function AmericanoSocialDetail({
       }
 
       toast({
-        title: "Éxito",
+        title: "✅ Éxito",
         description: "Torneo eliminado correctamente",
         variant: "success",
       })
@@ -187,7 +188,7 @@ export function AmericanoSocialDetail({
       router.push("/dashboard/tournaments")
     } catch (error) {
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: error instanceof Error ? error.message : "Error al eliminar torneo",
         variant: "destructive",
       })
@@ -201,13 +202,13 @@ export function AmericanoSocialDetail({
     try {
       await navigator.clipboard.writeText(window.location.href)
       toast({
-        title: "Enlace copiado",
+        title: "✅ Enlace copiado",
         description: "El enlace del torneo ha sido copiado al portapapeles",
         variant: "success",
       })
     } catch (error) {
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: "No se pudo copiar el enlace",
         variant: "destructive",
       })

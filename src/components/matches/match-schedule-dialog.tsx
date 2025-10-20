@@ -226,7 +226,7 @@ export function MatchScheduleDialog({
     } catch (error) {
       console.error("Error fetching courts:", error)
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: "No se pudieron cargar las canchas",
         variant: "destructive",
       })
@@ -285,8 +285,9 @@ export function MatchScheduleDialog({
       }
 
       toast({
-        title: "Partido programado",
+        title: "✅ Partido programado",
         description: "El partido ha sido programado exitosamente",
+        variant: "success",
       })
 
       form.reset()
@@ -295,9 +296,9 @@ export function MatchScheduleDialog({
 
     } catch (error) {
       toast({
-        variant: "destructive",
-        title: "Error",
+        title: "❌ Error",
         description: error instanceof Error ? error.message : "No se pudo programar el partido"
+        variant: "destructive",
       })
     } finally {
       setLoading(false)
@@ -325,8 +326,9 @@ export function MatchScheduleDialog({
       }
 
       toast({
-        title: "Programación eliminada",
+        title: "✅ Programación eliminada",
         description: "Se ha eliminado la cancha y horario del partido",
+        variant: "success",
       })
 
       form.reset({
@@ -339,9 +341,9 @@ export function MatchScheduleDialog({
 
     } catch (error) {
       toast({
+        title: "❌ Error",
+        description: error instanceof Error ? error.message : "No se pudo limpiar la programación",
         variant: "destructive",
-        title: "Error",
-        description: error instanceof Error ? error.message : "No se pudo limpiar la programación"
       })
     } finally {
       setLoading(false)

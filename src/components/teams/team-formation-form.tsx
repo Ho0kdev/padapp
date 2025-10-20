@@ -190,7 +190,7 @@ export function TeamFormationForm() {
       console.error("Error fetching data:", error)
       setError("Error al cargar tus inscripciones")
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: "Error al cargar datos",
         variant: "destructive"
       })
@@ -329,7 +329,7 @@ export function TeamFormationForm() {
 
       const team = await response.json()
       toast({
-        title: "Equipo creado",
+        title: "✅ Equipo creado",
         description: `Equipo "${team.name || 'Sin nombre'}" creado exitosamente`,
         variant: "success"
       })
@@ -350,7 +350,7 @@ export function TeamFormationForm() {
     } catch (error) {
       console.error("Error creating team:", error)
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: error instanceof Error ? error.message : "Error al crear el equipo",
         variant: "destructive"
       })

@@ -109,7 +109,7 @@ export function TournamentStatusManager({
       }
 
       toast({
-        title: "Estado actualizado",
+        title: "✅ Estado actualizado",
         description: `El torneo ahora está en estado: ${tournamentStatusOptions.find(s => s.value === selectedStatus)?.label}`,
         variant: "success",
       })
@@ -119,7 +119,7 @@ export function TournamentStatusManager({
       router.refresh()
     } catch (error) {
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: error instanceof Error ? error.message : "Error al cambiar estado",
         variant: "destructive",
       })

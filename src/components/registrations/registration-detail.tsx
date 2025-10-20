@@ -147,7 +147,7 @@ export function RegistrationDetail({ registration, isAdmin = false }: Registrati
       }
 
       toast({
-        title: "Éxito",
+        title: "✅ Éxito",
         description: "Inscripción eliminada correctamente",
         variant: "success",
       })
@@ -155,7 +155,7 @@ export function RegistrationDetail({ registration, isAdmin = false }: Registrati
       router.push("/dashboard/registrations")
     } catch (error) {
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: error instanceof Error ? error.message : "Error al eliminar inscripción",
         variant: "destructive",
       })
@@ -169,13 +169,13 @@ export function RegistrationDetail({ registration, isAdmin = false }: Registrati
     try {
       await navigator.clipboard.writeText(window.location.href)
       toast({
-        title: "Enlace copiado",
+        title: "✅ Enlace copiado",
         description: "El enlace de la inscripción ha sido copiado al portapapeles",
         variant: "success",
       })
     } catch {
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: "No se pudo copiar el enlace",
         variant: "destructive",
       })

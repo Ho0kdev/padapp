@@ -71,7 +71,7 @@ export function TournamentsTable() {
       setPagination(data.pagination)
     } catch (error) {
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: "No se pudieron cargar los torneos",
         variant: "destructive",
       })
@@ -92,7 +92,7 @@ export function TournamentsTable() {
       }
 
       toast({
-        title: "Éxito",
+        title: "✅ Éxito",
         description: "Torneo eliminado correctamente",
         variant: "success",
       })
@@ -100,7 +100,7 @@ export function TournamentsTable() {
       fetchTournaments()
     } catch (error) {
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: error instanceof Error ? error.message : "Error al eliminar torneo",
         variant: "destructive",
       })

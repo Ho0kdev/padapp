@@ -154,7 +154,7 @@ export function RegistrationsTable() {
       }
     } catch {
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: "No se pudieron cargar las inscripciones",
         variant: "destructive",
       })
@@ -173,7 +173,7 @@ export function RegistrationsTable() {
 
       if (response.ok) {
         toast({
-          title: "Inscripción eliminada",
+          title: "✅ Inscripción eliminada",
           description: "La inscripción ha sido eliminada exitosamente",
           variant: "success",
         })
@@ -184,7 +184,7 @@ export function RegistrationsTable() {
       }
     } catch (error) {
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: error instanceof Error ? error.message : "Error al eliminar inscripción",
         variant: "destructive",
       })

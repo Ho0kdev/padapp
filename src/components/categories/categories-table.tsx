@@ -109,7 +109,7 @@ export function CategoriesTable() {
       }
     } catch (error) {
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: "No se pudieron cargar las categorías",
         variant: "destructive",
       })
@@ -128,7 +128,7 @@ export function CategoriesTable() {
 
       if (response.ok) {
         toast({
-          title: "Categoría desactivada",
+          title: "✅ Categoría desactivada",
           description: "La categoría ha sido desactivada exitosamente",
           variant: "success",
         })
@@ -139,7 +139,7 @@ export function CategoriesTable() {
       }
     } catch (error) {
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: error instanceof Error ? error.message : "Error al desactivar categoría",
         variant: "destructive",
       })
@@ -159,7 +159,7 @@ export function CategoriesTable() {
 
       if (response.ok) {
         toast({
-          title: "Categoría activada",
+          title: "✅ Categoría activada",
           description: "La categoría ha sido activada exitosamente",
           variant: "success",
         })
@@ -170,7 +170,7 @@ export function CategoriesTable() {
       }
     } catch (error) {
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: error instanceof Error ? error.message : "Error al activar categoría",
         variant: "destructive",
       })

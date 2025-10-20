@@ -91,7 +91,7 @@ export function RegistrationStatusManager({
       }
 
       toast({
-        title: "Estado actualizado",
+        title: "✅ Estado actualizado",
         description: `La inscripción ahora está en estado: ${registrationStatusOptions.find(s => s.value === selectedStatus)?.label}`,
         variant: "success",
       })
@@ -102,7 +102,7 @@ export function RegistrationStatusManager({
       router.refresh()
     } catch (error) {
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: error instanceof Error ? error.message : "Error al cambiar estado",
         variant: "destructive",
       })
