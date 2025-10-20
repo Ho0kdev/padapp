@@ -14,8 +14,10 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { MatchResultDialog } from "@/components/matches/match-result-dialog"
+import { MatchScheduleDialog } from "@/components/matches/match-schedule-dialog"
 import { MatchCard as SharedMatchCard } from "@/components/matches/match-card"
 import { useAuth } from "@/hooks/use-auth"
+import { useToast } from "@/hooks/use-toast"
 
 interface Team {
   id: string
@@ -122,7 +124,10 @@ export function GroupStandingsAndMatches({
   const [error, setError] = useState<string | null>(null)
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null)
   const [resultDialogOpen, setResultDialogOpen] = useState(false)
+  const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false)
+  const [statusLoading, setStatusLoading] = useState<string | null>(null)
   const { isAdminOrClubAdmin, isReferee } = useAuth()
+  const { toast } = useToast()
 
   const fetchGroupsAndMatches = async () => {
     setIsLoading(true)
@@ -199,8 +204,47 @@ export function GroupStandingsAndMatches({
     setResultDialogOpen(true)
   }
 
+  const handleScheduleMatch = (match: Match) => {
+    setSelectedMatch(match)
+    setScheduleDialogOpen(true)
+  }
+
   const handleResultSuccess = () => {
     fetchGroupsAndMatches()
+  }
+
+  const handleScheduleSuccess = () => {
+    fetchGroupsAndMatches()
+  }
+
+  const handleStartMatch = async (matchId: string) => {
+    try {
+      setStatusLoading(matchId)
+      const response = await fetch(`/api/matches/${matchId}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "IN_PROGRESS" })
+      })
+
+      if (!response.ok) {
+        throw new Error("Error al cambiar estado")
+      }
+
+      toast({
+        title: "✅ Partido iniciado",
+        description: "El partido ha sido marcado como en progreso"
+      })
+
+      fetchGroupsAndMatches()
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "❌ Error",
+        description: "No se pudo iniciar el partido"
+      })
+    } finally {
+      setStatusLoading(null)
+    }
   }
 
   if (isLoading) {
@@ -396,6 +440,9 @@ export function GroupStandingsAndMatches({
                           match={match as any}
                           canManage={canManageMatch()}
                           onLoadResult={() => handleLoadResult(match)}
+                          onSchedule={() => handleScheduleMatch(match)}
+                          onStartMatch={() => handleStartMatch(match.id)}
+                          statusLoading={statusLoading === match.id}
                         />
                       ))}
                   </div>
@@ -414,12 +461,20 @@ export function GroupStandingsAndMatches({
       ))}
 
       {selectedMatch && (
-        <MatchResultDialog
-          match={selectedMatch as any}
-          open={resultDialogOpen}
-          onOpenChange={setResultDialogOpen}
-          onSuccess={handleResultSuccess}
-        />
+        <>
+          <MatchResultDialog
+            match={selectedMatch as any}
+            open={resultDialogOpen}
+            onOpenChange={setResultDialogOpen}
+            onSuccess={handleResultSuccess}
+          />
+          <MatchScheduleDialog
+            match={selectedMatch as any}
+            open={scheduleDialogOpen}
+            onOpenChange={setScheduleDialogOpen}
+            onSuccess={handleScheduleSuccess}
+          />
+        </>
       )}
     </div>
   )

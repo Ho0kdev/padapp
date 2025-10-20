@@ -127,15 +127,25 @@ export function MatchScheduleDialog({
   const [courts, setCourts] = useState<Court[]>([])
   const [loadingCourts, setLoadingCourts] = useState(false)
 
+  // Helper to convert scheduledAt to Date object
+  const getScheduledDate = () => {
+    if (!match.scheduledAt) return null
+    return typeof match.scheduledAt === 'string'
+      ? parseISO(match.scheduledAt)
+      : match.scheduledAt
+  }
+
+  const scheduledDate = getScheduledDate()
+
   const form = useForm<ScheduleFormData>({
     resolver: zodResolver(scheduleSchema),
     defaultValues: {
       courtId: match.court?.id || undefined,
-      scheduledDate: match.scheduledAt
-        ? format(parseISO(match.scheduledAt), "yyyy-MM-dd")
+      scheduledDate: scheduledDate
+        ? format(scheduledDate, "yyyy-MM-dd")
         : undefined,
-      scheduledTime: match.scheduledAt
-        ? format(parseISO(match.scheduledAt), "HH:mm")
+      scheduledTime: scheduledDate
+        ? format(scheduledDate, "HH:mm")
         : undefined
     }
   })
@@ -143,14 +153,15 @@ export function MatchScheduleDialog({
   useEffect(() => {
     if (open) {
       fetchCourts()
+      const currentScheduledDate = getScheduledDate()
       // Reset form with current values when dialog opens
       form.reset({
         courtId: match.court?.id || undefined,
-        scheduledDate: match.scheduledAt
-          ? format(parseISO(match.scheduledAt), "yyyy-MM-dd")
+        scheduledDate: currentScheduledDate
+          ? format(currentScheduledDate, "yyyy-MM-dd")
           : undefined,
-        scheduledTime: match.scheduledAt
-          ? format(parseISO(match.scheduledAt), "HH:mm")
+        scheduledTime: currentScheduledDate
+          ? format(currentScheduledDate, "HH:mm")
           : undefined
       })
     }
@@ -346,7 +357,7 @@ export function MatchScheduleDialog({
             Programar Partido
           </DialogTitle>
           <DialogDescription>
-            {match.tournament.name} • {match.category.name}
+            {match.tournament.name}{match.category && ` • ${match.category.name}`}
           </DialogDescription>
         </DialogHeader>
 

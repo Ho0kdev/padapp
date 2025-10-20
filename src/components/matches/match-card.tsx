@@ -1,9 +1,17 @@
 "use client"
 
+import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Calendar, MapPin, Edit } from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Calendar, MapPin, MoreHorizontal, Eye, CheckCircle, Play } from "lucide-react"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import { cn } from "@/lib/utils"
@@ -62,6 +70,8 @@ interface MatchCardProps {
   match: MatchCardData
   canManage?: boolean
   onLoadResult?: () => void
+  onSchedule?: () => void
+  onStartMatch?: () => void
   showTournamentInfo?: boolean
   tournament?: {
     id: string
@@ -71,15 +81,19 @@ interface MatchCardProps {
     id: string
     name: string
   }
+  statusLoading?: boolean
 }
 
 export function MatchCard({
   match,
   canManage = false,
   onLoadResult,
+  onSchedule,
+  onStartMatch,
   showTournamentInfo = false,
   tournament,
-  category
+  category,
+  statusLoading = false
 }: MatchCardProps) {
   const isCompleted = match.status === "COMPLETED" || match.status === "WALKOVER"
   const team1Won = match.winnerTeam?.id === match.team1?.id
@@ -144,16 +158,51 @@ export function MatchCard({
             </div>
             <div className="flex items-center gap-2">
               {getStatusBadge()}
-              {canManage && match.status !== "COMPLETED" && match.status !== "WALKOVER" && match.team1 && match.team2 && onLoadResult && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={onLoadResult}
-                  title="Cargar resultado"
-                >
-                  <Edit className="h-4 w-4" />
-                </Button>
-              )}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem asChild>
+                    <Link href={`/dashboard/matches/${match.id}`}>
+                      <Eye className="mr-2 h-4 w-4" />
+                      Ver detalle
+                    </Link>
+                  </DropdownMenuItem>
+
+                  {canManage && match.status !== "COMPLETED" && match.status !== "WALKOVER" && (
+                    <>
+                      <DropdownMenuSeparator />
+
+                      {onSchedule && (
+                        <DropdownMenuItem onClick={onSchedule}>
+                          <Calendar className="mr-2 h-4 w-4" />
+                          Programar partido
+                        </DropdownMenuItem>
+                      )}
+
+                      {match.status === "SCHEDULED" && onStartMatch && (
+                        <DropdownMenuItem
+                          onClick={onStartMatch}
+                          disabled={statusLoading}
+                        >
+                          <Play className="mr-2 h-4 w-4" />
+                          Iniciar partido
+                        </DropdownMenuItem>
+                      )}
+
+                      {onLoadResult && match.team1 && match.team2 && (
+                        <DropdownMenuItem onClick={onLoadResult}>
+                          <CheckCircle className="mr-2 h-4 w-4" />
+                          Cargar resultado
+                        </DropdownMenuItem>
+                      )}
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
 
