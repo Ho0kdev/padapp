@@ -3,9 +3,9 @@
 import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Users, Trophy, MapPin } from "lucide-react"
 import { AmericanoMatchResultDialog } from "./americano-match-result-dialog"
+import { AmericanoMatchCard } from "./americano-match-card"
 
 interface PoolCardProps {
   pool: any
@@ -14,25 +14,6 @@ interface PoolCardProps {
 
 export function PoolCard({ pool, onMatchUpdate }: PoolCardProps) {
   const [selectedMatch, setSelectedMatch] = useState<any>(null)
-
-  const getMatchTeamName = (match: any, team: "A" | "B") => {
-    if (team === "A") {
-      return `${match.player1.firstName} + ${match.player2.firstName}`
-    } else {
-      return `${match.player3.firstName} + ${match.player4.firstName}`
-    }
-  }
-
-  const getMatchStatus = (match: any) => {
-    switch (match.status) {
-      case "COMPLETED":
-        return <Badge className="bg-green-600">Completado</Badge>
-      case "IN_PROGRESS":
-        return <Badge className="bg-blue-600">En Progreso</Badge>
-      default:
-        return <Badge variant="outline">Pendiente</Badge>
-    }
-  }
 
   return (
     <>
@@ -90,59 +71,12 @@ export function PoolCard({ pool, onMatchUpdate }: PoolCardProps) {
             <h4 className="font-semibold mb-3">Partidos</h4>
             <div className="space-y-3">
               {pool.matches.map((match: any) => (
-                <div
+                <AmericanoMatchCard
                   key={match.id}
-                  className="border rounded-lg p-4 space-y-2"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">
-                      Ronda {match.roundNumber}
-                    </span>
-                    {getMatchStatus(match)}
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <p className="font-medium">
-                        {getMatchTeamName(match, "A")}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Equipo A
-                      </p>
-                    </div>
-
-                    {match.status === "COMPLETED" ? (
-                      <div className="px-4 py-2 bg-muted rounded">
-                        <p className="text-lg font-bold">
-                          {match.teamAScore} - {match.teamBScore}
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="px-4 py-2 text-muted-foreground">
-                        vs
-                      </div>
-                    )}
-
-                    <div className="flex-1 text-right">
-                      <p className="font-medium">
-                        {getMatchTeamName(match, "B")}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Equipo B
-                      </p>
-                    </div>
-                  </div>
-
-                  {match.status !== "COMPLETED" && (
-                    <Button
-                      size="sm"
-                      className="w-full"
-                      onClick={() => setSelectedMatch(match)}
-                    >
-                      Cargar Resultado
-                    </Button>
-                  )}
-                </div>
+                  match={match}
+                  canManage={true}
+                  onLoadResult={() => setSelectedMatch(match)}
+                />
               ))}
             </div>
           </div>

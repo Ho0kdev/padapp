@@ -47,6 +47,8 @@ import { tournamentStatusOptions, tournamentTypeOptions } from "@/lib/validation
 import { GlobalRankingTable } from "./global-ranking-table"
 import { PoolCard } from "./pool-card"
 import { CategorySelector } from "./category-selector"
+import { AmericanoMatchCard } from "./americano-match-card"
+import { AmericanoMatchResultDialog } from "./americano-match-result-dialog"
 import {
   getRegistrationStatusStyle,
   getRegistrationStatusLabel,
@@ -75,6 +77,7 @@ export function AmericanoSocialDetail({
   const [pools, setPools] = useState<any[]>([])
   const [ranking, setRanking] = useState<any[]>([])
   const [registrations, setRegistrations] = useState<any[]>([])
+  const [selectedMatch, setSelectedMatch] = useState<any>(null)
 
   const isOwner = tournament.organizerId === currentUserId
   const statusConfig = tournamentStatusOptions.find(s => s.value === tournament.status)
@@ -621,43 +624,19 @@ export function AmericanoSocialDetail({
                   No hay partidos programados aún. Genera los pools primero.
                 </p>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-6">
                   {pools.map((pool) => (
                     <div key={pool.id}>
                       <h4 className="font-medium mb-3">{pool.name}</h4>
-                      <div className="space-y-2">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                         {pool.matches.map((match: any) => (
-                          <div key={match.id} className="border rounded-lg p-4">
-                            <div className="flex items-center justify-between">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <Badge variant="outline">Ronda {match.roundNumber}</Badge>
-                                  {match.status === "COMPLETED" && (
-                                    <Badge variant="default">Completado</Badge>
-                                  )}
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                  <div>
-                                    <p className="text-sm font-medium">
-                                      {match.player1.firstName} {match.player1.lastName} / {match.player2.firstName} {match.player2.lastName}
-                                    </p>
-                                  </div>
-                                  <div>
-                                    <p className="text-sm font-medium">
-                                      {match.player3.firstName} {match.player3.lastName} / {match.player4.firstName} {match.player4.lastName}
-                                    </p>
-                                  </div>
-                                </div>
-                              </div>
-                              {match.status === "COMPLETED" && (
-                                <div className="text-right">
-                                  <p className="text-2xl font-bold">
-                                    {match.teamAScore} - {match.teamBScore}
-                                  </p>
-                                </div>
-                              )}
-                            </div>
-                          </div>
+                          <AmericanoMatchCard
+                            key={match.id}
+                            match={match}
+                            canManage={isOwner}
+                            onLoadResult={() => setSelectedMatch(match)}
+                            showPoolInfo={false}
+                          />
                         ))}
                       </div>
                     </div>
@@ -710,6 +689,19 @@ export function AmericanoSocialDetail({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Match Result Dialog */}
+      {selectedMatch && (
+        <AmericanoMatchResultDialog
+          match={selectedMatch}
+          open={!!selectedMatch}
+          onOpenChange={(open) => !open && setSelectedMatch(null)}
+          onSuccess={() => {
+            setSelectedMatch(null)
+            loadData()
+          }}
+        />
+      )}
     </div>
   )
 }
