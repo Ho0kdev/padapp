@@ -85,11 +85,15 @@ export function GlobalRankingTable({ ranking }: GlobalRankingTableProps) {
                     </div>
                   </TableCell>
                   <TableCell className="font-medium">
-                    <div>
-                      <p>{item.player.user.firstName} {item.player.user.lastName}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {item.player.user.email}
-                      </p>
+                    <div className="flex items-center gap-2">
+                      {item.player.profileImageUrl && (
+                        <img
+                          src={item.player.profileImageUrl}
+                          alt={`${item.player.firstName} ${item.player.lastName}`}
+                          className="h-8 w-8 rounded-full object-cover"
+                        />
+                      )}
+                      <p>{item.player.firstName} {item.player.lastName}</p>
                     </div>
                   </TableCell>
                   <TableCell className="text-center">{totalMatches}</TableCell>
