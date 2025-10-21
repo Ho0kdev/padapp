@@ -115,7 +115,7 @@ export function AmericanoSocialDetail({
   const loadRegistrations = async () => {
     try {
       const response = await fetch(
-        `/api/registrations?tournamentId=${tournament.id}&categoryId=${categoryId}`
+        `/api/registrations?tournamentId=${tournament.id}&categoryId=${categoryId}&limit=1000`
       )
 
       if (!response.ok) {
@@ -240,7 +240,7 @@ export function AmericanoSocialDetail({
             </div>
             <div className="flex items-center gap-1">
               <Users className="h-4 w-4" />
-              {ranking.length} jugadores
+              {registrations.length} jugadores
             </div>
             <div className="flex items-center gap-1">
               <Calendar className="h-4 w-4" />
@@ -324,7 +324,7 @@ export function AmericanoSocialDetail({
               <div className="ml-3">
                 <p className="text-sm font-medium text-muted-foreground">Jugadores</p>
                 <p className="text-2xl font-bold">
-                  {ranking.length}
+                  {registrations.length}
                   {tournament.maxParticipants && ` / ${tournament.maxParticipants}`}
                 </p>
               </div>
@@ -528,29 +528,29 @@ export function AmericanoSocialDetail({
                   No hay jugadores inscritos aún
                 </p>
               ) : (
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {registrations.map((registration: any) => (
-                    <div key={registration.id} className="border rounded-lg p-3">
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="font-medium">
+                    <div key={registration.id} className="border rounded-lg p-2">
+                      <div className="flex items-center justify-between mb-1">
+                        <p className="font-medium text-sm">
                           {registration.player.firstName} {registration.player.lastName}
                         </p>
-                        <Badge className={getRegistrationStatusStyle(registration.registrationStatus)}>
+                        <Badge className={`text-xs ${getRegistrationStatusStyle(registration.registrationStatus)}`}>
                           {getRegistrationStatusLabel(registration.registrationStatus)}
                         </Badge>
                       </div>
-                      <div className="space-y-2">
-                        <div className="text-sm text-muted-foreground">
-                          Puntos: {registration.player.rankingPoints}
+                      <div className="space-y-1">
+                        <div className="text-xs text-muted-foreground">
+                          {registration.player.rankingPoints} pts
                         </div>
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-1">
                           {registration.player.primaryCategory && (
-                            <Badge className={getCategoryLevelStyle(registration.player.primaryCategory.level)}>
+                            <Badge className={`text-xs ${getCategoryLevelStyle(registration.player.primaryCategory.level)}`}>
                               {formatCategoryLevel(registration.player.primaryCategory.name, registration.player.primaryCategory.level)}
                             </Badge>
                           )}
                           {registration.player.gender && (
-                            <Badge className={getGenderRestrictionStyle(registration.player.gender)}>
+                            <Badge className={`text-xs ${getGenderRestrictionStyle(registration.player.gender)}`}>
                               {getGenderRestrictionLabel(registration.player.gender)}
                             </Badge>
                           )}
