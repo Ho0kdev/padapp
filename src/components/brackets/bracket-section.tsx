@@ -80,19 +80,19 @@ export function BracketSection({ tournament, category }: BracketSectionProps) {
       {bracketData && bracketData.matches.length > 0 && (
         <>
           {tournament.type === 'GROUP_STAGE_ELIMINATION' ? (
-            <Tabs defaultValue="standings" className="w-full">
+            <Tabs defaultValue="tree" className="w-full">
               <TabsList className="grid w-full max-w-2xl grid-cols-3">
+                <TabsTrigger value="tree" className="flex items-center gap-2">
+                  <GitBranch className="h-4 w-4" />
+                  Llaves
+                </TabsTrigger>
                 <TabsTrigger value="standings" className="flex items-center gap-2">
                   <Trophy className="h-4 w-4" />
                   Clasificación
                 </TabsTrigger>
-                <TabsTrigger value="tree" className="flex items-center gap-2">
-                  <GitBranch className="h-4 w-4" />
-                  Vista Árbol
-                </TabsTrigger>
                 <TabsTrigger value="list" className="flex items-center gap-2">
                   <LayoutList className="h-4 w-4" />
-                  Partidos
+                  Lista de Partidos
                 </TabsTrigger>
               </TabsList>
 

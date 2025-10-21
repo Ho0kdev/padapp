@@ -266,8 +266,8 @@ export function BracketTree({
   // Calcular altura de cada ronda basado en número de partidos
   const getMatchHeight = () => 160 // Altura base de cada match card
   const getMatchGap = (roundIndex: number) => {
-    // El gap aumenta por ronda pero más suave
-    return Math.pow(2, roundIndex) * 8
+    // El gap aumenta exponencialmente por ronda para formar el árbol
+    return Math.pow(2, roundIndex) * 20 // Aumentado de 8 a 20 para más separación
   }
 
   // Filtrar partidos de fase de grupos para no mostrarlos en el árbol
@@ -360,77 +360,7 @@ export function BracketTree({
             transition: 'transform 0.2s ease'
           }}
         >
-          {/* SVG para líneas conectoras */}
-          <svg
-            className="absolute top-0 left-0 w-full h-full pointer-events-none"
-            style={{ zIndex: 0 }}
-          >
-            {sortedRounds.map(([roundNum, roundMatches], roundIndex) => {
-              if (roundIndex === sortedRounds.length - 1) return null // No conectar la última ronda
-
-              const groupColumnOffset = hasGroupStage && zones.length > 0 ? 350 : 0
-              const currentRoundX = groupColumnOffset + roundIndex * 350 + 280 // Final de la card actual
-              const nextRoundX = groupColumnOffset + (roundIndex + 1) * 350 + 20 // Inicio de la siguiente card
-              const midX = (currentRoundX + nextRoundX) / 2
-
-              return roundMatches.map((match, matchIndex) => {
-                const matchY = 50 + matchIndex * (getMatchHeight() + getMatchGap(roundIndex)) + 80
-
-                // Conectar con el partido de la siguiente ronda
-                const nextRoundMatchIndex = Math.floor(matchIndex / 2)
-                const nextRoundMatches = sortedRounds[roundIndex + 1]?.[1] || []
-                const nextMatch = nextRoundMatches[nextRoundMatchIndex]
-
-                if (!nextMatch) return null
-
-                const nextMatchY = 50 + nextRoundMatchIndex * (getMatchHeight() + getMatchGap(roundIndex + 1)) + 80
-
-                const isWinner = match.winnerTeam?.id !== undefined
-                const isPairTop = matchIndex % 2 === 0
-
-                return (
-                  <g key={`connector-${match.id}`}>
-                    {/* Línea horizontal desde el match hasta el punto medio */}
-                    <line
-                      x1={currentRoundX}
-                      y1={matchY}
-                      x2={midX}
-                      y2={matchY}
-                      stroke={isWinner ? "#22c55e" : "#d1d5db"}
-                      strokeWidth={isWinner ? 3 : 2}
-                      className={isWinner ? "opacity-100" : "opacity-50"}
-                    />
-
-                    {/* Solo el partido de arriba del par dibuja la línea vertical que conecta ambos */}
-                    {isPairTop && (
-                      <>
-                        {/* Línea vertical que conecta este partido con el de abajo */}
-                        <line
-                          x1={midX}
-                          y1={matchY}
-                          x2={midX}
-                          y2={matchY + (getMatchHeight() + getMatchGap(roundIndex))}
-                          stroke="#d1d5db"
-                          strokeWidth={2}
-                          className="opacity-50"
-                        />
-                        {/* Línea horizontal del punto medio al siguiente partido */}
-                        <line
-                          x1={midX}
-                          y1={nextMatchY}
-                          x2={nextRoundX}
-                          y2={nextMatchY}
-                          stroke="#d1d5db"
-                          strokeWidth={2}
-                          className="opacity-50"
-                        />
-                      </>
-                    )}
-                  </g>
-                )
-              })
-            })}
-          </svg>
+          {/* SVG para líneas conectoras - Removido */}
 
           {/* Columnas de Rondas */}
           <div className="relative flex gap-8 p-8" style={{ zIndex: 1 }}>
@@ -592,7 +522,7 @@ export function BracketTree({
                     className="flex flex-col"
                     style={{
                       gap: `${getMatchGap(roundIndex)}px`,
-                      marginTop: roundIndex > 0 ? `${getMatchGap(roundIndex - 1) / 2}px` : '0'
+                      marginTop: roundIndex > 0 ? `${(getMatchHeight() + getMatchGap(roundIndex - 1)) * Math.pow(1.5, roundIndex - 1)}px` : '0'
                     }}
                   >
                     {roundMatches.map((match) => (

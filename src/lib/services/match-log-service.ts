@@ -136,6 +136,31 @@ export class MatchLogService {
   }
 
   /**
+   * Log: Resultado revertido
+   */
+  static async logMatchResultReverted(context: LogContext, oldMatchData: any) {
+    const score = `${oldMatchData.team1SetsWon}-${oldMatchData.team2SetsWon}`
+    const sets = oldMatchData.sets || []
+    const setsDetail = sets.map((s: any) => `${s.team1Games}-${s.team2Games}`).join(', ')
+
+    return this.log(context, {
+      action: "MATCH_RESULT_REVERTED",
+      description: `Resultado revertido: Marcador ${score} (${setsDetail})`,
+      oldData: oldMatchData,
+      newData: { status: 'SCHEDULED', winnerTeamId: null },
+      metadata: {
+        oldWinnerTeamId: oldMatchData.winnerTeamId,
+        oldScore: score,
+        oldSets: sets,
+        oldStatus: oldMatchData.status,
+        oldDurationMinutes: oldMatchData.durationMinutes,
+        revertedAt: new Date().toISOString(),
+        reason: 'Admin correction'
+      }
+    })
+  }
+
+  /**
    * Log: Match eliminado
    */
   static async logMatchDeleted(context: LogContext, matchData: any) {

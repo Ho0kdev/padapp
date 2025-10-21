@@ -16,6 +16,7 @@ import {
   Edit,
   Play,
   CheckCircle,
+  RotateCcw,
 } from "lucide-react"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
@@ -36,6 +37,7 @@ export function MatchDetail({ match }: MatchDetailProps) {
   const [resultDialogOpen, setResultDialogOpen] = useState(false)
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false)
   const [statusLoading, setStatusLoading] = useState(false)
+  const [revertLoading, setRevertLoading] = useState(false)
 
   const canManage = isAdminOrClubAdmin || isReferee
   const isCompleted = match.status === "COMPLETED" || match.status === "WALKOVER"
@@ -121,6 +123,41 @@ export function MatchDetail({ match }: MatchDetailProps) {
     router.refresh()
   }
 
+  const handleRevertResult = async () => {
+    if (!confirm("¿Estás seguro de que deseas revertir este resultado? Esto limpiará el marcador y devolverá el partido al estado 'Programado'.")) {
+      return
+    }
+
+    try {
+      setRevertLoading(true)
+      const response = await fetch(`/api/matches/${match.id}/result`, {
+        method: "DELETE",
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || "Error al revertir resultado")
+      }
+
+      toast({
+        title: "✅ Resultado revertido",
+        description: "El resultado del partido ha sido revertido exitosamente",
+        variant: "success"
+      })
+
+      router.refresh()
+    } catch (error: any) {
+      toast({
+        title: "❌ Error",
+        description: error.message || "No se pudo revertir el resultado",
+        variant: "destructive",
+      })
+    } finally {
+      setRevertLoading(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -147,37 +184,52 @@ export function MatchDetail({ match }: MatchDetailProps) {
       </div>
 
       {/* Actions */}
-      {canManage && !isCompleted && (
+      {canManage && (
         <Card>
           <CardHeader>
             <CardTitle>Acciones</CardTitle>
           </CardHeader>
-          <CardContent className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setScheduleDialogOpen(true)}
-            >
-              <Calendar className="mr-2 h-4 w-4" />
-              Programar partido
-            </Button>
+          <CardContent className="flex gap-2 flex-wrap">
+            {!isCompleted && (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => setScheduleDialogOpen(true)}
+                >
+                  <Calendar className="mr-2 h-4 w-4" />
+                  Programar partido
+                </Button>
 
-            {match.status === "SCHEDULED" && (
-              <Button
-                variant="outline"
-                onClick={handleStartMatch}
-                disabled={statusLoading}
-              >
-                <Play className="mr-2 h-4 w-4" />
-                Iniciar partido
-              </Button>
+                {match.status === "SCHEDULED" && (
+                  <Button
+                    variant="outline"
+                    onClick={handleStartMatch}
+                    disabled={statusLoading}
+                  >
+                    <Play className="mr-2 h-4 w-4" />
+                    Iniciar partido
+                  </Button>
+                )}
+
+                {match.team1 && match.team2 && (
+                  <Button
+                    onClick={() => setResultDialogOpen(true)}
+                  >
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    Cargar resultado
+                  </Button>
+                )}
+              </>
             )}
 
-            {match.team1 && match.team2 && (
+            {isCompleted && isAdminOrClubAdmin && (
               <Button
-                onClick={() => setResultDialogOpen(true)}
+                variant="destructive"
+                onClick={handleRevertResult}
+                disabled={revertLoading}
               >
-                <CheckCircle className="mr-2 h-4 w-4" />
-                Cargar resultado
+                <RotateCcw className="mr-2 h-4 w-4" />
+                {revertLoading ? "Revirtiendo..." : "Revertir resultado"}
               </Button>
             )}
           </CardContent>

@@ -885,6 +885,119 @@ export class BracketService {
   }
 
   /**
+   * Revierte la progresión de un match, eliminando al equipo ganador del siguiente partido
+   * Esto permite corregir errores en resultados ya cargados
+   */
+  static async unprogress(matchId: string, winnerTeamId?: string): Promise<void> {
+    // Buscar el match actual
+    const currentMatch = await prisma.match.findUnique({
+      where: { id: matchId },
+      include: {
+        nextMatchesTeam1: true,
+        nextMatchesTeam2: true,
+        tournament: {
+          select: {
+            type: true
+          }
+        }
+      }
+    })
+
+    if (!currentMatch) {
+      throw new Error("Match no encontrado")
+    }
+
+    // REVERTIR PROGRESIÓN DEL GANADOR
+    const nextMatches = [...currentMatch.nextMatchesTeam1, ...currentMatch.nextMatchesTeam2]
+
+    for (const nextMatch of nextMatches) {
+      // Si este match progresó al ganador como team1, limpiar team1Id
+      if (nextMatch.team1FromMatchId === matchId && nextMatch.team1Id === winnerTeamId) {
+        await prisma.match.update({
+          where: { id: nextMatch.id },
+          data: { team1Id: null }
+        })
+        console.log(`✅ Ganador removido del match ${nextMatch.id} (era Team1)`)
+      }
+      // Si este match progresó al ganador como team2, limpiar team2Id
+      else if (nextMatch.team2FromMatchId === matchId && nextMatch.team2Id === winnerTeamId) {
+        await prisma.match.update({
+          where: { id: nextMatch.id },
+          data: { team2Id: null }
+        })
+        console.log(`✅ Ganador removido del match ${nextMatch.id} (era Team2)`)
+      }
+    }
+
+    // DOBLE ELIMINACIÓN: Revertir perdedor del lower bracket
+    if (currentMatch.tournament.type === TournamentType.DOUBLE_ELIMINATION && winnerTeamId) {
+      // Determinar si el match actual es del upper bracket
+      const isUpperBracket = currentMatch.roundNumber !== null && currentMatch.roundNumber < 100
+
+      if (isUpperBracket) {
+        // Determinar el loserTeamId (el equipo que no ganó)
+        const loserTeamId = currentMatch.team1Id === winnerTeamId
+          ? currentMatch.team2Id
+          : currentMatch.team1Id
+
+        if (loserTeamId) {
+          await this.unprogressLoserFromLowerBracket(matchId, loserTeamId, currentMatch)
+        }
+      }
+    }
+  }
+
+  /**
+   * Remueve al perdedor del lower bracket
+   * (Solo para doble eliminación)
+   */
+  private static async unprogressLoserFromLowerBracket(
+    upperMatchId: string,
+    loserTeamId: string,
+    upperMatch: { roundNumber: number | null; tournamentId: string; categoryId: string }
+  ): Promise<void> {
+    const upperRound = upperMatch.roundNumber || 1
+
+    // Calcular la ronda del lower bracket correspondiente
+    let lowerRound: number
+    if (upperRound === 1) {
+      lowerRound = 101 // LR1
+    } else {
+      lowerRound = 100 + (upperRound * 2) // Rondas pares del lower
+    }
+
+    // Buscar matches del lower bracket donde el perdedor fue asignado
+    const lowerMatches = await prisma.match.findMany({
+      where: {
+        tournamentId: upperMatch.tournamentId,
+        categoryId: upperMatch.categoryId,
+        roundNumber: lowerRound,
+        OR: [
+          { team1Id: loserTeamId },
+          { team2Id: loserTeamId }
+        ]
+      }
+    })
+
+    // Limpiar el perdedor de los matches del lower bracket
+    for (const lowerMatch of lowerMatches) {
+      if (lowerMatch.team1Id === loserTeamId) {
+        await prisma.match.update({
+          where: { id: lowerMatch.id },
+          data: { team1Id: null }
+        })
+        console.log(`⬆️ Perdedor removido del lower bracket (match ${lowerMatch.id}) como Team1`)
+      } else if (lowerMatch.team2Id === loserTeamId) {
+        await prisma.match.update({
+          where: { id: lowerMatch.id },
+          data: { team2Id: null }
+        })
+        console.log(`⬆️ Perdedor removido del lower bracket (match ${lowerMatch.id}) como Team2`)
+      }
+    }
+  }
+
+  /**
    * Progresa el ganador de un match al siguiente match del bracket
    * Y en doble eliminación, también mueve al perdedor al lower bracket
    */

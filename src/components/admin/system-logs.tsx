@@ -42,7 +42,8 @@ import {
   UsersRound,
   Medal,
   Building,
-  Swords
+  Swords,
+  RotateCcw
 } from "lucide-react"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
@@ -199,6 +200,7 @@ const actionIcons: Record<string, any> = {
   MATCH_UPDATED: Edit,
   MATCH_DELETED: Trash2,
   MATCH_RESULT_ADDED: Trophy,
+  MATCH_RESULT_REVERTED: RotateCcw,
   MATCH_WINNER_PROGRESSED: PlayCircle,
   MATCH_STATUS_CHANGED: PlayCircle,
 
@@ -254,6 +256,7 @@ const actionColors: Record<string, string> = {
   MATCH_UPDATED: "bg-blue-100 text-blue-800",
   MATCH_DELETED: "bg-red-100 text-red-800",
   MATCH_RESULT_ADDED: "bg-emerald-100 text-emerald-800",
+  MATCH_RESULT_REVERTED: "bg-yellow-100 text-yellow-800",
   MATCH_WINNER_PROGRESSED: "bg-purple-100 text-purple-800",
   MATCH_STATUS_CHANGED: "bg-orange-100 text-orange-800",
 
@@ -331,6 +334,7 @@ const actionLabels: Record<string, string> = {
   MATCH_UPDATED: "Partido Actualizado",
   MATCH_DELETED: "Partido Eliminado",
   MATCH_RESULT_ADDED: "Resultado Cargado",
+  MATCH_RESULT_REVERTED: "Resultado Revertido",
   MATCH_WINNER_PROGRESSED: "Ganador Progresado",
   MATCH_STATUS_CHANGED: "Estado de Partido Cambiado",
 
