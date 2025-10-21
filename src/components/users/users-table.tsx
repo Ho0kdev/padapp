@@ -84,21 +84,33 @@ interface User {
         name: string
       }
     }>
-    team1Memberships: Array<{
+    registrations: Array<{
       id: string
       tournament: {
         id: string
         name: string
         status: string
       }
-    }>
-    team2Memberships: Array<{
-      id: string
-      tournament: {
+      category: {
         id: string
         name: string
-        status: string
       }
+      teamAsPlayer1?: Array<{
+        id: string
+        tournament: {
+          id: string
+          name: string
+          status: string
+        }
+      }>
+      teamAsPlayer2?: Array<{
+        id: string
+        tournament: {
+          id: string
+          name: string
+          status: string
+        }
+      }>
     }>
   }
   organizerTournaments: Array<{
@@ -236,20 +248,36 @@ export function UsersTable() {
   }
 
   const getActiveTournaments = (user: User) => {
-    if (!user.player) return []
+    const tournaments = new Set<string>()
 
-    const tournaments = new Set()
-    user.player.team1Memberships?.forEach(team => {
-      if (team.tournament.status !== 'COMPLETED' && team.tournament.status !== 'CANCELLED') {
-        tournaments.add(team.tournament.name)
-      }
-    })
-    user.player.team2Memberships?.forEach(team => {
-      if (team.tournament.status !== 'COMPLETED' && team.tournament.status !== 'CANCELLED') {
-        tournaments.add(team.tournament.name)
-      }
-    })
+    // Torneos donde el jugador está inscrito (a través de registrations -> teams)
+    if (user.player?.registrations) {
+      user.player.registrations.forEach(registration => {
+        // teamAsPlayer1 y teamAsPlayer2 son ARRAYS de equipos
+        const teamsAsPlayer1 = registration.teamAsPlayer1 || []
+        const teamsAsPlayer2 = registration.teamAsPlayer2 || []
 
+        // Verificar equipos donde el jugador es player1
+        teamsAsPlayer1.forEach(team => {
+          if (team?.tournament &&
+              team.tournament.status !== 'COMPLETED' &&
+              team.tournament.status !== 'CANCELLED') {
+            tournaments.add(team.tournament.name)
+          }
+        })
+
+        // Verificar equipos donde el jugador es player2
+        teamsAsPlayer2.forEach(team => {
+          if (team?.tournament &&
+              team.tournament.status !== 'COMPLETED' &&
+              team.tournament.status !== 'CANCELLED') {
+            tournaments.add(team.tournament.name)
+          }
+        })
+      })
+    }
+
+    // Torneos organizados por el usuario
     user.organizerTournaments?.forEach(tournament => {
       if (tournament.status !== 'COMPLETED' && tournament.status !== 'CANCELLED') {
         tournaments.add(tournament.name)

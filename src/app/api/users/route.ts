@@ -93,6 +93,30 @@ export async function GET(request: NextRequest) {
                     id: true,
                     name: true
                   }
+                },
+                teamAsPlayer1: {
+                  select: {
+                    id: true,
+                    tournament: {
+                      select: {
+                        id: true,
+                        name: true,
+                        status: true
+                      }
+                    }
+                  }
+                },
+                teamAsPlayer2: {
+                  select: {
+                    id: true,
+                    tournament: {
+                      select: {
+                        id: true,
+                        name: true,
+                        status: true
+                      }
+                    }
+                  }
                 }
               }
             }

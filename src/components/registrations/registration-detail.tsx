@@ -420,12 +420,19 @@ export function RegistrationDetail({ registration, isAdmin = false }: Registrati
                   </div>
                 )}
 
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Fecha de Inscripción</p>
-                  <div className="text-sm">
-                    {format(new Date(registration.registeredAt), "dd/MM/yyyy HH:mm", { locale: es })}
+                {(registration.tournament.registrationStart || registration.tournament.registrationEnd) && (
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Período de Inscripciones</p>
+                    <div className="space-y-1 text-sm">
+                      {registration.tournament.registrationStart && (
+                        <div>Desde: {format(new Date(registration.tournament.registrationStart), "dd/MM/yyyy", { locale: es })}</div>
+                      )}
+                      {registration.tournament.registrationEnd && (
+                        <div>Hasta: {format(new Date(registration.tournament.registrationEnd), "dd/MM/yyyy", { locale: es })}</div>
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
               </CardContent>
             </Card>
           </div>
