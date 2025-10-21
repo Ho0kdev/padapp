@@ -107,7 +107,9 @@ export async function GET(request: NextRequest) {
     }
 
     // Aplicar filtrado basado en permisos RBAC
-    if (session.user.role !== 'ADMIN' && session.user.role !== 'CLUB_ADMIN') {
+    // Si se está consultando inscripciones de un torneo específico, son públicas (cualquiera puede ver la lista de jugadores)
+    // Si NO se especifica torneo, solo admins o el propio jugador pueden ver inscripciones
+    if (!tournamentId && session.user.role !== 'ADMIN' && session.user.role !== 'CLUB_ADMIN') {
       const userPlayer = await prisma.player.findUnique({
         where: { userId: session.user.id }
       })
@@ -156,6 +158,15 @@ export async function GET(request: NextRequest) {
               id: true,
               firstName: true,
               lastName: true,
+              rankingPoints: true,
+              gender: true,
+              primaryCategory: {
+                select: {
+                  id: true,
+                  name: true,
+                  level: true
+                }
+              },
               user: {
                 select: {
                   email: true
