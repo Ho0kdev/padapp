@@ -130,6 +130,7 @@ async function getUser(id: string) {
     // Get teams where the player is either player1 or player2
     let teams: any[] = []
     let upcomingMatches: any[] = []
+    let recentMatches: any[] = []
     if (user.player) {
       teams = await prisma.team.findMany({
         where: {
@@ -306,6 +307,130 @@ async function getUser(id: string) {
           ],
           take: 10 // Limit to next 10 matches
         })
+
+        // Get recent completed matches for the player's teams
+        recentMatches = await prisma.match.findMany({
+          where: {
+            OR: [
+              { team1Id: { in: teamIds } },
+              { team2Id: { in: teamIds } }
+            ],
+            status: {
+              in: ['COMPLETED', 'WALKOVER']
+            }
+          },
+          select: {
+            id: true,
+            matchNumber: true,
+            status: true,
+            phaseType: true,
+            roundNumber: true,
+            scheduledAt: true,
+            winnerTeamId: true,
+            team1SetsWon: true,
+            team2SetsWon: true,
+            tournament: {
+              select: {
+                id: true,
+                name: true,
+                status: true,
+                type: true
+              }
+            },
+            category: {
+              select: {
+                id: true,
+                name: true,
+                type: true
+              }
+            },
+            team1: {
+              select: {
+                id: true,
+                name: true,
+                registration1: {
+                  select: {
+                    player: {
+                      select: {
+                        id: true,
+                        firstName: true,
+                        lastName: true
+                      }
+                    }
+                  }
+                },
+                registration2: {
+                  select: {
+                    player: {
+                      select: {
+                        id: true,
+                        firstName: true,
+                        lastName: true
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            team2: {
+              select: {
+                id: true,
+                name: true,
+                registration1: {
+                  select: {
+                    player: {
+                      select: {
+                        id: true,
+                        firstName: true,
+                        lastName: true
+                      }
+                    }
+                  }
+                },
+                registration2: {
+                  select: {
+                    player: {
+                      select: {
+                        id: true,
+                        firstName: true,
+                        lastName: true
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            court: {
+              select: {
+                id: true,
+                name: true,
+                club: {
+                  select: {
+                    id: true,
+                    name: true
+                  }
+                }
+              }
+            },
+            sets: {
+              select: {
+                setNumber: true,
+                team1Games: true,
+                team2Games: true,
+                team1TiebreakPoints: true,
+                team2TiebreakPoints: true
+              },
+              orderBy: {
+                setNumber: 'asc'
+              }
+            }
+          },
+          orderBy: [
+            { scheduledAt: 'desc' },
+            { createdAt: 'desc' }
+          ],
+          take: 4 // Limit to last 4 matches
+        })
       }
     }
 
@@ -314,7 +439,8 @@ async function getUser(id: string) {
       player: user.player ? {
         ...user.player,
         teams,
-        upcomingMatches
+        upcomingMatches,
+        recentMatches
       } : undefined
     }
 

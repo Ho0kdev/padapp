@@ -20,6 +20,7 @@ import {
 } from "@/lib/utils/status-styles"
 import { TeamDetailActions } from "@/components/teams/team-detail-actions"
 import { TeamStatusManager } from "@/components/teams/team-status-manager"
+import { MatchCard } from "@/components/matches/match-card"
 
 interface TeamDetailPageProps {
   params: Promise<{
@@ -150,6 +151,199 @@ export default async function TeamDetailPage({ params }: TeamDetailPageProps) {
       redirect("/dashboard")
     }
   }
+
+  // Obtener próximos partidos del equipo
+  const upcomingMatches = await prisma.match.findMany({
+    where: {
+      OR: [
+        { team1Id: team.id },
+        { team2Id: team.id }
+      ],
+      status: {
+        in: ['SCHEDULED', 'IN_PROGRESS']
+      }
+    },
+    select: {
+      id: true,
+      matchNumber: true,
+      status: true,
+      phaseType: true,
+      roundNumber: true,
+      scheduledAt: true,
+      team1: {
+        select: {
+          id: true,
+          name: true,
+          registration1: {
+            select: {
+              player: {
+                select: {
+                  firstName: true,
+                  lastName: true
+                }
+              }
+            }
+          },
+          registration2: {
+            select: {
+              player: {
+                select: {
+                  firstName: true,
+                  lastName: true
+                }
+              }
+            }
+          }
+        }
+      },
+      team2: {
+        select: {
+          id: true,
+          name: true,
+          registration1: {
+            select: {
+              player: {
+                select: {
+                  firstName: true,
+                  lastName: true
+                }
+              }
+            }
+          },
+          registration2: {
+            select: {
+              player: {
+                select: {
+                  firstName: true,
+                  lastName: true
+                }
+              }
+            }
+          }
+        }
+      },
+      court: {
+        select: {
+          id: true,
+          name: true,
+          club: {
+            select: {
+              name: true
+            }
+          }
+        }
+      }
+    },
+    orderBy: [
+      { scheduledAt: 'asc' },
+      { createdAt: 'asc' }
+    ],
+    take: 10
+  })
+
+  // Obtener últimos 4 partidos completados del equipo
+  const recentMatches = await prisma.match.findMany({
+    where: {
+      OR: [
+        { team1Id: team.id },
+        { team2Id: team.id }
+      ],
+      status: {
+        in: ['COMPLETED', 'WALKOVER']
+      }
+    },
+    select: {
+      id: true,
+      matchNumber: true,
+      status: true,
+      phaseType: true,
+      roundNumber: true,
+      scheduledAt: true,
+      winnerTeamId: true,
+      team1SetsWon: true,
+      team2SetsWon: true,
+      team1: {
+        select: {
+          id: true,
+          name: true,
+          registration1: {
+            select: {
+              player: {
+                select: {
+                  firstName: true,
+                  lastName: true
+                }
+              }
+            }
+          },
+          registration2: {
+            select: {
+              player: {
+                select: {
+                  firstName: true,
+                  lastName: true
+                }
+              }
+            }
+          }
+        }
+      },
+      team2: {
+        select: {
+          id: true,
+          name: true,
+          registration1: {
+            select: {
+              player: {
+                select: {
+                  firstName: true,
+                  lastName: true
+                }
+              }
+            }
+          },
+          registration2: {
+            select: {
+              player: {
+                select: {
+                  firstName: true,
+                  lastName: true
+                }
+              }
+            }
+          }
+        }
+      },
+      court: {
+        select: {
+          id: true,
+          name: true,
+          club: {
+            select: {
+              name: true
+            }
+          }
+        }
+      },
+      sets: {
+        select: {
+          setNumber: true,
+          team1Games: true,
+          team2Games: true,
+          team1TiebreakPoints: true,
+          team2TiebreakPoints: true
+        },
+        orderBy: {
+          setNumber: 'asc'
+        }
+      }
+    },
+    orderBy: [
+      { scheduledAt: 'desc' },
+      { createdAt: 'desc' }
+    ],
+    take: 4
+  })
 
   return (
     <DashboardLayout>
@@ -353,6 +547,47 @@ export default async function TeamDetailPage({ params }: TeamDetailPageProps) {
             </div>
           </CardContent>
         </Card>
+
+        {/* Partidos */}
+        {(upcomingMatches.length > 0 || recentMatches.length > 0) && (
+          <div className="space-y-6">
+            {upcomingMatches.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Próximos Partidos</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {upcomingMatches.map((match) => (
+                      <MatchCard
+                        key={match.id}
+                        match={match as any}
+                      />
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {recentMatches.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Últimos 4 Partidos Jugados</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {recentMatches.map((match) => (
+                      <MatchCard
+                        key={match.id}
+                        match={match as any}
+                      />
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
 
         {/* Metadata */}
         <Card>

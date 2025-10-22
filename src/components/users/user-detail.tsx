@@ -185,6 +185,79 @@ interface User {
         }
       } | null
     }>
+    recentMatches?: Array<{
+      id: string
+      scheduledAt: string | null
+      status: string
+      phaseType: string
+      roundNumber: number | null
+      matchNumber: number | null
+      winnerTeamId: string | null
+      team1SetsWon: number
+      team2SetsWon: number
+      tournament: {
+        id: string
+        name: string
+        status: string
+        type: string
+      }
+      category: {
+        id: string
+        name: string
+        type: string
+      }
+      team1: {
+        id: string
+        name: string | null
+        registration1: {
+          player: {
+            id: string
+            firstName: string
+            lastName: string
+          }
+        }
+        registration2: {
+          player: {
+            id: string
+            firstName: string
+            lastName: string
+          }
+        }
+      } | null
+      team2: {
+        id: string
+        name: string | null
+        registration1: {
+          player: {
+            id: string
+            firstName: string
+            lastName: string
+          }
+        }
+        registration2: {
+          player: {
+            id: string
+            firstName: string
+            lastName: string
+          }
+        }
+      } | null
+      court: {
+        id: string
+        name: string
+        club: {
+          id: string
+          name: string
+        }
+      } | null
+      sets: Array<{
+        setNumber: number
+        team1Games: number
+        team2Games: number
+        team1TiebreakPoints?: number | null
+        team2TiebreakPoints?: number | null
+      }>
+    }>
   }
   organizerTournaments: Array<{
     id: string
@@ -576,8 +649,9 @@ export function UserDetail({ user }: UserDetailProps) {
         <TabsList>
           {user.player && (
             <>
-              {user.player.upcomingMatches && user.player.upcomingMatches.length > 0 && (
-                <TabsTrigger value="matches">Próximos Partidos</TabsTrigger>
+              {((user.player.upcomingMatches && user.player.upcomingMatches.length > 0) ||
+                (user.player.recentMatches && user.player.recentMatches.length > 0)) && (
+                <TabsTrigger value="matches">Partidos</TabsTrigger>
               )}
               <TabsTrigger value="rankings">Rankings</TabsTrigger>
               <TabsTrigger value="teams">Equipos</TabsTrigger>
@@ -592,26 +666,52 @@ export function UserDetail({ user }: UserDetailProps) {
 
         {user.player && (
           <>
-            {user.player.upcomingMatches && user.player.upcomingMatches.length > 0 && (
+            {((user.player.upcomingMatches && user.player.upcomingMatches.length > 0) ||
+              (user.player.recentMatches && user.player.recentMatches.length > 0)) && (
               <TabsContent value="matches">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Próximos Partidos</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {user.player.upcomingMatches.map((match) => (
-                        <SharedMatchCard
-                          key={match.id}
-                          match={match as any}
-                          showTournamentInfo={true}
-                          tournament={match.tournament}
-                          category={match.category}
-                        />
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
+                <div className="space-y-6">
+                  {user.player.upcomingMatches && user.player.upcomingMatches.length > 0 && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Próximos Partidos</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {user.player.upcomingMatches.map((match) => (
+                            <SharedMatchCard
+                              key={match.id}
+                              match={match as any}
+                              showTournamentInfo={true}
+                              tournament={match.tournament}
+                              category={match.category}
+                            />
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {user.player.recentMatches && user.player.recentMatches.length > 0 && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Últimos 4 Partidos Jugados</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {user.player.recentMatches.map((match) => (
+                            <SharedMatchCard
+                              key={match.id}
+                              match={match as any}
+                              showTournamentInfo={true}
+                              tournament={match.tournament}
+                              category={match.category}
+                            />
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
               </TabsContent>
             )}
 
