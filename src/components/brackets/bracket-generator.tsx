@@ -35,6 +35,24 @@ interface BracketGeneratorProps {
   onBracketGenerated?: () => void
 }
 
+interface SeedAssignment {
+  teamId: string
+  teamName: string
+  categoryId: string
+  categoryName: string
+  seed: number
+  totalPoints: number
+  player1: {
+    name: string
+    points: number
+  }
+  player2: {
+    name: string
+    points: number
+  }
+  hasRanking: boolean
+}
+
 export function BracketGenerator({
   tournamentId,
   categoryId,
@@ -44,8 +62,11 @@ export function BracketGenerator({
   onBracketGenerated
 }: BracketGeneratorProps) {
   const [isGenerating, setIsGenerating] = useState(false)
+  const [isAssigningSeeds, setIsAssigningSeeds] = useState(false)
   const [validationErrors, setValidationErrors] = useState<string[]>([])
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
+  const [showSeedsPreview, setShowSeedsPreview] = useState(false)
+  const [seedAssignments, setSeedAssignments] = useState<SeedAssignment[]>([])
   const [existingMatchesInfo, setExistingMatchesInfo] = useState<{
     totalMatches: number
     completedMatches: number
@@ -186,6 +207,56 @@ export function BracketGenerator({
 
   const bracketInfo = getBracketStructure()
 
+  // Función para asignar seeds automáticamente
+  const assignSeeds = async () => {
+    setIsAssigningSeeds(true)
+    setValidationErrors([])
+
+    try {
+      const response = await fetch(
+        `/api/tournaments/${tournamentId}/assign-seeds`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            categoryId
+          })
+        }
+      )
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || "Error al asignar seeds")
+      }
+
+      // Filtrar solo los assignments de la categoría actual
+      const categoryAssignments = data.data.assignments.filter(
+        (a: SeedAssignment) => a.categoryId === categoryId
+      )
+
+      setSeedAssignments(categoryAssignments)
+      setShowSeedsPreview(true)
+
+      toast({
+        title: "✅ Seeds calculados",
+        description: `${categoryAssignments.length} equipos ordenados por ranking`,
+        variant: "success",
+      })
+
+    } catch (error) {
+      toast({
+        title: "❌ Error al calcular seeds",
+        description: error instanceof Error ? error.message : "Error desconocido",
+        variant: "destructive"
+      })
+    } finally {
+      setIsAssigningSeeds(false)
+    }
+  }
+
   const generateBracket = async (force = false) => {
     setIsGenerating(true)
     setValidationErrors([])
@@ -256,7 +327,14 @@ export function BracketGenerator({
     }
   }
 
-  const handleGenerate = () => generateBracket(false)
+  // Iniciar proceso: primero asignar seeds
+  const handleGenerate = () => assignSeeds()
+
+  // Confirmar y generar bracket después de ver seeds
+  const handleConfirmWithSeeds = () => {
+    setShowSeedsPreview(false)
+    generateBracket(false)
+  }
 
   const handleConfirmRegenerate = () => {
     setShowConfirmDialog(false)
@@ -348,11 +426,16 @@ export function BracketGenerator({
         {/* Botón de generar */}
         <Button
           onClick={handleGenerate}
-          disabled={isGenerating || teamsCount < 2}
+          disabled={isGenerating || isAssigningSeeds || teamsCount < 2}
           className="w-full"
           size="lg"
         >
-          {isGenerating ? (
+          {isAssigningSeeds ? (
+            <>
+              <Sparkles className="h-4 w-4 mr-2 animate-spin" />
+              Calculando seeds...
+            </>
+          ) : isGenerating ? (
             <>
               <Sparkles className="h-4 w-4 mr-2 animate-spin" />
               Generando bracket...
@@ -386,6 +469,90 @@ export function BracketGenerator({
           </Alert>
         )}
       </CardContent>
+
+      {/* Diálogo de preview de seeds */}
+      <AlertDialog open={showSeedsPreview} onOpenChange={setShowSeedsPreview}>
+        <AlertDialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Trophy className="h-5 w-5 text-primary" />
+              Seeds Calculados Automáticamente
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <div className="text-base">
+                  Se han asignado seeds a {seedAssignments.length} equipos basándose en la suma de
+                  ranking points de ambos jugadores. Revisa el orden antes de confirmar.
+                </div>
+
+                <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                  <div className="font-semibold text-blue-900 dark:text-blue-100 mb-3">
+                    Orden de Seeds:
+                  </div>
+                  <div className="space-y-3 max-h-[400px] overflow-y-auto">
+                    {seedAssignments.map((assignment) => (
+                      <div
+                        key={assignment.teamId}
+                        className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-3"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <Badge className="bg-primary text-primary-foreground">
+                                Seed {assignment.seed}
+                              </Badge>
+                              <span className="font-medium">{assignment.teamName}</span>
+                            </div>
+                            <div className="text-sm text-muted-foreground space-y-1">
+                              <div className="flex items-center gap-2">
+                                <span>{assignment.player1.name}</span>
+                                <Badge variant="outline" className="text-xs">
+                                  {assignment.player1.points} pts
+                                </Badge>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span>{assignment.player2.name}</span>
+                                <Badge variant="outline" className="text-xs">
+                                  {assignment.player2.points} pts
+                                </Badge>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-xs text-muted-foreground mb-1">Total</div>
+                            <Badge variant="secondary" className="font-mono">
+                              {assignment.totalPoints} pts
+                            </Badge>
+                            {!assignment.hasRanking && (
+                              <div className="text-xs text-orange-600 dark:text-orange-400 mt-1">
+                                Sin ranking
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="text-sm text-muted-foreground">
+                  <strong>Nota:</strong> Los equipos sin ranking points se colocan al final del seeding.
+                  En caso de empate, se utiliza la fecha de inscripción del equipo.
+                </div>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmWithSeeds}
+              className="bg-primary hover:bg-primary/90"
+            >
+              Confirmar y Generar Bracket
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Diálogo de confirmación para regeneración */}
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
