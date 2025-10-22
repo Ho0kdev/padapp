@@ -25,6 +25,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useToast } from "@/hooks/use-toast"
+import { useAuth } from "@/hooks/use-auth"
 import {
   Loader2,
   Trophy,
@@ -38,7 +39,8 @@ import {
   Copy,
   Settings,
   Download,
-  Trash2
+  Trash2,
+  AlertTriangle
 } from "lucide-react"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
@@ -71,7 +73,14 @@ export function AmericanoSocialDetail({
 }: AmericanoSocialDetailProps) {
   const router = useRouter()
   const { toast } = useToast()
+  const { isAdminOrClubAdmin } = useAuth()
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [regenerateDialogOpen, setRegenerateDialogOpen] = useState(false)
+  const [existingPoolsInfo, setExistingPoolsInfo] = useState<{
+    totalPools: number
+    totalMatches: number
+    completedMatches: number
+  } | null>(null)
   const [loading, setLoading] = useState(false)
   const [generating, setGenerating] = useState(false)
   const [pools, setPools] = useState<any[]>([])
@@ -80,6 +89,7 @@ export function AmericanoSocialDetail({
   const [selectedMatch, setSelectedMatch] = useState<any>(null)
 
   const isOwner = tournament.organizerId === currentUserId
+  const canManage = isOwner || isAdminOrClubAdmin
   const statusConfig = tournamentStatusOptions.find(s => s.value === tournament.status)
   const typeLabel = tournamentTypeOptions.find(t => t.value === tournament.type)?.label
 
@@ -132,8 +142,25 @@ export function AmericanoSocialDetail({
     }
   }
 
-  const generatePools = async () => {
+  const generatePools = async (force = false) => {
     try {
+      // Si no se está forzando y ya hay pools, mostrar confirmación
+      if (!force && hasPools) {
+        // Calcular información de los pools existentes
+        const totalMatches = pools.reduce((sum, pool) => sum + (pool.matches?.length || 0), 0)
+        const completedMatches = pools.reduce((sum, pool) => {
+          return sum + (pool.matches?.filter((m: any) => m.status === 'COMPLETED').length || 0)
+        }, 0)
+
+        setExistingPoolsInfo({
+          totalPools: pools.length,
+          totalMatches,
+          completedMatches
+        })
+        setRegenerateDialogOpen(true)
+        return
+      }
+
       setGenerating(true)
 
       const response = await fetch(
@@ -141,7 +168,7 @@ export function AmericanoSocialDetail({
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ categoryId })
+          body: JSON.stringify({ categoryId, force })
         }
       )
 
@@ -157,6 +184,8 @@ export function AmericanoSocialDetail({
         variant: "success",
       })
 
+      setRegenerateDialogOpen(false)
+      setExistingPoolsInfo(null)
       await loadData()
     } catch (error) {
       console.error("Error:", error)
@@ -168,6 +197,11 @@ export function AmericanoSocialDetail({
     } finally {
       setGenerating(false)
     }
+  }
+
+  const handleConfirmRegenerate = () => {
+    setRegenerateDialogOpen(false)
+    generatePools(true)
   }
 
   const handleDelete = async () => {
@@ -253,15 +287,24 @@ export function AmericanoSocialDetail({
         </div>
 
         <div className="flex items-center gap-2">
-          {isOwner && hasPools && (
-            <Button variant="default">
-              <Play className="mr-2 h-4 w-4" />
-              Gestionar Pools
+          {canManage && hasPools && (
+            <Button variant="default" onClick={() => generatePools(false)} disabled={generating}>
+              {generating ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Regenerando...
+                </>
+              ) : (
+                <>
+                  <Play className="mr-2 h-4 w-4" />
+                  Regenerar Pools
+                </>
+              )}
             </Button>
           )}
 
-          {isOwner && !hasPools && (
-            <Button variant="default" onClick={generatePools} disabled={generating}>
+          {canManage && !hasPools && (
+            <Button variant="default" onClick={() => generatePools(false)} disabled={generating}>
               {generating ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -572,31 +615,39 @@ export function AmericanoSocialDetail({
           {!hasPools ? (
             <Card>
               <CardHeader>
-                <CardTitle>Generar Pools</CardTitle>
+                <CardTitle>Pools</CardTitle>
                 <CardDescription>
-                  Los jugadores confirmados se dividirán automáticamente en pools de 4.
-                  Cada pool jugará 3 partidos donde todos rotan parejas.
+                  {canManage
+                    ? "Los jugadores confirmados se dividirán automáticamente en pools de 4. Cada pool jugará 3 partidos donde todos rotan parejas."
+                    : "Los pools aún no han sido generados. Espera a que el organizador genere los pools."
+                  }
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Button
-                  onClick={generatePools}
-                  disabled={generating}
-                  size="lg"
-                  className="w-full md:w-auto"
-                >
-                  {generating ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Generando...
-                    </>
-                  ) : (
-                    <>
-                      <Play className="mr-2 h-4 w-4" />
-                      Generar Pools
-                    </>
-                  )}
-                </Button>
+                {canManage ? (
+                  <Button
+                    onClick={() => generatePools(false)}
+                    disabled={generating}
+                    size="lg"
+                    className="w-full md:w-auto"
+                  >
+                    {generating ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Generando...
+                      </>
+                    ) : (
+                      <>
+                        <Play className="mr-2 h-4 w-4" />
+                        Generar Pools
+                      </>
+                    )}
+                  </Button>
+                ) : (
+                  <p className="text-muted-foreground text-sm">
+                    Solo administradores y organizadores pueden generar pools.
+                  </p>
+                )}
               </CardContent>
             </Card>
           ) : (
@@ -633,7 +684,7 @@ export function AmericanoSocialDetail({
                           <AmericanoMatchCard
                             key={match.id}
                             match={match}
-                            canManage={isOwner}
+                            canManage={canManage}
                             onLoadResult={() => setSelectedMatch(match)}
                             showPoolInfo={false}
                           />
@@ -685,6 +736,66 @@ export function AmericanoSocialDetail({
               className="bg-red-600 hover:bg-red-700"
             >
               Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Regenerate Pools Confirmation Dialog */}
+      <AlertDialog open={regenerateDialogOpen} onOpenChange={setRegenerateDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-orange-500" />
+              ¿Regenerar pools?
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <div className="text-base">
+                  Ya existen pools generados. Si continúas, se eliminarán{" "}
+                  <strong>todos los pools y partidos existentes</strong> y se crearán nuevos.
+                </div>
+
+                {existingPoolsInfo && (
+                  <div className="bg-orange-50 dark:bg-orange-950 border border-orange-200 dark:border-orange-800 rounded-lg p-4 space-y-2">
+                    <div className="font-semibold text-orange-900 dark:text-orange-100">
+                      Datos que se eliminarán:
+                    </div>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-orange-800 dark:text-orange-200">Total de pools:</span>
+                        <Badge variant="secondary">{existingPoolsInfo.totalPools}</Badge>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-orange-800 dark:text-orange-200">Total de partidos:</span>
+                        <Badge variant="secondary">{existingPoolsInfo.totalMatches}</Badge>
+                      </div>
+                      {existingPoolsInfo.completedMatches > 0 && (
+                        <div className="flex justify-between">
+                          <span className="text-orange-800 dark:text-orange-200">Partidos completados:</span>
+                          <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">
+                            {existingPoolsInfo.completedMatches}
+                          </Badge>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                <div className="text-sm text-muted-foreground">
+                  Esta acción <strong>no se puede deshacer</strong>. Se perderán todos los
+                  resultados cargados hasta el momento.
+                </div>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmRegenerate}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              Sí, eliminar y regenerar
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
