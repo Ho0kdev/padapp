@@ -1,4 +1,5 @@
 // src/components/dashboard/recent-tournaments-real.tsx
+import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -18,6 +19,7 @@ interface Tournament {
   id: string
   name: string
   status: string
+  type: string
   startDate: Date
   location: string
   participants: number
@@ -70,8 +72,14 @@ export function RecentTournamentsReal({ tournaments }: RecentTournamentsRealProp
               </div>
               <div className="flex items-center space-x-2">
                 {getTournamentStatusBadge(tournament.status)}
-                <Button variant="outline" size="sm">
-                  Ver Detalles
+                <Button variant="outline" size="sm" asChild>
+                  <Link href={
+                    tournament.type === 'AMERICANO_SOCIAL'
+                      ? `/dashboard/tournaments/${tournament.id}/americano-social`
+                      : `/dashboard/tournaments/${tournament.id}`
+                  }>
+                    Ver Detalles
+                  </Link>
                 </Button>
               </div>
             </div>

@@ -158,6 +158,7 @@ export async function getRecentTournaments() {
       id: tournament.id,
       name: tournament.name,
       status: tournament.status,
+      type: tournament.type,
       startDate: tournament.tournamentStart,
       location: tournament.mainClub?.name || 'Multiple venues',
       participants: tournament._count.teams * 2, // 2 jugadores por equipo

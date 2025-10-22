@@ -2,7 +2,8 @@ import { z } from "zod"
 
 // Schema para generar pools
 export const generatePoolsSchema = z.object({
-  categoryId: z.string().min(1, "La categoría es requerida")
+  categoryId: z.string().min(1, "La categoría es requerida"),
+  force: z.boolean().optional() // Permite regenerar eliminando pools existentes
 })
 
 export type GeneratePoolsData = z.infer<typeof generatePoolsSchema>

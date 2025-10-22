@@ -57,19 +57,61 @@ export async function POST(
       )
     }
 
-    // Verificar que NO haya pools ya creados
-    const existingPools = await prisma.americanoPool.count({
+    // Verificar si hay pools ya creados
+    const existingPools = await prisma.americanoPool.findMany({
       where: {
         tournamentId: id,
         categoryId: validatedData.categoryId
+      },
+      include: {
+        matches: {
+          select: {
+            id: true,
+            status: true
+          }
+        }
       }
     })
 
-    if (existingPools > 0) {
-      return NextResponse.json(
-        { error: "Ya existen pools para esta categoría. Elimínalos primero." },
-        { status: 400 }
-      )
+    if (existingPools.length > 0) {
+      // Si no se está forzando la regeneración, devolver error
+      if (!validatedData.force) {
+        return NextResponse.json(
+          { error: "Ya existen pools para esta categoría. Elimínalos primero." },
+          { status: 400 }
+        )
+      }
+
+      // Si se está forzando, eliminar pools existentes
+      console.log(`🔄 Regenerando pools: eliminando ${existingPools.length} pools existentes...`)
+
+      // Eliminar en orden: matches primero, luego players, luego pools, luego rankings
+      for (const pool of existingPools) {
+        // Eliminar matches del pool
+        await prisma.americanoPoolMatch.deleteMany({
+          where: { poolId: pool.id }
+        })
+
+        // Eliminar jugadores del pool
+        await prisma.americanoPoolPlayer.deleteMany({
+          where: { poolId: pool.id }
+        })
+
+        // Eliminar el pool
+        await prisma.americanoPool.delete({
+          where: { id: pool.id }
+        })
+      }
+
+      // Eliminar rankings globales de esta categoría
+      await prisma.americanoGlobalRanking.deleteMany({
+        where: {
+          tournamentId: id,
+          categoryId: validatedData.categoryId
+        }
+      })
+
+      console.log(`✅ Pools y rankings anteriores eliminados`)
     }
 
     // Obtener jugadores confirmados
