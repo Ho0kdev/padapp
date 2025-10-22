@@ -209,7 +209,13 @@ async function getUser(id: string) {
               in: ['SCHEDULED', 'IN_PROGRESS']
             }
           },
-          include: {
+          select: {
+            id: true,
+            matchNumber: true,
+            status: true,
+            phaseType: true,
+            roundNumber: true,
+            scheduledAt: true,
             tournament: {
               select: {
                 id: true,

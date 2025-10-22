@@ -325,3 +325,26 @@ export const getTeamFormationStatusLabel = (hasTeam: boolean) => {
   const option = teamFormationStatusOptions.find(opt => opt.value === (hasTeam ? "HAS_TEAM" : "NO_TEAM"))
   return option ? option.label : "Desconocido"
 }
+
+// Opciones de fase de partido (PhaseType)
+export const phaseTypeOptions = [
+  { value: "GROUP_STAGE", label: "Fase de Grupos", color: "blue", css: "bg-blue-100 text-blue-800 border-blue-200" },
+  { value: "ROUND_OF_32", label: "32avos de Final", color: "cyan", css: "bg-cyan-100 text-cyan-800 border-cyan-200" },
+  { value: "ROUND_OF_16", label: "Octavos de Final", color: "teal", css: "bg-teal-100 text-teal-800 border-teal-200" },
+  { value: "QUARTERFINALS", label: "Cuartos de Final", color: "green", css: "bg-green-100 text-green-800 border-green-200" },
+  { value: "SEMIFINALS", label: "Semifinales", color: "yellow", css: "bg-yellow-100 text-yellow-800 border-yellow-200" },
+  { value: "FINAL", label: "Final", color: "orange", css: "bg-orange-100 text-orange-800 border-orange-200" },
+  { value: "THIRD_PLACE", label: "Tercer Puesto", color: "purple", css: "bg-purple-100 text-purple-800 border-purple-200" },
+] as const
+
+// Helper para obtener estilos de fase de partido
+export const getPhaseTypeStyle = (phaseType: string) => {
+  const option = phaseTypeOptions.find(opt => opt.value === phaseType)
+  return option ? option.css : phaseTypeOptions[0].css
+}
+
+// Helper para obtener label de fase de partido
+export const getPhaseTypeLabel = (phaseType: string) => {
+  const option = phaseTypeOptions.find(opt => opt.value === phaseType)
+  return option ? option.label : phaseType
+}

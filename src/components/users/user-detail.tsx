@@ -332,7 +332,7 @@ export function UserDetail({ user }: UserDetailProps) {
     (acc, stat) => ({
       matchesPlayed: acc.matchesPlayed + stat.matchesPlayed,
       matchesWon: acc.matchesWon + stat.matchesWon,
-      matchesLost: acc.matchesLost + stat.matchesLost,
+      matchesLost: acc.matchesLost + (stat.matchesPlayed - stat.matchesWon),
       setsWon: acc.setsWon + stat.setsWon,
       setsLost: acc.setsLost + stat.setsLost,
       gamesWon: acc.gamesWon + stat.gamesWon,
@@ -738,7 +738,7 @@ export function UserDetail({ user }: UserDetailProps) {
                             <div>
                               <div className="font-medium">Partidos</div>
                               <div className="text-muted-foreground">
-                                {stat.matchesWon}W - {stat.matchesLost}L
+                                {stat.matchesWon}W - {stat.matchesPlayed - stat.matchesWon}L
                               </div>
                             </div>
                             <div>

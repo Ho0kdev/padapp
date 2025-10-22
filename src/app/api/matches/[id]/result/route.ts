@@ -6,6 +6,234 @@ import { MatchLogService } from "@/lib/services/match-log-service"
 import { PhaseType } from "@prisma/client"
 import { z } from "zod"
 
+/**
+ * Actualiza las estadísticas de torneo para los jugadores de un partido completado
+ */
+async function updateTournamentStats(matchId: string) {
+  const match = await prisma.match.findUnique({
+    where: { id: matchId },
+    include: {
+      sets: true,
+      team1: {
+        include: {
+          registration1: { select: { playerId: true } },
+          registration2: { select: { playerId: true } }
+        }
+      },
+      team2: {
+        include: {
+          registration1: { select: { playerId: true } },
+          registration2: { select: { playerId: true } }
+        }
+      }
+    }
+  })
+
+  if (!match || !match.team1 || !match.team2) {
+    return
+  }
+
+  // Calcular estadísticas del partido
+  let team1GamesWon = 0
+  let team2GamesWon = 0
+  let team1SetsWon = 0
+  let team2SetsWon = 0
+
+  for (const set of match.sets) {
+    team1GamesWon += set.team1Games
+    team2GamesWon += set.team2Games
+    if (set.team1Games > set.team2Games) {
+      team1SetsWon++
+    } else {
+      team2SetsWon++
+    }
+  }
+
+  // Obtener IDs de los 4 jugadores
+  const team1Players = [
+    match.team1.registration1.playerId,
+    match.team1.registration2.playerId
+  ]
+  const team2Players = [
+    match.team2.registration1.playerId,
+    match.team2.registration2.playerId
+  ]
+
+  const team1Won = match.winnerTeamId === match.team1.id
+
+  // Actualizar estadísticas para jugadores del equipo 1
+  for (const playerId of team1Players) {
+    await prisma.tournamentStats.upsert({
+      where: {
+        tournamentId_playerId: {
+          tournamentId: match.tournamentId,
+          playerId
+        }
+      },
+      create: {
+        tournamentId: match.tournamentId,
+        playerId,
+        matchesPlayed: 1,
+        matchesWon: team1Won ? 1 : 0,
+        setsWon: team1SetsWon,
+        setsLost: team2SetsWon,
+        gamesWon: team1GamesWon,
+        gamesLost: team2GamesWon
+      },
+      update: {
+        matchesPlayed: { increment: 1 },
+        matchesWon: { increment: team1Won ? 1 : 0 },
+        setsWon: { increment: team1SetsWon },
+        setsLost: { increment: team2SetsWon },
+        gamesWon: { increment: team1GamesWon },
+        gamesLost: { increment: team2GamesWon }
+      }
+    })
+  }
+
+  // Actualizar estadísticas para jugadores del equipo 2
+  for (const playerId of team2Players) {
+    await prisma.tournamentStats.upsert({
+      where: {
+        tournamentId_playerId: {
+          tournamentId: match.tournamentId,
+          playerId
+        }
+      },
+      create: {
+        tournamentId: match.tournamentId,
+        playerId,
+        matchesPlayed: 1,
+        matchesWon: !team1Won ? 1 : 0,
+        setsWon: team2SetsWon,
+        setsLost: team1SetsWon,
+        gamesWon: team2GamesWon,
+        gamesLost: team1GamesWon
+      },
+      update: {
+        matchesPlayed: { increment: 1 },
+        matchesWon: { increment: !team1Won ? 1 : 0 },
+        setsWon: { increment: team2SetsWon },
+        setsLost: { increment: team1SetsWon },
+        gamesWon: { increment: team2GamesWon },
+        gamesLost: { increment: team1GamesWon }
+      }
+    })
+  }
+
+  console.log(`✅ Estadísticas de torneo actualizadas para 4 jugadores`)
+}
+
+/**
+ * Revierte las estadísticas de torneo cuando se revierte un resultado
+ */
+async function revertTournamentStats(matchId: string) {
+  const match = await prisma.match.findUnique({
+    where: { id: matchId },
+    include: {
+      sets: true,
+      team1: {
+        include: {
+          registration1: { select: { playerId: true } },
+          registration2: { select: { playerId: true } }
+        }
+      },
+      team2: {
+        include: {
+          registration1: { select: { playerId: true } },
+          registration2: { select: { playerId: true } }
+        }
+      }
+    }
+  })
+
+  if (!match || !match.team1 || !match.team2 || !match.winnerTeamId) {
+    return
+  }
+
+  // Calcular estadísticas del partido
+  let team1GamesWon = 0
+  let team2GamesWon = 0
+  let team1SetsWon = 0
+  let team2SetsWon = 0
+
+  for (const set of match.sets) {
+    team1GamesWon += set.team1Games
+    team2GamesWon += set.team2Games
+    if (set.team1Games > set.team2Games) {
+      team1SetsWon++
+    } else {
+      team2SetsWon++
+    }
+  }
+
+  // Obtener IDs de los 4 jugadores
+  const team1Players = [
+    match.team1.registration1.playerId,
+    match.team1.registration2.playerId
+  ]
+  const team2Players = [
+    match.team2.registration1.playerId,
+    match.team2.registration2.playerId
+  ]
+
+  const team1Won = match.winnerTeamId === match.team1.id
+
+  // Revertir estadísticas para jugadores del equipo 1
+  for (const playerId of team1Players) {
+    const stat = await prisma.tournamentStats.findUnique({
+      where: {
+        tournamentId_playerId: {
+          tournamentId: match.tournamentId,
+          playerId
+        }
+      }
+    })
+
+    if (stat) {
+      await prisma.tournamentStats.update({
+        where: { id: stat.id },
+        data: {
+          matchesPlayed: Math.max(0, stat.matchesPlayed - 1),
+          matchesWon: Math.max(0, stat.matchesWon - (team1Won ? 1 : 0)),
+          setsWon: Math.max(0, stat.setsWon - team1SetsWon),
+          setsLost: Math.max(0, stat.setsLost - team2SetsWon),
+          gamesWon: Math.max(0, stat.gamesWon - team1GamesWon),
+          gamesLost: Math.max(0, stat.gamesLost - team2GamesWon)
+        }
+      })
+    }
+  }
+
+  // Revertir estadísticas para jugadores del equipo 2
+  for (const playerId of team2Players) {
+    const stat = await prisma.tournamentStats.findUnique({
+      where: {
+        tournamentId_playerId: {
+          tournamentId: match.tournamentId,
+          playerId
+        }
+      }
+    })
+
+    if (stat) {
+      await prisma.tournamentStats.update({
+        where: { id: stat.id },
+        data: {
+          matchesPlayed: Math.max(0, stat.matchesPlayed - 1),
+          matchesWon: Math.max(0, stat.matchesWon - (!team1Won ? 1 : 0)),
+          setsWon: Math.max(0, stat.setsWon - team2SetsWon),
+          setsLost: Math.max(0, stat.setsLost - team1SetsWon),
+          gamesWon: Math.max(0, stat.gamesWon - team2GamesWon),
+          gamesLost: Math.max(0, stat.gamesLost - team1GamesWon)
+        }
+      })
+    }
+  }
+
+  console.log(`✅ Estadísticas de torneo revertidas para 4 jugadores`)
+}
+
 const matchResultSchema = z.object({
   winnerTeamId: z.string().min(1, "El equipo ganador es requerido"),
   sets: z.array(z.object({
@@ -220,6 +448,15 @@ export async function POST(
       }
     })
 
+    // ACTUALIZAR ESTADÍSTICAS: Actualizar las estadísticas de torneo de los jugadores
+    try {
+      await updateTournamentStats(matchId)
+      console.log(`✅ Estadísticas de jugadores actualizadas`)
+    } catch (statsError) {
+      console.error(`⚠️ No se pudieron actualizar las estadísticas:`, statsError)
+      // No fallar la operación completa si la actualización de stats falla
+    }
+
     // PROGRESIÓN AUTOMÁTICA: Mover el ganador al siguiente partido del bracket
     // Y en doble eliminación, también mover al perdedor al lower bracket
     try {
@@ -431,7 +668,16 @@ export async function DELETE(
       sets: match.sets
     }
 
-    // PASO 1: Revertir progresión en el bracket (llamar al nuevo método unprogress)
+    // PASO 1: Revertir estadísticas de torneo
+    try {
+      await revertTournamentStats(matchId)
+      console.log(`✅ Estadísticas de jugadores revertidas`)
+    } catch (statsError) {
+      console.error(`⚠️ No se pudieron revertir las estadísticas:`, statsError)
+      // Continuar de todas formas con la reversión del resultado
+    }
+
+    // PASO 2: Revertir progresión en el bracket (llamar al nuevo método unprogress)
     try {
       await BracketService.unprogress(matchId, match.winnerTeamId || undefined)
       console.log(`✅ Progresión revertida en el bracket`)
@@ -440,12 +686,12 @@ export async function DELETE(
       // Continuar de todas formas con la reversión del resultado
     }
 
-    // PASO 2: Eliminar sets
+    // PASO 3: Eliminar sets
     await prisma.matchSet.deleteMany({
       where: { matchId }
     })
 
-    // PASO 3: Limpiar resultado del partido
+    // PASO 4: Limpiar resultado del partido
     const updatedMatch = await prisma.match.update({
       where: { id: matchId },
       data: {

@@ -15,6 +15,7 @@ import { Calendar, MapPin, MoreHorizontal, Eye, CheckCircle, Play } from "lucide
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import { cn } from "@/lib/utils"
+import { getPhaseTypeLabel, getPhaseTypeStyle } from "@/lib/utils/status-styles"
 
 interface Team {
   id: string
@@ -47,6 +48,8 @@ export interface MatchCardData {
   id: string
   matchNumber: number | null
   status: string
+  phaseType?: string
+  roundNumber?: number | null
   team1?: Team | null
   team2?: Team | null
   winnerTeam?: {
@@ -144,16 +147,30 @@ export function MatchCard({
                   <div className="font-medium text-sm">
                     {tournament.name} - {category.name}
                   </div>
-                  {match.matchNumber && (
-                    <div className="text-xs text-muted-foreground mt-0.5">
-                      Partido {match.matchNumber}
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2 mt-1">
+                    {match.phaseType && (
+                      <Badge variant="outline" className={`text-xs ${getPhaseTypeStyle(match.phaseType)}`}>
+                        {getPhaseTypeLabel(match.phaseType)}
+                      </Badge>
+                    )}
+                    {match.matchNumber && (
+                      <span className="text-xs text-muted-foreground">
+                        Partido {match.matchNumber}
+                      </span>
+                    )}
+                  </div>
                 </>
               ) : (
-                <span className="text-xs font-medium text-muted-foreground">
-                  Partido {match.matchNumber}
-                </span>
+                <div className="flex items-center gap-2">
+                  {match.phaseType && (
+                    <Badge variant="outline" className={`text-xs ${getPhaseTypeStyle(match.phaseType)}`}>
+                      {getPhaseTypeLabel(match.phaseType)}
+                    </Badge>
+                  )}
+                  <span className="text-xs font-medium text-muted-foreground">
+                    Partido {match.matchNumber}
+                  </span>
+                </div>
               )}
             </div>
             <div className="flex items-center gap-2">

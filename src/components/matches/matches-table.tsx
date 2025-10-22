@@ -318,7 +318,7 @@ export function MatchesTable() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    {match.status === "COMPLETED" && match.winnerTeam ? (
+                    {(match.status === "COMPLETED" || match.status === "WALKOVER") && match.winnerTeam ? (
                       <div className="space-y-1">
                         <Badge variant="secondary" className="font-mono">
                           {match.team1SetsWon} - {match.team2SetsWon}
@@ -367,7 +367,7 @@ export function MatchesTable() {
                           </Link>
                         </DropdownMenuItem>
 
-                        {canManageMatch(match) && match.status !== "COMPLETED" && (
+                        {canManageMatch(match) && match.status !== "COMPLETED" && match.status !== "WALKOVER" && (
                           <>
                             <DropdownMenuSeparator />
 
