@@ -32,6 +32,7 @@ interface RouteParams {
  *
  * **Validaciones:**
  * - El partido debe existir
+ * - Para cambiar a IN_PROGRESS, COMPLETED o WALKOVER se requieren ambos equipos asignados
  * - No se puede cambiar el estado de un partido completado (excepto para reprogramarlo a SCHEDULED)
  * - No se puede usar este endpoint para marcar como COMPLETED (usar /result en su lugar)
  *
@@ -53,6 +54,7 @@ interface RouteParams {
  *
  * **Errores posibles:**
  * - 400: Estado inválido
+ * - 400: Partido sin ambos equipos asignados (al intentar IN_PROGRESS, COMPLETED o WALKOVER)
  * - 400: Transición de estado no permitida
  * - 404: Partido no encontrado
  */
@@ -93,6 +95,18 @@ export async function PATCH(
       return NextResponse.json({
         error: "Partido no encontrado"
       }, { status: 404 })
+    }
+
+    // Validación: Para cambiar a IN_PROGRESS, COMPLETED o WALKOVER se requieren ambos equipos
+    if ((status === "IN_PROGRESS" || status === "COMPLETED" || status === "WALKOVER") &&
+        (!match.team1Id || !match.team2Id)) {
+      return NextResponse.json({
+        error: "No se puede iniciar o completar un partido sin ambos equipos asignados. El partido aún está pendiente de que se defina un equipo.",
+        details: {
+          team1Assigned: !!match.team1Id,
+          team2Assigned: !!match.team2Id
+        }
+      }, { status: 400 })
     }
 
     // Validación: Transiciones de estado
