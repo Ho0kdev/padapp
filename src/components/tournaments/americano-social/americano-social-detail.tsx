@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
@@ -80,6 +80,8 @@ export function AmericanoSocialDetail({
     totalPools: number
     totalMatches: number
     completedMatches: number
+    numberOfRounds: number
+    poolsPerRound: number
   } | null>(null)
   const [loading, setLoading] = useState(false)
   const [generating, setGenerating] = useState(false)
@@ -152,10 +154,17 @@ export function AmericanoSocialDetail({
           return sum + (pool.matches?.filter((m: any) => m.status === 'COMPLETED').length || 0)
         }, 0)
 
+        // Calcular número de rondas únicas
+        const uniqueRounds = new Set(pools.map((pool: any) => pool.roundNumber))
+        const numberOfRounds = uniqueRounds.size
+        const poolsPerRound = numberOfRounds > 0 ? Math.round(pools.length / numberOfRounds) : 0
+
         setExistingPoolsInfo({
           totalPools: pools.length,
           totalMatches,
-          completedMatches
+          completedMatches,
+          numberOfRounds,
+          poolsPerRound
         })
         setRegenerateDialogOpen(true)
         return
@@ -253,6 +262,21 @@ export function AmericanoSocialDetail({
   }
 
   const hasPools = pools.length > 0
+
+  // Agrupar pools por ronda
+  const poolsByRound = useMemo(() => {
+    const grouped = new Map<number, typeof pools>()
+    pools.forEach(pool => {
+      const roundNumber = pool.roundNumber || 1
+      if (!grouped.has(roundNumber)) {
+        grouped.set(roundNumber, [])
+      }
+      grouped.get(roundNumber)!.push(pool)
+    })
+    return Array.from(grouped.entries()).sort((a, b) => a[0] - b[0])
+  }, [pools])
+
+  const numberOfRounds = poolsByRound.length
 
   return (
     <div className="space-y-6">
@@ -650,15 +674,61 @@ export function AmericanoSocialDetail({
                 )}
               </CardContent>
             </Card>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {pools.map((pool) => (
-                <PoolCard
-                  key={pool.id}
-                  pool={pool}
-                  onMatchUpdate={loadData}
-                />
+          ) : numberOfRounds > 1 ? (
+            // Múltiples rondas: mostrar con tabs
+            <Tabs defaultValue="round-1">
+              <TabsList>
+                {poolsByRound.map(([roundNum]) => (
+                  <TabsTrigger key={roundNum} value={`round-${roundNum}`}>
+                    Ronda {roundNum}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+
+              {poolsByRound.map(([roundNum, roundPools]) => (
+                <TabsContent key={roundNum} value={`round-${roundNum}`} className="space-y-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="text-lg font-semibold">Ronda {roundNum}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {roundPools.length} pool{roundPools.length > 1 ? 's' : ''} • {roundPools.length * 3} partidos
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {roundPools.map((pool) => (
+                      <PoolCard
+                        key={pool.id}
+                        pool={pool}
+                        onMatchUpdate={loadData}
+                      />
+                    ))}
+                  </div>
+                </TabsContent>
               ))}
+            </Tabs>
+          ) : (
+            // Una sola ronda: mostrar directamente
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-lg font-semibold">Pools</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {pools.length} pool{pools.length > 1 ? 's' : ''} • {pools.length * 3} partidos
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {pools.map((pool) => (
+                  <PoolCard
+                    key={pool.id}
+                    pool={pool}
+                    onMatchUpdate={loadData}
+                  />
+                ))}
+              </div>
             </div>
           )}
         </TabsContent>
@@ -674,7 +744,40 @@ export function AmericanoSocialDetail({
                 <p className="text-center text-muted-foreground py-8">
                   No hay partidos programados aún. Genera los pools primero.
                 </p>
+              ) : numberOfRounds > 1 ? (
+                // Múltiples rondas: agrupar por ronda
+                <div className="space-y-8">
+                  {poolsByRound.map(([roundNum, roundPools]) => (
+                    <div key={roundNum}>
+                      <div className="mb-4">
+                        <h3 className="text-lg font-semibold">Ronda {roundNum}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {roundPools.length * 3} partidos en {roundPools.length} pool{roundPools.length > 1 ? 's' : ''}
+                        </p>
+                      </div>
+                      <div className="space-y-6">
+                        {roundPools.map((pool) => (
+                          <div key={pool.id}>
+                            <h4 className="font-medium mb-3">{pool.name}</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                              {pool.matches.map((match: any) => (
+                                <AmericanoMatchCard
+                                  key={match.id}
+                                  match={match}
+                                  canManage={canManage}
+                                  onLoadResult={() => setSelectedMatch(match)}
+                                  showPoolInfo={false}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               ) : (
+                // Una sola ronda: mostrar sin agrupar
                 <div className="space-y-6">
                   {pools.map((pool) => (
                     <div key={pool.id}>
@@ -753,7 +856,8 @@ export function AmericanoSocialDetail({
               <div className="space-y-3">
                 <div className="text-base">
                   Ya existen pools generados. Si continúas, se eliminarán{" "}
-                  <strong>todos los pools y partidos existentes</strong> y se crearán nuevos.
+                  <strong>todas las rondas, pools y partidos existentes</strong> y se crearán nuevos
+                  según la configuración actual del torneo ({tournament.americanoRounds || 1} {(tournament.americanoRounds || 1) === 1 ? 'ronda' : 'rondas'}).
                 </div>
 
                 {existingPoolsInfo && (
@@ -762,6 +866,14 @@ export function AmericanoSocialDetail({
                       Datos que se eliminarán:
                     </div>
                     <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-orange-800 dark:text-orange-200">Número de rondas:</span>
+                        <Badge variant="secondary">{existingPoolsInfo.numberOfRounds}</Badge>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-orange-800 dark:text-orange-200">Pools por ronda:</span>
+                        <Badge variant="secondary">{existingPoolsInfo.poolsPerRound}</Badge>
+                      </div>
                       <div className="flex justify-between">
                         <span className="text-orange-800 dark:text-orange-200">Total de pools:</span>
                         <Badge variant="secondary">{existingPoolsInfo.totalPools}</Badge>

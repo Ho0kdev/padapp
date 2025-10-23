@@ -1418,6 +1418,50 @@ console.log('Tournament created:', {
 
 ---
 
+## 🗺️ Roadmap
+
+### Estado Actual
+**97% de funcionalidad core completa** - El sistema está listo para manejar torneos completos de principio a fin.
+
+### Fases del Proyecto
+
+#### ✅ Fase 1 - Funcionalidad Core (Completada al 90%)
+- ✅ Sistema de autenticación y RBAC (100%)
+- ✅ CRUD completo de entidades principales (100%)
+- ✅ Sistema de inscripciones (90% - falta integración de pagos)
+- ✅ Gestión de brackets - 6 formatos (86% - falta Sistema Suizo)
+- ✅ Sistema de partidos con resultados y progresión automática
+- ✅ Sistema de puntos configurables y rankings anuales
+- ✅ Panel administrativo con logs de auditoría (100%)
+
+#### ⏳ Fase 2 - Gestión Operativa (Pendiente)
+- Calendario visual y programación de canchas
+- Sistema de notificaciones multi-canal (push, email, SMS)
+- Reportes avanzados y analytics
+- Sistema de reservas de canchas
+
+#### ⏳ Fase 3 - Funcionalidades Avanzadas (Pendiente)
+- Progressive Web App (PWA) para móviles
+- Funcionalidades sociales (perfiles, feed, chat)
+- Reservas inteligentes con precios dinámicos
+- Sistema de membresías
+
+#### ⏳ Fase 4 - Escalabilidad Enterprise (Pendiente)
+- Multi-tenancy para múltiples organizaciones
+- APIs públicas con documentación OpenAPI
+- Optimizaciones de performance (Redis, CDN, sharding)
+- Observabilidad completa (monitoring, alertas)
+
+### Próximos Pasos Inmediatos
+1. **Completar integración de pagos con Stripe** (3-4 días)
+2. **Implementar Sistema Suizo** para completar todos los formatos (1 semana)
+3. **Sistema de notificaciones por email** (2-3 días)
+4. **Panel público de inscripción** sin login requerido (2 días)
+
+Para el roadmap completo con detalles de cada sprint y estimaciones, ver el historial del proyecto.
+
+---
+
 ## 📞 Contacto y Soporte
 
 Para preguntas, sugerencias o reportar problemas:

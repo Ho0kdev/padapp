@@ -31,6 +31,7 @@ const createTournamentSchema = z.object({
   gamesToWinSet: z.number().int().positive("Debe ser un número positivo").min(4, "Mínimo 4 games"),
   tiebreakAt: z.number().int().positive("Debe ser un número positivo").min(4, "Mínimo en 4 games"),
   goldenPoint: z.boolean(),
+  americanoRounds: z.number().int().min(1, "Mínimo 1 ronda").max(10, "Máximo 10 rondas").default(1),
   mainClubId: z.string().min(1, "El club principal es requerido"),
   rules: z.string().optional(),
   prizesDescription: z.string().optional(),

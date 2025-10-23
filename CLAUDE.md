@@ -190,6 +190,12 @@ The system supports 7 formats (6 implemented):
 - Requires exactly multiples of 4 players
 - 3 matches per player with rotating partners
 - Individual and global rankings
+- **🆕 Multiple rounds support** (1-10 rounds):
+  - Round 1: Random distribution
+  - Rounds 2+: Intelligent pairing that minimizes ALL repeated pairings within pools
+  - Greedy algorithm counts total pool repetitions, not just individual player pairs
+  - Mathematical formula: max rounds ≈ `(N/4) - 1` based on Social Golfer Problem analysis
+  - Examples: 8 players → 1 round, 12 players → 2 rounds, 16 players → 3 rounds, 20 players → 4 rounds
 
 ### Validation Pattern
 
@@ -374,13 +380,11 @@ npm run db:seed     # Loads test data (users, clubs, tournaments, etc.)
 
 ## Key Documentation Files
 
-- `README.md` - Complete project documentation (1,360 lines)
+- `README.md` - Complete project documentation with roadmap section
 - `RBAC_GUIA_DEFINITIVA.md` - Detailed RBAC guide
 - `POINTS_CALCULATION.md` - Points system documentation
 - `LOGGING_SYSTEM.md` - Audit logging guide (9 services)
 - `TOURNAMENT_FORMATS.md` - All bracket formats explained (1,637 lines)
-- `ROADMAP.md` - Project roadmap and progress tracking
-- `context.md` - Quick development context
 
 ## Technology Stack
 
@@ -409,3 +413,104 @@ npm run db:seed     # Loads test data (users, clubs, tournaments, etc.)
 5. **Configurable Tournament Points**: Each tournament defines its own `rankingPoints` value (100-5000) for flexible ranking systems
 
 6. **Americano Social as Separate Tables**: AmericanoPool/Player/Match tables independent from main Match system due to different structure (4 players per match vs 2 teams)
+
+
+7. **Multiple Rounds for Americano Social** (Dec 2024): Tournament-level configuration (1-10 rounds) with intelligent greedy algorithm that minimizes total pool repetitions (counts all pairs within pool, not just individual connections)
+
+## Recent Updates (December 2024)
+
+### Match Validation Enhancements
+- Added validation preventing match status changes to `IN_PROGRESS`, `COMPLETED`, or `WALKOVER` when teams are not fully assigned
+- File: `src/app/api/matches/[id]/status/route.ts:98-108`
+
+### Automatic Seed Assignment System
+- Implemented automatic seed calculation based on sum of player ranking points
+- Preview dialog shows seed assignments before bracket generation
+- Tiebreaker: team registration date (first registered = better seed)
+- Players without ranking automatically go to the end
+- File: `src/app/api/tournaments/[id]/assign-seeds/route.ts`
+- Component: `src/components/brackets/bracket-generator.tsx`
+
+### RBAC Improvements for Americano Social
+- Enhanced permission controls for pool generation and management
+- Only ADMIN and CLUB_ADMIN can generate/regenerate pools
+- Players see informative messages instead of admin buttons
+- File: `src/components/tournaments/americano-social/americano-social-detail.tsx`
+
+### Pool Regeneration with Confirmation
+- Added confirmation dialog showing what data will be deleted
+- Displays: total pools, total matches, completed matches
+- Properly deletes americanoGlobalRanking to avoid unique constraint errors
+- File: `src/app/api/tournaments/[id]/americano-social/generate/route.ts`
+
+### Navigation Fixes for Americano Social
+- Dashboard automatically detects tournament type and redirects appropriately
+- Conventional tournament route redirects to americano-social route when applicable
+- Server-side redirection for better performance
+- Files:
+  - `src/lib/dashboard.ts`
+  - `src/components/dashboard/recent-tournaments-real.tsx`
+  - `src/app/dashboard/tournaments/[id]/page.tsx`
+
+### Multiple Rounds System (Major Feature)
+**Database Changes**:
+- Added `americanoRounds` field to Tournament model (1-10)
+- Added `roundNumber` field to AmericanoPool model
+- Updated unique constraint: `[tournamentId, categoryId, roundNumber, poolNumber]`
+
+**Intelligent Pairing Algorithm**:
+- Round 1: Random distribution
+- Rounds 2+: Greedy algorithm minimizes TOTAL pool repetitions
+- Evaluates each candidate by counting ALL repeated pairs in the proposed pool
+- Uses `countPoolRepetitions()` to score entire pool, not just candidate connections
+- Selects candidates that create pools with minimum total repetitions
+
+**Mathematical Foundation**:
+- Utility: `src/lib/utils/americano-rounds.ts`
+- Based on Social Golfer Problem (NP-complete combinatorial problem)
+- Conservative formula: max rounds ≈ `(N/4) - 1`
+- Formula derived from analysis of known optimal solutions for pools of 4
+- Provides recommendation messages based on player count
+- Examples: 8 players → 1 round, 12 → 2, 16 → 3, 20 → 4
+
+**UI Enhancements**:
+- Form field visible only for AMERICANO_SOCIAL tournament type
+- Dynamic message showing recommended rounds based on player count
+- Multi-round visualization with tabs per round
+- Organized match view grouped by rounds
+
+**Service Updates**:
+- `AmericanoSocialService.generateAmericanoSocialPools()` now accepts `numberOfRounds` parameter
+- Private methods: `generateFirstRound()`, `generateSubsequentRound()`, `countPoolRepetitions()`, `updatePlayerPoolHistory()`
+- New `countPoolRepetitions()`: evaluates entire pool for repeated pairs (not just candidate)
+- File: `src/lib/services/americano-social-service.ts`
+
+**Benefits**:
+- Maximizes player interaction variety
+- Minimizes total pool repetitions using intelligent greedy algorithm
+- Flexible configuration (1-10 rounds)
+- Better statistics from more matches
+- Clear UI organization
+
+### Bug Fix: americanoRounds Not Persisting (Dec 2024)
+**Issue**: Field `americanoRounds` was not saving when editing tournaments, causing regenerated pools to always use 1 round.
+
+**Root Causes**:
+1. Missing `americanoRounds` in `updateTournamentSchema` validation (`/api/tournaments/[id]/route.ts`)
+2. Missing `americanoRounds` in `createTournamentSchema` validation (`/api/tournaments/route.ts`)
+3. Missing `americanoRounds` in `initialData` mapping (`edit/page.tsx`)
+4. Next.js caching preventing fresh data load (`americano-social/page.tsx`)
+
+**Fixes Applied**:
+- ✅ Added `americanoRounds: z.number().int().min(1).max(10).optional()` to update schema
+- ✅ Added `americanoRounds: z.number().int().min(1).max(10).default(1)` to create schema
+- ✅ Added `americanoRounds: tournament.americanoRounds` to edit page initialData
+- ✅ Explicitly selected `americanoRounds: true` in americano-social page query
+- ✅ Added `export const dynamic = 'force-dynamic'` to disable Next.js caching
+
+**Files Modified**:
+- `src/app/api/tournaments/route.ts` (line 34)
+- `src/app/api/tournaments/[id]/route.ts` (line 42)
+- `src/app/dashboard/tournaments/[id]/edit/page.tsx` (line 81)
+- `src/app/dashboard/tournaments/[id]/americano-social/page.tsx` (lines 12-13, 52)
+

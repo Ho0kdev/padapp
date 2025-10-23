@@ -8,6 +8,10 @@ import { AmericanoSocialDetail } from "@/components/tournaments/americano-social
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 
+// Forzar que esta página siempre se ejecute en el servidor sin caché
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 interface PageProps {
   params: Promise<{ id: string }>
   searchParams: Promise<{ categoryId?: string }>
@@ -29,7 +33,34 @@ export default async function AmericanoSocialPage({
   // Verificar que el torneo existe y es AMERICANO_SOCIAL
   const tournament = await prisma.tournament.findUnique({
     where: { id },
-    include: {
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      type: true,
+      status: true,
+      visibility: true,
+      registrationStart: true,
+      registrationEnd: true,
+      tournamentStart: true,
+      tournamentEnd: true,
+      maxParticipants: true,
+      minParticipants: true,
+      registrationFee: true,
+      prizePool: true,
+      rankingPoints: true,
+      setsToWin: true,
+      gamesToWinSet: true,
+      tiebreakAt: true,
+      goldenPoint: true,
+      americanoRounds: true,
+      organizerId: true,
+      mainClubId: true,
+      rules: true,
+      prizesDescription: true,
+      logoUrl: true,
+      createdAt: true,
+      updatedAt: true,
       organizer: {
         select: { id: true, name: true, email: true }
       },

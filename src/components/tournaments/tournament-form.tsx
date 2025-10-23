@@ -45,6 +45,10 @@ import {
   tournamentVisibilityOptions
 } from "@/lib/validations/tournament"
 import { CategoryOption, ClubOption } from "@/types/tournament"
+import {
+  calculateMaxRoundsWithoutRepetition,
+  getRoundsRecommendationMessage
+} from "@/lib/utils/americano-rounds"
 
 const genderFilterOptions = [
   { value: "all", label: "Todas las categorías" },
@@ -96,6 +100,7 @@ export function TournamentForm({
       gamesToWinSet: 6,
       tiebreakAt: 6,
       goldenPoint: true,
+      americanoRounds: 1,
       mainClubId: "",
       rules: "",
       prizesDescription: "",
@@ -211,8 +216,6 @@ export function TournamentForm({
         clubs: allClubs,
       }
 
-      console.log('Payload being sent:', payload)
-
       const url = tournamentId ? `/api/tournaments/${tournamentId}` : "/api/tournaments"
       const method = tournamentId ? "PUT" : "POST"
 
@@ -223,9 +226,6 @@ export function TournamentForm({
         },
         body: JSON.stringify(payload),
       })
-
-      console.log('Response status:', response.status)
-      console.log('Response headers:', Object.fromEntries(response.headers.entries()))
 
       if (!response.ok) {
         const error = await response.json()
@@ -842,6 +842,43 @@ export function TournamentForm({
                   </FormItem>
                 )}
               />
+
+              {/* Campo de rondas solo para AMERICANO_SOCIAL */}
+              {form.watch("type") === "AMERICANO_SOCIAL" && (
+                <FormField
+                  control={form.control}
+                  name="americanoRounds"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Número de Rondas</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min={1}
+                          max={10}
+                          {...field}
+                          onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Cada ronda genera nuevos pools con rotación de jugadores.
+                        {(() => {
+                          const minParticipants = form.watch("minParticipants")
+                          if (minParticipants && minParticipants >= 4) {
+                            return (
+                              <span className="block mt-1 text-blue-600 dark:text-blue-400 font-medium">
+                                {getRoundsRecommendationMessage(minParticipants)}
+                              </span>
+                            )
+                          }
+                          return null
+                        })()}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
 
               <FormField
                 control={form.control}

@@ -956,6 +956,245 @@ Partido 3: (A, D) vs (B, C)  // roundNumber: 3
 
 ---
 
+### 🆕 Sistema de Múltiples Rondas (Actualizado: Dic 2024)
+
+**Descripción**:
+El sistema Americano Social ahora soporta **múltiples rondas** con rotación inteligente que minimiza la repetición de parejas entre rondas.
+
+**Configuración**:
+```prisma
+model Tournament {
+  americanoRounds Int @default(1) // 1-10 rondas configurables
+}
+
+model AmericanoPool {
+  roundNumber Int @default(1) // Número de ronda
+  @@unique([tournamentId, categoryId, roundNumber, poolNumber])
+}
+```
+
+**Cálculo Matemático de Rondas Óptimas**:
+```typescript
+// Basado en Social Golfer Problem (NP-completo)
+function calculateMaxRoundsWithoutRepetition(numPlayers: number): number {
+  const numPools = numPlayers / 4
+  return Math.max(1, numPools - 1)
+}
+
+// Ejemplos verificados:
+// 8 jugadores  → 1 ronda sin repetir (2-1 = 1)
+// 12 jugadores → 2 rondas sin repetir (3-1 = 2)
+// 16 jugadores → 3 rondas sin repetir (4-1 = 3)
+// 20 jugadores → 4 rondas sin repetir (5-1 = 4)
+```
+
+**Fórmula Explicada**:
+- Este es el problema del "Social Golfer": maximizar rondas sin repetir parejas en grupos
+- Es un problema NP-completo sin fórmula exacta
+- Fórmula conservadora: `(N/4) - 1` basada en análisis de casos conocidos
+- Con N jugadores formamos N/4 pools por ronda
+- Cada pool genera C(4,2) = 6 parejas únicas
+- **Rondas máximas sin repetir** ≈ número de pools menos 1
+
+**Algoritmo de Generación Inteligente**:
+
+**Ronda 1:** Distribución aleatoria (base)
+```typescript
+shuffledPlayers = mezclarAleatoriamente(players)
+pools = dividirEnGruposDe4(shuffledPlayers)
+```
+
+**Rondas 2+:** Minimizar TODAS las repeticiones en el pool (greedy mejorado)
+```typescript
+// Tracking de jugadores que han compartido pool
+playerPoolHistory = Map<playerId, Set<jugadoresQueCompartieronPoolId>>
+
+for cada nueva ronda:
+  for cada pool a crear:
+    1. Seleccionar jugador "anchor" (primero disponible)
+    2. Para cada candidato disponible:
+       a. Crear pool temporal = [pool actual + candidato]
+       b. Contar TODAS las parejas repetidas en ese pool temporal
+          usando countPoolRepetitions(pool, history)
+       c. Asignar score de repeticiones totales
+    3. Seleccionar candidato con MENOR score total
+    4. Actualizar playerPoolHistory con nuevas interacciones
+
+// Método auxiliar crítico
+countPoolRepetitions(pool, history):
+  repetitions = 0
+  for cada par (i,j) en pool:
+    if history[i].has(j): repetitions++
+  return repetitions
+  // Retorna 0 si el pool es perfecto (sin repeticiones)
+```
+
+**Ejemplo Visual de 3 Rondas (8 jugadores)**:
+
+```
+JUGADORES: Juan, Pedro, María, Ana, Carlos, Luis, Sofia, Laura
+
+RONDA 1 (aleatorio):
+- R1 - Pool A: [Juan, Pedro, María, Ana]
+  Partidos: JP-MA, JM-PA, JA-PM
+- R1 - Pool B: [Carlos, Luis, Sofia, Laura]
+  Partidos: CL-SL, CS-LL, CL-LS
+
+RONDA 2 (mínimas repeticiones con 8 jugadores):
+- R2 - Pool A: [Juan, Carlos, Pedro, Luis]
+  Partidos: JC-PL, JP-CL, JL-CP
+  Score de repeticiones: 1 (JP ya se conocían de R1)
+  ↑ 5 parejas nuevas, 1 repetida
+- R2 - Pool B: [María, Sofia, Ana, Laura]
+  Partidos: MS-AL, MA-SL, ML-AS
+  Score de repeticiones: 1 (MA ya se conocían de R1)
+  ↑ 5 parejas nuevas, 1 repetida
+
+Con 8 jugadores: Ronda 2 tiene mínimo 2 repeticiones totales (inevitable)
+
+RONDA 3 (muchas más repeticiones con 8 jugadores):
+- R3 - Pool A: [Juan, María, Pedro, Ana]
+  Score: 4 (JP, JM, JA, PA ya se conocían)
+- R3 - Pool B: [Carlos, Sofia, Luis, Laura]
+  Score: 4 (CS, CL, SL, LL ya se conocían)
+
+TOTAL con 1 ronda: 6 partidos, 3 games por jugador, 0 repeticiones ✓
+TOTAL con 2 rondas: 12 partidos, 6 games por jugador, 2 repeticiones mínimas
+TOTAL con 3 rondas: 18 partidos, 9 games por jugador, 10+ repeticiones
+```
+
+**Utilidad Matemática**:
+Archivo: `src/lib/utils/americano-rounds.ts`
+
+```typescript
+// Calcula rondas máximas sin repetir
+calculateMaxRoundsWithoutRepetition(numPlayers: number): number
+
+// Genera mensaje informativo
+getRoundsRecommendationMessage(numPlayers: number): string
+// Ejemplo output:
+// "Con 8 jugadores (2 pools por ronda), se recomienda hasta 1 ronda
+//  para minimizar repeticiones. A partir de la ronda 2, es inevitable
+//  que algunos jugadores compartan pool nuevamente (el algoritmo
+//  minimizará estas repeticiones)."
+
+// Valida configuración
+isValidRoundsConfiguration(rounds: number, numPlayers: number): boolean
+```
+
+**UI - Formulario de Creación**:
+```tsx
+{/* Campo visible solo para AMERICANO_SOCIAL */}
+{form.watch("type") === "AMERICANO_SOCIAL" && (
+  <FormField name="americanoRounds">
+    <Input type="number" min={1} max={10} />
+    <FormDescription>
+      Cada ronda genera nuevos pools con rotación de jugadores.
+      {/* Mensaje dinámico según número de jugadores */}
+      Con 8 jugadores, se recomienda hasta 1 ronda para minimizar repeticiones.
+    </FormDescription>
+  </FormField>
+)}
+```
+
+**UI - Visualización por Rondas**:
+
+**Opción 1: Una sola ronda**
+```
+Tab: Pools
+├─ Pool A (4 jugadores, 3 partidos)
+├─ Pool B (4 jugadores, 3 partidos)
+└─ Pool C (4 jugadores, 3 partidos)
+```
+
+**Opción 2: Múltiples rondas (con tabs)**
+```
+Tab: Pools
+├─ [Tab] Ronda 1
+│   ├─ R1 - Pool A (4 jugadores, 3 partidos)
+│   └─ R1 - Pool B (4 jugadores, 3 partidos)
+├─ [Tab] Ronda 2
+│   ├─ R2 - Pool A (4 jugadores, 3 partidos)
+│   └─ R2 - Pool B (4 jugadores, 3 partidos)
+└─ [Tab] Ronda 3
+    ├─ R3 - Pool A (4 jugadores, 3 partidos)
+    └─ R3 - Pool B (4 jugadores, 3 partidos)
+```
+
+**Tab de Partidos (organizado por ronda)**:
+```
+Ronda 1
+  6 partidos en 2 pools
+  ├─ R1 - Pool A
+  │   ├─ Partido 1: AB vs CD
+  │   ├─ Partido 2: AC vs BD
+  │   └─ Partido 3: AD vs BC
+  └─ R1 - Pool B
+      └─ ...
+
+Ronda 2
+  6 partidos en 2 pools (nuevos emparejamientos)
+  └─ ...
+```
+
+**Servicio Actualizado**:
+```typescript
+// Método principal ahora acepta número de rondas
+AmericanoSocialService.generateAmericanoSocialPools(
+  tournamentId: string,
+  categoryId: string,
+  players: Player[],
+  numberOfRounds: number = 1  // 🆕 Nuevo parámetro
+)
+
+// Métodos privados para algoritmo
+private static generateFirstRound() // Aleatorio
+private static generateSubsequentRound() // Minimiza repeticiones
+private static updatePairHistory() // Tracking de interacciones
+```
+
+**API Response con Múltiples Rondas**:
+```json
+{
+  "success": true,
+  "message": "6 pools generados exitosamente (2 pools x 3 ronda(s))",
+  "data": {
+    "totalPools": 6,
+    "poolsPerRound": 2,
+    "numberOfRounds": 3,
+    "numPlayers": 8
+  }
+}
+```
+
+**Validaciones Adicionales**:
+- ✅ Rondas debe estar entre 1-10
+- ✅ Número de jugadores sigue siendo múltiplo de 4
+- ✅ Mensaje informativo si se excede máximo recomendado
+- ✅ Regeneración elimina todas las rondas previas
+
+**Beneficios del Sistema**:
+- ✅ **Maximiza variedad**: Jugadores conocen más personas
+- ✅ **Minimiza repeticiones**: Algoritmo greedy las reduce al mínimo
+- ✅ **Flexible**: 1-10 rondas configurables según necesidad
+- ✅ **Informativo**: Cálculo automático de rondas óptimas
+- ✅ **Justo**: Más partidos = mejor estadística y ranking
+- ✅ **UX clara**: Tabs organizados por ronda, fácil navegación
+
+**Limitaciones Conocidas**:
+- ⚠️ Más allá del máximo calculado, algunas repeticiones son inevitables matemáticamente
+- ⚠️ Torneo más largo (3 rondas = 3x tiempo de juego)
+- ⚠️ Requiere que todos los jugadores estén disponibles para todas las rondas
+- ⚠️ Algoritmo greedy no garantiza distribución perfecta, solo minimiza
+
+**Casos de Uso Ideales**:
+- ✅ Torneos sociales de fin de semana (2-3 rondas)
+- ✅ Clínicas de práctica con rotación
+- ✅ Eventos corporativos/team building
+- ✅ Desarrollo de jugadores (más partidos = más experiencia)
+
+---
+
 ## Formatos Pendientes
 
 ### ⏳ Sistema Suizo

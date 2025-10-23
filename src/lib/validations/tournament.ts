@@ -43,6 +43,7 @@ export const tournamentFormSchema = z.object({
   gamesToWinSet: z.number().int().positive("Debe ser un número positivo").default(6),
   tiebreakAt: z.number().int().positive("Debe ser un número positivo").default(6),
   goldenPoint: z.boolean().default(true),
+  americanoRounds: z.number().int().min(1, "Mínimo 1 ronda").max(10, "Máximo 10 rondas").default(1),
   mainClubId: z.string().optional(),
   rules: z.string().optional(),
   prizesDescription: z.string().optional(),

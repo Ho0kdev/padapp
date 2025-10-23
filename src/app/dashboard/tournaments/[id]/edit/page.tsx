@@ -78,6 +78,7 @@ export default async function EditTournamentPage({ params }: EditTournamentPageP
     gamesToWinSet: tournament.gamesToWinSet,
     tiebreakAt: tournament.tiebreakAt,
     goldenPoint: tournament.goldenPoint,
+    americanoRounds: tournament.americanoRounds,
     mainClubId: tournament.mainClubId || undefined,
     rules: tournament.rules || undefined,
     prizesDescription: tournament.prizesDescription || undefined,

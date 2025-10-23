@@ -229,6 +229,7 @@ model Tournament {
   gamesToWinSet     Int                      @default(6)
   tiebreakAt        Int                      @default(6)
   goldenPoint       Boolean                  @default(true)
+  americanoRounds   Int                      @default(1) // Número de rondas para Americano Social (1-10)
   organizerId       String
   mainClubId        String?
   rules             String?
@@ -944,6 +945,7 @@ model AmericanoPool {
   name         String // "Pool A", "Pool B", etc.
   courtId      String? // Cancha asignada
   poolNumber   Int // 1, 2, 3...
+  roundNumber  Int     @default(1) // Número de ronda (1, 2, 3...)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -953,7 +955,7 @@ model AmericanoPool {
   players    AmericanoPoolPlayer[]
   matches    AmericanoPoolMatch[]
 
-  @@unique([tournamentId, categoryId, poolNumber])
+  @@unique([tournamentId, categoryId, roundNumber, poolNumber])
   @@index([tournamentId, categoryId])
   @@map("americano_pools")
 }

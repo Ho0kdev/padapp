@@ -24,6 +24,7 @@ export async function POST(
         id: true,
         name: true,
         type: true,
+        americanoRounds: true,
         categories: {
           where: { categoryId: validatedData.categoryId },
           include: {
@@ -147,23 +148,30 @@ export async function POST(
       )
     }
 
-    // Generar pools
+    // Obtener número de rondas del torneo
+    const numberOfRounds = tournament.americanoRounds || 1
+
+    // Generar pools para todas las rondas
     await AmericanoSocialService.generateAmericanoSocialPools(
       id,
       validatedData.categoryId,
-      players as any // Type assertion - service only uses player.id
+      players as any, // Type assertion - service only uses player.id
+      numberOfRounds
     )
 
     const numPools = players.length / 4
+    const totalPools = numPools * numberOfRounds
 
     // Auditoría
     await AuditLogger.log(session, {
       action: Action.CREATE,
       resource: Resource.TOURNAMENT,
       resourceId: id,
-      description: `${numPools} pools generados para categoría ${tournamentCategory.category.name} en torneo ${tournament.name}`,
+      description: `${totalPools} pools generados (${numPools} pools x ${numberOfRounds} ronda(s)) para categoría ${tournamentCategory.category.name} en torneo ${tournament.name}`,
       newData: {
-        numPools,
+        totalPools,
+        poolsPerRound: numPools,
+        numberOfRounds,
         numPlayers: players.length,
         categoryId: validatedData.categoryId
       }
@@ -171,8 +179,10 @@ export async function POST(
 
     return NextResponse.json({
       success: true,
-      message: `${numPools} pools generados exitosamente`,
-      numPools,
+      message: `${totalPools} pools generados exitosamente (${numPools} pools x ${numberOfRounds} ronda(s))`,
+      totalPools,
+      poolsPerRound: numPools,
+      numberOfRounds,
       numPlayers: players.length
     })
 
