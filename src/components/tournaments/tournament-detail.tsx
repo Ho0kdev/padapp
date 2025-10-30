@@ -8,6 +8,7 @@ import { TournamentStatusManager } from "./tournament-status-manager"
 import { GroupStandingsAndMatches } from "@/components/brackets/group-standings-and-matches"
 import { BracketTree } from "@/components/brackets/bracket-tree"
 import { BracketVisualization } from "@/components/brackets/bracket-visualization"
+import { TournamentPoints } from "./tournament-points"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
@@ -279,6 +280,7 @@ export function TournamentDetail({ tournament, currentUserId }: TournamentDetail
           <TabsTrigger value="teams">Equipos</TabsTrigger>
           <TabsTrigger value="matches">Clasificación</TabsTrigger>
           <TabsTrigger value="bracket">Llaves</TabsTrigger>
+          <TabsTrigger value="points">Puntos</TabsTrigger>
         </TabsList>
 
         <TabsContent value="info" className="space-y-4">
@@ -581,6 +583,13 @@ export function TournamentDetail({ tournament, currentUserId }: TournamentDetail
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="points">
+          <TournamentPoints
+            tournamentId={tournament.id}
+            tournamentStatus={tournament.status}
+          />
         </TabsContent>
       </Tabs>
 

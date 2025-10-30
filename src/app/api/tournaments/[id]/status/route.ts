@@ -210,6 +210,17 @@ export async function PATCH(
       }
     })
 
+    // Si el torneo volvió de COMPLETED a IN_PROGRESS, recalcular rankings
+    if (currentStatus === 'COMPLETED' && newStatus === 'IN_PROGRESS') {
+      try {
+        const PointsCalculationService = (await import('@/lib/services/points-calculation-service')).default
+        await PointsCalculationService.recalculatePlayerRankingsAfterTournamentReversion(id)
+      } catch (recalcError) {
+        console.error('⚠️ Error al recalcular rankings:', recalcError)
+        // No fallar la operación completa
+      }
+    }
+
     // Registrar en el log
     await TournamentLogService.logTournamentStatusChanged(
       {

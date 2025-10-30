@@ -1,12 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import React, { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Skeleton } from "@/components/ui/skeleton"
 import {
   Dialog,
   DialogContent,
@@ -34,13 +35,17 @@ import {
   Copy,
   TrendingUp,
   Activity,
-  Users
+  Users,
+  ChevronDown,
+  ChevronUp,
+  Info
 } from "lucide-react"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/hooks/use-auth"
 import { getTournamentStatusStyle, getTournamentStatusLabel } from "@/lib/utils/status-styles"
+import { cn } from "@/lib/utils"
 
 interface RankingWithDetails {
   id: string
@@ -90,6 +95,48 @@ interface RankingDetailProps {
   currentUserId: string
 }
 
+interface PointsBreakdown {
+  participationPoints: number
+  positionPoints: number
+  positionPercentage: number
+  victoryBonus: number
+  victoriesCount: number
+  victoryBonusPerWin: number
+  setBonus: number
+  setsCount: number
+  setBonusPerSet: number
+  subtotal: number
+  tournamentMultiplier: number
+  tournamentMultiplierLabel: string
+  afterTournamentMultiplier: number
+  participantMultiplier: number
+  participantMultiplierLabel: string
+  finalTotal: number
+}
+
+interface TournamentStat {
+  id: string
+  tournamentId: string
+  matchesPlayed: number
+  matchesWon: number
+  setsWon: number
+  setsLost: number
+  gamesWon: number
+  gamesLost: number
+  pointsEarned: number
+  finalPosition: number | null
+  pointsBreakdown?: PointsBreakdown
+  tournament: {
+    id: string
+    name: string
+    status: string
+    type: string
+    rankingPoints: number
+    tournamentStart: string
+    tournamentEnd: string | null
+  }
+}
+
 export function RankingDetail({ ranking, currentUserId }: RankingDetailProps) {
   const router = useRouter()
   const { toast } = useToast()
@@ -97,6 +144,9 @@ export function RankingDetail({ ranking, currentUserId }: RankingDetailProps) {
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [newPoints, setNewPoints] = useState(ranking.currentPoints.toString())
   const [updating, setUpdating] = useState(false)
+  const [tournamentStats, setTournamentStats] = useState<TournamentStat[]>([])
+  const [loadingStats, setLoadingStats] = useState(false)
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set())
 
   const getTypeBadge = (type: string) => {
     const variants = {
@@ -209,6 +259,37 @@ export function RankingDetail({ ranking, currentUserId }: RankingDetailProps) {
   const activeTournaments = allTournaments.filter(t =>
     t.tournament.status !== "COMPLETED" && t.tournament.status !== "CANCELLED"
   )
+
+  useEffect(() => {
+    fetchTournamentStats()
+  }, [ranking.playerId])
+
+  const fetchTournamentStats = async () => {
+    try {
+      setLoadingStats(true)
+      const response = await fetch(`/api/players/${ranking.playerId}/tournament-stats`)
+      if (response.ok) {
+        const data = await response.json()
+        setTournamentStats(data.stats || [])
+      }
+    } catch (error) {
+      console.error("Error fetching tournament stats:", error)
+    } finally {
+      setLoadingStats(false)
+    }
+  }
+
+  const toggleRow = (statId: string) => {
+    const newExpanded = new Set(expandedRows)
+    if (newExpanded.has(statId)) {
+      newExpanded.delete(statId)
+    } else {
+      newExpanded.add(statId)
+    }
+    setExpandedRows(newExpanded)
+  }
+
+  const totalPointsEarned = tournamentStats.reduce((sum, stat) => sum + stat.pointsEarned, 0)
 
   return (
     <div className="space-y-6">
@@ -343,6 +424,7 @@ export function RankingDetail({ ranking, currentUserId }: RankingDetailProps) {
         <TabsList>
           <TabsTrigger value="info">Información</TabsTrigger>
           <TabsTrigger value="tournaments">Historial de Torneos</TabsTrigger>
+          <TabsTrigger value="points">Historial de Puntos</TabsTrigger>
         </TabsList>
 
         <TabsContent value="info" className="space-y-4">
@@ -451,6 +533,178 @@ export function RankingDetail({ ranking, currentUserId }: RankingDetailProps) {
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="points">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>Historial de Puntos por Torneo</CardTitle>
+                {!loadingStats && (
+                  <Badge variant="outline" className="text-sm">
+                    Total: {totalPointsEarned} puntos
+                  </Badge>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent>
+              {loadingStats ? (
+                <div className="space-y-3">
+                  <Skeleton className="h-20 w-full" />
+                  <Skeleton className="h-20 w-full" />
+                  <Skeleton className="h-20 w-full" />
+                </div>
+              ) : tournamentStats.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">
+                  No hay estadísticas de puntos disponibles aún
+                </p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Torneo</th>
+                        <th className="text-center py-3 px-4 text-sm font-medium text-muted-foreground">Estado</th>
+                        <th className="text-center py-3 px-4 text-sm font-medium text-muted-foreground">Pos.</th>
+                        <th className="text-center py-3 px-4 text-sm font-medium text-muted-foreground">PJ</th>
+                        <th className="text-center py-3 px-4 text-sm font-medium text-muted-foreground">PG</th>
+                        <th className="text-center py-3 px-4 text-sm font-medium text-muted-foreground">Sets</th>
+                        <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Puntos</th>
+                        <th className="text-center py-3 px-4 text-sm font-medium text-muted-foreground w-12"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {tournamentStats.map((stat) => (
+                        <React.Fragment key={stat.id}>
+                          <tr className={cn(
+                            "border-b hover:bg-muted/50 transition-colors",
+                            expandedRows.has(stat.id) && "border-b-0"
+                          )}>
+                            <td className="py-3 px-4">
+                              <div>
+                                <Link
+                                  href={`/dashboard/tournaments/${stat.tournament.id}`}
+                                  className="font-medium hover:underline"
+                                >
+                                  {stat.tournament.name}
+                                </Link>
+                                <p className="text-xs text-muted-foreground">
+                                  {format(new Date(stat.tournament.tournamentStart), "dd/MM/yyyy", { locale: es })}
+                                </p>
+                              </div>
+                            </td>
+                            <td className="text-center py-3 px-4">
+                              <Badge variant="outline" className={getTournamentStatusStyle(stat.tournament.status)}>
+                                {getTournamentStatusLabel(stat.tournament.status)}
+                              </Badge>
+                            </td>
+                            <td className="text-center py-3 px-4">
+                              <Badge variant="outline">
+                                {stat.finalPosition || "N/A"}
+                              </Badge>
+                            </td>
+                            <td className="text-center py-3 px-4 text-sm">
+                              {stat.matchesPlayed}
+                            </td>
+                            <td className="text-center py-3 px-4 text-sm">
+                              {stat.matchesWon}
+                            </td>
+                            <td className="text-center py-3 px-4 text-sm text-muted-foreground">
+                              {stat.setsWon}-{stat.setsLost}
+                            </td>
+                            <td className="text-right py-3 px-4">
+                              <span className="font-bold text-lg text-primary">
+                                {stat.pointsEarned}
+                              </span>
+                            </td>
+                            <td className="text-center py-3 px-4">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => toggleRow(stat.id)}
+                                className="h-8 w-8 p-0"
+                              >
+                                {expandedRows.has(stat.id) ? (
+                                  <ChevronUp className="h-4 w-4" />
+                                ) : (
+                                  <ChevronDown className="h-4 w-4" />
+                                )}
+                              </Button>
+                            </td>
+                          </tr>
+                          {stat.pointsBreakdown && expandedRows.has(stat.id) && (
+                            <tr className="border-b">
+                              <td colSpan={8} className="py-4 px-6">
+                                <div className="bg-muted/30 rounded-lg p-4">
+                                  <div className="flex items-center gap-2 mb-3">
+                                    <Info className="h-4 w-4 text-primary" />
+                                    <h4 className="font-semibold text-sm">Desglose del Cálculo de Puntos</h4>
+                                  </div>
+                                  <div className="grid gap-3 md:grid-cols-2">
+                                    {/* Columna Izquierda */}
+                                    <div className="space-y-2 text-sm">
+                                      <div className="flex justify-between">
+                                        <span className="text-muted-foreground">Participación base:</span>
+                                        <span className="font-mono font-semibold">+{stat.pointsBreakdown.participationPoints}</span>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <span className="text-muted-foreground">
+                                          {stat.finalPosition
+                                            ? `Posición ${stat.finalPosition}° (${stat.pointsBreakdown.positionPercentage}%):`
+                                            : 'Posición final (sin asignar):'}
+                                        </span>
+                                        <span className="font-mono font-semibold">+{stat.pointsBreakdown.positionPoints}</span>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <span className="text-muted-foreground">
+                                          Victorias ({stat.pointsBreakdown.victoriesCount} × {stat.pointsBreakdown.victoryBonusPerWin}):
+                                        </span>
+                                        <span className="font-mono font-semibold">+{stat.pointsBreakdown.victoryBonus}</span>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <span className="text-muted-foreground">
+                                          Sets ganados ({stat.pointsBreakdown.setsCount} × {stat.pointsBreakdown.setBonusPerSet}):
+                                        </span>
+                                        <span className="font-mono font-semibold">+{stat.pointsBreakdown.setBonus}</span>
+                                      </div>
+                                      <div className="flex justify-between pt-2 border-t">
+                                        <span className="font-medium">Subtotal:</span>
+                                        <span className="font-mono font-bold">{stat.pointsBreakdown.subtotal}</span>
+                                      </div>
+                                    </div>
+
+                                    {/* Columna Derecha */}
+                                    <div className="space-y-2 text-sm">
+                                      <div className="flex justify-between">
+                                        <span className="text-muted-foreground">
+                                          Multiplicador torneo (×{stat.pointsBreakdown.tournamentMultiplier}):
+                                        </span>
+                                        <span className="font-mono font-semibold">{stat.pointsBreakdown.afterTournamentMultiplier}</span>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <span className="text-muted-foreground">
+                                          Multiplicador participantes (×{stat.pointsBreakdown.participantMultiplier}):
+                                        </span>
+                                        <span className="font-mono font-semibold">{stat.pointsBreakdown.finalTotal}</span>
+                                      </div>
+                                      <div className="flex justify-between pt-2 mt-2 border-t-2 border-primary/20">
+                                        <span className="font-bold text-primary">TOTAL FINAL:</span>
+                                        <span className="font-mono font-bold text-xl text-primary">{stat.pointsBreakdown.finalTotal}</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </React.Fragment>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </CardContent>

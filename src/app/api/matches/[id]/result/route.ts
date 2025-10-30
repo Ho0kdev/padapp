@@ -512,6 +512,68 @@ export async function POST(
       }
     }
 
+    // COMPLETAR TORNEO AUTOMÁTICAMENTE: Verificar si todos los partidos de TODAS las categorías están completados
+    try {
+      const allTournamentMatches = await prisma.match.findMany({
+        where: {
+          tournamentId: match.tournament.id
+        },
+        select: {
+          id: true,
+          status: true
+        }
+      })
+
+      const allMatchesCompleted = allTournamentMatches.length > 0 && allTournamentMatches.every(m =>
+        m.status === 'COMPLETED' || m.status === 'WALKOVER'
+      )
+
+      if (allMatchesCompleted) {
+        console.log('🏆 Todos los partidos del torneo completados en todas las categorías. Completando torneo automáticamente...')
+
+        // Actualizar estado del torneo a COMPLETED
+        const tournament = await prisma.tournament.update({
+          where: { id: match.tournament.id },
+          data: {
+            status: 'COMPLETED'
+          }
+        })
+
+        console.log(`✅ Torneo ${tournament.name} marcado como COMPLETED`)
+
+        // Calcular posiciones finales y puntos automáticamente
+        try {
+          // Importar el servicio de cálculo de puntos
+          const PointsCalculationService = (await import('@/lib/services/points-calculation-service')).default
+
+          await PointsCalculationService.processCompletedTournament(match.tournament.id)
+          console.log('✅ Posiciones finales y puntos del torneo calculados automáticamente')
+
+          // Registrar en auditoría
+          await AuditLogger.log(
+            session,
+            {
+              action: Action.UPDATE,
+              resource: Resource.TOURNAMENT,
+              resourceId: match.tournament.id,
+              description: `Torneo completado automáticamente y puntos calculados`,
+              metadata: {
+                totalMatches: allTournamentMatches.length,
+                autoCompleted: true
+              }
+            },
+            request
+          )
+        } catch (pointsError) {
+          console.error('⚠️ No se pudieron calcular los puntos automáticamente:', pointsError)
+          // No fallar la operación completa si el cálculo de puntos falla
+        }
+      }
+    } catch (completionError) {
+      console.error('⚠️ No se pudo completar el torneo automáticamente:', completionError)
+      // No fallar la operación completa si la finalización automática falla
+    }
+
     // Registrar auditoría general
     await AuditLogger.log(
       session,
@@ -741,6 +803,69 @@ export async function DELETE(
         }
       }
     })
+
+    // PASO 5: Verificar si el torneo debe volver a IN_PROGRESS
+    try {
+      // Verificar si todos los partidos del torneo siguen completados
+      const allTournamentMatches = await prisma.match.findMany({
+        where: {
+          tournamentId: match.tournament.id
+        },
+        select: {
+          id: true,
+          status: true
+        }
+      })
+
+      const allMatchesCompleted = allTournamentMatches.every(m =>
+        m.status === 'COMPLETED' || m.status === 'WALKOVER'
+      )
+
+      // Si NO todos los partidos están completados, volver torneo a IN_PROGRESS
+      if (!allMatchesCompleted && match.tournament) {
+        const currentTournament = await prisma.tournament.findUnique({
+          where: { id: match.tournament.id },
+          select: { status: true }
+        })
+
+        if (currentTournament?.status === 'COMPLETED') {
+          await prisma.tournament.update({
+            where: { id: match.tournament.id },
+            data: { status: 'IN_PROGRESS' }
+          })
+
+          // Recalcular rankings excluyendo este torneo
+          try {
+            const PointsCalculationService = (await import('@/lib/services/points-calculation-service')).default
+            await PointsCalculationService.recalculatePlayerRankingsAfterTournamentReversion(match.tournament.id)
+          } catch (recalcError) {
+            console.error('⚠️ Error al recalcular rankings:', recalcError)
+            // No fallar la operación completa
+          }
+
+          // Registrar en auditoría
+          await AuditLogger.log(
+            session,
+            {
+              action: Action.UPDATE,
+              resource: Resource.TOURNAMENT,
+              resourceId: match.tournament.id,
+              description: `Torneo vuelto a IN_PROGRESS al revertir resultado de partido ${match.matchNumber || matchId}`,
+              metadata: {
+                previousStatus: 'COMPLETED',
+                newStatus: 'IN_PROGRESS',
+                matchId,
+                reason: 'Resultado revertido'
+              }
+            },
+            request
+          )
+        }
+      }
+    } catch (statusError) {
+      console.error('⚠️ No se pudo actualizar el estado del torneo:', statusError)
+      // No fallar la operación completa si la actualización del estado falla
+    }
 
     // Registrar auditoría general
     await AuditLogger.log(

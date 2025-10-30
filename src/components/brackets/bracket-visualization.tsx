@@ -26,6 +26,14 @@ interface Team {
   }
 }
 
+interface MatchSet {
+  setNumber: number
+  team1Games: number
+  team2Games: number
+  team1TiebreakPoints?: number | null
+  team2TiebreakPoints?: number | null
+}
+
 interface Match {
   id: string
   roundNumber: number | null
@@ -54,6 +62,7 @@ interface Match {
     tiebreakAt: number
     goldenPoint: boolean
   } | null
+  sets?: MatchSet[]
 }
 
 interface BracketData {

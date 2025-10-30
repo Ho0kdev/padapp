@@ -28,6 +28,14 @@ interface Team {
   }
 }
 
+interface MatchSet {
+  setNumber: number
+  team1Games: number
+  team2Games: number
+  team1TiebreakPoints?: number | null
+  team2TiebreakPoints?: number | null
+}
+
 interface Match {
   id: string
   roundNumber: number | null
@@ -56,6 +64,7 @@ interface Match {
     tiebreakAt: number
     goldenPoint: boolean
   } | null
+  sets?: MatchSet[]
 }
 
 interface BracketTreeProps {
@@ -285,7 +294,7 @@ export function BracketTree({
       return true
     })
 
-  const totalWidth = sortedRounds.length * 350 + (hasGroupStage && zones.length > 0 ? 350 : 0) // 350px por columna + grupos
+  const totalWidth = sortedRounds.length * 380 + (hasGroupStage && zones.length > 0 ? 350 : 0) // 380px por columna + grupos
 
   // Calcular altura total necesaria basada en la ronda con más partidos
   const maxMatchesInRound = sortedRounds.length > 0
@@ -505,7 +514,7 @@ export function BracketTree({
                 <div
                   key={roundNum}
                   className="flex flex-col gap-4"
-                  style={{ width: '280px' }}
+                  style={{ width: '320px' }}
                 >
                   {/* Header de la ronda */}
                   <div className="sticky top-0 z-10 bg-background/95 backdrop-blur py-2 border-b">
@@ -607,54 +616,75 @@ function MatchCard({
         </div>
       </CardHeader>
       <CardContent className="p-3 pt-2">
-        <div className="space-y-1.5">
-          {/* Team 1 */}
-          <div
-            className={cn(
-              "flex items-center justify-between px-2 py-1.5 rounded text-sm transition-colors",
-              team1Won && "bg-green-100 dark:bg-green-950 font-semibold",
-              !team1Won && !team2Won && "hover:bg-muted/50"
-            )}
-          >
-            <span className={cn(
-              "truncate flex-1 text-xs",
-              !match.team1 && "text-muted-foreground italic"
-            )}>
-              {getTeamDisplay(match.team1)}
-            </span>
-            {isCompleted && (
-              <span className="ml-2 font-mono text-xs font-bold">
-                {match.team1SetsWon}
-              </span>
-            )}
-            {team1Won && <Trophy className="h-3 w-3 ml-1 text-green-600" />}
-          </div>
+        {/* Teams Grid with Sets/Games */}
+        <div className="border rounded-md overflow-hidden">
+          <div className="flex">
+            {/* Team Names Column */}
+            <div className="divide-y flex-1 min-w-0">
+              <div
+                className={cn(
+                  "px-2 py-1.5 text-xs",
+                  team1Won && "bg-green-100 dark:bg-green-950 font-semibold"
+                )}
+              >
+                <span className={cn(
+                  "truncate block",
+                  !match.team1 && "text-muted-foreground italic"
+                )}>
+                  {getTeamDisplay(match.team1)}
+                </span>
+              </div>
+              <div
+                className={cn(
+                  "px-2 py-1.5 text-xs",
+                  team2Won && "bg-green-100 dark:bg-green-950 font-semibold"
+                )}
+              >
+                <span className={cn(
+                  "truncate block",
+                  !match.team2 && "text-muted-foreground italic"
+                )}>
+                  {getTeamDisplay(match.team2)}
+                </span>
+              </div>
+            </div>
 
-          {/* VS separator */}
-          <div className="text-center text-xs text-muted-foreground font-medium">
-            vs
-          </div>
-
-          {/* Team 2 */}
-          <div
-            className={cn(
-              "flex items-center justify-between px-2 py-1.5 rounded text-sm transition-colors",
-              team2Won && "bg-green-100 dark:bg-green-950 font-semibold",
-              !team1Won && !team2Won && "hover:bg-muted/50"
-            )}
-          >
-            <span className={cn(
-              "truncate flex-1 text-xs",
-              !match.team2 && "text-muted-foreground italic"
-            )}>
-              {getTeamDisplay(match.team2)}
-            </span>
-            {isCompleted && (
-              <span className="ml-2 font-mono text-xs font-bold">
-                {match.team2SetsWon}
-              </span>
-            )}
-            {team2Won && <Trophy className="h-3 w-3 ml-1 text-green-600" />}
+            {/* Sets/Games Columns */}
+            {isCompleted && match.sets && match.sets.length > 0 ? (
+              <div className="flex divide-x shrink-0">
+                {match.sets.map((set) => (
+                  <div key={set.setNumber} className="divide-y w-8">
+                    <div
+                      className={cn(
+                        "py-1.5 text-center font-mono text-xs",
+                        set.team1Games > set.team2Games && "bg-green-200 dark:bg-green-900 font-bold"
+                      )}
+                    >
+                      {set.team1Games}
+                    </div>
+                    <div
+                      className={cn(
+                        "py-1.5 text-center font-mono text-xs",
+                        set.team2Games > set.team1Games && "bg-green-200 dark:bg-green-900 font-bold"
+                      )}
+                    >
+                      {set.team2Games}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : isCompleted ? (
+              <div className="flex items-center px-2 text-xs text-muted-foreground shrink-0">
+                <div className="divide-y">
+                  <div className="py-1.5 text-center font-mono">
+                    {match.team1SetsWon}
+                  </div>
+                  <div className="py-1.5 text-center font-mono">
+                    {match.team2SetsWon}
+                  </div>
+                </div>
+              </div>
+            ) : null}
           </div>
         </div>
 

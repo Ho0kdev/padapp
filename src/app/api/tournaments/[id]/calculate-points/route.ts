@@ -64,7 +64,8 @@ export async function POST(
       )
     }
 
-    // Ejecutar cálculo completo de puntos
+    // Ejecutar cálculo completo de puntos (incluye recalcular posiciones finales)
+    console.log(`🔄 Recalculando posiciones finales y puntos para torneo: ${tournament.name}`)
     await PointsCalculationService.processCompletedTournament(id)
 
     // Obtener resumen de puntos calculados
