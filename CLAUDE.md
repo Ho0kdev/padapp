@@ -514,3 +514,47 @@ npm run db:seed     # Loads test data (users, clubs, tournaments, etc.)
 - `src/app/dashboard/tournaments/[id]/edit/page.tsx` (line 81)
 - `src/app/dashboard/tournaments/[id]/americano-social/page.tsx` (lines 12-13, 52)
 
+### Points Visualization and Tournament Reversion (Oct 30, 2025)
+
+**New Feature: Tournament Points Tab**
+- Added "Puntos" tab in tournament detail view showing complete points breakdown
+- Component: `src/components/tournaments/tournament-points.tsx`
+- API Endpoint: `GET /api/tournaments/[id]/stats`
+- Features:
+  - Podium display for top 3 players
+  - Stats cards (total players, points awarded, average)
+  - Expandable table rows with detailed breakdown per player
+  - Shows: participation base, position points (%), victory bonus, set bonus, subtotal, tournament multiplier, participant multiplier, final total
+  - Real-time calculation of breakdown using `PointsCalculationService.calculatePlayerTournamentPointsWithBreakdown()`
+
+**New Feature: Player Points History**
+- Added "Historial de Puntos" tab in player ranking detail page
+- Component: `src/components/rankings/ranking-detail.tsx`
+- API Endpoint: `GET /api/players/[playerId]/tournament-stats`
+- Features:
+  - List of all tournaments played by the player
+  - Tournament name (linked), status, final position, matches, sets, points
+  - Same expandable breakdown as tournament points tab
+  - Ordered by most recent tournament first
+
+**Automatic Points Recalculation on Tournament Reversion**
+- When a tournament status changes from COMPLETED to IN_PROGRESS:
+  - Automatically resets `TournamentStats.pointsEarned` to 0
+  - Resets `TournamentStats.finalPosition` to null
+  - Recalculates all player rankings excluding the reverted tournament
+  - Only sums points from tournaments with status COMPLETED
+- Service: `PointsCalculationService.recalculatePlayerRankingsAfterTournamentReversion()`
+- Triggers:
+  1. DELETE `/api/matches/[id]/result` - When reverting a match result
+  2. PATCH `/api/tournaments/[id]/status` - When manually changing tournament status
+- File: `src/lib/services/points-calculation-service.ts`
+- Ensures data integrity: rankings always reflect only completed tournaments
+
+**UI Fixes: React Fragment Keys**
+- Fixed React warning about missing keys in list items
+- Changed `<>` to `<React.Fragment key={...}>` in tournament-points.tsx and ranking-detail.tsx
+- Proper HTML structure maintained (no Collapsible wrapper violating table hierarchy)
+- Files:
+  - `src/components/tournaments/tournament-points.tsx`
+  - `src/components/rankings/ranking-detail.tsx`
+

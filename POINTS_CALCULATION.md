@@ -359,7 +359,93 @@ Puedes combinar torneos de diferentes niveles para maximizar puntos:
 
 ---
 
+## 🔄 REVERSIÓN Y RECALCULO DE PUNTOS
+
+### ¿Qué sucede cuando un torneo vuelve a IN_PROGRESS?
+
+Si un torneo que estaba COMPLETED vuelve a IN_PROGRESS (por ejemplo, al revertir un resultado de partido o cambio manual de estado), el sistema ejecuta automáticamente:
+
+1. **Reseteo de TournamentStats**:
+   - `pointsEarned` → 0
+   - `finalPosition` → null
+   - Las estadísticas de partidos se mantienen (matchesPlayed, matchesWon, sets, etc.)
+
+2. **Recálculo de Rankings Globales**:
+   - Se recalculan todos los puntos de los jugadores afectados
+   - Se excluyen los puntos del torneo revertido
+   - Solo se suman torneos con status COMPLETED
+   - Rankings se actualizan automáticamente
+
+### Casos de Uso
+
+**Escenario 1: Revertir resultado de partido**
+```
+DELETE /api/matches/{id}/result
+→ Torneo vuelve a IN_PROGRESS automáticamente
+→ TournamentStats reseteados a 0
+→ Rankings recalculados sin ese torneo
+```
+
+**Escenario 2: Cambio manual de estado**
+```
+PATCH /api/tournaments/{id}/status
+{ "status": "IN_PROGRESS" }
+→ TournamentStats reseteados a 0
+→ Rankings recalculados sin ese torneo
+```
+
+### Integridad de Datos
+
+✅ **Rankings siempre reflejan solo torneos COMPLETED**
+✅ **No hay puntos "fantasma" de torneos incompletos**
+✅ **Proceso transparente y auditable**
+✅ **Sin intervención manual necesaria**
+
+---
+
+## 📊 VISUALIZACIÓN DE PUNTOS
+
+### Pestaña "Puntos" en Torneos
+
+Cada torneo completado muestra una pestaña "Puntos" con:
+
+- **Tabla de jugadores** ordenada por puntos
+- **Desglose detallado** expandible por jugador:
+  - Participación base: +50
+  - Posición final (con porcentaje): +X
+  - Victorias (cantidad × valor): +X
+  - Sets ganados (cantidad × valor): +X
+  - Subtotal
+  - Multiplicador de torneo: ×X
+  - Multiplicador de participantes: ×X
+  - **Total final**
+
+### Historial de Puntos en Rankings
+
+En la página de cada jugador en el ranking (`/dashboard/rankings/{id}`):
+
+- **Pestaña "Historial de Puntos"** con:
+  - Tabla de todos los torneos jugados
+  - Link a cada torneo
+  - Status del torneo
+  - Posición final alcanzada
+  - Partidos jugados/ganados
+  - Sets ganados/perdidos
+  - **Puntos totales del torneo**
+  - Desglose expandible con el mismo detalle que arriba
+
+---
+
 ## 📝 CHANGELOG
+
+### Octubre 30, 2025 - Sistema de Reversión Automática
+- ✅ Recálculo automático de rankings al revertir torneos
+- ✅ Reseteo de TournamentStats (pointsEarned, finalPosition)
+- ✅ Integrado en reversión de resultados de partidos
+- ✅ Integrado en cambio manual de estado de torneos
+- ✅ Pestaña "Puntos" en vista de torneos con desglose detallado
+- ✅ Pestaña "Historial de Puntos" en página de rankings
+- ✅ Visualización completa del breakdown de cálculo
 
 ### Octubre 17, 2025
 - ✅ Fecha de documentación actualizada
@@ -378,4 +464,4 @@ Puedes combinar torneos de diferentes niveles para maximizar puntos:
 
 ---
 
-**¡El sistema de puntos automático con configuración flexible está 100% funcional y listo para producción!** 🎯
+**¡El sistema de puntos automático con configuración flexible, reversión inteligente y visualización completa está 100% funcional y listo para producción!** 🎯

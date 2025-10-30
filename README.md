@@ -198,7 +198,14 @@ padapp/
   - Regional Alto: 600-900 pts
   - Regional: 400-600 pts
   - Local/Club: 100-300 pts
-- **API Endpoint**: `POST /api/tournaments/{id}/calculate-points`
+- **🆕 Visualización Detallada**: Pestaña "Puntos" en torneos con breakdown completo por jugador
+- **🆕 Reversión Inteligente**: Recálculo automático al revertir torneos (COMPLETED → IN_PROGRESS)
+  - Resetea puntos de TournamentStats a 0
+  - Recalcula rankings excluyendo torneos revertidos
+  - Garantiza integridad de datos
+- **API Endpoints**:
+  - `POST /api/tournaments/{id}/calculate-points` - Calcular puntos
+  - `GET /api/tournaments/{id}/stats` - Obtener stats con breakdown
 - **Actualización Automática**: Rankings actualizados al completar torneos
 - **Transparencia Total**: Logs detallados de cada cálculo
 - 📄 [Documentación completa del sistema de puntos](POINTS_CALCULATION.md)
@@ -232,8 +239,13 @@ padapp/
 - **Rankings Anuales**: Puntuaciones por temporada
 - **Múltiples Categorías**: Rankings independientes por categoría
 - **Actualización Automática**: Se actualizan tras completar torneos
+- **🆕 Historial de Puntos por Jugador**: Pestaña dedicada mostrando todos los torneos jugados
+  - Desglose completo del cálculo de puntos por torneo
+  - Link a cada torneo
+  - Estadísticas de rendimiento (posición, partidos, sets)
 - **Histórico**: Mantiene registro de todas las temporadas
 - **API de Temporadas**: `/api/rankings/seasons` para obtener años disponibles
+- **API de Historial**: `/api/players/{playerId}/tournament-stats` - Stats detalladas por jugador
 
 ### ✅ **Panel de Administración**
 - **Dashboard de Torneos**: Estadísticas y métricas globales

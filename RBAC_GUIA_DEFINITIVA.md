@@ -317,6 +317,8 @@ Esta sección documenta **TODAS** las rutas API del sistema con su implementaci�
 | `/api/tournaments/[id]/classify` | POST | `authorize(Action.UPDATE, Resource.TOURNAMENT)` | ADMIN o CLUB_ADMIN |
 | `/api/tournaments/[id]/force-classify` | POST | `authorize(Action.UPDATE, Resource.TOURNAMENT)` | ADMIN o CLUB_ADMIN |
 | `/api/tournaments/[id]/calculate-points` | POST | `authorize(Action.MANAGE, Resource.RANKING)` | Solo ADMIN |
+| `/api/tournaments/[id]/stats` | GET | `requireAuth()` | Todos los usuarios autenticados |
+| `/api/players/[playerId]/tournament-stats` | GET | `requireAuth()` | Todos los usuarios autenticados |
 | `/api/tournaments/[id]/americano-social/generate` | POST | `authorize(Action.UPDATE, Resource.TOURNAMENT)` | ADMIN o CLUB_ADMIN |
 | `/api/tournaments/[id]/americano-social/pools` | GET | `requireAuth()` | Todos los usuarios autenticados |
 | `/api/tournaments/status-update` | PUT | `authorize()` | ADMIN o CLUB_ADMIN |
@@ -508,6 +510,8 @@ Consulta estos archivos como ejemplos de implementación RBAC completa:
 - **[id]/route.ts**: CRUD con ownership y rol
 - **[id]/generate-bracket/route.ts**: Generación de brackets
 - **[id]/calculate-points/route.ts**: Cálculo de puntos (solo ADMIN)
+- **[id]/stats/route.ts**: Estadísticas del torneo con breakdown de puntos (autenticado)
+- **players/[playerId]/tournament-stats/route.ts**: Historial de torneos por jugador (autenticado)
 
 #### Inscripciones - src/app/api/registrations/
 - **route.ts**: GET contextual por rol, POST con validaciones
