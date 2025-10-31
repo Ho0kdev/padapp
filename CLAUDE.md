@@ -122,6 +122,42 @@ const { user, isAdmin, isClubAdmin, isAdminOrClubAdmin, hasRole } = useAuth()
 
 For complete API endpoint mapping, see [RBAC_GUIA_DEFINITIVA.md](RBAC_GUIA_DEFINITIVA.md)
 
+**Match Management Permissions**:
+
+All tournament formats (conventional and Americano Social) use consistent permissions for match management operations:
+
+| Operation | Required Permissions | Implementation |
+|-----------|---------------------|----------------|
+| View match details | Any authenticated user | `requireAuth()` on server page |
+| Start match | ADMIN, CLUB_ADMIN, REFEREE, or Tournament Organizer | `canManage` check in client component |
+| Load match result | ADMIN, CLUB_ADMIN, REFEREE, or Tournament Organizer | `canManage` check in client component |
+| Schedule match | ADMIN, CLUB_ADMIN, REFEREE, or Tournament Organizer | `canManage` check in client component |
+| Revert result | ADMIN, CLUB_ADMIN, REFEREE, or Tournament Organizer | `canManage` check in client component |
+
+**Client Component Pattern**:
+```typescript
+import { useAuth } from '@/hooks/use-auth'
+
+const { isAdminOrClubAdmin, isReferee } = useAuth()
+const isOwner = match.tournament.organizerId === currentUserId
+const canManage = isOwner || isAdminOrClubAdmin || isReferee
+
+// Use canManage to show/hide management buttons
+{canManage && <Button>Cargar resultado</Button>}
+```
+
+**API Endpoint Pattern**:
+```typescript
+// All match management endpoints use Action.UPDATE on Resource.TOURNAMENT
+const session = await authorize(Action.UPDATE, Resource.TOURNAMENT)
+```
+
+This ensures that:
+- Tournament organizers can manage their own tournament matches
+- ADMIN and CLUB_ADMIN can manage any matches
+- REFEREE role can load/revert match results (but not create/delete tournaments)
+- Regular PLAYER role cannot manage matches
+
 ### Audit Logging System
 
 **All sensitive operations MUST be logged**. There are 9 logging services:
