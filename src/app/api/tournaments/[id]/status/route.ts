@@ -54,10 +54,16 @@ export async function PATCH(
         id: true,
         organizerId: true,
         status: true,
+        type: true,
         registrationStart: true,
         registrationEnd: true,
         tournamentStart: true,
-        _count: { select: { teams: true } }
+        _count: {
+          select: {
+            teams: true,
+            americanoPools: true
+          }
+        }
       }
     })
 
@@ -153,11 +159,24 @@ export async function PATCH(
             { status: 400 }
           )
         }
-        if (existingTournament._count.teams === 0) {
-          return NextResponse.json(
-            { error: "No se puede iniciar un torneo sin equipos registrados" },
-            { status: 400 }
-          )
+
+        // Validar según el tipo de torneo
+        if (existingTournament.type === 'AMERICANO_SOCIAL') {
+          // Para Americano Social, verificar que haya pools generados
+          if (existingTournament._count.americanoPools === 0) {
+            return NextResponse.json(
+              { error: "No se puede iniciar un torneo Americano Social sin pools generados" },
+              { status: 400 }
+            )
+          }
+        } else {
+          // Para torneos tradicionales, verificar que haya equipos registrados
+          if (existingTournament._count.teams === 0) {
+            return NextResponse.json(
+              { error: "No se puede iniciar un torneo sin equipos registrados" },
+              { status: 400 }
+            )
+          }
         }
         break
 

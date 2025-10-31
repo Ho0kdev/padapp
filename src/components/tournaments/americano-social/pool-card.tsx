@@ -10,9 +10,10 @@ import { AmericanoMatchCard } from "./americano-match-card"
 interface PoolCardProps {
   pool: any
   onMatchUpdate: () => void
+  hasPreviousRoundsIncomplete?: boolean
 }
 
-export function PoolCard({ pool, onMatchUpdate }: PoolCardProps) {
+export function PoolCard({ pool, onMatchUpdate, hasPreviousRoundsIncomplete = false }: PoolCardProps) {
   const [selectedMatch, setSelectedMatch] = useState<any>(null)
 
   return (
@@ -76,6 +77,7 @@ export function PoolCard({ pool, onMatchUpdate }: PoolCardProps) {
                   match={match}
                   canManage={true}
                   onLoadResult={() => setSelectedMatch(match)}
+                  hasPreviousRoundsIncomplete={hasPreviousRoundsIncomplete}
                 />
               ))}
             </div>

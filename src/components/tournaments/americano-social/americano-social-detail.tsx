@@ -278,6 +278,34 @@ export function AmericanoSocialDetail({
 
   const numberOfRounds = poolsByRound.length
 
+  // Calcular si hay rondas anteriores con partidos incompletos
+  const hasIncompletePreviousRounds = useMemo(() => {
+    const incompleteMapp = new Map<number, boolean>()
+
+    poolsByRound.forEach(([roundNum, roundPools]) => {
+      // Verificar si la ronda actual tiene partidos incompletos
+      const hasIncomplete = roundPools.some(pool =>
+        pool.matches?.some((match: any) => match.status !== 'COMPLETED')
+      )
+      incompleteMapp.set(roundNum, hasIncomplete)
+    })
+
+    // Para cada ronda, verificar si ALGUNA ronda anterior tiene partidos incompletos
+    const result = new Map<number, boolean>()
+    poolsByRound.forEach(([roundNum]) => {
+      let hasPreviousIncomplete = false
+      for (let i = 1; i < roundNum; i++) {
+        if (incompleteMapp.get(i)) {
+          hasPreviousIncomplete = true
+          break
+        }
+      }
+      result.set(roundNum, hasPreviousIncomplete)
+    })
+
+    return result
+  }, [poolsByRound])
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -702,6 +730,7 @@ export function AmericanoSocialDetail({
                         key={pool.id}
                         pool={pool}
                         onMatchUpdate={loadData}
+                        hasPreviousRoundsIncomplete={hasIncompletePreviousRounds.get(roundNum) || false}
                       />
                     ))}
                   </div>
@@ -726,6 +755,7 @@ export function AmericanoSocialDetail({
                     key={pool.id}
                     pool={pool}
                     onMatchUpdate={loadData}
+                    hasPreviousRoundsIncomplete={false}
                   />
                 ))}
               </div>
@@ -767,6 +797,7 @@ export function AmericanoSocialDetail({
                                   canManage={canManage}
                                   onLoadResult={() => setSelectedMatch(match)}
                                   showPoolInfo={false}
+                                  hasPreviousRoundsIncomplete={hasIncompletePreviousRounds.get(roundNum) || false}
                                 />
                               ))}
                             </div>
@@ -790,6 +821,7 @@ export function AmericanoSocialDetail({
                             canManage={canManage}
                             onLoadResult={() => setSelectedMatch(match)}
                             showPoolInfo={false}
+                            hasPreviousRoundsIncomplete={false}
                           />
                         ))}
                       </div>

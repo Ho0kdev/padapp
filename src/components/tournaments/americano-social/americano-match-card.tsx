@@ -45,6 +45,7 @@ interface AmericanoMatchCardProps {
   onSchedule?: () => void
   showPoolInfo?: boolean
   poolName?: string
+  hasPreviousRoundsIncomplete?: boolean
 }
 
 export function AmericanoMatchCard({
@@ -53,7 +54,8 @@ export function AmericanoMatchCard({
   onLoadResult,
   onSchedule,
   showPoolInfo = false,
-  poolName
+  poolName,
+  hasPreviousRoundsIncomplete = false
 }: AmericanoMatchCardProps) {
   const isCompleted = match.status === "COMPLETED"
   const teamAWon = isCompleted && (match.teamAScore ?? 0) > (match.teamBScore ?? 0)
@@ -138,9 +140,15 @@ export function AmericanoMatchCard({
                         )}
 
                         {onLoadResult && (
-                          <DropdownMenuItem onClick={onLoadResult}>
+                          <DropdownMenuItem
+                            onClick={hasPreviousRoundsIncomplete ? undefined : onLoadResult}
+                            disabled={hasPreviousRoundsIncomplete}
+                            className={hasPreviousRoundsIncomplete ? "opacity-50 cursor-not-allowed" : ""}
+                          >
                             <CheckCircle className="mr-2 h-4 w-4" />
-                            Cargar resultado
+                            {hasPreviousRoundsIncomplete
+                              ? "Completar rondas anteriores primero"
+                              : "Cargar resultado"}
                           </DropdownMenuItem>
                         )}
                       </>

@@ -48,6 +48,36 @@ export async function POST(
       )
     }
 
+    // Validar que las rondas anteriores estén completadas (para torneos multi-ronda)
+    const currentRound = match.pool.roundNumber
+    if (currentRound > 1) {
+      // Verificar si todos los partidos de rondas anteriores están completados
+      const incompleteMatches = await prisma.americanoPoolMatch.count({
+        where: {
+          pool: {
+            tournamentId: match.pool.tournamentId,
+            roundNumber: {
+              lt: currentRound // Rondas anteriores
+            }
+          },
+          status: {
+            not: 'COMPLETED'
+          }
+        }
+      })
+
+      if (incompleteMatches > 0) {
+        return NextResponse.json(
+          {
+            error: `No se puede cargar el resultado de la Ronda ${currentRound}. Aún hay ${incompleteMatches} partido(s) pendiente(s) en rondas anteriores.`,
+            incompleteMatches,
+            currentRound
+          },
+          { status: 400 }
+        )
+      }
+    }
+
     // Autorización - solo organizador o admin
     const session = await authorize(Action.UPDATE, Resource.TOURNAMENT, match.pool.tournament.id)
 
