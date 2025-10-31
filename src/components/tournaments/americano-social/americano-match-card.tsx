@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -10,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Calendar, MapPin, MoreHorizontal, Eye, CheckCircle } from "lucide-react"
+import { Calendar, MapPin, MoreHorizontal, Eye, CheckCircle, Play } from "lucide-react"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import { cn } from "@/lib/utils"
@@ -43,10 +44,12 @@ interface AmericanoMatchCardProps {
   canManage?: boolean
   onLoadResult?: () => void
   onSchedule?: () => void
+  onStartMatch?: () => void
   showPoolInfo?: boolean
   poolName?: string
   hasPreviousRoundsIncomplete?: boolean
   matchNumber?: number
+  statusLoading?: boolean
 }
 
 export function AmericanoMatchCard({
@@ -54,10 +57,12 @@ export function AmericanoMatchCard({
   canManage = false,
   onLoadResult,
   onSchedule,
+  onStartMatch,
   showPoolInfo = false,
   poolName,
   hasPreviousRoundsIncomplete = false,
-  matchNumber
+  matchNumber,
+  statusLoading = false
 }: AmericanoMatchCardProps) {
   const isCompleted = match.status === "COMPLETED"
   const teamAWon = isCompleted && (match.teamAScore ?? 0) > (match.teamBScore ?? 0)
@@ -117,47 +122,57 @@ export function AmericanoMatchCard({
             </div>
             <div className="flex items-center gap-2">
               {getStatusBadge()}
-              {canManage && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem asChild>
+                    <Link href={`/dashboard/americano-matches/${match.id}`}>
                       <Eye className="mr-2 h-4 w-4" />
                       Ver detalle
-                    </DropdownMenuItem>
+                    </Link>
+                  </DropdownMenuItem>
 
-                    {match.status !== "COMPLETED" && (
-                      <>
-                        <DropdownMenuSeparator />
+                  {canManage && match.status !== "COMPLETED" && match.status !== "WALKOVER" && (
+                    <>
+                      <DropdownMenuSeparator />
 
-                        {onSchedule && (
-                          <DropdownMenuItem onClick={onSchedule}>
-                            <Calendar className="mr-2 h-4 w-4" />
-                            Programar partido
-                          </DropdownMenuItem>
-                        )}
+                      {onSchedule && (
+                        <DropdownMenuItem onClick={onSchedule}>
+                          <Calendar className="mr-2 h-4 w-4" />
+                          Programar partido
+                        </DropdownMenuItem>
+                      )}
 
-                        {onLoadResult && (
-                          <DropdownMenuItem
-                            onClick={hasPreviousRoundsIncomplete ? undefined : onLoadResult}
-                            disabled={hasPreviousRoundsIncomplete}
-                            className={hasPreviousRoundsIncomplete ? "opacity-50 cursor-not-allowed" : ""}
-                          >
-                            <CheckCircle className="mr-2 h-4 w-4" />
-                            {hasPreviousRoundsIncomplete
-                              ? "Completar rondas anteriores primero"
-                              : "Cargar resultado"}
-                          </DropdownMenuItem>
-                        )}
-                      </>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
+                      {match.status === "SCHEDULED" && onStartMatch && (
+                        <DropdownMenuItem
+                          onClick={onStartMatch}
+                          disabled={statusLoading}
+                        >
+                          <Play className="mr-2 h-4 w-4" />
+                          Iniciar partido
+                        </DropdownMenuItem>
+                      )}
+
+                      {onLoadResult && (
+                        <DropdownMenuItem
+                          onClick={hasPreviousRoundsIncomplete ? undefined : onLoadResult}
+                          disabled={hasPreviousRoundsIncomplete}
+                          className={hasPreviousRoundsIncomplete ? "opacity-50 cursor-not-allowed" : ""}
+                        >
+                          <CheckCircle className="mr-2 h-4 w-4" />
+                          {hasPreviousRoundsIncomplete
+                            ? "Completar rondas anteriores primero"
+                            : "Cargar resultado"}
+                        </DropdownMenuItem>
+                      )}
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
 

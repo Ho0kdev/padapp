@@ -6,6 +6,16 @@ import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/hooks/use-auth"
 import {
@@ -13,43 +23,37 @@ import {
   Calendar,
   Trophy,
   Users,
+  MapPin,
   Play,
   CheckCircle,
-  RotateCcw,
-  MapPin
+  RotateCcw
 } from "lucide-react"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import { cn } from "@/lib/utils"
-import { MatchResultDialog } from "./match-result-dialog"
-import { MatchScheduleDialog } from "./match-schedule-dialog"
+import { AmericanoMatchResultDialog } from "@/components/tournaments/americano-social/americano-match-result-dialog"
+import { AmericanoMatchScheduleDialog } from "@/components/tournaments/americano-social/americano-match-schedule-dialog"
 
-interface MatchDetailProps {
+interface AmericanoMatchDetailProps {
   match: any
+  currentUserId: string
 }
 
-export function MatchDetail({ match }: MatchDetailProps) {
+export function AmericanoMatchDetail({ match, currentUserId }: AmericanoMatchDetailProps) {
   const router = useRouter()
   const { toast } = useToast()
-  const { isAdminOrClubAdmin, isReferee } = useAuth()
+  const { isAdminOrClubAdmin } = useAuth()
   const [statusLoading, setStatusLoading] = useState(false)
   const [revertLoading, setRevertLoading] = useState(false)
   const [resultDialogOpen, setResultDialogOpen] = useState(false)
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false)
 
-  const canManage = isAdminOrClubAdmin || isReferee
-  const isCompleted = match.status === "COMPLETED" || match.status === "WALKOVER"
-  const team1Won = match.winnerTeam?.id === match.team1?.id
-  const team2Won = match.winnerTeam?.id === match.team2?.id
+  const isOwner = match.tournament.organizerId === currentUserId
+  const canManage = isOwner || isAdminOrClubAdmin
 
-  const getTeamDisplay = (team: any): string => {
-    if (!team) return "Por definir"
-    if (team.name) return team.name
-    if (team.registration1?.player && team.registration2?.player) {
-      return `${team.registration1.player.firstName} ${team.registration1.player.lastName} / ${team.registration2.player.firstName} ${team.registration2.player.lastName}`
-    }
-    return "Equipo sin nombre"
-  }
+  const isCompleted = match.status === "COMPLETED"
+  const teamAWon = isCompleted && (match.teamAScore ?? 0) > (match.teamBScore ?? 0)
+  const teamBWon = isCompleted && (match.teamBScore ?? 0) > (match.teamAScore ?? 0)
 
   const getStatusBadge = () => {
     const styles: Record<string, string> = {
@@ -75,24 +79,10 @@ export function MatchDetail({ match }: MatchDetailProps) {
     )
   }
 
-  const getPhaseLabel = (phaseType: string): string => {
-    const labels: Record<string, string> = {
-      FINAL: "Final",
-      SEMIFINALS: "Semifinales",
-      QUARTERFINALS: "Cuartos de Final",
-      ROUND_OF_16: "Octavos de Final",
-      ROUND_OF_32: "1/16 de Final",
-      GROUP_STAGE: "Fase de Grupos",
-      THIRD_PLACE: "Tercer Lugar",
-      ELIMINATION: "Eliminación"
-    }
-    return labels[phaseType] || phaseType
-  }
-
   const handleStartMatch = async () => {
     try {
       setStatusLoading(true)
-      const response = await fetch(`/api/matches/${match.id}/status`, {
+      const response = await fetch(`/api/americano-matches/${match.id}/status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "IN_PROGRESS" })
@@ -121,10 +111,14 @@ export function MatchDetail({ match }: MatchDetailProps) {
     }
   }
 
+  const handleLoadResult = () => {
+    setResultDialogOpen(true)
+  }
+
   const handleSuccess = () => {
-    router.refresh()
     setResultDialogOpen(false)
     setScheduleDialogOpen(false)
+    router.refresh()
   }
 
   const handleRevertResult = async () => {
@@ -134,7 +128,7 @@ export function MatchDetail({ match }: MatchDetailProps) {
 
     try {
       setRevertLoading(true)
-      const response = await fetch(`/api/matches/${match.id}/result`, {
+      const response = await fetch(`/api/americano-matches/${match.id}/result`, {
         method: "DELETE",
       })
 
@@ -175,7 +169,7 @@ export function MatchDetail({ match }: MatchDetailProps) {
           </div>
           <div className="flex items-center gap-3">
             <h1 className="text-3xl font-bold tracking-tight">
-              {getPhaseLabel(match.phaseType)} {match.matchNumber && `- Partido ${match.matchNumber}`}
+              {match.pool.name} - Partido {match.roundNumber}
             </h1>
             {getStatusBadge()}
           </div>
@@ -183,7 +177,7 @@ export function MatchDetail({ match }: MatchDetailProps) {
             <div className="flex items-center gap-1">
               <Trophy className="h-4 w-4" />
               <Link
-                href={`/dashboard/tournaments/${match.tournament.id}`}
+                href={`/dashboard/tournaments/${match.tournament.id}/americano-social`}
                 className="hover:underline"
               >
                 {match.tournament.name}
@@ -191,7 +185,7 @@ export function MatchDetail({ match }: MatchDetailProps) {
             </div>
             <div className="flex items-center gap-1">
               <Users className="h-4 w-4" />
-              {match.category.name}
+              Americano Social
             </div>
           </div>
         </div>
@@ -208,8 +202,8 @@ export function MatchDetail({ match }: MatchDetailProps) {
             </Button>
           )}
 
-          {canManage && !isCompleted && match.team1 && match.team2 && (
-            <Button onClick={() => setResultDialogOpen(true)}>
+          {canManage && match.status !== "COMPLETED" && match.status !== "WALKOVER" && (
+            <Button onClick={handleLoadResult}>
               <CheckCircle className="mr-2 h-4 w-4" />
               Cargar resultado
             </Button>
@@ -238,7 +232,7 @@ export function MatchDetail({ match }: MatchDetailProps) {
           </CardHeader>
           <CardContent>
             <div className="border rounded-md overflow-hidden">
-              {/* Team 1 Row */}
+              {/* Team A Row */}
               <div
                 className="grid border-b"
                 style={{
@@ -247,53 +241,47 @@ export function MatchDetail({ match }: MatchDetailProps) {
                     : '1fr auto'
                 }}
               >
-                {/* Team 1 Info */}
+                {/* Team A Info */}
                 <div
                   className={cn(
                     "p-4 border-r",
-                    team1Won && "bg-green-50 dark:bg-green-950 font-semibold"
+                    teamAWon && "bg-green-50 dark:bg-green-950 font-semibold"
                   )}
                 >
                   <div className="flex flex-col gap-2">
-                    <div className={cn("font-semibold", team1Won && "text-green-700 dark:text-green-400")}>
-                      {getTeamDisplay(match.team1)} {team1Won && "🏆"}
+                    <div className={cn("font-semibold", teamAWon && "text-green-700 dark:text-green-400")}>
+                      Equipo A {teamAWon && "🏆"}
                     </div>
-                    {match.team1 && match.team1.registration1 && match.team1.registration2 && (
-                      <div className="space-y-1 text-xs text-muted-foreground">
-                        <div className="flex items-center justify-between">
-                          <span>{match.team1.registration1.player.firstName} {match.team1.registration1.player.lastName}</span>
-                          <Badge variant="outline" className="text-xs ml-2">
-                            {match.team1.registration1.player.rankings?.[0]?.currentPoints ?? match.team1.registration1.player.rankingPoints} pts
-                          </Badge>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span>{match.team1.registration2.player.firstName} {match.team1.registration2.player.lastName}</span>
-                          <Badge variant="outline" className="text-xs ml-2">
-                            {match.team1.registration2.player.rankings?.[0]?.currentPoints ?? match.team1.registration2.player.rankingPoints} pts
-                          </Badge>
-                        </div>
+                    <div className="space-y-1 text-xs text-muted-foreground">
+                      <div className="flex items-center justify-between">
+                        <span>{match.player1.firstName} {match.player1.lastName}</span>
+                        <Badge variant="outline" className="text-xs ml-2">
+                          {match.player1.rankingPoints} pts
+                        </Badge>
                       </div>
-                    )}
+                      <div className="flex items-center justify-between">
+                        <span>{match.player2.firstName} {match.player2.lastName}</span>
+                        <Badge variant="outline" className="text-xs ml-2">
+                          {match.player2.rankingPoints} pts
+                        </Badge>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                {/* Team 1 Sets */}
+                {/* Team A Sets/Score */}
                 {isCompleted && match.sets && match.sets.length > 0 ? (
+                  // Mostrar games por set
                   <>
                     {match.sets.map((set: any) => (
                       <div
                         key={set.setNumber}
                         className={cn(
                           "p-4 text-center font-mono text-lg flex items-center justify-center min-w-[60px] border-r last:border-r-0",
-                          set.team1Games > set.team2Games && "bg-green-100 dark:bg-green-900 font-bold"
+                          set.teamAScore > set.teamBScore && "bg-green-100 dark:bg-green-900 font-bold"
                         )}
                       >
-                        <div>
-                          {set.team1Games}
-                          {set.team1TiebreakPoints !== null && (
-                            <sup className="text-xs ml-0.5">{set.team1TiebreakPoints}</sup>
-                          )}
-                        </div>
+                        {set.teamAScore}
                       </div>
                     ))}
                   </>
@@ -304,7 +292,7 @@ export function MatchDetail({ match }: MatchDetailProps) {
                 )}
               </div>
 
-              {/* Team 2 Row */}
+              {/* Team B Row */}
               <div
                 className="grid"
                 style={{
@@ -313,53 +301,47 @@ export function MatchDetail({ match }: MatchDetailProps) {
                     : '1fr auto'
                 }}
               >
-                {/* Team 2 Info */}
+                {/* Team B Info */}
                 <div
                   className={cn(
                     "p-4 border-r",
-                    team2Won && "bg-green-50 dark:bg-green-950 font-semibold"
+                    teamBWon && "bg-green-50 dark:bg-green-950 font-semibold"
                   )}
                 >
                   <div className="flex flex-col gap-2">
-                    <div className={cn("font-semibold", team2Won && "text-green-700 dark:text-green-400")}>
-                      {getTeamDisplay(match.team2)} {team2Won && "🏆"}
+                    <div className={cn("font-semibold", teamBWon && "text-green-700 dark:text-green-400")}>
+                      Equipo B {teamBWon && "🏆"}
                     </div>
-                    {match.team2 && match.team2.registration1 && match.team2.registration2 && (
-                      <div className="space-y-1 text-xs text-muted-foreground">
-                        <div className="flex items-center justify-between">
-                          <span>{match.team2.registration1.player.firstName} {match.team2.registration1.player.lastName}</span>
-                          <Badge variant="outline" className="text-xs ml-2">
-                            {match.team2.registration1.player.rankings?.[0]?.currentPoints ?? match.team2.registration1.player.rankingPoints} pts
-                          </Badge>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span>{match.team2.registration2.player.firstName} {match.team2.registration2.player.lastName}</span>
-                          <Badge variant="outline" className="text-xs ml-2">
-                            {match.team2.registration2.player.rankings?.[0]?.currentPoints ?? match.team2.registration2.player.rankingPoints} pts
-                          </Badge>
-                        </div>
+                    <div className="space-y-1 text-xs text-muted-foreground">
+                      <div className="flex items-center justify-between">
+                        <span>{match.player3.firstName} {match.player3.lastName}</span>
+                        <Badge variant="outline" className="text-xs ml-2">
+                          {match.player3.rankingPoints} pts
+                        </Badge>
                       </div>
-                    )}
+                      <div className="flex items-center justify-between">
+                        <span>{match.player4.firstName} {match.player4.lastName}</span>
+                        <Badge variant="outline" className="text-xs ml-2">
+                          {match.player4.rankingPoints} pts
+                        </Badge>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                {/* Team 2 Sets */}
+                {/* Team B Sets/Score */}
                 {isCompleted && match.sets && match.sets.length > 0 ? (
+                  // Mostrar games por set
                   <>
                     {match.sets.map((set: any) => (
                       <div
                         key={set.setNumber}
                         className={cn(
                           "p-4 text-center font-mono text-lg flex items-center justify-center min-w-[60px] border-r last:border-r-0",
-                          set.team2Games > set.team1Games && "bg-green-100 dark:bg-green-900 font-bold"
+                          set.teamBScore > set.teamAScore && "bg-green-100 dark:bg-green-900 font-bold"
                         )}
                       >
-                        <div>
-                          {set.team2Games}
-                          {set.team2TiebreakPoints !== null && (
-                            <sup className="text-xs ml-0.5">{set.team2TiebreakPoints}</sup>
-                          )}
-                        </div>
+                        {set.teamBScore}
                       </div>
                     ))}
                   </>
@@ -381,55 +363,41 @@ export function MatchDetail({ match }: MatchDetailProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Fase</p>
-              <p>{getPhaseLabel(match.phaseType)}</p>
+              <p className="text-sm font-medium text-muted-foreground">Pool</p>
+              <p>{match.pool.name}</p>
             </div>
 
-            {match.roundNumber && (
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Ronda</p>
-                <p>Ronda {match.roundNumber}</p>
-              </div>
-            )}
-
-            {match.zone && (
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Grupo</p>
-                <p>{match.zone.name}</p>
-              </div>
-            )}
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Ronda</p>
+              <p>Ronda {match.roundNumber}</p>
+            </div>
 
             <div>
               <p className="text-sm font-medium text-muted-foreground">Estado</p>
               <div className="mt-1">{getStatusBadge()}</div>
             </div>
 
-            {match.scheduledAt && (
+            {match.scheduledFor && (
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Programado para</p>
                 <div className="flex items-center gap-1 mt-1">
                   <Calendar className="h-4 w-4" />
                   <span>
-                    {format(new Date(match.scheduledAt), "dd/MM/yyyy HH:mm", { locale: es })}
+                    {format(new Date(match.scheduledFor), "dd/MM/yyyy HH:mm", { locale: es })}
                   </span>
                 </div>
               </div>
             )}
 
-            {match.court && (
+            {match.completedAt && (
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Cancha</p>
+                <p className="text-sm font-medium text-muted-foreground">Completado</p>
                 <div className="flex items-center gap-1 mt-1">
-                  <MapPin className="h-4 w-4" />
-                  <span>{match.court.name} - {match.court.club.name}</span>
+                  <Calendar className="h-4 w-4" />
+                  <span>
+                    {format(new Date(match.completedAt), "dd/MM/yyyy HH:mm", { locale: es })}
+                  </span>
                 </div>
-              </div>
-            )}
-
-            {match.durationMinutes && (
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Duración</p>
-                <p>{match.durationMinutes} minutos</p>
               </div>
             )}
 
@@ -446,13 +414,19 @@ export function MatchDetail({ match }: MatchDetailProps) {
       </div>
 
       {/* Dialogs */}
-      <MatchResultDialog
+      <AmericanoMatchResultDialog
         match={match}
+        tournament={{
+          setsToWin: match.tournament.setsToWin,
+          gamesToWinSet: match.tournament.gamesToWinSet,
+          tiebreakAt: match.tournament.tiebreakAt,
+          goldenPoint: match.tournament.goldenPoint
+        }}
         open={resultDialogOpen}
         onOpenChange={setResultDialogOpen}
         onSuccess={handleSuccess}
       />
-      <MatchScheduleDialog
+      <AmericanoMatchScheduleDialog
         match={match}
         open={scheduleDialogOpen}
         onOpenChange={setScheduleDialogOpen}

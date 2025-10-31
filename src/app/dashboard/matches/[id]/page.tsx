@@ -4,6 +4,9 @@ import { prisma } from "@/lib/prisma"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { MatchDetail } from "@/components/matches/match-detail"
 
+// Forzar renderizado dinámico para siempre obtener datos frescos
+export const dynamic = 'force-dynamic'
+
 interface MatchPageProps {
   params: Promise<{ id: string }>
 }
@@ -42,6 +45,13 @@ async function getMatch(id: string) {
                   id: true,
                   firstName: true,
                   lastName: true,
+                  rankingPoints: true,
+                  rankings: {
+                    orderBy: {
+                      lastUpdated: 'desc'
+                    },
+                    take: 1
+                  }
                 }
               }
             }
@@ -53,6 +63,13 @@ async function getMatch(id: string) {
                   id: true,
                   firstName: true,
                   lastName: true,
+                  rankingPoints: true,
+                  rankings: {
+                    orderBy: {
+                      lastUpdated: 'desc'
+                    },
+                    take: 1
+                  }
                 }
               }
             }
@@ -70,6 +87,13 @@ async function getMatch(id: string) {
                   id: true,
                   firstName: true,
                   lastName: true,
+                  rankingPoints: true,
+                  rankings: {
+                    orderBy: {
+                      lastUpdated: 'desc'
+                    },
+                    take: 1
+                  }
                 }
               }
             }
@@ -81,6 +105,13 @@ async function getMatch(id: string) {
                   id: true,
                   firstName: true,
                   lastName: true,
+                  rankingPoints: true,
+                  rankings: {
+                    orderBy: {
+                      lastUpdated: 'desc'
+                    },
+                    take: 1
+                  }
                 }
               }
             }
