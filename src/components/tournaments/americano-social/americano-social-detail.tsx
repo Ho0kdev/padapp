@@ -790,7 +790,7 @@ export function AmericanoSocialDetail({
                           <div key={pool.id}>
                             <h4 className="font-medium mb-3">{pool.name}</h4>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                              {pool.matches.map((match: any) => (
+                              {pool.matches.map((match: any, index: number) => (
                                 <AmericanoMatchCard
                                   key={match.id}
                                   match={match}
@@ -798,6 +798,7 @@ export function AmericanoSocialDetail({
                                   onLoadResult={() => setSelectedMatch(match)}
                                   showPoolInfo={false}
                                   hasPreviousRoundsIncomplete={hasIncompletePreviousRounds.get(roundNum) || false}
+                                  matchNumber={index + 1}
                                 />
                               ))}
                             </div>
@@ -814,7 +815,7 @@ export function AmericanoSocialDetail({
                     <div key={pool.id}>
                       <h4 className="font-medium mb-3">{pool.name}</h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                        {pool.matches.map((match: any) => (
+                        {pool.matches.map((match: any, index: number) => (
                           <AmericanoMatchCard
                             key={match.id}
                             match={match}
@@ -822,6 +823,7 @@ export function AmericanoSocialDetail({
                             onLoadResult={() => setSelectedMatch(match)}
                             showPoolInfo={false}
                             hasPreviousRoundsIncomplete={false}
+                            matchNumber={index + 1}
                           />
                         ))}
                       </div>
@@ -949,6 +951,12 @@ export function AmericanoSocialDetail({
       {selectedMatch && (
         <AmericanoMatchResultDialog
           match={selectedMatch}
+          tournament={{
+            setsToWin: tournament.setsToWin,
+            gamesToWinSet: tournament.gamesToWinSet,
+            tiebreakAt: tournament.tiebreakAt,
+            goldenPoint: tournament.goldenPoint
+          }}
           open={!!selectedMatch}
           onOpenChange={(open) => !open && setSelectedMatch(null)}
           onSuccess={() => {

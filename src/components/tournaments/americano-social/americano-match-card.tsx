@@ -46,6 +46,7 @@ interface AmericanoMatchCardProps {
   showPoolInfo?: boolean
   poolName?: string
   hasPreviousRoundsIncomplete?: boolean
+  matchNumber?: number
 }
 
 export function AmericanoMatchCard({
@@ -55,7 +56,8 @@ export function AmericanoMatchCard({
   onSchedule,
   showPoolInfo = false,
   poolName,
-  hasPreviousRoundsIncomplete = false
+  hasPreviousRoundsIncomplete = false,
+  matchNumber
 }: AmericanoMatchCardProps) {
   const isCompleted = match.status === "COMPLETED"
   const teamAWon = isCompleted && (match.teamAScore ?? 0) > (match.teamBScore ?? 0)
@@ -104,12 +106,12 @@ export function AmericanoMatchCard({
                     {poolName}
                   </div>
                   <div className="text-xs text-muted-foreground mt-0.5">
-                    Ronda {match.roundNumber}
+                    {matchNumber ? `Partido ${matchNumber}` : `Ronda ${match.roundNumber}`}
                   </div>
                 </>
               ) : (
                 <span className="text-xs font-medium text-muted-foreground">
-                  Ronda {match.roundNumber}
+                  {matchNumber ? `Partido ${matchNumber}` : `Ronda ${match.roundNumber}`}
                 </span>
               )}
             </div>

@@ -552,6 +552,16 @@ export class AmericanoSocialService {
           },
           orderBy: { roundNumber: 'asc' }
         },
+        tournament: {
+          select: {
+            id: true,
+            name: true,
+            setsToWin: true,
+            gamesToWinSet: true,
+            tiebreakAt: true,
+            goldenPoint: true
+          }
+        },
         court: true
       },
       orderBy: { poolNumber: 'asc' }

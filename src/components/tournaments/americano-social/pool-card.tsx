@@ -71,13 +71,14 @@ export function PoolCard({ pool, onMatchUpdate, hasPreviousRoundsIncomplete = fa
           <div>
             <h4 className="font-semibold mb-3">Partidos</h4>
             <div className="space-y-3">
-              {pool.matches.map((match: any) => (
+              {pool.matches.map((match: any, index: number) => (
                 <AmericanoMatchCard
                   key={match.id}
                   match={match}
                   canManage={true}
                   onLoadResult={() => setSelectedMatch(match)}
                   hasPreviousRoundsIncomplete={hasPreviousRoundsIncomplete}
+                  matchNumber={index + 1}
                 />
               ))}
             </div>
@@ -88,6 +89,7 @@ export function PoolCard({ pool, onMatchUpdate, hasPreviousRoundsIncomplete = fa
       {selectedMatch && (
         <AmericanoMatchResultDialog
           match={selectedMatch}
+          tournament={pool.tournament}
           open={!!selectedMatch}
           onOpenChange={(open) => !open && setSelectedMatch(null)}
           onSuccess={() => {
