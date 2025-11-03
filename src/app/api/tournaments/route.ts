@@ -148,6 +148,11 @@ export async function GET(request: NextRequest) {
               }
             }
           },
+          americanoPools: {
+            include: {
+              players: true
+            }
+          },
           _count: {
             select: {
               teams: true,

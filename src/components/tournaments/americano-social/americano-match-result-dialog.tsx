@@ -282,7 +282,7 @@ export function AmericanoMatchResultDialog({
     if (currentSets.length > setsToWin) {
       form.setValue(
         "sets",
-        currentSets.filter((_, i) => i !== index)
+        currentSets.filter((_: any, i: number) => i !== index)
       )
     }
   }
@@ -292,7 +292,7 @@ export function AmericanoMatchResultDialog({
     let teamAScore = 0
     let teamBScore = 0
 
-    sets.forEach((set) => {
+    sets.forEach((set: any) => {
       if (typeof set.teamAScore === 'number' && !isNaN(set.teamAScore)) {
         teamAScore += set.teamAScore
       }
@@ -527,7 +527,7 @@ export function AmericanoMatchResultDialog({
                 </Alert>
               )}
 
-              {sets.map((_, index) => (
+              {sets.map((_: any, index: number) => (
                 <Card key={index}>
                   <CardContent className="pt-6">
                     <div className="space-y-4">

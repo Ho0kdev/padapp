@@ -287,6 +287,127 @@ export function UsersTable() {
     return Array.from(tournaments)
   }
 
+  // Componente de tarjeta para mobile
+  const UserCard = ({ user }: { user: User }) => {
+    const activeTournaments = getActiveTournaments(user)
+
+    return (
+      <Card className="overflow-hidden">
+        <CardHeader className="pb-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <Avatar className="h-12 w-12 flex-shrink-0">
+                <AvatarImage src={(user.player as any)?.profileImageUrl} />
+                <AvatarFallback>{getUserInitials(user)}</AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-base truncate">
+                  {user.player
+                    ? `${user.player.firstName} ${user.player.lastName}`
+                    : user.name
+                  }
+                </h3>
+                <p className="text-sm text-muted-foreground truncate">{user.email}</p>
+              </div>
+            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 flex-shrink-0">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                  <Link href={`/dashboard/users/${user.id}`}>
+                    <Eye className="mr-2 h-4 w-4" />
+                    Ver detalle
+                  </Link>
+                </DropdownMenuItem>
+                {isAdmin && (
+                  <>
+                    <DropdownMenuItem asChild>
+                      <Link href={`/dashboard/users/${user.id}/edit`}>
+                        <Edit className="mr-2 h-4 w-4" />
+                        Editar
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    {user.status === "ACTIVE" ? (
+                      <DropdownMenuItem
+                        className="text-red-600"
+                        onClick={() => {
+                          setUserToDelete(user)
+                          setDeleteDialogOpen(true)
+                        }}
+                        disabled={activeTournaments.length > 0}
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Desactivar
+                      </DropdownMenuItem>
+                    ) : (
+                      <DropdownMenuItem
+                        className="text-green-600"
+                        onClick={() => {
+                          setUserToActivate(user)
+                          setActivateDialogOpen(true)
+                        }}
+                      >
+                        <CheckCircle className="mr-2 h-4 w-4" />
+                        Activar
+                      </DropdownMenuItem>
+                    )}
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3 pb-4">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Rol</span>
+            {getRoleBadge(user.role)}
+          </div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Estado</span>
+            {getStatusBadge(user.status)}
+          </div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Género</span>
+            {getGenderBadge(user.player?.gender) || <span className="text-muted-foreground">-</span>}
+          </div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Categoría</span>
+            {user.player?.primaryCategory ? (
+              <div className="flex items-center gap-1">
+                <Trophy className="h-3 w-3 text-muted-foreground" />
+                <span className="font-medium">{user.player.primaryCategory.name}</span>
+              </div>
+            ) : (
+              <span className="text-muted-foreground">-</span>
+            )}
+          </div>
+          {activeTournaments.length > 0 && (
+            <div className="flex flex-col gap-2 text-sm pt-2 border-t">
+              <span className="text-muted-foreground">Torneos Activos</span>
+              <div className="flex flex-wrap gap-1">
+                {activeTournaments.slice(0, 3).map((tournament: any, i: number) => (
+                  <Badge key={i} variant="outline" className="text-xs">
+                    {tournament}
+                  </Badge>
+                ))}
+                {activeTournaments.length > 3 && (
+                  <Badge variant="outline" className="text-xs">
+                    +{activeTournaments.length - 3}
+                  </Badge>
+                )}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    )
+  }
+
   if (loading) {
     return <div className="text-center py-8">Cargando usuarios...</div>
   }
@@ -396,7 +517,22 @@ export function UsersTable() {
           </CardContent>
         </Card>
       </div>
-      <div className="rounded-md border">
+
+      {/* Vista de tarjetas para mobile */}
+      <div className="lg:hidden space-y-3">
+        {users.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            No se encontraron usuarios
+          </div>
+        ) : (
+          users.map((user) => (
+            <UserCard key={user.id} user={user} />
+          ))
+        )}
+      </div>
+
+      {/* Vista de tabla para desktop */}
+      <div className="hidden lg:block rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>

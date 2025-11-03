@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import {
   Table,
   TableBody,
@@ -226,6 +226,147 @@ export function ClubsTable() {
   }
 
 
+  // Componente de tarjeta para mobile
+  const ClubCard = ({ club }: { club: Club }) => (
+    <Card className="overflow-hidden">
+      <div className="p-4">
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <div className="flex-shrink-0">
+              {(club as any).logoUrl ? (
+                <img
+                  src={(club as any).logoUrl}
+                  alt={`Logo de ${club.name}`}
+                  className="h-12 w-12 rounded-full object-cover border"
+                />
+              ) : (
+                <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center">
+                  <Building className="h-5 w-5 text-gray-400" />
+                </div>
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-base truncate">{club.name}</h3>
+              {club.description && (
+                <p className="text-sm text-muted-foreground line-clamp-2">{club.description}</p>
+              )}
+            </div>
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 flex-shrink-0">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <Link href={`/dashboard/clubs/${club.id}`}>
+                <DropdownMenuItem>
+                  <Eye className="mr-2 h-4 w-4" />
+                  Ver detalles
+                </DropdownMenuItem>
+              </Link>
+              {isAdminOrClubAdmin && (
+                <>
+                  <Link href={`/dashboard/clubs/${club.id}/edit`}>
+                    <DropdownMenuItem>
+                      <Edit className="mr-2 h-4 w-4" />
+                      Editar
+                    </DropdownMenuItem>
+                  </Link>
+                  <DropdownMenuSeparator />
+                  {club.status === "ACTIVE" ? (
+                    <>
+                      <DropdownMenuItem
+                        className="text-yellow-600"
+                        onClick={() => {
+                          setClubToMaintenance(club)
+                          setMaintenanceDialogOpen(true)
+                        }}
+                      >
+                        <Wrench className="mr-2 h-4 w-4" />
+                        Mantenimiento
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="text-red-600"
+                        onClick={() => {
+                          setClubToDelete(club)
+                          setDeleteDialogOpen(true)
+                        }}
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Desactivar
+                      </DropdownMenuItem>
+                    </>
+                  ) : (
+                    <DropdownMenuItem
+                      className="text-green-600"
+                      onClick={() => {
+                        setClubToActivate(club)
+                        setActivateDialogOpen(true)
+                      }}
+                    >
+                      <CheckCircle className="mr-2 h-4 w-4" />
+                      Activar
+                    </DropdownMenuItem>
+                  )}
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        <div className="space-y-3">
+          <div className="flex items-start gap-2 text-sm">
+            <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <div className="truncate">{club.address}</div>
+              <div className="text-muted-foreground">
+                {club.city}, {club.state && `${club.state}, `}{club.country}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Estado</span>
+            <Badge variant="outline" className={getClubStatusStyle(club.status)}>
+              {getClubStatusLabel(club.status)}
+            </Badge>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 text-sm pt-2 border-t">
+            <div className="flex items-center gap-1">
+              <SquareSplitHorizontal className="h-4 w-4 text-muted-foreground" />
+              <span className="font-medium">{club._count.courts}</span>
+              <span className="text-muted-foreground">Canchas</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Trophy className="h-4 w-4 text-muted-foreground" />
+              <span className="font-medium">{(club._count.tournaments || 0) + (club._count.tournamentClubs || 0)}</span>
+              <span className="text-muted-foreground">Torneos</span>
+            </div>
+          </div>
+
+          {(club.phone || club.email) && (
+            <div className="space-y-1 text-sm pt-2 border-t">
+              {club.phone && (
+                <div className="flex items-center gap-2">
+                  <Phone className="h-3 w-3 text-muted-foreground" />
+                  <span>{club.phone}</span>
+                </div>
+              )}
+              {club.email && (
+                <div className="flex items-center gap-2">
+                  <Mail className="h-3 w-3 text-muted-foreground" />
+                  <span className="truncate">{club.email}</span>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </Card>
+  )
+
   if (loading) {
     return (
       <Card>
@@ -241,7 +382,23 @@ export function ClubsTable() {
 
   return (
     <div className="space-y-4">
-      <Card>
+      {/* Vista de tarjetas para mobile */}
+      <div className="lg:hidden space-y-3">
+        {clubs.length === 0 ? (
+          <Card>
+            <CardContent className="p-6 text-center text-muted-foreground">
+              No se encontraron clubes
+            </CardContent>
+          </Card>
+        ) : (
+          clubs.map((club) => (
+            <ClubCard key={club.id} club={club} />
+          ))
+        )}
+      </div>
+
+      {/* Vista de tabla para desktop */}
+      <Card className="hidden lg:block">
         <CardContent className="p-0">
           <Table>
             <TableHeader>

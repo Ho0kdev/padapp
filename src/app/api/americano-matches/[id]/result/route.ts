@@ -58,7 +58,7 @@ async function revertAmericanoPoolStats(matchId: string) {
           gamesWon: Math.max(0, poolPlayer.gamesWon - gamesWon),
           gamesLost: Math.max(0, poolPlayer.gamesLost - gamesLost),
           matchesWon: Math.max(0, poolPlayer.matchesWon - 1),
-          points: Math.max(0, poolPlayer.points - 3) // Restar 3 puntos por victoria
+          totalPoints: Math.max(0, poolPlayer.totalPoints - 3) // Restar 3 puntos por victoria
         }
       })
     }

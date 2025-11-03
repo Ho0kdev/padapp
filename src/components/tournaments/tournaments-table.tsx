@@ -30,7 +30,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Eye, MoreHorizontal, Pencil, Trash2, Users, Calendar } from "lucide-react"
+import { Eye, MoreHorizontal, Pencil, Trash2, Users, Calendar, MapPin } from "lucide-react"
 import Link from "next/link"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
@@ -39,6 +39,7 @@ import { tournamentStatusOptions as statusStyles } from "@/lib/utils/status-styl
 import { DataTablePagination } from "@/components/ui/data-table-pagination"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/hooks/use-auth"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 
 export function TournamentsTable() {
   const searchParams = useSearchParams()
@@ -124,13 +125,153 @@ export function TournamentsTable() {
     return tournamentTypeOptions.find(t => t.value === type)?.label || type
   }
 
+  // Función para obtener el número de participantes según el tipo de torneo
+  const getParticipantsCount = (tournament: TournamentListItem): number => {
+    if (tournament.type === "AMERICANO_SOCIAL") {
+      // Para americano social, contar jugadores únicos en los pools
+      const uniquePlayers = new Set<string>()
+      tournament.americanoPools?.forEach(pool => {
+        pool.players?.forEach(player => {
+          uniquePlayers.add(player.playerId)
+        })
+      })
+      return uniquePlayers.size
+    }
+    // Para otros torneos, usar el conteo de teams
+    return tournament._count.teams
+  }
+
+  // Componente de tarjeta para mobile
+  const TournamentCard = ({ tournament }: { tournament: TournamentListItem }) => (
+    <Card className="overflow-hidden">
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-base truncate">{tournament.name}</h3>
+            {tournament.description && (
+              <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
+                {tournament.description}
+              </p>
+            )}
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem asChild>
+                <Link href={
+                  tournament.type === "AMERICANO_SOCIAL"
+                    ? `/dashboard/tournaments/${tournament.id}/americano-social`
+                    : `/dashboard/tournaments/${tournament.id}`
+                }>
+                  <Eye className="mr-2 h-4 w-4" />
+                  Ver detalle
+                </Link>
+              </DropdownMenuItem>
+              {isAdminOrClubAdmin && (
+                <>
+                  <DropdownMenuItem asChild>
+                    <Link href={`/dashboard/tournaments/${tournament.id}/edit`}>
+                      <Pencil className="mr-2 h-4 w-4" />
+                      Editar
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="text-red-600"
+                    onClick={() => setDeleteId(tournament.id)}
+                    disabled={getParticipantsCount(tournament) > 0}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Eliminar
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3 pb-4">
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-muted-foreground">Tipo</span>
+          <span className="font-medium">{getTypeLabel(tournament.type)}</span>
+        </div>
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-muted-foreground">Estado</span>
+          {getStatusBadge(tournament.status)}
+        </div>
+        {tournament.mainClub && (
+          <div className="flex items-start gap-2 text-sm">
+            <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <div className="font-medium truncate">{tournament.mainClub.name}</div>
+              <div className="text-muted-foreground truncate">{tournament.mainClub.city}</div>
+            </div>
+          </div>
+        )}
+        <div className="flex items-start gap-2 text-sm">
+          <Calendar className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+          <div>
+            <div>{format(new Date(tournament.tournamentStart), "dd/MM/yyyy", { locale: es })}</div>
+            {tournament.tournamentEnd && (
+              <div className="text-muted-foreground text-xs">
+                hasta {format(new Date(tournament.tournamentEnd), "dd/MM/yyyy", { locale: es })}
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-muted-foreground flex items-center gap-1">
+            <Users className="h-4 w-4" />
+            Participantes
+          </span>
+          <span className="font-medium">
+            {getParticipantsCount(tournament)}
+            {tournament.maxParticipants && ` / ${tournament.maxParticipants}`}
+          </span>
+        </div>
+        {tournament.categories.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {tournament.categories.slice(0, 3).map((cat) => (
+              <Badge key={cat.category.name} variant="outline" className="text-xs">
+                {cat.category.name}
+              </Badge>
+            ))}
+            {tournament.categories.length > 3 && (
+              <Badge variant="outline" className="text-xs">
+                +{tournament.categories.length - 3}
+              </Badge>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
+
   if (loading) {
     return <div className="text-center py-8">Cargando torneos...</div>
   }
 
   return (
     <div className="space-y-4">
-      <div className="rounded-md border">
+      {/* Vista de tarjetas para mobile */}
+      <div className="lg:hidden space-y-3">
+        {tournaments.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            No se encontraron torneos
+          </div>
+        ) : (
+          tournaments.map((tournament) => (
+            <TournamentCard key={tournament.id} tournament={tournament} />
+          ))
+        )}
+      </div>
+
+      {/* Vista de tabla para desktop */}
+      <div className="hidden lg:block rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
@@ -194,7 +335,7 @@ export function TournamentsTable() {
                   <TableCell>
                     <div className="flex items-center gap-1">
                       <Users className="h-3 w-3" />
-                      {tournament._count.teams}
+                      {getParticipantsCount(tournament)}
                       {tournament.maxParticipants && ` / ${tournament.maxParticipants}`}
                     </div>
                   </TableCell>
@@ -242,7 +383,7 @@ export function TournamentsTable() {
                             <DropdownMenuItem
                               className="text-red-600"
                               onClick={() => setDeleteId(tournament.id)}
-                              disabled={tournament._count.teams > 0}
+                              disabled={getParticipantsCount(tournament) > 0}
                             >
                               <Trash2 className="mr-2 h-4 w-4" />
                               Eliminar
