@@ -89,6 +89,70 @@ export async function POST(
       validatedData.sets
     )
 
+    // COMPLETAR TORNEO AUTOMÁTICAMENTE: Verificar si todos los partidos de Americano Social están completados
+    try {
+      const allAmericanoMatches = await prisma.americanoPoolMatch.findMany({
+        where: {
+          tournamentId: match.pool.tournamentId,
+          categoryId: match.categoryId
+        },
+        select: {
+          id: true,
+          status: true
+        }
+      })
+
+      const allMatchesCompleted = allAmericanoMatches.length > 0 && allAmericanoMatches.every(m =>
+        m.status === 'COMPLETED' || m.status === 'WALKOVER'
+      )
+
+      if (allMatchesCompleted) {
+        console.log('🏆 Todos los partidos de Americano Social completados. Completando torneo automáticamente...')
+
+        // Actualizar estado del torneo a COMPLETED
+        const tournament = await prisma.tournament.update({
+          where: { id: match.pool.tournamentId },
+          data: {
+            status: 'COMPLETED'
+          }
+        })
+
+        console.log(`✅ Torneo ${tournament.name} marcado como COMPLETED`)
+
+        // Calcular posiciones finales y puntos automáticamente
+        try {
+          // Importar el servicio de cálculo de puntos
+          const PointsCalculationService = (await import('@/lib/services/points-calculation-service')).default
+
+          await PointsCalculationService.processCompletedTournament(match.pool.tournamentId)
+          console.log('✅ Posiciones finales y puntos del torneo calculados automáticamente')
+
+          // Registrar en auditoría
+          await AuditLogger.log(
+            session,
+            {
+              action: Action.UPDATE,
+              resource: Resource.TOURNAMENT,
+              resourceId: match.pool.tournamentId,
+              description: `Torneo Americano Social completado automáticamente y puntos calculados`,
+              metadata: {
+                totalMatches: allAmericanoMatches.length,
+                autoCompleted: true,
+                tournamentType: 'AMERICANO_SOCIAL'
+              }
+            },
+            request
+          )
+        } catch (pointsError) {
+          console.error('⚠️ No se pudieron calcular los puntos automáticamente:', pointsError)
+          // No fallar la operación completa si el cálculo de puntos falla
+        }
+      }
+    } catch (completionError) {
+      console.error('⚠️ No se pudo completar el torneo automáticamente:', completionError)
+      // No fallar la operación completa si la finalización automática falla
+    }
+
     // Auditoría
     await AuditLogger.log(session, {
       action: Action.UPDATE,

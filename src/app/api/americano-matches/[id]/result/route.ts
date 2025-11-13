@@ -279,6 +279,70 @@ export async function DELETE(
       }
     })
 
+    // PASO 5: Verificar si el torneo debe volver a IN_PROGRESS
+    try {
+      // Verificar si todos los partidos del torneo siguen completados
+      const allTournamentMatches = await prisma.americanoPoolMatch.findMany({
+        where: {
+          tournamentId: match.tournamentId
+        },
+        select: {
+          id: true,
+          status: true
+        }
+      })
+
+      const allMatchesCompleted = allTournamentMatches.every(m =>
+        m.status === 'COMPLETED' || m.status === 'WALKOVER'
+      )
+
+      // Si NO todos los partidos están completados, volver torneo a IN_PROGRESS
+      if (!allMatchesCompleted && match.tournament) {
+        const currentTournament = await prisma.tournament.findUnique({
+          where: { id: match.tournament.id },
+          select: { status: true }
+        })
+
+        if (currentTournament?.status === 'COMPLETED') {
+          await prisma.tournament.update({
+            where: { id: match.tournament.id },
+            data: { status: 'IN_PROGRESS' }
+          })
+
+          // Recalcular rankings excluyendo este torneo
+          try {
+            const PointsCalculationService = (await import('@/lib/services/points-calculation-service')).default
+            await PointsCalculationService.recalculatePlayerRankingsAfterTournamentReversion(match.tournament.id)
+          } catch (recalcError) {
+            console.error('⚠️ Error al recalcular rankings:', recalcError)
+            // No fallar la operación completa
+          }
+
+          // Registrar en auditoría
+          await AuditLogger.log(
+            session,
+            {
+              action: Action.UPDATE,
+              resource: Resource.TOURNAMENT,
+              resourceId: match.tournament.id,
+              description: `Torneo Americano Social vuelto a IN_PROGRESS al revertir resultado de partido`,
+              metadata: {
+                previousStatus: 'COMPLETED',
+                newStatus: 'IN_PROGRESS',
+                matchId,
+                reason: 'Resultado revertido',
+                tournamentType: 'AMERICANO_SOCIAL'
+              }
+            },
+            request
+          )
+        }
+      }
+    } catch (statusError) {
+      console.error('⚠️ No se pudo actualizar el estado del torneo:', statusError)
+      // No fallar la operación completa si la actualización del estado falla
+    }
+
     // Registrar auditoría
     await AuditLogger.log(
       session,
