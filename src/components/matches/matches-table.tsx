@@ -28,7 +28,10 @@ import {
   MapPin,
   Users,
   Play,
-  CheckCircle
+  CheckCircle,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
 } from "lucide-react"
 import Link from "next/link"
 import { useToast } from "@/hooks/use-toast"
@@ -39,6 +42,7 @@ import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import { MatchResultDialog } from "./match-result-dialog"
 import { MatchScheduleDialog } from "./match-schedule-dialog"
+import { useRouter } from "next/navigation"
 
 interface Match {
   id: string
@@ -126,6 +130,7 @@ interface MatchesPaginatedResponse {
 }
 
 export function MatchesTable() {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const [matches, setMatches] = useState<Match[]>([])
   const [pagination, setPagination] = useState({
@@ -141,6 +146,9 @@ export function MatchesTable() {
   const [statusLoading, setStatusLoading] = useState<string | null>(null)
   const { toast } = useToast()
   const { isAdminOrClubAdmin, isReferee } = useAuth()
+
+  const orderBy = searchParams.get('orderBy') || 'scheduledAt'
+  const order = searchParams.get('order') || 'asc'
 
   useEffect(() => {
     fetchMatches()
@@ -250,6 +258,41 @@ export function MatchesTable() {
     }
   }
 
+  const handleSort = (column: string) => {
+    const params = new URLSearchParams(searchParams)
+
+    // Si ya está ordenando por esta columna, invertir el orden
+    if (orderBy === column) {
+      const newOrder = order === 'asc' ? 'desc' : 'asc'
+      params.set('order', newOrder)
+    } else {
+      // Nueva columna, ordenar ascendente por defecto
+      params.set('orderBy', column)
+      params.set('order', 'asc')
+    }
+
+    params.set('page', '1') // Reset a la primera página
+    router.push(`/dashboard/matches?${params.toString()}`)
+  }
+
+  const getSortIcon = (column: string) => {
+    if (orderBy !== column) {
+      return <ArrowUpDown className="ml-1 h-3 w-3 text-muted-foreground" />
+    }
+    return order === 'asc'
+      ? <ArrowUp className="ml-1 h-3 w-3" />
+      : <ArrowDown className="ml-1 h-3 w-3" />
+  }
+
+  const handleRowClick = (matchId: string, e: React.MouseEvent) => {
+    // No navegar si se hizo click en el dropdown menu o sus elementos
+    const target = e.target as HTMLElement
+    if (target.closest('button') || target.closest('[role="menuitem"]')) {
+      return
+    }
+    router.push(`/dashboard/matches/${matchId}`)
+  }
+
   if (loading) {
     return <div className="text-center py-8">Cargando partidos...</div>
   }
@@ -265,8 +308,26 @@ export function MatchesTable() {
               <TableHead>Fase</TableHead>
               <TableHead>Equipos</TableHead>
               <TableHead>Resultado</TableHead>
-              <TableHead>Horario / Cancha</TableHead>
-              <TableHead>Estado</TableHead>
+              <TableHead>
+                <Button
+                  variant="ghost"
+                  onClick={() => handleSort('scheduledAt')}
+                  className="h-8 px-2 lg:px-3 hover:bg-transparent"
+                >
+                  Horario / Cancha
+                  {getSortIcon('scheduledAt')}
+                </Button>
+              </TableHead>
+              <TableHead>
+                <Button
+                  variant="ghost"
+                  onClick={() => handleSort('status')}
+                  className="h-8 px-2 lg:px-3 hover:bg-transparent"
+                >
+                  Estado
+                  {getSortIcon('status')}
+                </Button>
+              </TableHead>
               <TableHead className="w-[50px]"></TableHead>
             </TableRow>
           </TableHeader>
@@ -279,7 +340,11 @@ export function MatchesTable() {
               </TableRow>
             ) : (
               matches.map((match) => (
-                <TableRow key={match.id}>
+                <TableRow
+                  key={match.id}
+                  onClick={(e) => handleRowClick(match.id, e)}
+                  className="cursor-pointer hover:bg-muted/50"
+                >
                   <TableCell>
                     <div>
                       <div className="font-medium flex items-center gap-1">

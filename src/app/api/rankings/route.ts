@@ -14,6 +14,8 @@ export async function GET(request: NextRequest) {
     const categoryId = searchParams.get("categoryId")
     const seasonYearParam = searchParams.get("seasonYear")
     const search = searchParams.get("search")
+    const orderBy = searchParams.get('orderBy') || 'currentPoints'
+    const order = searchParams.get('order') || 'desc'
 
     const skip = (page - 1) * limit
 
@@ -54,15 +56,28 @@ export async function GET(request: NextRequest) {
       ]
     }
 
+    // Build orderBy clause dynamically
+    const buildOrderBy = () => {
+      const validColumns = ['currentPoints', 'position', 'seasonYear']
+      const sortOrder = (order === 'asc' ? 'asc' : 'desc') as 'asc' | 'desc'
+
+      if (orderBy === 'position') {
+        // La posición se calcula después, así que ordenamos por puntos por defecto
+        return { currentPoints: 'desc' as const }
+      } else if (validColumns.includes(orderBy)) {
+        return { [orderBy]: sortOrder }
+      } else {
+        // Default ordering
+        return { currentPoints: 'desc' as const }
+      }
+    }
+
     const [rankings, total] = await Promise.all([
       prisma.playerRanking.findMany({
         where,
         skip,
         take: limit,
-        orderBy: [
-          { currentPoints: "desc" },
-          { lastUpdated: "asc" }
-        ],
+        orderBy: buildOrderBy(),
         include: {
           player: {
             select: {

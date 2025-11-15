@@ -12,7 +12,7 @@ export function CategoriesHeader() {
     <DataTableHeader
       title="Categorías"
       description="Gestiona las categorías para organizar torneos"
-      searchPlaceholder="Buscar categorías..."
+      searchPlaceholder="Buscar por nombre o descripción..."
       createButtonText="Nueva Categoría"
       createButtonHref="/dashboard/categories/new"
       filterLabel="Estado"

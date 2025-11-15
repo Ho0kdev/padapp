@@ -20,6 +20,8 @@ export async function GET(request: NextRequest) {
     const role = searchParams.get('role') || ''
     const status = searchParams.get('status') || ''
     const gender = searchParams.get('gender') || ''
+    const orderBy = searchParams.get('orderBy') || 'createdAt'
+    const order = searchParams.get('order') || 'desc'
 
     const skip = (page - 1) * limit
 
@@ -58,6 +60,28 @@ export async function GET(request: NextRequest) {
 
     // Get total count
     const total = await prisma.user.count({ where })
+
+    // Build orderBy clause dynamically
+    const buildOrderBy = () => {
+      const validColumns = ['name', 'email', 'role', 'status', 'createdAt']
+      const validPlayerColumns = ['firstName', 'lastName', 'gender', 'rankingPoints']
+      const sortOrder = (order === 'asc' ? 'asc' : 'desc') as 'asc' | 'desc'
+
+      if (validPlayerColumns.includes(orderBy)) {
+        // For player fields, use nested ordering
+        return [
+          { player: { [orderBy]: sortOrder } }
+        ]
+      } else if (validColumns.includes(orderBy)) {
+        return [{ [orderBy]: sortOrder }]
+      } else {
+        // Default ordering
+        return [
+          { status: 'asc' as const },
+          { createdAt: 'desc' as const }
+        ]
+      }
+    }
 
     // Get users with player info
     const users = await prisma.user.findMany({
@@ -130,10 +154,7 @@ export async function GET(request: NextRequest) {
           }
         }
       },
-      orderBy: [
-        { status: 'asc' },
-        { createdAt: 'desc' }
-      ]
+      orderBy: buildOrderBy()
     })
 
     // Get global stats (unfiltered)

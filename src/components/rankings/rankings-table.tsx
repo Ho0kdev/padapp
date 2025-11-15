@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -36,7 +36,10 @@ import {
   Eye,
   Calendar,
   Award,
-  Trash2
+  Trash2,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
 } from "lucide-react"
 import Link from "next/link"
 import { useToast } from "@/hooks/use-toast"
@@ -81,6 +84,7 @@ interface RankingsPaginatedResponse {
 }
 
 export function RankingsTable() {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const [rankings, setRankings] = useState<Ranking[]>([])
   const [pagination, setPagination] = useState({
@@ -100,6 +104,9 @@ export function RankingsTable() {
   const { toast } = useToast()
   const { isAdminOrClubAdmin } = useAuth()
   const currentCategoryId = searchParams.get("categoryId")
+
+  const orderBy = searchParams.get('orderBy') || 'currentPoints'
+  const order = searchParams.get('order') || 'desc'
 
   useEffect(() => {
     if (currentCategoryId) {
@@ -225,6 +232,41 @@ export function RankingsTable() {
     setDeleteDialogOpen(true)
   }
 
+  const handleSort = (column: string) => {
+    const params = new URLSearchParams(searchParams)
+
+    // Si ya está ordenando por esta columna, invertir el orden
+    if (orderBy === column) {
+      const newOrder = order === 'asc' ? 'desc' : 'asc'
+      params.set('order', newOrder)
+    } else {
+      // Nueva columna, ordenar descendente por defecto para puntos
+      params.set('orderBy', column)
+      params.set('order', column === 'currentPoints' ? 'desc' : 'asc')
+    }
+
+    params.set('page', '1') // Reset a la primera página
+    router.push(`/dashboard/rankings?${params.toString()}`)
+  }
+
+  const getSortIcon = (column: string) => {
+    if (orderBy !== column) {
+      return <ArrowUpDown className="ml-1 h-3 w-3 text-muted-foreground" />
+    }
+    return order === 'asc'
+      ? <ArrowUp className="ml-1 h-3 w-3" />
+      : <ArrowDown className="ml-1 h-3 w-3" />
+  }
+
+  const handleRowClick = (rankingId: string, e: React.MouseEvent) => {
+    // No navegar si se hizo click en el dropdown menu o sus elementos
+    const target = e.target as HTMLElement
+    if (target.closest('button') || target.closest('[role="menuitem"]') || target.closest('a')) {
+      return
+    }
+    router.push(`/dashboard/rankings/${rankingId}`)
+  }
+
   const getTypeBadge = (type: string) => {
     const variants = {
       AGE: "bg-blue-100 text-blue-800",
@@ -306,11 +348,38 @@ export function RankingsTable() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Posición</TableHead>
+              <TableHead>
+                <Button
+                  variant="ghost"
+                  onClick={() => handleSort('position')}
+                  className="h-8 px-2 lg:px-3 hover:bg-transparent"
+                >
+                  Posición
+                  {getSortIcon('position')}
+                </Button>
+              </TableHead>
               <TableHead>Jugador</TableHead>
               <TableHead>Categoría</TableHead>
-              <TableHead>Puntos</TableHead>
-              <TableHead>Temporada</TableHead>
+              <TableHead>
+                <Button
+                  variant="ghost"
+                  onClick={() => handleSort('currentPoints')}
+                  className="h-8 px-2 lg:px-3 hover:bg-transparent"
+                >
+                  Puntos
+                  {getSortIcon('currentPoints')}
+                </Button>
+              </TableHead>
+              <TableHead>
+                <Button
+                  variant="ghost"
+                  onClick={() => handleSort('seasonYear')}
+                  className="h-8 px-2 lg:px-3 hover:bg-transparent"
+                >
+                  Temporada
+                  {getSortIcon('seasonYear')}
+                </Button>
+              </TableHead>
               <TableHead>Última Actualización</TableHead>
               <TableHead className="w-[50px]"></TableHead>
             </TableRow>
@@ -324,7 +393,11 @@ export function RankingsTable() {
               </TableRow>
             ) : (
               rankings.map((ranking) => (
-                <TableRow key={ranking.id}>
+                <TableRow
+                  key={ranking.id}
+                  onClick={(e) => handleRowClick(ranking.id, e)}
+                  className="cursor-pointer hover:bg-muted/50"
+                >
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Trophy className="h-4 w-4 text-muted-foreground" />

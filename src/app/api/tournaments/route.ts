@@ -81,6 +81,8 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "10")
     const statuses = searchParams.getAll("status")
     const search = searchParams.get("search")
+    const orderBy = searchParams.get('orderBy') || 'name'
+    const order = searchParams.get('order') || 'asc'
 
     const skip = (page - 1) * limit
 
@@ -128,12 +130,25 @@ export async function GET(request: NextRequest) {
       ]
     }
 
+    // Build orderBy clause dynamically
+    const buildOrderBy = () => {
+      const validColumns = ['name', 'status', 'tournamentStart', 'type', 'createdAt']
+      const sortOrder = (order === 'asc' ? 'asc' : 'desc') as 'asc' | 'desc'
+
+      if (validColumns.includes(orderBy)) {
+        return { [orderBy]: sortOrder }
+      } else {
+        // Default ordering
+        return { name: 'asc' as const }
+      }
+    }
+
     const [tournaments, total] = await Promise.all([
       prisma.tournament.findMany({
         where,
         skip,
         take: limit,
-        orderBy: { createdAt: "desc" },
+        orderBy: buildOrderBy(),
         include: {
           organizer: {
             select: { name: true, email: true }

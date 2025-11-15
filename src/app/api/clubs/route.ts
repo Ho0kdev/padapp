@@ -15,6 +15,10 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "10")
     const statusFilter = searchParams.get('status')
     const search = searchParams.get('search')
+    const city = searchParams.get('city')
+    const country = searchParams.get('country')
+    const orderBy = searchParams.get('orderBy') || 'name'
+    const order = searchParams.get('order') || 'asc'
 
     const skip = (page - 1) * limit
 
@@ -22,6 +26,14 @@ export async function GET(request: NextRequest) {
     const whereClause: any = {}
     if (statusFilter && statusFilter !== 'all') {
       whereClause.status = statusFilter
+    }
+
+    if (city && city !== 'all') {
+      whereClause.city = city
+    }
+
+    if (country && country !== 'all') {
+      whereClause.country = country
     }
 
     if (search) {
@@ -32,12 +44,25 @@ export async function GET(request: NextRequest) {
       ]
     }
 
+    // Build orderBy clause dynamically
+    const buildOrderBy = () => {
+      const validColumns = ['name', 'city', 'country', 'address', 'status', 'createdAt']
+      const sortOrder = (order === 'asc' ? 'asc' : 'desc') as 'asc' | 'desc'
+
+      if (validColumns.includes(orderBy)) {
+        return { [orderBy]: sortOrder }
+      } else {
+        // Default ordering
+        return { name: 'asc' as const }
+      }
+    }
+
     const [clubs, total] = await Promise.all([
       prisma.club.findMany({
         where: whereClause,
         skip,
         take: limit,
-        orderBy: { name: "asc" },
+        orderBy: buildOrderBy(),
         include: {
           _count: {
             select: {

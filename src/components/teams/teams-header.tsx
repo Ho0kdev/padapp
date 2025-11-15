@@ -49,7 +49,7 @@ export function TeamsHeader() {
     <DataTableHeader
       title="Equipos"
       description={isAdmin ? "Gestiona los equipos formados en torneos" : "Tus equipos en torneos"}
-      searchPlaceholder="Buscar equipos..."
+      searchPlaceholder="Buscar por nombre de equipo o jugadores..."
       createButtonText={isAdmin ? "Formar Equipo" : undefined}
       createButtonHref={isAdmin ? "/dashboard/teams/new" : undefined}
       filterLabel="Estado"

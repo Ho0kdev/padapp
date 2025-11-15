@@ -49,7 +49,10 @@ import {
   Phone,
   User,
   Trophy,
-  CheckCircle
+  CheckCircle,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
 } from "lucide-react"
 import Link from "next/link"
 import { useToast } from "@/hooks/use-toast"
@@ -57,6 +60,7 @@ import { useAuth } from "@/hooks/use-auth"
 import { DataTablePagination } from "@/components/ui/data-table-pagination"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
+import { useRouter } from "next/navigation"
 
 interface User {
   id: string
@@ -137,6 +141,7 @@ interface UsersPaginatedResponse {
 }
 
 export function UsersTable() {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const [users, setUsers] = useState<User[]>([])
   const [pagination, setPagination] = useState({
@@ -158,6 +163,9 @@ export function UsersTable() {
   const [userToActivate, setUserToActivate] = useState<User | null>(null)
   const { toast } = useToast()
   const { isAdmin } = useAuth()
+
+  const orderBy = searchParams.get('orderBy') || 'createdAt'
+  const order = searchParams.get('order') || 'desc'
 
   useEffect(() => {
     fetchUsers()
@@ -287,12 +295,50 @@ export function UsersTable() {
     return Array.from(tournaments)
   }
 
+  const handleSort = (column: string) => {
+    const params = new URLSearchParams(searchParams)
+
+    // Si ya está ordenando por esta columna, invertir el orden
+    if (orderBy === column) {
+      const newOrder = order === 'asc' ? 'desc' : 'asc'
+      params.set('order', newOrder)
+    } else {
+      // Nueva columna, ordenar ascendente por defecto
+      params.set('orderBy', column)
+      params.set('order', 'asc')
+    }
+
+    params.set('page', '1') // Reset a la primera página
+    router.push(`/dashboard/users?${params.toString()}`)
+  }
+
+  const getSortIcon = (column: string) => {
+    if (orderBy !== column) {
+      return <ArrowUpDown className="ml-1 h-3 w-3 text-muted-foreground" />
+    }
+    return order === 'asc'
+      ? <ArrowUp className="ml-1 h-3 w-3" />
+      : <ArrowDown className="ml-1 h-3 w-3" />
+  }
+
+  const handleRowClick = (userId: string, e: React.MouseEvent) => {
+    // No navegar si se hizo click en el dropdown menu o sus elementos
+    const target = e.target as HTMLElement
+    if (target.closest('button') || target.closest('[role="menuitem"]')) {
+      return
+    }
+    router.push(`/dashboard/users/${userId}`)
+  }
+
   // Componente de tarjeta para mobile
   const UserCard = ({ user }: { user: User }) => {
     const activeTournaments = getActiveTournaments(user)
 
     return (
-      <Card className="overflow-hidden">
+      <Card
+        className="overflow-hidden cursor-pointer hover:bg-muted/50 transition-colors"
+        onClick={(e) => handleRowClick(user.id, e)}
+      >
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -536,15 +582,69 @@ export function UsersTable() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Usuario</TableHead>
-              <TableHead>Email</TableHead>
+              <TableHead>
+                <Button
+                  variant="ghost"
+                  onClick={() => handleSort('name')}
+                  className="h-8 px-2 lg:px-3 hover:bg-transparent"
+                >
+                  Usuario
+                  {getSortIcon('name')}
+                </Button>
+              </TableHead>
+              <TableHead>
+                <Button
+                  variant="ghost"
+                  onClick={() => handleSort('email')}
+                  className="h-8 px-2 lg:px-3 hover:bg-transparent"
+                >
+                  Email
+                  {getSortIcon('email')}
+                </Button>
+              </TableHead>
               <TableHead>Teléfono</TableHead>
-              <TableHead>Rol</TableHead>
-              <TableHead>Estado</TableHead>
-              <TableHead>Género</TableHead>
+              <TableHead>
+                <Button
+                  variant="ghost"
+                  onClick={() => handleSort('role')}
+                  className="h-8 px-2 lg:px-3 hover:bg-transparent"
+                >
+                  Rol
+                  {getSortIcon('role')}
+                </Button>
+              </TableHead>
+              <TableHead>
+                <Button
+                  variant="ghost"
+                  onClick={() => handleSort('status')}
+                  className="h-8 px-2 lg:px-3 hover:bg-transparent"
+                >
+                  Estado
+                  {getSortIcon('status')}
+                </Button>
+              </TableHead>
+              <TableHead>
+                <Button
+                  variant="ghost"
+                  onClick={() => handleSort('gender')}
+                  className="h-8 px-2 lg:px-3 hover:bg-transparent"
+                >
+                  Género
+                  {getSortIcon('gender')}
+                </Button>
+              </TableHead>
               <TableHead>Categoría</TableHead>
               <TableHead>Torneos Activos</TableHead>
-              <TableHead>Registro</TableHead>
+              <TableHead>
+                <Button
+                  variant="ghost"
+                  onClick={() => handleSort('createdAt')}
+                  className="h-8 px-2 lg:px-3 hover:bg-transparent"
+                >
+                  Registro
+                  {getSortIcon('createdAt')}
+                </Button>
+              </TableHead>
               <TableHead className="w-[50px]"></TableHead>
             </TableRow>
           </TableHeader>
@@ -559,7 +659,11 @@ export function UsersTable() {
                 users.map((user) => {
                   const activeTournaments = getActiveTournaments(user)
                   return (
-                    <TableRow key={user.id}>
+                    <TableRow
+                      key={user.id}
+                      onClick={(e) => handleRowClick(user.id, e)}
+                      className="cursor-pointer hover:bg-muted/50"
+                    >
                       <TableCell>
                         <div className="flex items-center space-x-3">
                           <Avatar className="h-10 w-10">

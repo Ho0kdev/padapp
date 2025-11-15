@@ -90,7 +90,7 @@ export function RankingsHeader() {
     <DataTableHeader
       title="Rankings por Categoría"
       description="Gestiona los rankings de jugadores por categoría y temporada"
-      searchPlaceholder="Buscar jugadores..."
+      searchPlaceholder="Buscar por nombre de jugador..."
       showCreateButton={false}
       filterLabel="Categoría"
       filterOptions={categoryOptions}

@@ -35,11 +35,12 @@ import {
   Eye,
   Edit,
   Trash2,
-  CreditCard
+  CreditCard,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
 } from "lucide-react"
 import Link from "next/link"
-import { format } from "date-fns"
-import { es } from "date-fns/locale"
 import { categoryTypeOptions } from "@/lib/validations/category"
 import {
   tournamentStatusOptions as statusStyles,
@@ -49,9 +50,12 @@ import {
   getTeamFormationStatusStyle,
   getTeamFormationStatusLabel
 } from "@/lib/utils/status-styles"
+import { format } from "date-fns"
+import { es } from "date-fns/locale"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/hooks/use-auth"
 import { DataTablePagination } from "@/components/ui/data-table-pagination"
+import { useRouter } from "next/navigation"
 
 interface Player {
   id: string
@@ -114,6 +118,7 @@ interface RegistrationsPaginatedResponse {
 }
 
 export function RegistrationsTable() {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const [registrations, setRegistrations] = useState<Registration[]>([])
   const [pagination, setPagination] = useState({
@@ -129,6 +134,8 @@ export function RegistrationsTable() {
   const { user } = useAuth()
 
   const isAdmin = user?.role === "ADMIN" || user?.role === "CLUB_ADMIN"
+  const orderBy = searchParams.get('orderBy') || 'createdAt'
+  const order = searchParams.get('order') || 'desc'
 
   useEffect(() => {
     fetchRegistrations()
@@ -193,6 +200,42 @@ export function RegistrationsTable() {
       setRegistrationToDelete(null)
     }
   }
+
+  const handleSort = (column: string) => {
+    const params = new URLSearchParams(searchParams)
+
+    // Si ya está ordenando por esta columna, invertir el orden
+    if (orderBy === column) {
+      const newOrder = order === 'asc' ? 'desc' : 'asc'
+      params.set('order', newOrder)
+    } else {
+      // Nueva columna, ordenar ascendente por defecto
+      params.set('orderBy', column)
+      params.set('order', 'asc')
+    }
+
+    params.set('page', '1') // Reset a la primera página
+    router.push(`/dashboard/registrations?${params.toString()}`)
+  }
+
+  const getSortIcon = (column: string) => {
+    if (orderBy !== column) {
+      return <ArrowUpDown className="ml-1 h-3 w-3 text-muted-foreground" />
+    }
+    return order === 'asc'
+      ? <ArrowUp className="ml-1 h-3 w-3" />
+      : <ArrowDown className="ml-1 h-3 w-3" />
+  }
+
+  const handleRowClick = (registrationId: string, e: React.MouseEvent) => {
+    // No navegar si se hizo click en el dropdown menu o sus elementos
+    const target = e.target as HTMLElement
+    if (target.closest('button') || target.closest('[role="menuitem"]') || target.closest('a')) {
+      return
+    }
+    router.push(`/dashboard/registrations/${registrationId}`)
+  }
+
   const getStatusBadge = (status: string) => {
     return (
       <Badge className={getRegistrationStatusStyle(status)}>
@@ -304,22 +347,45 @@ export function RegistrationsTable() {
               <TableHead>Jugador</TableHead>
               <TableHead>Torneo</TableHead>
               <TableHead>Categoría</TableHead>
-              <TableHead>Estado</TableHead>
+              <TableHead>
+                <Button
+                  variant="ghost"
+                  onClick={() => handleSort('registrationStatus')}
+                  className="h-8 px-2 lg:px-3 hover:bg-transparent"
+                >
+                  Estado
+                  {getSortIcon('registrationStatus')}
+                </Button>
+              </TableHead>
               <TableHead>Pago</TableHead>
               <TableHead>Equipo</TableHead>
+              <TableHead>
+                <Button
+                  variant="ghost"
+                  onClick={() => handleSort('createdAt')}
+                  className="h-8 px-2 lg:px-3 hover:bg-transparent"
+                >
+                  Fecha
+                  {getSortIcon('createdAt')}
+                </Button>
+              </TableHead>
               <TableHead className="w-[70px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {registrations.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="h-24 text-center">
+                <TableCell colSpan={8} className="h-24 text-center">
                   No se encontraron inscripciones.
                 </TableCell>
               </TableRow>
             ) : (
               registrations.map((registration) => (
-                <TableRow key={registration.id}>
+                <TableRow
+                  key={registration.id}
+                  onClick={(e) => handleRowClick(registration.id, e)}
+                  className="cursor-pointer hover:bg-muted/50"
+                >
                   <TableCell>
                     <div className="space-y-1">
                       <div className="font-medium">
@@ -350,6 +416,11 @@ export function RegistrationsTable() {
                   </TableCell>
                   <TableCell>
                     {getTeamStatus(registration)}
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm text-muted-foreground">
+                      {format(new Date(registration.registeredAt), "dd/MM/yyyy", { locale: es })}
+                    </div>
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>

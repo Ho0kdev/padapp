@@ -40,6 +40,8 @@ const getRegistrationsSchema = z.object({
   tournamentId: z.string().optional(),
   categoryId: z.string().optional(),
   playerId: z.string().optional(),
+  orderBy: z.string().optional(),
+  order: z.enum(["asc", "desc"]).optional(),
 })
 
 // ============================================================================
@@ -64,9 +66,20 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const params = Object.fromEntries(searchParams.entries())
     const validatedParams = getRegistrationsSchema.parse(params)
-    const { page, limit, status, search, tournamentId, categoryId, playerId } = validatedParams
+    const { page, limit, status, search, tournamentId, categoryId, playerId, orderBy, order } = validatedParams
 
     const offset = (page - 1) * limit
+
+    // Función auxiliar para construir ordenamiento dinámico
+    function buildOrderBy(orderBy?: string, order?: string): any {
+      const validColumns = ['createdAt', 'registrationStatus', 'paymentStatus']
+      const validOrders: ('asc' | 'desc')[] = ['asc', 'desc']
+
+      const column = orderBy && validColumns.includes(orderBy) ? orderBy : 'createdAt'
+      const direction = (order && validOrders.includes(order as 'asc' | 'desc')) ? order as 'asc' | 'desc' : 'desc'
+
+      return { [column]: direction }
+    }
 
     // Construir filtros base
     const where: any = {}
@@ -135,6 +148,7 @@ export async function GET(request: NextRequest) {
         where,
         skip: offset,
         take: limit,
+        orderBy: buildOrderBy(orderBy, order),
         include: {
           tournament: {
             select: {
@@ -225,9 +239,6 @@ export async function GET(request: NextRequest) {
             },
             take: 1
           }
-        },
-        orderBy: {
-          createdAt: 'desc'
         }
       }),
       prisma.registration.count({ where })

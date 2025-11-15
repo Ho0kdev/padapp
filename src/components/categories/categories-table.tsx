@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -38,13 +38,17 @@ import {
   CheckCircle,
   Users,
   Calendar,
-  Trophy
+  Trophy,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
 } from "lucide-react"
 import Link from "next/link"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/hooks/use-auth"
 import { DataTablePagination } from "@/components/ui/data-table-pagination"
 import { getCategoryTypeStyle, getCategoryTypeLabel, getGenderRestrictionStyle, getGenderRestrictionLabel, formatAgeRange, formatRankingRange } from "@/lib/utils/status-styles"
+import { Card, CardContent } from "@/components/ui/card"
 
 interface Category {
   id: string
@@ -74,6 +78,7 @@ interface CategoriesPaginatedResponse {
 }
 
 export function CategoriesTable() {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const [categories, setCategories] = useState<Category[]>([])
   const [pagination, setPagination] = useState({
@@ -89,6 +94,9 @@ export function CategoriesTable() {
   const [categoryToActivate, setCategoryToActivate] = useState<Category | null>(null)
   const { toast } = useToast()
   const { isAdminOrClubAdmin } = useAuth()
+
+  const orderBy = searchParams.get('orderBy') || 'name'
+  const order = searchParams.get('order') || 'asc'
 
   useEffect(() => {
     fetchCategories()
@@ -206,22 +214,188 @@ export function CategoriesTable() {
     )
   }
 
+  const handleSort = (column: string) => {
+    const params = new URLSearchParams(searchParams)
+
+    // Si ya está ordenando por esta columna, invertir el orden
+    if (orderBy === column) {
+      const newOrder = order === 'asc' ? 'desc' : 'asc'
+      params.set('order', newOrder)
+    } else {
+      // Nueva columna, ordenar ascendente por defecto
+      params.set('orderBy', column)
+      params.set('order', 'asc')
+    }
+
+    params.set('page', '1') // Reset a la primera página
+    router.push(`/dashboard/categories?${params.toString()}`)
+  }
+
+  const getSortIcon = (column: string) => {
+    if (orderBy !== column) {
+      return <ArrowUpDown className="ml-1 h-3 w-3 text-muted-foreground" />
+    }
+    return order === 'asc'
+      ? <ArrowUp className="ml-1 h-3 w-3" />
+      : <ArrowDown className="ml-1 h-3 w-3" />
+  }
+
+  const handleRowClick = (categoryId: string, e: React.MouseEvent) => {
+    // No navegar si se hizo click en el dropdown menu o sus elementos
+    const target = e.target as HTMLElement
+    if (target.closest('button') || target.closest('[role="menuitem"]')) {
+      return
+    }
+    router.push(`/dashboard/categories/${categoryId}`)
+  }
+
   if (loading) {
     return <div className="text-center py-8">Cargando categorías...</div>
   }
 
   return (
     <div className="space-y-4">
-      <div className="rounded-md border">
+      {/* Vista mobile con cards clickeables */}
+      <div className="lg:hidden space-y-3">
+        {categories.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            No se encontraron categorías
+          </div>
+        ) : (
+          categories.map((category) => (
+            <Card
+              key={category.id}
+              className="overflow-hidden cursor-pointer hover:bg-muted/50 transition-colors"
+              onClick={(e) => handleRowClick(category.id, e)}
+            >
+              <CardContent className="p-4 space-y-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-base truncate">{category.name}</h3>
+                    {category.description && (
+                      <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
+                        {category.description}
+                      </p>
+                    )}
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem asChild>
+                        <Link href={`/dashboard/categories/${category.id}`}>
+                          <Eye className="mr-2 h-4 w-4" />
+                          Ver detalle
+                        </Link>
+                      </DropdownMenuItem>
+                      {isAdminOrClubAdmin && (
+                        <>
+                          <DropdownMenuItem asChild>
+                            <Link href={`/dashboard/categories/${category.id}/edit`}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Editar
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          {category.isActive ? (
+                            <DropdownMenuItem
+                              className="text-red-600"
+                              onClick={() => {
+                                setCategoryToDelete(category)
+                                setDeleteDialogOpen(true)
+                              }}
+                              disabled={category._count.tournamentCategories > 0}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Desactivar
+                            </DropdownMenuItem>
+                          ) : (
+                            <DropdownMenuItem
+                              className="text-green-600"
+                              onClick={() => {
+                                setCategoryToActivate(category)
+                                setActivateDialogOpen(true)
+                              }}
+                            >
+                              <CheckCircle className="mr-2 h-4 w-4" />
+                              Activar
+                            </DropdownMenuItem>
+                          )}
+                        </>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {getTypeBadge(category.type)}
+                  {category.level && (
+                    <Badge variant="secondary" className="font-mono">
+                      Nivel {category.level}
+                    </Badge>
+                  )}
+                  {getStatusBadge(category.isActive)}
+                </div>
+                {(formatAgeRange(category.minAge, category.maxAge) || category.genderRestriction || formatRankingRange(category.minRankingPoints, category.maxRankingPoints)) && (
+                  <div className="space-y-1 text-sm">
+                    {formatAgeRange(category.minAge, category.maxAge) && (
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3 text-muted-foreground" />
+                        {formatAgeRange(category.minAge, category.maxAge)}
+                      </div>
+                    )}
+                    {category.genderRestriction && (
+                      <div className="flex items-center gap-1">
+                        <Users className="h-3 w-3 text-muted-foreground" />
+                        {getGenderBadge(category.genderRestriction)}
+                      </div>
+                    )}
+                    {formatRankingRange(category.minRankingPoints, category.maxRankingPoints) && (
+                      <div className="flex items-center gap-1">
+                        <Trophy className="h-3 w-3 text-muted-foreground" />
+                        {formatRankingRange(category.minRankingPoints, category.maxRankingPoints)}
+                      </div>
+                    )}
+                  </div>
+                )}
+                <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                  <Tag className="h-3 w-3" />
+                  {category._count.tournamentCategories} torneos
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </div>
+
+      {/* Vista desktop con tabla clickeable */}
+      <div className="hidden lg:block rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Nombre</TableHead>
-              <TableHead>Tipo</TableHead>
+              <TableHead>
+                <Button variant="ghost" onClick={() => handleSort('name')} className="h-8 px-2 lg:px-3 hover:bg-transparent">
+                  Nombre
+                  {getSortIcon('name')}
+                </Button>
+              </TableHead>
+              <TableHead>
+                <Button variant="ghost" onClick={() => handleSort('type')} className="h-8 px-2 lg:px-3 hover:bg-transparent">
+                  Tipo
+                  {getSortIcon('type')}
+                </Button>
+              </TableHead>
               <TableHead>Nivel</TableHead>
               <TableHead>Restricciones</TableHead>
               <TableHead>Torneos</TableHead>
-              <TableHead>Estado</TableHead>
+              <TableHead>
+                <Button variant="ghost" onClick={() => handleSort('isActive')} className="h-8 px-2 lg:px-3 hover:bg-transparent">
+                  Estado
+                  {getSortIcon('isActive')}
+                </Button>
+              </TableHead>
               <TableHead className="w-[50px]"></TableHead>
             </TableRow>
           </TableHeader>
@@ -234,7 +408,11 @@ export function CategoriesTable() {
                 </TableRow>
               ) : (
                 categories.map((category) => (
-                  <TableRow key={category.id}>
+                  <TableRow
+                    key={category.id}
+                    onClick={(e) => handleRowClick(category.id, e)}
+                    className="cursor-pointer hover:bg-muted/50"
+                  >
                     <TableCell>
                       <div>
                         <div className="font-medium">{category.name}</div>

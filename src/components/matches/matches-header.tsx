@@ -78,7 +78,7 @@ export function MatchesHeader() {
         <form onSubmit={handleSearch} className="flex-1 max-w-md">
           <div className="flex gap-2">
             <Input
-              placeholder="Buscar por equipo, torneo..."
+              placeholder="Buscar por equipo, torneo, categoría..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="flex-1"

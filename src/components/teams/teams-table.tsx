@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -34,7 +34,10 @@ import {
   MoreHorizontal,
   Eye,
   Trash2,
-  Users
+  Users,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
 } from "lucide-react"
 import Link from "next/link"
 import {
@@ -43,6 +46,8 @@ import {
   getRegistrationStatusStyle,
   getRegistrationStatusLabel
 } from "@/lib/utils/status-styles"
+import { format } from "date-fns"
+import { es } from "date-fns/locale"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/hooks/use-auth"
 import { DataTablePagination } from "@/components/ui/data-table-pagination"
@@ -91,6 +96,7 @@ interface TeamsPaginatedResponse {
 }
 
 export function TeamsTable() {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const [teams, setTeams] = useState<Team[]>([])
   const [pagination, setPagination] = useState({
@@ -106,6 +112,8 @@ export function TeamsTable() {
   const { user } = useAuth()
 
   const isAdmin = user?.role === "ADMIN" || user?.role === "CLUB_ADMIN"
+  const orderBy = searchParams.get('orderBy') || 'createdAt'
+  const order = searchParams.get('order') || 'desc'
 
   useEffect(() => {
     fetchTeams()
@@ -171,6 +179,41 @@ export function TeamsTable() {
     }
   }
 
+  const handleSort = (column: string) => {
+    const params = new URLSearchParams(searchParams)
+
+    // Si ya está ordenando por esta columna, invertir el orden
+    if (orderBy === column) {
+      const newOrder = order === 'asc' ? 'desc' : 'asc'
+      params.set('order', newOrder)
+    } else {
+      // Nueva columna, ordenar ascendente por defecto
+      params.set('orderBy', column)
+      params.set('order', 'asc')
+    }
+
+    params.set('page', '1') // Reset a la primera página
+    router.push(`/dashboard/teams?${params.toString()}`)
+  }
+
+  const getSortIcon = (column: string) => {
+    if (orderBy !== column) {
+      return <ArrowUpDown className="ml-1 h-3 w-3 text-muted-foreground" />
+    }
+    return order === 'asc'
+      ? <ArrowUp className="ml-1 h-3 w-3" />
+      : <ArrowDown className="ml-1 h-3 w-3" />
+  }
+
+  const handleRowClick = (teamId: string, e: React.MouseEvent) => {
+    // No navegar si se hizo click en el dropdown menu o sus elementos
+    const target = e.target as HTMLElement
+    if (target.closest('button') || target.closest('[role="menuitem"]')) {
+      return
+    }
+    router.push(`/dashboard/teams/${teamId}`)
+  }
+
   if (loading) {
     return (
       <Card>
@@ -215,21 +258,118 @@ export function TeamsTable() {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-md border">
+      {/* Vista mobile con cards clickeables */}
+      <div className="lg:hidden space-y-3">
+        {teams.map((team) => (
+          <Card
+            key={team.id}
+            className="overflow-hidden cursor-pointer hover:bg-muted/50 transition-colors"
+            onClick={(e) => handleRowClick(team.id, e)}
+          >
+            <CardContent className="p-4 space-y-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-base truncate">
+                    {team.name || `${team.registration1.player.firstName} ${team.registration1.player.lastName} / ${team.registration2.player.firstName} ${team.registration2.player.lastName}`}
+                  </h3>
+                  <p className="text-sm text-muted-foreground truncate">
+                    {team.tournament.name}
+                  </p>
+                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <Link href={`/dashboard/teams/${team.id}`}>
+                      <DropdownMenuItem>
+                        <Eye className="mr-2 h-4 w-4" />
+                        Ver detalles
+                      </DropdownMenuItem>
+                    </Link>
+                    {isAdmin && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-destructive"
+                          onClick={() => {
+                            setTeamToDelete(team)
+                            setDeleteDialogOpen(true)
+                          }}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Disolver equipo
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+              <Badge className={getTeamStatusStyle(team.status)}>
+                {getTeamStatusLabel(team.status)}
+              </Badge>
+              <div className="text-sm">
+                <p className="text-muted-foreground mb-1">Categoría: {team.category.name}</p>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span>{team.registration1.player.firstName} {team.registration1.player.lastName}</span>
+                    <Badge variant="outline" className={getRegistrationStatusStyle(team.registration1.registrationStatus)}>
+                      {getRegistrationStatusLabel(team.registration1.registrationStatus)}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span>{team.registration2.player.firstName} {team.registration2.player.lastName}</span>
+                    <Badge variant="outline" className={getRegistrationStatusStyle(team.registration2.registrationStatus)}>
+                      {getRegistrationStatusLabel(team.registration2.registrationStatus)}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Vista desktop con tabla clickeable */}
+      <div className="hidden lg:block rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Equipo</TableHead>
+              <TableHead>
+                <Button variant="ghost" onClick={() => handleSort('name')} className="h-8 px-2 lg:px-3 hover:bg-transparent">
+                  Equipo
+                  {getSortIcon('name')}
+                </Button>
+              </TableHead>
               <TableHead>Torneo</TableHead>
               <TableHead>Categoría</TableHead>
               <TableHead>Jugadores</TableHead>
-              <TableHead>Estado</TableHead>
+              <TableHead>
+                <Button variant="ghost" onClick={() => handleSort('status')} className="h-8 px-2 lg:px-3 hover:bg-transparent">
+                  Estado
+                  {getSortIcon('status')}
+                </Button>
+              </TableHead>
+              <TableHead>
+                <Button variant="ghost" onClick={() => handleSort('createdAt')} className="h-8 px-2 lg:px-3 hover:bg-transparent">
+                  Fecha
+                  {getSortIcon('createdAt')}
+                </Button>
+              </TableHead>
               <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {teams.map((team) => (
-              <TableRow key={team.id}>
+              <TableRow
+                key={team.id}
+                onClick={(e) => handleRowClick(team.id, e)}
+                className="cursor-pointer hover:bg-muted/50"
+              >
                 <TableCell className="font-medium">
                   {team.name || `${team.registration1.player.firstName} ${team.registration1.player.lastName} / ${team.registration2.player.firstName} ${team.registration2.player.lastName}`}
                   {team.seed && (
@@ -260,6 +400,11 @@ export function TeamsTable() {
                   <Badge className={getTeamStatusStyle(team.status)}>
                     {getTeamStatusLabel(team.status)}
                   </Badge>
+                </TableCell>
+                <TableCell>
+                  <div className="text-sm text-muted-foreground">
+                    {format(new Date(team.createdAt), "dd/MM/yyyy", { locale: es })}
+                  </div>
                 </TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>

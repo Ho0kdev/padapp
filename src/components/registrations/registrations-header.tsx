@@ -40,7 +40,7 @@ export function RegistrationsHeader() {
     <DataTableHeader
       title="Inscripciones"
       description="Gestiona las inscripciones de equipos en torneos"
-      searchPlaceholder="Buscar inscripciones..."
+      searchPlaceholder="Buscar por jugador, torneo, categoría..."
       createButtonText="Nueva Inscripción"
       createButtonHref="/dashboard/registrations/new"
       filterLabel="Estado"

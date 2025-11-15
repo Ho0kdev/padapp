@@ -13,6 +13,26 @@ const querySchema = z.object({
   phaseType: z.string().optional(),
 })
 
+// Función auxiliar para construir ordenamiento dinámico
+function buildOrderBy(orderBy?: string, order?: string): any {
+  const validColumns = ['scheduledAt', 'status', 'roundNumber', 'matchNumber', 'createdAt']
+  const validOrders: ('asc' | 'desc')[] = ['asc', 'desc']
+
+  const column = orderBy && validColumns.includes(orderBy) ? orderBy : 'scheduledAt'
+  const direction = (order && validOrders.includes(order as 'asc' | 'desc')) ? order as 'asc' | 'desc' : 'asc'
+
+  // Para status y scheduledAt con null, necesitamos un ordenamiento especial
+  if (column === 'scheduledAt') {
+    return [
+      { scheduledAt: { sort: direction, nulls: 'last' } },
+      { roundNumber: 'asc' },
+      { matchNumber: 'asc' }
+    ]
+  }
+
+  return { [column]: direction }
+}
+
 /**
  * GET /api/matches
  * Lista partidos con paginación y filtros
@@ -25,6 +45,8 @@ const querySchema = z.object({
  * - status: filtrar por estado (SCHEDULED, IN_PROGRESS, COMPLETED, CANCELLED, all)
  * - courtId: filtrar por cancha
  * - phaseType: filtrar por fase (FINAL, SEMIFINALS, etc)
+ * - orderBy: columna para ordenar (scheduledAt, status, roundNumber, matchNumber, createdAt)
+ * - order: dirección de ordenamiento (asc, desc)
  */
 export async function GET(request: NextRequest) {
   try {
@@ -33,6 +55,8 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const params = Object.fromEntries(searchParams.entries())
     const validatedQuery = querySchema.parse(params)
+    const orderBy = searchParams.get("orderBy") || undefined
+    const order = searchParams.get("order") || undefined
 
     const page = parseInt(validatedQuery.page)
     const limit = parseInt(validatedQuery.limit)
@@ -168,12 +192,7 @@ export async function GET(request: NextRequest) {
             }
           }
         },
-        orderBy: [
-          { status: 'asc' }, // SCHEDULED primero
-          { scheduledAt: 'asc' }, // Por horario
-          { roundNumber: 'asc' }, // Por ronda
-          { matchNumber: 'asc' } // Por número de partido
-        ],
+        orderBy: buildOrderBy(orderBy, order),
         skip,
         take: limit
       }),

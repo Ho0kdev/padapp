@@ -4,6 +4,17 @@ import { prisma } from "@/lib/prisma"
 import { categoryFormSchema } from "@/lib/validations/category"
 import { z } from "zod"
 
+// Función auxiliar para construir ordenamiento dinámico
+function buildOrderBy(orderBy?: string, order?: string): any {
+  const validColumns = ['name', 'type', 'minAge', 'maxAge', 'createdAt', 'isActive']
+  const validOrders: ('asc' | 'desc')[] = ['asc', 'desc']
+
+  const column = orderBy && validColumns.includes(orderBy) ? orderBy : 'name'
+  const direction = (order && validOrders.includes(order as 'asc' | 'desc')) ? order as 'asc' | 'desc' : 'asc'
+
+  return { [column]: direction }
+}
+
 // GET /api/categories - Obtener lista de categorías
 export async function GET(request: NextRequest) {
   try {
@@ -20,6 +31,8 @@ export async function GET(request: NextRequest) {
     const type = searchParams.get("type")
     const isActive = searchParams.get("isActive")
     const search = searchParams.get("search")
+    const orderBy = searchParams.get("orderBy") || undefined
+    const order = searchParams.get("order") || undefined
 
     const skip = (page - 1) * limit
 
@@ -48,7 +61,7 @@ export async function GET(request: NextRequest) {
         where,
         skip,
         take: limit,
-        orderBy: { name: "asc" },
+        orderBy: buildOrderBy(orderBy, order),
         include: {
           _count: {
             select: {
@@ -56,9 +69,9 @@ export async function GET(request: NextRequest) {
                 where: {
                   tournament: {
                     status: {
-                      in: [ "PUBLISHED", 
+                      in: [ "PUBLISHED",
                             "REGISTRATION_OPEN",
-                            "REGISTRATION_CLOSED", 
+                            "REGISTRATION_CLOSED",
                             "IN_PROGRESS",]
                     }
                   }

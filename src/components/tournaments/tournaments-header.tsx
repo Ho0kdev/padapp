@@ -16,7 +16,7 @@ export function TournamentsHeader() {
     <DataTableHeader
       title="Torneos"
       description="Gestiona y organiza torneos de pádel"
-      searchPlaceholder="Buscar torneos..."
+      searchPlaceholder="Buscar por nombre, club, ciudad..."
       createButtonText="Nuevo Torneo"
       createButtonHref="/dashboard/tournaments/new"
       showCreateButton={isAdminOrClubAdmin}

@@ -9,6 +9,17 @@ import { TeamLogService } from "@/lib/services/team-log-service"
 // GET ENDPOINT
 // ============================================================================
 
+// Función auxiliar para construir ordenamiento dinámico
+function buildOrderBy(orderBy?: string, order?: string): any {
+  const validColumns = ['createdAt', 'name', 'status']
+  const validOrders: ('asc' | 'desc')[] = ['asc', 'desc']
+
+  const column = orderBy && validColumns.includes(orderBy) ? orderBy : 'createdAt'
+  const direction = (order && validOrders.includes(order as 'asc' | 'desc')) ? order as 'asc' | 'desc' : 'desc'
+
+  return { [column]: direction }
+}
+
 /**
  * GET /api/teams
  *
@@ -25,6 +36,8 @@ export async function GET(request: NextRequest) {
     const params = Object.fromEntries(searchParams.entries())
     const validatedParams = getTeamsSchema.parse(params)
     const { page, limit, status, search, tournamentId, categoryId, playerId } = validatedParams
+    const orderBy = searchParams.get("orderBy") || undefined
+    const order = searchParams.get("order") || undefined
 
     const offset = (page - 1) * limit
 
@@ -190,9 +203,7 @@ export async function GET(request: NextRequest) {
             }
           }
         },
-        orderBy: {
-          createdAt: 'desc'
-        }
+        orderBy: buildOrderBy(orderBy, order)
       }),
       prisma.team.count({ where })
     ])

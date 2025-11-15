@@ -21,6 +21,14 @@ interface SecondaryFilter {
   width?: string
 }
 
+interface TertiaryFilter {
+  label: string
+  options: FilterOption[]
+  paramKey: string
+  defaultValue?: string
+  width?: string
+}
+
 interface DataTableHeaderProps {
   title: string
   description: string
@@ -34,6 +42,7 @@ interface DataTableHeaderProps {
   searchParamKey?: string
   filterParamKey?: string
   secondaryFilter?: SecondaryFilter
+  tertiaryFilter?: TertiaryFilter
   basePath: string
 }
 
@@ -50,6 +59,7 @@ export function DataTableHeader({
   searchParamKey = "search",
   filterParamKey = "status",
   secondaryFilter,
+  tertiaryFilter,
   basePath
 }: DataTableHeaderProps) {
   const router = useRouter()
@@ -82,10 +92,23 @@ export function DataTableHeader({
     if (!secondaryFilter) return
 
     const params = new URLSearchParams(searchParams)
-    if (value) {
+    if (value && value !== "all") {
       params.set(secondaryFilter.paramKey, value)
     } else {
       params.delete(secondaryFilter.paramKey)
+    }
+    params.set("page", "1") // Reset to first page
+    router.push(`${basePath}?${params.toString()}`)
+  }
+
+  const handleTertiaryFilter = (value: string) => {
+    if (!tertiaryFilter) return
+
+    const params = new URLSearchParams(searchParams)
+    if (value && value !== "all") {
+      params.set(tertiaryFilter.paramKey, value)
+    } else {
+      params.delete(tertiaryFilter.paramKey)
     }
     params.set("page", "1") // Reset to first page
     router.push(`${basePath}?${params.toString()}`)
@@ -147,6 +170,25 @@ export function DataTableHeader({
               <SelectContent>
                 <SelectItem value="all">Todos</SelectItem>
                 {secondaryFilter.options.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
+          {tertiaryFilter && (
+            <Select
+              value={searchParams.get(tertiaryFilter.paramKey) || tertiaryFilter.defaultValue || "all"}
+              onValueChange={handleTertiaryFilter}
+            >
+              <SelectTrigger className={tertiaryFilter.width || "w-[120px]"}>
+                <SelectValue placeholder={tertiaryFilter.label} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                {tertiaryFilter.options.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
                   </SelectItem>

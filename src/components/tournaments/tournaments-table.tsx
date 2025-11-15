@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 import { TournamentListItem, TournamentsPaginatedResponse } from "@/types/tournament"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -30,7 +30,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Eye, MoreHorizontal, Pencil, Trash2, Users, Calendar, MapPin } from "lucide-react"
+import { Eye, MoreHorizontal, Pencil, Trash2, Users, Calendar, MapPin, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react"
 import Link from "next/link"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
@@ -42,6 +42,7 @@ import { useAuth } from "@/hooks/use-auth"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 
 export function TournamentsTable() {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const { isAdminOrClubAdmin } = useAuth()
   const [tournaments, setTournaments] = useState<TournamentListItem[]>([])
@@ -54,6 +55,9 @@ export function TournamentsTable() {
   const [loading, setLoading] = useState(true)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const { toast } = useToast()
+
+  const orderBy = searchParams.get('orderBy') || 'name'
+  const order = searchParams.get('order') || 'asc'
 
   useEffect(() => {
     fetchTournaments()
@@ -108,6 +112,44 @@ export function TournamentsTable() {
     } finally {
       setDeleteId(null)
     }
+  }
+
+  const handleSort = (column: string) => {
+    const params = new URLSearchParams(searchParams)
+
+    // Si ya está ordenando por esta columna, invertir el orden
+    if (orderBy === column) {
+      const newOrder = order === 'asc' ? 'desc' : 'asc'
+      params.set('order', newOrder)
+    } else {
+      // Nueva columna, ordenar ascendente por defecto
+      params.set('orderBy', column)
+      params.set('order', 'asc')
+    }
+
+    params.set('page', '1') // Reset a la primera página
+    router.push(`/dashboard/tournaments?${params.toString()}`)
+  }
+
+  const getSortIcon = (column: string) => {
+    if (orderBy !== column) {
+      return <ArrowUpDown className="ml-1 h-3 w-3 text-muted-foreground" />
+    }
+    return order === 'asc'
+      ? <ArrowUp className="ml-1 h-3 w-3" />
+      : <ArrowDown className="ml-1 h-3 w-3" />
+  }
+
+  const handleRowClick = (tournamentId: string, e: React.MouseEvent) => {
+    // No navegar si se hizo click en el dropdown menu o sus elementos
+    const target = e.target as HTMLElement
+    if (target.closest('button') || target.closest('[role="menuitem"]') || target.closest('a')) {
+      return
+    }
+    const route = tournaments.find(t => t.id === tournamentId)?.type === "AMERICANO_SOCIAL"
+      ? `/dashboard/tournaments/${tournamentId}/americano-social`
+      : `/dashboard/tournaments/${tournamentId}`
+    router.push(route)
   }
 
   const getStatusBadge = (status: string) => {
@@ -275,11 +317,38 @@ export function TournamentsTable() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Nombre</TableHead>
+              <TableHead>
+                <Button
+                  variant="ghost"
+                  onClick={() => handleSort('name')}
+                  className="h-8 px-2 lg:px-3 hover:bg-transparent"
+                >
+                  Nombre
+                  {getSortIcon('name')}
+                </Button>
+              </TableHead>
               <TableHead>Tipo</TableHead>
-              <TableHead>Estado</TableHead>
+              <TableHead>
+                <Button
+                  variant="ghost"
+                  onClick={() => handleSort('status')}
+                  className="h-8 px-2 lg:px-3 hover:bg-transparent"
+                >
+                  Estado
+                  {getSortIcon('status')}
+                </Button>
+              </TableHead>
               <TableHead>Club Principal</TableHead>
-              <TableHead>Fechas</TableHead>
+              <TableHead>
+                <Button
+                  variant="ghost"
+                  onClick={() => handleSort('tournamentStart')}
+                  className="h-8 px-2 lg:px-3 hover:bg-transparent"
+                >
+                  Fechas
+                  {getSortIcon('tournamentStart')}
+                </Button>
+              </TableHead>
               <TableHead>Participantes</TableHead>
               <TableHead>Categorías</TableHead>
               <TableHead className="w-[50px]"></TableHead>
@@ -294,7 +363,11 @@ export function TournamentsTable() {
               </TableRow>
             ) : (
               tournaments.map((tournament) => (
-                <TableRow key={tournament.id}>
+                <TableRow
+                  key={tournament.id}
+                  onClick={(e) => handleRowClick(tournament.id, e)}
+                  className="cursor-pointer hover:bg-muted/50"
+                >
                   <TableCell>
                     <div>
                       <div className="font-medium">{tournament.name}</div>
