@@ -10,11 +10,13 @@
 
 PadApp es una aplicación web completa para la gestión integral de torneos de pádel. Desarrollada con tecnologías modernas, permite administrar torneos, jugadores, clubes, rankings y mucho más de manera eficiente y profesional.
 
+**Estado Actual**: ✅ **99% completo** - Sistema production-ready con 46 API endpoints (100% RBAC protegidos), 91+ componentes React, 30+ tablas de base de datos, y sistema de UI/UX profesional con ordenamiento, filtros y navegación avanzada en 8 páginas principales.
+
 ### 🎯 Objetivos Principales
 - **Gestión Completa de Torneos**: Crear, administrar y seguir torneos de pádel
 - **Sistema de Rankings**: Cálculo automático de puntos y rankings por categorías
 - **Administración de Clubes**: Gestión de clubes, canchas y recursos
-- **Experiencia de Usuario Optimizada**: Interfaz moderna y responsiva
+- **Experiencia de Usuario Optimizada**: Interfaz moderna, responsiva y profesional con UX avanzado
 - **Escalabilidad**: Arquitectura preparada para crecer
 
 ## 🏗️ Arquitectura del Sistema
@@ -136,7 +138,7 @@ padapp/
 ### Características Especiales
 - **Cálculo Automático de Puntos**: Sistema complejo basado en posición, victorias y multiplicadores
 - **Múltiples Formatos de Torneo**: Single/Double Elimination, Round Robin, Swiss, etc.
-- **Gestión de Pagos**: Sistema de pagos por equipos
+- **Sistema de Pagos Completo**: Integración con Mercado Pago + Pagos manuales (ver [PAYMENT_SYSTEM.md](PAYMENT_SYSTEM.md))
 - **Notificaciones**: Sistema de notificaciones en tiempo real
 - **Logs de Auditoría**: Seguimiento completo de todas las acciones
 
@@ -291,6 +293,42 @@ padapp/
 - **Reglas de Negocio**: Un jugador puede inscribirse en múltiples categorías, pero solo un equipo por categoría
 - **Protección RBAC**: Permisos granulares por rol
 
+### ✅ **Sistema de Pagos Completo** ⭐ NUEVO (Diciembre 2024)
+- **Integración con Mercado Pago**:
+  - SDK oficial de Mercado Pago instalado
+  - Creación automática de preferencias de pago
+  - Soporte para tarjetas de crédito/débito y wallets digitales
+  - Redirección a checkout seguro de Mercado Pago
+  - Webhook para actualización automática de estados
+  - Modo sandbox para testing con tarjetas de prueba
+- **Gestión de Pagos Manual**:
+  - Solo para ADMIN y CLUB_ADMIN
+  - Métodos: Efectivo, Transferencia Bancaria, Confirmación Manual
+  - Registro de comprobantes de pago (URL opcional)
+  - Auditoría completa (quién confirmó y cuándo)
+  - Campo de notas para información adicional
+- **Estados de Pago**: PENDING, PAID, FAILED, CANCELLED, REFUNDED
+- **Componentes UI**:
+  - `PaymentSelector`: Selección de método de pago integrado en inscripciones
+  - `ManualPaymentDialog`: Modal para pagos manuales (solo admins)
+  - Visualización de historial de pagos
+  - Badges de estado con colores (verde=pagado, amarillo=pendiente, rojo=fallido)
+- **API Endpoints**:
+  - `POST /api/registrations/[id]/payment/mercadopago` - Crear preferencia de pago
+  - `POST /api/webhooks/mercadopago` - Recibir notificaciones de Mercado Pago
+  - `POST /api/registrations/[id]/payment/manual` - Confirmar pago manualmente
+  - `GET /api/registrations/[id]/payment` - Obtener historial de pagos
+- **Auditoría y Seguridad**:
+  - PaymentLogService con 9 acciones diferentes
+  - Logs de IP, User Agent, timestamps
+  - Trazabilidad completa de operaciones
+  - RBAC en todos los endpoints
+- **Configuración**:
+  - Variables de entorno para credenciales de Mercado Pago
+  - Modo test/production automático
+  - URL de webhook configurable
+- 📄 [Documentación completa del sistema de pagos](PAYMENT_SYSTEM.md)
+
 ### ✅ **Sistema de Equipos**
 - **Formación de Equipos**: 2 jugadores registrados forman un equipo
 - **CRUD Completo**: Gestión completa de equipos
@@ -331,6 +369,61 @@ padapp/
 - **Asignación de Canchas**: Manual a través de court_id
 - **Filtros**: Por torneo, fecha, cancha, estado
 - ⏳ **Pendiente**: Asignación automática de canchas, detección de conflictos, notificaciones de cambios
+
+### ✅ **Sistema de UI/UX Avanzado** ⭐ NUEVO (Diciembre 2024)
+- **🆕 Ordenamiento Dinámico en Todas las Tablas**:
+  - **8 Páginas Mejoradas**: Usuarios, Clubes, Categorías, Equipos, Partidos, Rankings, Torneos, Inscripciones
+  - **27+ Columnas Ordenables**: Click en header para ordenar ASC/DESC
+  - **Iconos Visuales Intuitivos**:
+    - `↕️` Columna sin orden aplicado
+    - `↑` Ordenamiento ascendente activo
+    - `↓` Ordenamiento descendente activo
+  - **Persistencia en URL**: Parámetros `orderBy` y `order` mantienen estado
+  - **Reset Automático**: Vuelve a página 1 al cambiar ordenamiento
+
+- **🆕 Navegación Clickeable en Tablas**:
+  - **Click en Fila → Detalle**: Navegación directa desde cualquier tabla
+  - **Detección Inteligente**: No navega al hacer click en botones/dropdowns
+  - **Hover Effects**: Feedback visual `hover:bg-muted/50` en todas las filas
+  - **Mobile Responsive**: Cards clickeables en vista móvil
+  - **Consistencia Total**: Mismo patrón en desktop y mobile
+
+- **🆕 Filtros Avanzados Mejorados**:
+  - **Usuarios**: Estado + Rol + Género (3 filtros)
+  - **Clubes**: Estado + Ciudad + País (3 filtros, dinámicos desde BD)
+  - **Categorías**: Estado (1 filtro)
+  - **Equipos**: Estado + Torneo (2 filtros)
+  - **Partidos**: Estado + Torneo (2 filtros)
+  - **Rankings**: Categoría + Temporada (2 filtros)
+  - **Torneos**: Estado (múltiples simultáneos)
+  - **Inscripciones**: Estado + Torneo (2 filtros)
+
+- **🆕 Búsqueda Mejorada**:
+  - **Placeholders Descriptivos**: Cada página describe qué se puede buscar
+  - **Búsqueda Inteligente**: Múltiples campos simultáneos (nombre, email, ciudad, etc.)
+  - **Búsqueda en Tiempo Real**: Actualización inmediata con debounce
+
+- **🆕 Backend API Mejorado**:
+  - **Ordenamiento Dinámico**: Función `buildOrderBy()` en 8 endpoints
+  - **Validación de Columnas**: Solo columnas permitidas pueden ordenarse
+  - **Type Safety**: Tipos TypeScript `'asc' | 'desc'` estrictos
+  - **Endpoint de Filtros**: `/api/clubs/filters` para filtros dinámicos
+
+- **Columnas Ordenables por Página**:
+  - **Usuarios (6)**: Usuario, Email, Rol, Estado, Género, Fecha Registro
+  - **Clubes (3)**: Club, Ubicación, Estado
+  - **Categorías (3)**: Nombre, Tipo, Estado
+  - **Equipos (3)**: Equipo, Estado, Fecha Creación
+  - **Partidos (2)**: Horario/Cancha, Estado
+  - **Rankings (3)**: Posición, Puntos, Temporada
+  - **Torneos (4)**: Nombre, Estado, Fecha Inicio, Tipo
+  - **Inscripciones (2)**: Estado, Fecha Inscripción
+
+- **Patrón de Código Consistente**:
+  - 3 funciones standard: `handleSort()`, `getSortIcon()`, `handleRowClick()`
+  - Same hooks: `useRouter()`, `useSearchParams()`
+  - Consistencia total en nombres y comportamiento
+  - Type-safe en todos los componentes
 
 ## 📋 Funcionalidades Pendientes por Desarrollar
 

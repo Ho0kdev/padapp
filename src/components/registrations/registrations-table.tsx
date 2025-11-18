@@ -83,13 +83,13 @@ interface Registration {
     type: string
   }
   player: Player
-  payment: {
+  payments: Array<{
     id: string
     amount: number
     paymentStatus: string
     paymentMethod: string
     paidAt: Date | null
-  } | null
+  }>
   tournamentCategory: {
     registrationFee: number | null
   } | null
@@ -248,14 +248,16 @@ export function RegistrationsTable() {
     return `${registration.player.firstName} ${registration.player.lastName}`
   }
 
-  const getTotalPaid = (payment: Registration['payment']) => {
-    if (!payment) return 0
-    return payment.paymentStatus === 'PAID' ? payment.amount : 0
+  const getTotalPaid = (payments: Registration['payments']) => {
+    if (!payments || payments.length === 0) return 0
+    return payments
+      .filter(p => p.paymentStatus === 'PAID')
+      .reduce((sum, p) => sum + p.amount, 0)
   }
 
   const getPaymentStatus = (registration: Registration) => {
     const registrationFee = registration.tournamentCategory?.registrationFee || 0
-    const totalPaid = getTotalPaid(registration.payment)
+    const totalPaid = getTotalPaid(registration.payments)
 
     if (registrationFee === 0) {
       return <Badge variant="secondary">Sin Costo</Badge>

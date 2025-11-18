@@ -5,7 +5,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
@@ -48,9 +48,14 @@ import {
   getGenderRestrictionStyle,
   getGenderRestrictionLabel,
   getCategoryLevelStyle,
-  formatCategoryLevel
+  formatCategoryLevel,
+  getPaymentStatusStyle,
+  getPaymentStatusLabel,
+  getPaymentMethodStyle,
+  getPaymentMethodLabel
 } from "@/lib/utils/status-styles"
 import { RegistrationStatusManager } from "./registration-status-manager"
+import { PaymentSelector } from "@/components/payments/payment-selector"
 
 interface Player {
   id: string
@@ -84,6 +89,7 @@ interface RegistrationWithDetails {
     tournamentEnd: Date | null
     registrationStart: Date | null
     registrationEnd: Date | null
+    registrationFee: number
   }
   category: {
     id: string
@@ -96,14 +102,17 @@ interface RegistrationWithDetails {
     maxRankingPoints: number | null
   }
   player: Player
-  payment: {
+  payments: {
     id: string
     amount: number
     paymentStatus: string
-    paymentMethod: string
+    paymentMethod: string | null
     paidAt: Date | null
     createdAt: Date
-  } | null
+    transactionId: string | null
+    paymentProofUrl: string | null
+    metadata: any
+  }[]
   tournamentCategory: {
     registrationFee: number | null
     maxTeams: number | null
@@ -123,12 +132,19 @@ export function RegistrationDetail({ registration, isAdmin = false }: Registrati
 
   const statusConfig = registrationStatusOptions.find(s => s.value === registration.registrationStatus)
 
-  const totalPaid = (registration.payment && registration.payment.paymentStatus === 'PAID')
-    ? registration.payment.amount
-    : 0
+  // Calculate total paid by summing all PAID payments
+  const totalPaid = registration.payments
+    .filter(p => p.paymentStatus === 'PAID')
+    .reduce((sum, p) => sum + p.amount, 0)
 
-  const registrationFee = registration.tournamentCategory?.registrationFee || 0
+  // Use tournamentCategory fee if available, otherwise use tournament fee
+  const registrationFee = registration.tournamentCategory?.registrationFee ?? registration.tournament.registrationFee ?? 0
   const amountDue = Math.max(0, registrationFee - totalPaid)
+
+  // Get the most recent payment status (for PaymentSelector)
+  const latestPaymentStatus = registration.payments.length > 0
+    ? registration.payments[0].paymentStatus
+    : undefined
 
   const getPlayerName = () => {
     return `${registration.player.firstName} ${registration.player.lastName}`
@@ -196,14 +212,14 @@ export function RegistrationDetail({ registration, isAdmin = false }: Registrati
     }
 
     if (totalPaid >= registrationFee) {
-      return <Badge variant="default" className="bg-green-600">Pagado</Badge>
+      return <Badge variant="default" className="bg-green-600">💳 Pagado</Badge>
     }
 
     if (totalPaid > 0) {
-      return <Badge variant="outline">Parcial</Badge>
+      return <Badge variant="outline">💳 Pago Parcial</Badge>
     }
 
-    return <Badge variant="destructive">Pendiente</Badge>
+    return <Badge variant="destructive">💳 Pago Pendiente</Badge>
   }
 
 
@@ -225,7 +241,6 @@ export function RegistrationDetail({ registration, isAdmin = false }: Registrati
               />
             )}
             {!isAdmin && getStatusBadge(registration.registrationStatus)}
-            {getPaymentStatusBadge()}
           </div>
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <div className="flex items-center gap-1">
@@ -388,10 +403,10 @@ export function RegistrationDetail({ registration, isAdmin = false }: Registrati
                   </div>
                 </div>
 
-                {registration.tournamentCategory && (
+                {registrationFee > 0 && (
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Tarifa de Inscripción</p>
-                    <p>${registration.tournamentCategory.registrationFee || 0}</p>
+                    <p>${registrationFee.toFixed(2)}</p>
                   </div>
                 )}
               </CardContent>
@@ -496,35 +511,66 @@ export function RegistrationDetail({ registration, isAdmin = false }: Registrati
           </Card>
         </TabsContent>
 
-        <TabsContent value="payments">
+        <TabsContent value="payments" className="space-y-4">
+          {/* Payment Selector - Shows only if registration is CONFIRMED and has pending payment */}
+          {registration.registrationStatus === 'CONFIRMED' && registrationFee > 0 && amountDue > 0 && (
+            <PaymentSelector
+              registrationId={registration.id}
+              amount={registrationFee}
+              amountPaid={totalPaid}
+              tournamentName={registration.tournament.name}
+              categoryName={registration.category.name}
+              currentStatus={latestPaymentStatus}
+              onPaymentComplete={() => router.refresh()}
+            />
+          )}
+
+          {/* Message if registration is pending approval */}
+          {registration.registrationStatus === 'PENDING' && registrationFee > 0 && (
+            <Card className="border-yellow-200 bg-yellow-50">
+              <CardHeader>
+                <CardTitle className="text-yellow-700">Inscripción Pendiente de Aprobación</CardTitle>
+                <CardDescription>
+                  Tu inscripción está pendiente de aprobación por el organizador del torneo.
+                  Podrás realizar el pago una vez que sea confirmada.
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          )}
+
+          {/* Payment History */}
           <Card>
             <CardHeader>
               <CardTitle>Historial de Pagos</CardTitle>
+              <CardDescription>
+                {registration.payments.length === 0 ? (
+                  "No hay pagos registrados"
+                ) : (
+                  `${registration.payments.length} pago${registration.payments.length !== 1 ? 's' : ''} registrado${registration.payments.length !== 1 ? 's' : ''}`
+                )}
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              {!registration.payment ? (
+              {registration.payments.length === 0 ? (
                 <p className="text-center text-muted-foreground py-8">
                   No hay pagos registrados para esta inscripción
                 </p>
               ) : (
                 <div className="space-y-4">
-                  {[registration.payment].map((payment) => (
+                  {registration.payments.map((payment) => (
                     <div key={payment.id} className="border rounded-lg p-4">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-3">
-                          <Badge
-                            variant={payment.paymentStatus === 'PAID' ? 'default' :
-                                   payment.paymentStatus === 'PENDING' ? 'outline' : 'destructive'}
-                            className={payment.paymentStatus === 'PAID' ? 'bg-green-600' : ''}
-                          >
-                            {payment.paymentStatus === 'PAID' ? 'Pagado' :
-                             payment.paymentStatus === 'PENDING' ? 'Pendiente' : 'Cancelado'}
+                          <Badge className={getPaymentStatusStyle(payment.paymentStatus)}>
+                            {getPaymentStatusLabel(payment.paymentStatus)}
                           </Badge>
-                          <span className="font-medium">${payment.amount}</span>
+                          <span className="font-medium">${payment.amount.toFixed(2)}</span>
                         </div>
-                        <Badge variant="outline">
-                          {payment.paymentMethod}
-                        </Badge>
+                        {payment.paymentMethod && (
+                          <Badge className={getPaymentMethodStyle(payment.paymentMethod)}>
+                            {getPaymentMethodLabel(payment.paymentMethod)}
+                          </Badge>
+                        )}
                       </div>
 
                       <div className="text-sm text-muted-foreground space-y-1">
@@ -534,6 +580,16 @@ export function RegistrationDetail({ registration, isAdmin = false }: Registrati
                         {payment.paidAt && (
                           <div>
                             Pagado: {format(new Date(payment.paidAt), "dd/MM/yyyy HH:mm", { locale: es })}
+                          </div>
+                        )}
+                        {payment.transactionId && (
+                          <div>
+                            ID Transacción: {payment.transactionId}
+                          </div>
+                        )}
+                        {payment.metadata && typeof payment.metadata === 'object' && 'notes' in payment.metadata && (
+                          <div>
+                            Notas: {String(payment.metadata.notes)}
                           </div>
                         )}
                       </div>

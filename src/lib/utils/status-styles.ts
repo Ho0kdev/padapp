@@ -348,3 +348,45 @@ export const getPhaseTypeLabel = (phaseType: string) => {
   const option = phaseTypeOptions.find(opt => opt.value === phaseType)
   return option ? option.label : phaseType
 }
+
+// Opciones de estado de pago
+export const paymentStatusOptions = [
+  { value: "PENDING", label: "Pendiente", color: "yellow", css: "bg-yellow-100 text-yellow-800 border-yellow-200" },
+  { value: "PAID", label: "Pagado", color: "green", css: "bg-green-100 text-green-800 border-green-200" },
+  { value: "FAILED", label: "Fallido", color: "red", css: "bg-red-100 text-red-800 border-red-200" },
+  { value: "REFUNDED", label: "Reembolsado", color: "purple", css: "bg-purple-100 text-purple-800 border-purple-200" },
+  { value: "CANCELLED", label: "Cancelado", color: "gray", css: "bg-gray-100 text-gray-800 border-gray-200" },
+] as const
+
+// Helper para obtener estilos de estado de pago
+export const getPaymentStatusStyle = (status: string) => {
+  const option = paymentStatusOptions.find(opt => opt.value === status)
+  return option ? option.css : paymentStatusOptions[0].css
+}
+
+// Helper para obtener label de estado de pago
+export const getPaymentStatusLabel = (status: string) => {
+  const option = paymentStatusOptions.find(opt => opt.value === status)
+  return option ? option.label : status
+}
+
+// Opciones de método de pago
+export const paymentMethodOptions = [
+  { value: "MERCADOPAGO_CARD", label: "Tarjeta (MercadoPago)", color: "blue", css: "bg-blue-100 text-blue-800 border-blue-200" },
+  { value: "MERCADOPAGO_WALLET", label: "Wallet Digital", color: "purple", css: "bg-purple-100 text-purple-800 border-purple-200" },
+  { value: "BANK_TRANSFER", label: "Transferencia Bancaria", color: "teal", css: "bg-teal-100 text-teal-800 border-teal-200" },
+  { value: "CASH", label: "Efectivo", color: "green", css: "bg-green-100 text-green-800 border-green-200" },
+  { value: "MANUAL", label: "Manual", color: "orange", css: "bg-orange-100 text-orange-800 border-orange-200" },
+] as const
+
+// Helper para obtener estilos de método de pago
+export const getPaymentMethodStyle = (method: string) => {
+  const option = paymentMethodOptions.find(opt => opt.value === method)
+  return option ? option.css : paymentMethodOptions[0].css
+}
+
+// Helper para obtener label de método de pago
+export const getPaymentMethodLabel = (method: string) => {
+  const option = paymentMethodOptions.find(opt => opt.value === method)
+  return option ? option.label : method
+}

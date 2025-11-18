@@ -63,7 +63,10 @@ model User {
   registrationLogs     RegistrationLog[]
   teamLogs             TeamLog[]
   matchLogs            MatchLog[]
-  securityLogs         SecurityLog[]     @relation("SecurityLogUser")
+  securityLogs         SecurityLog[]         @relation("SecurityLogUser")
+  confirmedPayments    RegistrationPayment[] @relation("PaymentConfirmer")
+  refundedPayments     RegistrationPayment[] @relation("PaymentRefunder")
+  paymentLogs          PaymentLog[]
 
   @@map("users")
 }
@@ -298,7 +301,7 @@ model Registration {
   player             Player               @relation(fields: [playerId], references: [id])
   tournament         Tournament           @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
   tournamentCategory TournamentCategory   @relation(fields: [tournamentId, categoryId], references: [tournamentId, categoryId])
-  payment            RegistrationPayment?
+  payments           RegistrationPayment[]
   teamAsPlayer1      Team[]               @relation("TeamRegistration1")
   teamAsPlayer2      Team[]               @relation("TeamRegistration2")
   logs               RegistrationLog[]
@@ -313,17 +316,44 @@ model Registration {
 
 // PAGOS DE INSCRIPCIONES INDIVIDUALES
 model RegistrationPayment {
-  id             String        @id @default(cuid())
-  registrationId String        @unique
+  id             String         @id @default(cuid())
+  registrationId String
   amount         Float
-  paymentStatus  PaymentStatus @default(PENDING)
-  paymentMethod  String?
-  transactionId  String?
-  paidAt         DateTime?
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  registration   Registration  @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+  paymentStatus  PaymentStatus  @default(PENDING)
+  paymentMethod  PaymentMethod?
+  transactionId  String? // ID de transacción genérico (puede ser bancario)
 
+  // MercadoPago específico
+  mercadoPagoPaymentId    String? @unique // ID del pago en MercadoPago
+  mercadoPagoPreferenceId String? // ID de la preferencia de pago
+  mercadoPagoStatus       String? // Estado del pago según MercadoPago
+
+  // Transferencia bancaria
+  paymentProofUrl String? // URL del comprobante de transferencia
+
+  // Confirmación manual y reembolsos
+  confirmedBy String? // UserID de quien confirmó el pago
+  confirmedAt DateTime?
+  refundedBy  String? // UserID de quien procesó el reembolso
+  refundedAt  DateTime?
+  refundReason String? // Razón del reembolso
+
+  // Timestamps
+  paidAt    DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Metadata adicional
+  metadata Json? // Información adicional del pago
+
+  // Relations
+  registration Registration @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+  confirmer    User?        @relation("PaymentConfirmer", fields: [confirmedBy], references: [id])
+  refunder     User?        @relation("PaymentRefunder", fields: [refundedBy], references: [id])
+  logs         PaymentLog[]
+
+  @@index([paymentStatus])
+  @@index([mercadoPagoPaymentId])
   @@map("registration_payments")
 }
 
@@ -714,6 +744,28 @@ model MatchLog {
   @@map("match_logs")
 }
 
+model PaymentLog {
+  id          String               @id @default(cuid())
+  action      LogAction
+  description String
+  paymentId   String?
+  userId      String
+  ipAddress   String?
+  userAgent   String?
+  oldData     Json?
+  newData     Json?
+  metadata    Json?
+  createdAt   DateTime             @default(now())
+  payment     RegistrationPayment? @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  user        User                 @relation(fields: [userId], references: [id])
+
+  @@index([paymentId])
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("payment_logs")
+}
+
 model SecurityLog {
   id         String   @id @default(cuid())
   type       String   // ACCESS_DENIED, RATE_LIMIT_EXCEEDED, INVALID_TOKEN, BRUTE_FORCE_ATTEMPT, SUSPICIOUS_ACTIVITY
@@ -839,6 +891,15 @@ enum PaymentStatus {
   PAID
   FAILED
   REFUNDED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  MERCADOPAGO_CARD // Tarjeta de crédito/débito con MercadoPago
+  MERCADOPAGO_WALLET // Wallets digitales (Apple Pay, Google Pay)
+  BANK_TRANSFER // Transferencia bancaria
+  MANUAL // Confirmación manual por ADMIN
+  CASH // Efectivo
 }
 
 enum TeamStatus {
@@ -931,6 +992,19 @@ enum LogAction {
   TEAM_DELETED
   TEAM_STATUS_CHANGED
   TEAM_CONFIRMED
+  PAYMENT_CREATED
+  PAYMENT_UPDATED
+  PAYMENT_INITIATED
+  PAYMENT_CONFIRMED
+  PAYMENT_FAILED
+  PAYMENT_REFUNDED
+  PAYMENT_MANUALLY_CONFIRMED
+  PAYMENT_CANCELLED
+  PAYMENT_STATUS_CHANGED
+  MERCADOPAGO_PREFERENCE_CREATED
+  MERCADOPAGO_WEBHOOK_RECEIVED
+  MERCADOPAGO_PAYMENT_APPROVED
+  MERCADOPAGO_PAYMENT_REJECTED
 }
 
 // ============================================

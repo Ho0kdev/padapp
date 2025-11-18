@@ -5,6 +5,9 @@ import { prisma } from "@/lib/prisma"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { RegistrationDetail } from "@/components/registrations/registration-detail"
 
+// Force dynamic rendering to always fetch fresh payment data
+export const dynamic = 'force-dynamic'
+
 interface RegistrationDetailPageProps {
   params: Promise<{ id: string }>
 }
@@ -22,7 +25,8 @@ async function getRegistration(id: string) {
           tournamentStart: true,
           tournamentEnd: true,
           registrationStart: true,
-          registrationEnd: true
+          registrationEnd: true,
+          registrationFee: true
         }
       },
       category: {
@@ -60,14 +64,20 @@ async function getRegistration(id: string) {
           }
         }
       },
-      payment: {
+      payments: {
         select: {
           id: true,
           amount: true,
           paymentStatus: true,
           paymentMethod: true,
           paidAt: true,
-          createdAt: true
+          createdAt: true,
+          transactionId: true,
+          paymentProofUrl: true,
+          metadata: true
+        },
+        orderBy: {
+          createdAt: 'desc'
         }
       },
       tournamentCategory: {

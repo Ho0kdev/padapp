@@ -188,13 +188,16 @@ export async function GET(request: NextRequest) {
               }
             }
           },
-          payment: {
+          payments: {
             select: {
               id: true,
               amount: true,
               paymentStatus: true,
               paymentMethod: true,
               paidAt: true,
+            },
+            orderBy: {
+              createdAt: 'desc'
             }
           },
           tournamentCategory: {

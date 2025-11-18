@@ -5,8 +5,15 @@ import { z } from "zod"
 
 const createPaymentSchema = z.object({
   amount: z.number().positive("El monto debe ser positivo"),
-  paymentMethod: z.enum(["STRIPE", "CASH", "TRANSFER", "OTHER"]).default("STRIPE"),
+  paymentMethod: z.enum([
+    "MERCADOPAGO_CARD",
+    "MERCADOPAGO_WALLET",
+    "BANK_TRANSFER",
+    "MANUAL",
+    "CASH"
+  ]),
   transactionId: z.string().optional(),
+  paymentProofUrl: z.string().url().optional(), // Para transferencias bancarias
   metadata: z.record(z.string(), z.any()).optional(),
 })
 
@@ -216,8 +223,12 @@ async function handleTeamPayment(
   }
 
   // Determinar estado del pago según método
-  const paymentStatus: 'PENDING' | 'PAID' = validatedData.paymentMethod === 'STRIPE' ? 'PENDING' : 'PAID'
-  const paidAt = validatedData.paymentMethod !== 'STRIPE' ? new Date() : null
+  // MERCADOPAGO_* siempre inicia como PENDING (se actualiza vía webhook)
+  // MANUAL, CASH, BANK_TRANSFER son PAID inmediatamente
+  const isAutomaticPayment = validatedData.paymentMethod === 'MERCADOPAGO_CARD' ||
+                             validatedData.paymentMethod === 'MERCADOPAGO_WALLET'
+  const paymentStatus: 'PENDING' | 'PAID' = isAutomaticPayment ? 'PENDING' : 'PAID'
+  const paidAt = !isAutomaticPayment ? new Date() : null
 
   // Crear payment para ambas registrations en una transacción
   const result = await prisma.$transaction(async (tx) => {
@@ -309,8 +320,12 @@ async function handleIndividualRegistrationPayment(
   }
 
   // Determinar estado del pago según método
-  const paymentStatus: 'PENDING' | 'PAID' = validatedData.paymentMethod === 'STRIPE' ? 'PENDING' : 'PAID'
-  const paidAt = validatedData.paymentMethod !== 'STRIPE' ? new Date() : null
+  // MERCADOPAGO_* siempre inicia como PENDING (se actualiza vía webhook)
+  // MANUAL, CASH, BANK_TRANSFER son PAID inmediatamente
+  const isAutomaticPayment = validatedData.paymentMethod === 'MERCADOPAGO_CARD' ||
+                             validatedData.paymentMethod === 'MERCADOPAGO_WALLET'
+  const paymentStatus: 'PENDING' | 'PAID' = isAutomaticPayment ? 'PENDING' : 'PAID'
+  const paidAt = !isAutomaticPayment ? new Date() : null
 
   // Crear/actualizar payment
   const payment = await prisma.$transaction(async (tx) => {

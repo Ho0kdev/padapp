@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **PadApp** is a comprehensive paddle tennis (pádel) tournament management system built with Next.js 15, React 19, TypeScript, Prisma, and PostgreSQL. The system handles tournament creation, player registrations, bracket generation (6 different formats), match management, rankings, and administrative tasks with full RBAC (Role-Based Access Control) and audit logging.
 
-**Current Status**: 97% core functionality complete, production-ready with 46 API endpoints (100% RBAC protected), 91+ React components, and 30+ database tables.
+**Current Status**: 99% core functionality complete, production-ready with 46 API endpoints (100% RBAC protected), 91+ React components, 30+ database tables, and advanced UI/UX system with sorting, filtering, and clickable navigation on 8 main pages.
 
 ## Essential Commands
 
@@ -453,7 +453,245 @@ npm run db:seed     # Loads test data (users, clubs, tournaments, etc.)
 
 7. **Multiple Rounds for Americano Social** (Dec 2024): Tournament-level configuration (1-10 rounds) with intelligent greedy algorithm that minimizes total pool repetitions (counts all pairs within pool, not just individual connections)
 
+## UI/UX Patterns - Data Tables (December 2024)
+
+### Advanced Data Table Pattern
+
+All main data tables (Users, Clubs, Categories, Teams, Matches, Rankings, Tournaments, Registrations) follow a consistent pattern with:
+1. **Dynamic sorting** (click headers to sort ASC/DESC)
+2. **Advanced filtering** (multiple filter dropdowns)
+3. **Clickable rows** (navigate to detail page)
+4. **Mobile responsive** (cards on mobile, table on desktop)
+
+### Standard Table Component Structure
+
+```typescript
+// 1. Imports
+import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react"
+import { useRouter } from "next/navigation"
+
+// 2. Component setup
+export function EntityTable() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
+  // Get current sorting state from URL
+  const orderBy = searchParams.get('orderBy') || 'defaultColumn'
+  const order = searchParams.get('order') || 'defaultOrder'
+
+  // 3. Sorting handler
+  const handleSort = (column: string) => {
+    const params = new URLSearchParams(searchParams)
+    if (orderBy === column) {
+      // Toggle order if clicking same column
+      params.set('order', order === 'asc' ? 'desc' : 'asc')
+    } else {
+      // New column, start with ascending
+      params.set('orderBy', column)
+      params.set('order', 'asc')
+    }
+    params.set('page', '1') // Reset to first page
+    router.push(`/dashboard/entity?${params.toString()}`)
+  }
+
+  // 4. Icon selector
+  const getSortIcon = (column: string) => {
+    if (orderBy !== column) {
+      return <ArrowUpDown className="ml-1 h-3 w-3 text-muted-foreground" />
+    }
+    return order === 'asc'
+      ? <ArrowUp className="ml-1 h-3 w-3" />
+      : <ArrowDown className="ml-1 h-3 w-3" />
+  }
+
+  // 5. Row click handler
+  const handleRowClick = (id: string, e: React.MouseEvent) => {
+    const target = e.target as HTMLElement
+    // Don't navigate if clicking on buttons or dropdown menus
+    if (target.closest('button') || target.closest('[role="menuitem"]') || target.closest('a')) {
+      return
+    }
+    router.push(`/dashboard/entity/${id}`)
+  }
+
+  return (
+    <>
+      {/* Desktop table */}
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>
+              <Button
+                variant="ghost"
+                onClick={() => handleSort('columnName')}
+                className="h-8 px-2 lg:px-3 hover:bg-transparent"
+              >
+                Column Label
+                {getSortIcon('columnName')}
+              </Button>
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {items.map((item) => (
+            <TableRow
+              key={item.id}
+              onClick={(e) => handleRowClick(item.id, e)}
+              className="cursor-pointer hover:bg-muted/50"
+            >
+              <TableCell>{item.data}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+
+      {/* Mobile cards */}
+      <Card
+        className="cursor-pointer hover:bg-muted/50 transition-colors"
+        onClick={(e) => handleRowClick(item.id, e)}
+      >
+        {/* Card content */}
+      </Card>
+    </>
+  )
+}
+```
+
+### API Route Pattern for Sorting
+
+```typescript
+export async function GET(request: NextRequest) {
+  try {
+    await requireAuth()
+
+    const { searchParams } = new URL(request.url)
+    const orderBy = searchParams.get('orderBy') || 'defaultColumn'
+    const order = searchParams.get('order') || 'defaultOrder'
+
+    // Build dynamic orderBy clause
+    const buildOrderBy = () => {
+      const validColumns = ['col1', 'col2', 'col3']
+      const sortOrder = (order === 'asc' ? 'asc' : 'desc') as 'asc' | 'desc'
+
+      if (validColumns.includes(orderBy)) {
+        return { [orderBy]: sortOrder }
+      } else {
+        return { defaultColumn: 'asc' as const }
+      }
+    }
+
+    const items = await prisma.entity.findMany({
+      orderBy: buildOrderBy(),
+      // ... other query params
+    })
+
+    return NextResponse.json(items)
+  } catch (error) {
+    return handleAuthError(error)
+  }
+}
+```
+
+### Header Component Pattern
+
+Headers use the `DataTableHeader` component with support for multiple filters:
+
+```typescript
+export function EntityHeader() {
+  return (
+    <DataTableHeader
+      title="Page Title"
+      description="Page description"
+      searchPlaceholder="Search by name, email, etc..."
+      createButtonText="New Item"
+      createButtonHref="/dashboard/entity/new"
+      filterLabel="Status"
+      filterOptions={statusOptions}
+      filterParamKey="status"
+      secondaryFilter={{
+        label: "Secondary",
+        options: secondaryOptions,
+        paramKey: "secondary",
+        width: "w-[150px]"
+      }}
+      tertiaryFilter={{
+        label: "Tertiary",
+        options: tertiaryOptions,
+        paramKey: "tertiary",
+        width: "w-[140px]"
+      }}
+      basePath="/dashboard/entity"
+    />
+  )
+}
+```
+
+### Pages with Full UI/UX Implementation
+
+| Page | Sortable Columns | Filters | Clickable |
+|------|-----------------|---------|-----------|
+| **Users** | 6 (name, email, role, status, gender, createdAt) | Status, Role, Gender | ✅ |
+| **Clubs** | 3 (name, city, status) | Status, City, Country | ✅ |
+| **Categories** | 3 (name, type, status) | Status | ✅ |
+| **Teams** | 3 (name, status, createdAt) | Status, Tournament | ✅ |
+| **Matches** | 2 (scheduledAt, status) | Status, Tournament | ✅ |
+| **Rankings** | 3 (position, points, season) | Category, Season | ✅ |
+| **Tournaments** | 4 (name, status, start, type) | Status (multiple) | ✅ |
+| **Registrations** | 2 (status, createdAt) | Status, Tournament | ✅ |
+
+### Key Features
+
+1. **URL State Persistence**: All sorting and filtering stored in URL params
+2. **Type Safety**: TypeScript types enforced for `order` param (`'asc' | 'desc'`)
+3. **Intelligent Click Detection**: Prevents navigation when clicking UI elements
+4. **Visual Feedback**: Hover effects and sort icons provide clear UX
+5. **Mobile First**: Responsive design with cards on mobile, tables on desktop
+6. **Consistent Behavior**: Same patterns across all 8 pages
+
 ## Recent Updates (December 2024)
+
+### UI/UX System Overhaul - Advanced Data Tables (December 2024)
+
+Implemented comprehensive UI/UX improvements across all 8 main pages with:
+
+**Pages Updated**: Users, Clubs, Categories, Teams, Matches, Rankings, Tournaments, Registrations
+
+**Features Added**:
+1. **Dynamic Column Sorting**:
+   - 27+ sortable columns across all pages
+   - Click header to sort ascending, click again for descending
+   - Visual icons: `↕️` (unsorted), `↑` (asc), `↓` (desc)
+   - URL persistence with `orderBy` and `order` params
+
+2. **Clickable Row Navigation**:
+   - Click any table row to navigate to detail page
+   - Intelligent click detection (doesn't navigate on buttons/dropdowns)
+   - Hover effect: `cursor-pointer hover:bg-muted/50`
+   - Works on both desktop tables and mobile cards
+
+3. **Advanced Filtering**:
+   - Multiple filter dropdowns per page (up to 3)
+   - Dynamic filters (e.g., cities/countries loaded from database)
+   - Improved search placeholders describing searchable fields
+   - `DataTableHeader` component enhanced with `tertiaryFilter` support
+
+4. **Backend API Improvements**:
+   - `buildOrderBy()` function pattern in 8 API endpoints
+   - Type-safe ordering: `'asc' | 'desc'` enforcement
+   - Column validation (only allowed columns can be sorted)
+   - New endpoint: `/api/clubs/filters` for dynamic filter options
+
+**Files Modified** (25 files):
+- APIs (8): users, clubs, categories, teams, matches, rankings, tournaments, registrations, clubs/filters
+- Tables (8): Corresponding table components for each entity
+- Headers (8): Corresponding header components for each entity
+- UI Component (1): `data-table-header.tsx` (added tertiaryFilter support)
+
+**Consistency Achieved**:
+- Same 3 functions in all tables: `handleSort()`, `getSortIcon()`, `handleRowClick()`
+- Same hooks: `useRouter()`, `useSearchParams()`
+- Same TypeScript patterns and type safety
+- Same UX behavior across desktop and mobile
 
 ### Match Validation Enhancements
 - Added validation preventing match status changes to `IN_PROGRESS`, `COMPLETED`, or `WALKOVER` when teams are not fully assigned
