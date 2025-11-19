@@ -47,8 +47,10 @@ export async function createPaymentPreference(
 ): Promise<PreferenceResponse> {
   try {
     const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
+    const isLocalhost = baseUrl.includes('localhost') || baseUrl.includes('127.0.0.1')
 
     console.log('🌐 Base URL para MercadoPago:', baseUrl)
+    console.log('🏠 Is Localhost:', isLocalhost)
     console.log('📧 Email del pagador:', params.payer.email)
     console.log('💰 Monto:', params.amount)
 
@@ -59,34 +61,44 @@ export async function createPaymentPreference(
 
     console.log('🔗 Success URL:', successUrl)
 
-    const preference = await preferenceClient.create({
-      body: {
-        items: [
-          {
-            id: params.registrationId,
-            title: params.description,
-            quantity: 1,
-            unit_price: params.amount,
-            currency_id: 'ARS', // Pesos argentinos
-          },
-        ],
-        payer: {
-          email: params.payer.email,
-          name: params.payer.name,
+    // Preparar el body de la preferencia
+    const preferenceBody: any = {
+      items: [
+        {
+          id: params.registrationId,
+          title: params.description,
+          quantity: 1,
+          unit_price: params.amount,
+          currency_id: 'ARS', // Pesos argentinos
         },
-        back_urls: {
-          success: successUrl,
-          failure: failureUrl,
-          pending: pendingUrl,
-        },
-        auto_return: 'approved', // Redirige automáticamente al aprobar el pago
-        notification_url: `${baseUrl}/api/webhooks/mercadopago`,
-        external_reference: params.registrationId,
-        statement_descriptor: 'PADAPP',
-        metadata: {
-          registration_id: params.registrationId,
-        },
+      ],
+      payer: {
+        email: params.payer.email,
+        name: params.payer.name,
       },
+      back_urls: {
+        success: successUrl,
+        failure: failureUrl,
+        pending: pendingUrl,
+      },
+      notification_url: `${baseUrl}/api/webhooks/mercadopago`,
+      external_reference: params.registrationId,
+      statement_descriptor: 'PADAPP',
+      metadata: {
+        registration_id: params.registrationId,
+      },
+    }
+
+    // Solo agregar auto_return si NO es localhost (requiere URL pública)
+    if (!isLocalhost) {
+      preferenceBody.auto_return = 'approved'
+      console.log('✅ auto_return habilitado (URL pública detectada)')
+    } else {
+      console.log('⚠️ auto_return deshabilitado (localhost detectado - usuario debe hacer clic en "Volver al sitio")')
+    }
+
+    const preference = await preferenceClient.create({
+      body: preferenceBody,
     })
 
     return {

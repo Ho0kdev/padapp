@@ -69,14 +69,32 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Registration not found' }, { status: 404 })
     }
 
-    // Buscar el pago específico por mercadoPagoPaymentId o mercadoPagoPreferenceId
+    // Buscar el pago específico
+    // 1. Primero intentar por mercadoPagoPaymentId (si ya fue actualizado antes)
     let payment = registration.payments.find(p => p.mercadoPagoPaymentId === paymentId.toString())
 
-    // Si no se encuentra por paymentId, buscar por preferenceId
+    // 2. Si no se encuentra, buscar por preferenceId
     const preferenceId = (paymentInfoRaw as any).preference_id
     if (!payment && preferenceId) {
       payment = registration.payments.find(p => p.mercadoPagoPreferenceId === preferenceId)
       console.log('🔍 Payment encontrado por preferenceId:', preferenceId)
+    }
+
+    // 3. Si aún no se encuentra, buscar el pago PENDING más reciente para esta registration
+    // (esto cubre el caso cuando el preference_id no viene en la respuesta de MercadoPago)
+    if (!payment) {
+      const pendingPayments = registration.payments.filter(p =>
+        p.paymentStatus === 'PENDING' &&
+        p.mercadoPagoPreferenceId !== null
+      )
+
+      if (pendingPayments.length > 0) {
+        // Ordenar por fecha de creación descendente y tomar el más reciente
+        payment = pendingPayments.sort((a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        )[0]
+        console.log('🔍 Payment PENDING encontrado para registration:', payment.id)
+      }
     }
 
     if (!payment) {
