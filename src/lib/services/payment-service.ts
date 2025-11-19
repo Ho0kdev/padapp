@@ -79,7 +79,7 @@ export async function createPaymentPreference(
           failure: failureUrl,
           pending: pendingUrl,
         },
-        // auto_return: 'approved', // Comentado temporalmente - causa error con algunas versiones del SDK
+        auto_return: 'approved', // Redirige automáticamente al aprobar el pago
         notification_url: `${baseUrl}/api/webhooks/mercadopago`,
         external_reference: params.registrationId,
         statement_descriptor: 'PADAPP',

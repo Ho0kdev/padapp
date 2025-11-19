@@ -32,10 +32,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing payment ID' }, { status: 400 })
     }
 
-    // Obtener información del pago desde Mercado Pago
+    // Obtener información completa del pago desde Mercado Pago
+    const paymentInfoRaw = await PaymentService.getPaymentInfo(paymentId.toString())
     const paymentInfo = await PaymentService.verifyPaymentStatus(paymentId.toString())
 
     console.log('💳 Información del pago:', paymentInfo)
+    console.log('🔑 Preference ID:', (paymentInfoRaw as any).preference_id)
 
     // Obtener el ID de registro desde external_reference
     const registrationId = paymentInfo.externalReference
@@ -67,16 +69,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Registration not found' }, { status: 404 })
     }
 
-    // Buscar el pago específico por mercadoPagoPaymentId
-    const payment = registration.payments.find(p => p.mercadoPagoPaymentId === paymentId.toString())
+    // Buscar el pago específico por mercadoPagoPaymentId o mercadoPagoPreferenceId
+    let payment = registration.payments.find(p => p.mercadoPagoPaymentId === paymentId.toString())
+
+    // Si no se encuentra por paymentId, buscar por preferenceId
+    const preferenceId = (paymentInfoRaw as any).preference_id
+    if (!payment && preferenceId) {
+      payment = registration.payments.find(p => p.mercadoPagoPreferenceId === preferenceId)
+      console.log('🔍 Payment encontrado por preferenceId:', preferenceId)
+    }
 
     if (!payment) {
-      console.error('❌ Payment no encontrado para registration:', registrationId, 'paymentId:', paymentId)
+      console.error('❌ Payment no encontrado para registration:', registrationId, 'paymentId:', paymentId, 'preferenceId:', preferenceId)
       return NextResponse.json({ error: 'Payment not found' }, { status: 404 })
     }
 
     // Mapear el estado de Mercado Pago a nuestro estado
     const newStatus = PaymentService.mapMercadoPagoStatus(paymentInfo.status)
+
+    // Mapear el método de pago si está disponible
+    const paymentMethod = paymentInfoRaw.payment_type_id
+      ? PaymentService.mapMercadoPagoPaymentType(paymentInfoRaw.payment_type_id)
+      : payment.paymentMethod // Mantener el método actual si no se puede determinar
 
     // Use tournamentCategory fee if available, otherwise use tournament fee
     const registrationFee = registration.tournamentCategory?.registrationFee ?? registration.tournament.registrationFee ?? 0
@@ -87,6 +101,7 @@ export async function POST(request: NextRequest) {
         where: { id: payment.id },
         data: {
           paymentStatus: newStatus,
+          paymentMethod: paymentMethod,
           mercadoPagoPaymentId: paymentId.toString(),
           mercadoPagoStatus: paymentInfo.status,
           paidAt: paymentInfo.status === 'approved' ? new Date() : null,

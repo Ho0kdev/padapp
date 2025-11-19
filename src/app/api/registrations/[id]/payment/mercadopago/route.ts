@@ -151,6 +151,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         registrationId: registration.id,
         amount: amountDue,
         paymentStatus: 'PENDING',
+        paymentMethod: 'MERCADOPAGO_CARD', // Default, se actualizará cuando se complete el pago
         mercadoPagoPreferenceId: preference.id,
       }
     })

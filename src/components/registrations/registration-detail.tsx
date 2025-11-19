@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -126,9 +126,40 @@ interface RegistrationDetailProps {
 
 export function RegistrationDetail({ registration, isAdmin = false }: RegistrationDetailProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { toast } = useToast()
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [loading, setLoading] = useState(false)
+
+  // Handle payment return from MercadoPago
+  useEffect(() => {
+    const paymentStatus = searchParams.get('payment')
+
+    if (paymentStatus === 'success') {
+      toast({
+        title: "✅ Pago exitoso",
+        description: "Tu pago ha sido procesado correctamente. El estado de tu inscripción se actualizará en breve.",
+        variant: "success",
+      })
+      // Clean URL
+      router.replace(`/dashboard/registrations/${registration.id}`, { scroll: false })
+    } else if (paymentStatus === 'failure') {
+      toast({
+        title: "❌ Pago rechazado",
+        description: "Tu pago no pudo ser procesado. Por favor, intenta nuevamente o contacta a soporte.",
+        variant: "destructive",
+      })
+      // Clean URL
+      router.replace(`/dashboard/registrations/${registration.id}`, { scroll: false })
+    } else if (paymentStatus === 'pending') {
+      toast({
+        title: "⏳ Pago pendiente",
+        description: "Tu pago está siendo procesado. Te notificaremos cuando se confirme.",
+      })
+      // Clean URL
+      router.replace(`/dashboard/registrations/${registration.id}`, { scroll: false })
+    }
+  }, [searchParams, toast, router, registration.id])
 
   const statusConfig = registrationStatusOptions.find(s => s.value === registration.registrationStatus)
 
