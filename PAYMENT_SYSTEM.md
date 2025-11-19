@@ -253,13 +253,49 @@ export function MyComponent() {
 
 ## 📊 Estados de Pago
 
-| Estado | Descripción | Color |
-|--------|-------------|-------|
-| `PENDING` | Pago iniciado pero no confirmado | Amarillo |
-| `PAID` | Pago completado exitosamente | Verde |
-| `FAILED` | Pago rechazado | Rojo |
-| `CANCELLED` | Pago cancelado por el usuario | Gris |
-| `REFUNDED` | Pago reembolsado | Naranja |
+El sistema utiliza badges visuales consistentes para mostrar estados y métodos de pago.
+
+### Estados de Pago (PaymentStatus)
+
+| Estado | Label | Color | CSS Class |
+|--------|-------|-------|-----------|
+| `PENDING` | Pendiente | Amarillo | `bg-yellow-100 text-yellow-800 border-yellow-200` |
+| `PAID` | Pagado | Verde | `bg-green-100 text-green-800 border-green-200` |
+| `FAILED` | Fallido | Rojo | `bg-red-100 text-red-800 border-red-200` |
+| `REFUNDED` | Reembolsado | Púrpura | `bg-purple-100 text-purple-800 border-purple-200` |
+| `CANCELLED` | Cancelado | Gris | `bg-gray-100 text-gray-800 border-gray-200` |
+
+### Métodos de Pago (PaymentMethod)
+
+| Método | Label | Color | CSS Class |
+|--------|-------|-------|-----------|
+| `MERCADOPAGO_CARD` | Tarjeta (MercadoPago) | Azul | `bg-blue-100 text-blue-800 border-blue-200` |
+| `MERCADOPAGO_WALLET` | Wallet Digital | Púrpura | `bg-purple-100 text-purple-800 border-purple-200` |
+| `BANK_TRANSFER` | Transferencia Bancaria | Teal | `bg-teal-100 text-teal-800 border-teal-200` |
+| `CASH` | Efectivo | Verde | `bg-green-100 text-green-800 border-green-200` |
+| `MANUAL` | Manual | Naranja | `bg-orange-100 text-orange-800 border-orange-200` |
+
+### Uso de Helpers
+
+El sistema proporciona helpers centralizados en `src/lib/utils/status-styles.ts`:
+
+```tsx
+import {
+  getPaymentStatusStyle,
+  getPaymentStatusLabel,
+  getPaymentMethodStyle,
+  getPaymentMethodLabel
+} from '@/lib/utils/status-styles'
+
+// Usar en componentes
+<Badge className={getPaymentStatusStyle(payment.paymentStatus)}>
+  {getPaymentStatusLabel(payment.paymentStatus)}
+</Badge>
+
+<Badge className={getPaymentMethodStyle(payment.paymentMethod)}>
+  {getPaymentMethodLabel(payment.paymentMethod)}
+</Badge>
+```
 
 ## 🛡️ Seguridad
 

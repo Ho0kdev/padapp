@@ -65,12 +65,17 @@ export async function GET(
                     maxRankingPoints: true
                   }
                 },
-                payment: {
+                payments: {
                   select: {
                     id: true,
                     amount: true,
                     paymentStatus: true,
-                    paidAt: true
+                    paymentMethod: true,
+                    paidAt: true,
+                    createdAt: true,
+                  },
+                  orderBy: {
+                    createdAt: 'desc'
                   }
                 }
               }

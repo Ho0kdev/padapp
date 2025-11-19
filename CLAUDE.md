@@ -326,6 +326,65 @@ export async function POST(request: NextRequest) {
 - Table component with data display
 - Detail/edit dialogs for actions
 
+### Status Badges and Visual Styles
+
+**Centralized Badge System** (`src/lib/utils/status-styles.ts`):
+
+The system uses a centralized approach for all status badges to ensure consistency across the entire application.
+
+**Available Badge Systems**:
+1. **Tournament Status** - 7 states (DRAFT, PUBLISHED, REGISTRATION_OPEN, etc.)
+2. **Registration Status** - 5 states (PENDING, CONFIRMED, PAID, CANCELLED, WAITLIST)
+3. **Payment Status** - 5 states (PENDING, PAID, FAILED, REFUNDED, CANCELLED)
+4. **Payment Method** - 5 methods (MERCADOPAGO_CARD, MERCADOPAGO_WALLET, BANK_TRANSFER, CASH, MANUAL)
+5. **Match Status** - 5 states (SCHEDULED, IN_PROGRESS, COMPLETED, CANCELLED, WALKOVER)
+6. **Team Status** - 3 states (DRAFT, CONFIRMED, CANCELLED)
+7. **Club Status** - 3 states (ACTIVE, INACTIVE, MAINTENANCE)
+8. **Court Status** - 4 states (AVAILABLE, MAINTENANCE, RESERVED, UNAVAILABLE)
+9. **Category Type** - 5 types (AGE, SKILL, RANKING, GENDER, MIXED)
+10. **Gender Restriction** - 3 options (MALE, FEMALE, MIXED)
+11. **Phase Type** - 7 phases (GROUP_STAGE, ROUND_OF_16, QUARTERFINALS, etc.)
+
+**Usage Pattern**:
+```typescript
+import {
+  getPaymentStatusStyle,
+  getPaymentStatusLabel,
+  getPaymentMethodStyle,
+  getPaymentMethodLabel,
+  getTournamentStatusStyle,
+  getTournamentStatusLabel
+  // ... other helpers
+} from '@/lib/utils/status-styles'
+
+// In component
+<Badge className={getPaymentStatusStyle(payment.paymentStatus)}>
+  {getPaymentStatusLabel(payment.paymentStatus)}
+</Badge>
+```
+
+**IMPORTANT**:
+- ALWAYS use the helper functions from `status-styles.ts`
+- NEVER hardcode badge styles or labels inline
+- Each status/method has consistent colors across the entire app
+- All labels are in Spanish for user-facing components
+
+**Payment System Badges**:
+
+*Payment Status*:
+- `PENDING` → Pendiente (yellow)
+- `PAID` → Pagado (green)
+- `FAILED` → Fallido (red)
+- `REFUNDED` → Reembolsado (purple)
+- `CANCELLED` → Cancelado (gray)
+
+*Payment Method*:
+- `MERCADOPAGO_CARD` → Tarjeta (MercadoPago) (blue)
+- `MERCADOPAGO_WALLET` → Wallet Digital (purple)
+- `BANK_TRANSFER` → Transferencia Bancaria (teal)
+- `CASH` → Efectivo (green)
+- `MANUAL` → Manual (orange)
+
 ### Bracket & Match Management
 
 **Important flows**:
@@ -395,6 +454,41 @@ src/
 5. **Don't forget Zod validation**: All API input must be validated
 6. **Don't create teams directly**: Create individual registrations first
 7. **Don't bypass ownership checks**: `authorize()` automatically checks ownership for resources
+8. **Don't forget to regenerate Prisma client**: After schema changes, always run `npx prisma generate`
+
+## Troubleshooting Common Issues
+
+### Prisma Client Out of Sync
+
+**Error**: `Unknown field 'X' for include statement on model 'Y'`
+
+**Cause**: The Prisma client is out of sync with the schema after schema modifications.
+
+**Solution**:
+```bash
+# Stop the dev server first (Ctrl+C)
+npx prisma generate
+
+# Restart dev server
+npm run dev
+```
+
+**Note**: The Prisma client must be regenerated whenever:
+- You modify `prisma/schema.prisma`
+- You add/remove fields from models
+- You change relationships between models
+- After pulling schema changes from git
+
+### Dev Server File Lock on Windows
+
+**Error**: `EPERM: operation not permitted, rename '...query_engine-windows.dll.node'`
+
+**Cause**: The Next.js dev server is running and has locked the Prisma query engine DLL.
+
+**Solution**:
+1. Stop the dev server completely
+2. Run `npx prisma generate`
+3. Restart the dev server
 
 ## Testing Workflows
 

@@ -79,13 +79,17 @@ export default async function TeamDetailPage({ params }: TeamDetailPageProps) {
               }
             }
           },
-          payment: {
+          payments: {
             select: {
               id: true,
               amount: true,
               paymentStatus: true,
               paymentMethod: true,
               paidAt: true,
+              createdAt: true,
+            },
+            orderBy: {
+              createdAt: 'desc'
             }
           }
         }
@@ -114,13 +118,17 @@ export default async function TeamDetailPage({ params }: TeamDetailPageProps) {
               }
             }
           },
-          payment: {
+          payments: {
             select: {
               id: true,
               amount: true,
               paymentStatus: true,
               paymentMethod: true,
               paidAt: true,
+              createdAt: true,
+            },
+            orderBy: {
+              createdAt: 'desc'
             }
           }
         }

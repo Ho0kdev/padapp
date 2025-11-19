@@ -17,6 +17,7 @@
     "db:select": "node scripts/database-selector.js",
     "db:seed-select": "node scripts/database-selector.js && tsx prisma/seeds/index.ts",
     "dev-select": "node scripts/database-selector.js && npm run dev",
+    "payments:clear-pending": "node scripts/clear-pending-payments.js",
     "type-check": "tsc --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check ."

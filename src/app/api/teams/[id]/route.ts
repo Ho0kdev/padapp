@@ -62,11 +62,17 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
                 }
               }
             },
-            payment: {
+            payments: {
               select: {
                 id: true,
                 amount: true,
                 paymentStatus: true,
+                paymentMethod: true,
+                paidAt: true,
+                createdAt: true,
+              },
+              orderBy: {
+                createdAt: 'desc'
               }
             }
           }
@@ -95,11 +101,17 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
                 }
               }
             },
-            payment: {
+            payments: {
               select: {
                 id: true,
                 amount: true,
                 paymentStatus: true,
+                paymentMethod: true,
+                paidAt: true,
+                createdAt: true,
+              },
+              orderBy: {
+                createdAt: 'desc'
               }
             }
           }

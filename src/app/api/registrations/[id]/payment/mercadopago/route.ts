@@ -64,8 +64,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       )
     }
 
-    // Verificar que el usuario sea el dueño de la inscripción
-    if (registration.playerId !== session.user.id &&
+    // Verificar que el usuario sea el dueño de la inscripción, organizador del torneo o admin
+    if (registration.player.userId !== session.user.id &&
         registration.tournament.organizerId !== session.user.id &&
         session.user.role !== 'ADMIN') {
       return NextResponse.json(
@@ -85,8 +85,10 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       )
     }
 
-    // Calculate current total paid by summing all payments
-    const currentPaid = registration.payments.reduce((sum, payment) => sum + payment.amount, 0)
+    // Calculate current total paid by summing only PAID payments (not PENDING, CANCELLED, etc.)
+    const currentPaid = registration.payments
+      .filter(p => p.paymentStatus === 'PAID')
+      .reduce((sum, payment) => sum + payment.amount, 0)
 
     // Verificar que no esté ya completamente pagada
     if (currentPaid >= registrationFee) {
@@ -99,16 +101,49 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Calculate remaining amount to pay
     const amountDue = registrationFee - currentPaid
 
-    // Crear preferencia de pago en Mercado Pago (solo por el monto pendiente)
-    const preference = await PaymentService.createPaymentPreference({
+    // Validar que el usuario tenga email
+    if (!registration.player.user?.email) {
+      return NextResponse.json(
+        { error: "El jugador no tiene un email asociado" },
+        { status: 400 }
+      )
+    }
+
+    // Obtener nombre de la categoría
+    const categoryName = registration.tournamentCategory?.category?.name || 'Sin categoría'
+
+    // Log de datos antes de crear la preferencia
+    console.log('📝 Creando preferencia de MercadoPago con datos:', {
       registrationId: registration.id,
       amount: amountDue,
-      description: `${registration.tournament.name} - ${registration.tournamentCategory.category.name}`,
-      payer: {
-        email: registration.player.user.email,
-        name: registration.player.user.name || undefined,
-      }
+      description: `${registration.tournament.name} - ${categoryName}`,
+      email: registration.player.user.email,
+      name: registration.player.user.name,
     })
+
+    // Crear preferencia de pago en Mercado Pago (solo por el monto pendiente)
+    let preference
+    try {
+      preference = await PaymentService.createPaymentPreference({
+        registrationId: registration.id,
+        amount: amountDue,
+        description: `${registration.tournament.name} - ${categoryName}`,
+        payer: {
+          email: registration.player.user.email,
+          name: registration.player.user.name || undefined,
+        }
+      })
+      console.log('✅ Preferencia creada exitosamente:', preference.id)
+    } catch (prefError) {
+      console.error('❌ Error al crear preferencia de MercadoPago:', prefError)
+      console.error('Tipo de error:', typeof prefError)
+      console.error('Error completo:', JSON.stringify(prefError, null, 2))
+
+      return NextResponse.json(
+        { error: `Error al crear preferencia de pago: ${prefError instanceof Error ? prefError.message : String(prefError)}` },
+        { status: 500 }
+      )
+    }
 
     // Crear nuevo registro de pago con la preferencia (siempre crear, nunca actualizar)
     const payment = await prisma.registrationPayment.create({
@@ -133,6 +168,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       ? preference.initPoint
       : preference.sandboxInitPoint
 
+    console.log('🔗 URL de pago generada:', paymentUrl)
+
     return NextResponse.json({
       preferenceId: preference.id,
       paymentUrl,
@@ -140,7 +177,13 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     })
 
   } catch (error) {
-    console.error('Error creando preferencia de Mercado Pago:', error)
+    console.error('❌ Error general en endpoint de MercadoPago:', error)
+    console.error('Tipo de error:', typeof error)
+    if (error instanceof Error) {
+      console.error('Error name:', error.name)
+      console.error('Error message:', error.message)
+      console.error('Error stack:', error.stack)
+    }
     return handleAuthError(error)
   }
 }

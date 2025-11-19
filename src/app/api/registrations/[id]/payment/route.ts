@@ -54,7 +54,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         registration1: {
           select: {
             id: true,
-            payment: {
+            payments: {
               where: {
                 paymentStatus: 'PAID'
               }
@@ -91,7 +91,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
               type: true,
             }
           },
-          payment: {
+          payments: {
             where: {
               paymentStatus: 'PAID'
             }

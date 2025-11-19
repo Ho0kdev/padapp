@@ -90,7 +90,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
                 }
               }
             },
-            payment: {
+            payments: {
               select: {
                 id: true,
                 amount: true,
@@ -99,6 +99,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
                 transactionId: true,
                 paidAt: true,
                 createdAt: true,
+              },
+              orderBy: {
+                createdAt: 'desc'
               }
             }
           }
@@ -129,7 +132,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
                 }
               }
             },
-            payment: {
+            payments: {
               select: {
                 id: true,
                 amount: true,
@@ -138,6 +141,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
                 transactionId: true,
                 paidAt: true,
                 createdAt: true,
+              },
+              orderBy: {
+                createdAt: 'desc'
               }
             }
           }

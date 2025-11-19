@@ -80,6 +80,38 @@ export function PaymentSelector({
     }
   }
 
+  const handleCancelPendingPayment = async () => {
+    try {
+      setLoading(true)
+
+      const response = await fetch(`/api/registrations/${registrationId}/payment/cancel-pending`, {
+        method: 'POST',
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Error al cancelar el pago pendiente')
+      }
+
+      toast.success('Pago pendiente cancelado. Puedes intentar nuevamente.')
+
+      // Forzar recarga completa de la página para asegurar datos frescos
+      if (onPaymentComplete) {
+        onPaymentComplete()
+      }
+
+      // Esperar un momento y luego hacer hard refresh
+      setTimeout(() => {
+        window.location.reload()
+      }, 500)
+    } catch (error) {
+      console.error('Error:', error)
+      toast.error(error instanceof Error ? error.message : 'Error al cancelar el pago')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   if (isPaid) {
     return (
       <Card className="border-green-200 bg-green-50">
@@ -114,17 +146,28 @@ export function PaymentSelector({
               <Loader2 className="h-4 w-4 animate-spin" />
               <span>Esperando confirmación del pago...</span>
             </div>
-            {isAdminOrClubAdmin && (
+            <div className="flex gap-2 flex-wrap">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setManualPaymentOpen(true)}
+                onClick={handleCancelPendingPayment}
+                disabled={loading}
                 className="mt-2"
               >
-                <DollarSign className="mr-2 h-4 w-4" />
-                Confirmar pago manualmente
+                Cancelar e intentar de nuevo
               </Button>
-            )}
+              {isAdminOrClubAdmin && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setManualPaymentOpen(true)}
+                  className="mt-2"
+                >
+                  <DollarSign className="mr-2 h-4 w-4" />
+                  Confirmar pago manualmente
+                </Button>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>

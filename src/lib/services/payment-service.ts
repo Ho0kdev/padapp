@@ -48,6 +48,17 @@ export async function createPaymentPreference(
   try {
     const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
 
+    console.log('🌐 Base URL para MercadoPago:', baseUrl)
+    console.log('📧 Email del pagador:', params.payer.email)
+    console.log('💰 Monto:', params.amount)
+
+    // Construir las URLs de retorno
+    const successUrl = `${baseUrl}/dashboard/registrations/${params.registrationId}?payment=success`
+    const failureUrl = `${baseUrl}/dashboard/registrations/${params.registrationId}?payment=failure`
+    const pendingUrl = `${baseUrl}/dashboard/registrations/${params.registrationId}?payment=pending`
+
+    console.log('🔗 Success URL:', successUrl)
+
     const preference = await preferenceClient.create({
       body: {
         items: [
@@ -64,11 +75,11 @@ export async function createPaymentPreference(
           name: params.payer.name,
         },
         back_urls: {
-          success: `${baseUrl}/dashboard/registrations/${params.registrationId}?payment=success`,
-          failure: `${baseUrl}/dashboard/registrations/${params.registrationId}?payment=failure`,
-          pending: `${baseUrl}/dashboard/registrations/${params.registrationId}?payment=pending`,
+          success: successUrl,
+          failure: failureUrl,
+          pending: pendingUrl,
         },
-        auto_return: 'approved',
+        // auto_return: 'approved', // Comentado temporalmente - causa error con algunas versiones del SDK
         notification_url: `${baseUrl}/api/webhooks/mercadopago`,
         external_reference: params.registrationId,
         statement_descriptor: 'PADAPP',
@@ -85,7 +96,19 @@ export async function createPaymentPreference(
     }
   } catch (error) {
     console.error('Error creando preferencia de Mercado Pago:', error)
-    throw new Error('No se pudo crear la preferencia de pago')
+
+    // Mostrar detalles del error para debugging
+    if (error instanceof Error) {
+      console.error('Error message:', error.message)
+      console.error('Error stack:', error.stack)
+    }
+
+    // Si es un error de MercadoPago, mostrar más detalles
+    if (typeof error === 'object' && error !== null && 'cause' in error) {
+      console.error('Error cause:', error.cause)
+    }
+
+    throw new Error(`No se pudo crear la preferencia de pago: ${error instanceof Error ? error.message : 'Error desconocido'}`)
   }
 }
 

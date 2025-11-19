@@ -80,8 +80,10 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Use tournamentCategory fee if available, otherwise use tournament fee
     const registrationFee = registration.tournamentCategory?.registrationFee ?? registration.tournament.registrationFee ?? 0
 
-    // Calculate current total paid by summing all payments
-    const currentPaid = registration.payments.reduce((sum, payment) => sum + payment.amount, 0)
+    // Calculate current total paid by summing only PAID payments
+    const currentPaid = registration.payments
+      .filter(p => p.paymentStatus === 'PAID')
+      .reduce((sum, payment) => sum + payment.amount, 0)
 
     // Verificar que no esté ya completamente pagada
     if (currentPaid >= registrationFee) {
