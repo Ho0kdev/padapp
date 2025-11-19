@@ -58,6 +58,8 @@ export async function POST(request: NextRequest) {
         },
         tournament: {
           select: {
+            id: true,
+            organizerId: true,
             registrationFee: true,
           }
         }
@@ -148,28 +150,33 @@ export async function POST(request: NextRequest) {
       return updatedPayment
     })
 
-    // Log de auditoría (usar un userId del sistema para webhooks)
-    const systemUserId = 'system' // TODO: crear un usuario "system" en la DB o usar el organizador del torneo
+    // Log de auditoría (usar el organizador del torneo como userId)
+    const logUserId = registration.tournament.organizerId
 
-    if (paymentInfo.status === 'approved') {
-      await PaymentLogService.logMercadoPagoPaymentApproved(
-        { userId: systemUserId, paymentId: updatedPayment.id },
-        updatedPayment,
-        paymentId.toString()
+    try {
+      if (paymentInfo.status === 'approved') {
+        await PaymentLogService.logMercadoPagoPaymentApproved(
+          { userId: logUserId, paymentId: updatedPayment.id },
+          updatedPayment,
+          paymentId.toString()
+        )
+      } else if (paymentInfo.status === 'rejected') {
+        await PaymentLogService.logMercadoPagoPaymentRejected(
+          { userId: logUserId, paymentId: updatedPayment.id },
+          paymentId.toString(),
+          paymentInfo.statusDetail
+        )
+      }
+
+      // Log general del webhook
+      await PaymentLogService.logMercadoPagoWebhookReceived(
+        { userId: logUserId, paymentId: updatedPayment.id },
+        body
       )
-    } else if (paymentInfo.status === 'rejected') {
-      await PaymentLogService.logMercadoPagoPaymentRejected(
-        { userId: systemUserId, paymentId: updatedPayment.id },
-        paymentId.toString(),
-        paymentInfo.statusDetail
-      )
+    } catch (logError) {
+      // Si falla el log, no queremos que falle todo el webhook
+      console.error('❌ Error creating payment log:', logError)
     }
-
-    // Log general del webhook
-    await PaymentLogService.logMercadoPagoWebhookReceived(
-      { userId: systemUserId, paymentId: updatedPayment.id },
-      body
-    )
 
     console.log('✅ Pago actualizado:', {
       paymentId: updatedPayment.id,
