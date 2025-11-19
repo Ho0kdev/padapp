@@ -486,17 +486,17 @@ export default async function TeamDetailPage({ params }: TeamDetailPageProps) {
                 )}
               </div>
 
-              {team.registration1.payment && (
+              {team.registration1.payments && team.registration1.payments.length > 0 && (
                 <div className="mt-3 pt-3 border-t">
                   <p className="text-sm text-muted-foreground">Estado del Pago</p>
                   <div className="flex items-center gap-2 mt-1">
-                    <Badge className={getRegistrationStatusStyle(team.registration1.payment.paymentStatus)}>
-                      {team.registration1.payment.paymentStatus}
+                    <Badge className={getRegistrationStatusStyle(team.registration1.payments[0].paymentStatus)}>
+                      {team.registration1.payments[0].paymentStatus}
                     </Badge>
-                    {team.registration1.payment.paidAt && (
+                    {team.registration1.payments[0].paidAt && (
                       <span className="text-sm text-muted-foreground flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
-                        {new Date(team.registration1.payment.paidAt).toLocaleDateString()}
+                        {new Date(team.registration1.payments[0].paidAt).toLocaleDateString()}
                       </span>
                     )}
                   </div>
@@ -536,17 +536,17 @@ export default async function TeamDetailPage({ params }: TeamDetailPageProps) {
                 )}
               </div>
 
-              {team.registration2.payment && (
+              {team.registration2.payments && team.registration2.payments.length > 0 && (
                 <div className="mt-3 pt-3 border-t">
                   <p className="text-sm text-muted-foreground">Estado del Pago</p>
                   <div className="flex items-center gap-2 mt-1">
-                    <Badge className={getRegistrationStatusStyle(team.registration2.payment.paymentStatus)}>
-                      {team.registration2.payment.paymentStatus}
+                    <Badge className={getRegistrationStatusStyle(team.registration2.payments[0].paymentStatus)}>
+                      {team.registration2.payments[0].paymentStatus}
                     </Badge>
-                    {team.registration2.payment.paidAt && (
+                    {team.registration2.payments[0].paidAt && (
                       <span className="text-sm text-muted-foreground flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
-                        {new Date(team.registration2.payment.paidAt).toLocaleDateString()}
+                        {new Date(team.registration2.payments[0].paidAt).toLocaleDateString()}
                       </span>
                     )}
                   </div>

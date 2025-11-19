@@ -143,7 +143,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       include: {
         registration1: {
           select: {
-            payment: true
+            payments: true
           }
         }
       }
@@ -153,15 +153,15 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       // Verificar permisos
       await authorize(Action.READ, Resource.PAYMENT, team)
 
-      // Retornar payment de registration1 (ambas registrations tienen el mismo payment)
-      return NextResponse.json(team.registration1.payment || null)
+      // Retornar payments de registration1 (ambas registrations tienen el mismo payment)
+      return NextResponse.json(team.registration1.payments || [])
     }
 
     // Si no es Team, buscar como Registration
     const registration = await prisma.registration.findUnique({
       where: { id },
       include: {
-        payment: true
+        payments: true
       }
     })
 
@@ -175,7 +175,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     // Verificar permisos
     await authorize(Action.READ, Resource.PAYMENT, registration)
 
-    return NextResponse.json(registration.payment || null)
+    return NextResponse.json(registration.payments || [])
 
   } catch (error) {
     return handleAuthError(error)
@@ -203,7 +203,7 @@ async function handleTeamPayment(
   const registrationFee = team.tournamentCategory?.registrationFee || 0
 
   // Calcular total pagado (basado en registration1, que es igual a registration2)
-  const totalPaid = team.registration1.payment?.reduce((sum: number, p: any) => sum + p.amount, 0) || 0
+  const totalPaid = team.registration1.payments?.reduce((sum: number, p: any) => sum + p.amount, 0) || 0
 
   // Validar que no esté ya pagado
   if (totalPaid >= registrationFee) {
@@ -300,10 +300,10 @@ async function handleIndividualRegistrationPayment(
   await authorize(Action.CREATE, Resource.PAYMENT, registration)
 
   const registrationFee = registration.tournamentCategory?.registrationFee || 0
-  const totalPaid = registration.payment?.amount || 0
+  const totalPaid = registration.payments?.reduce((sum: number, p: any) => sum + p.amount, 0) || 0
 
   // Validar que no esté ya pagado
-  if (registration.payment && totalPaid >= registrationFee) {
+  if (registration.payments && registration.payments.length > 0 && totalPaid >= registrationFee) {
     return NextResponse.json(
       { error: "Esta inscripción ya está completamente pagada" },
       { status: 400 }
@@ -327,9 +327,8 @@ async function handleIndividualRegistrationPayment(
   const paymentStatus: 'PENDING' | 'PAID' = isAutomaticPayment ? 'PENDING' : 'PAID'
   const paidAt = !isAutomaticPayment ? new Date() : null
 
-  // Crear/actualizar payment
+  // Crear payment (siempre crear uno nuevo, ya que es un array de pagos)
   const payment = await prisma.$transaction(async (tx) => {
-    // Crear o actualizar el payment
     const paymentData = {
       registrationId,
       amount: validatedData.amount,
@@ -339,23 +338,10 @@ async function handleIndividualRegistrationPayment(
       paidAt,
     }
 
-    let createdPayment
-    if (registration.payment) {
-      // Si ya existe, actualizar (suma el monto)
-      createdPayment = await tx.registrationPayment.update({
-        where: { id: registration.payment.id },
-        data: {
-          amount: totalPaid + validatedData.amount,
-          paymentStatus,
-          paidAt,
-        }
-      })
-    } else {
-      // Si no existe, crear
-      createdPayment = await tx.registrationPayment.create({
-        data: paymentData
-      })
-    }
+    // Crear nuevo payment
+    const createdPayment = await tx.registrationPayment.create({
+      data: paymentData
+    })
 
     // Si el pago está completado y cubre toda la tarifa, actualizar estado
     if (paymentStatus === 'PAID') {
