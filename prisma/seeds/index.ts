@@ -87,7 +87,28 @@ async function main() {
 
   console.log('🗑️ Datos anteriores limpiados')
 
-  // 1. Crear usuario administrador
+  // 1. Crear usuario SYSTEM para logs automáticos (webhooks, etc.)
+  const systemUser = await prisma.user.create({
+    data: {
+      id: 'system', // ID fijo para fácil referencia
+      email: 'system@padapp.internal',
+      password: null, // Sin contraseña - no se puede autenticar
+      name: 'Sistema Automático',
+      role: UserRole.ADMIN,
+      player: {
+        create: {
+          firstName: 'Sistema',
+          lastName: 'Automático',
+          rankingPoints: 0,
+          isActive: false, // No es un jugador activo
+        }
+      }
+    }
+  })
+
+  console.log(`🤖 Creado usuario SYSTEM para logs automáticos`)
+
+  // 2. Crear usuario administrador
   const hashedPassword = await bcrypt.hash('123456', 12)
 
   const adminUser = await prisma.user.create({

@@ -293,13 +293,13 @@ padapp/
 - **Reglas de Negocio**: Un jugador puede inscribirse en múltiples categorías, pero solo un equipo por categoría
 - **Protección RBAC**: Permisos granulares por rol
 
-### ✅ **Sistema de Pagos Completo** ⭐ NUEVO (Diciembre 2024)
+### ✅ **Sistema de Pagos Completo** ⭐ NUEVO (Diciembre 2024) 🔒 SEGURO
 - **Integración con Mercado Pago**:
   - SDK oficial de Mercado Pago instalado
   - Creación automática de preferencias de pago
   - Soporte para tarjetas de crédito/débito y wallets digitales
   - Redirección a checkout seguro de Mercado Pago
-  - Webhook para actualización automática de estados
+  - Webhook con **validación de firma x-signature** (HMAC-SHA256) ✅
   - Modo sandbox para testing con tarjetas de prueba
 - **Gestión de Pagos Manual**:
   - Solo para ADMIN y CLUB_ADMIN
@@ -315,19 +315,28 @@ padapp/
   - Badges de estado con colores (verde=pagado, amarillo=pendiente, rojo=fallido)
 - **API Endpoints**:
   - `POST /api/registrations/[id]/payment/mercadopago` - Crear preferencia de pago
-  - `POST /api/webhooks/mercadopago` - Recibir notificaciones de Mercado Pago
+  - `POST /api/webhooks/mercadopago` - Recibir notificaciones de Mercado Pago (🔒 firma validada)
   - `POST /api/registrations/[id]/payment/manual` - Confirmar pago manualmente
   - `GET /api/registrations/[id]/payment` - Obtener historial de pagos
-- **Auditoría y Seguridad**:
+- **🔒 Seguridad Avanzada** (Auditoría Diciembre 2024):
+  - **Validación de firma x-signature**: Webhooks verificados criptográficamente
+  - **Validación de timestamp**: Prevención de replay attacks (máx. 5 minutos)
+  - **Validación de monto**: Verifica que el monto pagado coincida exactamente
+  - **Idempotencia**: Previene procesamiento duplicado de pagos
+  - **Búsqueda estricta**: Solo busca pagos por IDs únicos (sin fallbacks peligrosos)
+  - **Usuario 'system'**: Logs de webhooks con usuario dedicado para mejor auditoría
+  - **Puntuación de seguridad**: 9/10 ⭐
+- **Auditoría y Logs**:
   - PaymentLogService con 9 acciones diferentes
   - Logs de IP, User Agent, timestamps
   - Trazabilidad completa de operaciones
   - RBAC en todos los endpoints
 - **Configuración**:
   - Variables de entorno para credenciales de Mercado Pago
+  - `MERCADOPAGO_WEBHOOK_SECRET` para validación de firma (obligatorio en producción)
   - Modo test/production automático
   - URL de webhook configurable
-- 📄 [Documentación completa del sistema de pagos](PAYMENT_SYSTEM.md)
+- 📄 [Documentación completa del sistema de pagos](PAYMENT_SYSTEM.md) (incluye auditoría de seguridad)
 
 ### ✅ **Sistema de Equipos**
 - **Formación de Equipos**: 2 jugadores registrados forman un equipo

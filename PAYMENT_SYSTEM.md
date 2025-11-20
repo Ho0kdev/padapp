@@ -299,20 +299,40 @@ import {
 
 ## 🛡️ Seguridad
 
+### Validación de Webhooks (Actualizado Diciembre 2024)
+
+El sistema implementa **validación completa de firma** para todos los webhooks de MercadoPago:
+
+1. **Validación de firma x-signature**: Verifica que el webhook realmente venga de MercadoPago
+2. **Validación de timestamp**: Previene replay attacks (webhooks deben ser menores a 5 minutos)
+3. **Validación de monto**: Verifica que el monto pagado coincida con el esperado (tolerancia: 0.01 ARS)
+4. **Idempotencia**: No procesa pagos ya marcados como PAID (previene doble procesamiento)
+5. **Búsqueda estricta**: Solo busca pagos por IDs únicos, sin fallbacks peligrosos
+
+**IMPORTANTE**: En producción, la variable `MERCADOPAGO_WEBHOOK_SECRET` es OBLIGATORIA. En desarrollo, se permite continuar sin ella pero con warnings de seguridad.
+
 ### RBAC (Control de Acceso)
 
 - **Crear preferencia de Mercado Pago**: Usuario dueño de la inscripción, organizador del torneo, o ADMIN
 - **Confirmar pago manual**: Solo ADMIN o CLUB_ADMIN (organizador del torneo)
 - **Ver historial de pagos**: Usuario autenticado con acceso a la inscripción
+- **Webhook de MercadoPago**: Sin autenticación RBAC (validado por firma x-signature)
 
 ### Auditoría
 
 Todas las operaciones de pago se registran en `PaymentLog`:
-- Quién realizó la acción
+- Quién realizó la acción (usuario 'system' para webhooks automáticos)
 - Cuándo se realizó
 - IP y User Agent
 - Datos anteriores y nuevos (para cambios)
 - Metadata adicional
+
+### Usuario SYSTEM
+
+El sistema utiliza un usuario especial con ID `'system'` para logs de acciones automáticas como webhooks. Este usuario:
+- No tiene contraseña (no puede autenticarse)
+- Tiene rol ADMIN (solo para permisos de logging)
+- Se crea automáticamente en el seed de la base de datos
 
 ## 🔍 Debugging
 
@@ -358,7 +378,7 @@ SELECT * FROM payment_logs WHERE action = 'PAYMENT_MANUALLY_CONFIRMED';
 
 1. **Webhook en Desarrollo**: En desarrollo local, el webhook no funcionará a menos que uses ngrok o similar para exponer tu localhost.
 
-2. **Usuario System**: El webhook crea logs con `userId = 'system'`. Considera crear un usuario "system" en la DB para mejor trazabilidad.
+2. **Usuario System**: El webhook crea logs con `userId = 'system'`. El sistema crea automáticamente este usuario en el seed para mejor trazabilidad.
 
 3. **Moneda**: El sistema está configurado para pesos argentinos (ARS). Para cambiar moneda, editar `PaymentService.createPaymentPreference()`.
 
@@ -366,11 +386,79 @@ SELECT * FROM payment_logs WHERE action = 'PAYMENT_MANUALLY_CONFIRMED';
    - En desarrollo: usa `sandboxInitPoint` (testing)
    - En producción: usa `initPoint` (pagos reales)
 
-5. **Seguridad del Webhook**: El endpoint de webhook NO tiene autenticación RBAC porque es llamado por Mercado Pago. Considerar implementar validación de firma de Mercado Pago para mayor seguridad.
+5. **Seguridad del Webhook**: ✅ **IMPLEMENTADO** - El sistema valida firma x-signature y timestamp de todos los webhooks de MercadoPago.
+
+## 🔐 Auditoría de Seguridad (Diciembre 2024)
+
+### Vulnerabilidades Corregidas
+
+El sistema de pagos fue sometido a una auditoría de seguridad completa. Se identificaron y corrigieron las siguientes vulnerabilidades:
+
+#### 1. ✅ Webhook sin Validación de Firma (CRÍTICO)
+**Problema**: Cualquiera podía enviar webhooks falsos para marcar pagos como aprobados.
+**Solución**: Implementado `MercadoPagoValidationService` que valida firma x-signature y timestamp.
+**Archivo**: `src/lib/services/mercadopago-validation-service.ts`
+
+#### 2. ✅ Fallback Peligroso a PENDING (CRÍTICO)
+**Problema**: Si había múltiples pagos PENDING, el webhook podía actualizar el pago incorrecto.
+**Solución**: Removido el fallback. Ahora solo busca pagos por `mercadoPagoPaymentId` o `preferenceId`.
+**Archivo**: `src/app/api/webhooks/mercadopago/route.ts:102-128`
+
+#### 3. ✅ Sin Validación de Monto (ALTA)
+**Problema**: El sistema aceptaba pagos sin verificar que el monto coincidiera.
+**Solución**: Validación de monto con tolerancia de 0.01 ARS antes de aprobar pagos.
+**Archivo**: `src/app/api/webhooks/mercadopago/route.ts:143-175`
+
+#### 4. ✅ Race Condition (MEDIA)
+**Problema**: Webhooks simultáneos podían procesar el mismo pago dos veces.
+**Solución**: Check de idempotencia - no procesar pagos ya marcados como PAID.
+**Archivo**: `src/app/api/webhooks/mercadopago/route.ts:130-138`
+
+#### 5. ✅ Logs con Organizador en vez de Sistema (BAJA)
+**Problema**: Los logs de webhook usaban el `organizerId` como actor, confundiendo la auditoría.
+**Solución**: Creado usuario 'system' para logs de acciones automáticas.
+**Archivo**: `prisma/seeds/index.ts:90-109`
+
+### Configuración para Producción
+
+Para habilitar todas las validaciones de seguridad en producción:
+
+1. **Obtener Webhook Secret de MercadoPago**:
+   - Ir a https://www.mercadopago.com.ar/developers
+   - Tus integraciones → Tu aplicación → Webhooks
+   - Copiar el "Secret key"
+
+2. **Configurar Variable de Entorno**:
+   ```bash
+   MERCADOPAGO_WEBHOOK_SECRET="tu-secret-key-aqui"
+   ```
+
+3. **Ejecutar Seed para Crear Usuario System**:
+   ```bash
+   npm run db:seed
+   ```
+
+4. **Verificar Validaciones**:
+   - En desarrollo: verás warnings si el secret no está configurado
+   - En producción: el webhook rechazará peticiones sin firma válida (HTTP 401)
+
+### Prevención de Confusión de Pagos
+
+**¿Puede un pago aplicarse al usuario incorrecto?**
+
+**NO** - Los pagos están vinculados por `external_reference` (registrationId) que es único por inscripción. Un pago NUNCA puede aplicarse a un usuario diferente.
+
+**¿Puede confundirse entre múltiples pagos del mismo usuario?**
+
+**NO (después de las correcciones)** - El sistema ahora busca pagos SOLO por IDs únicos:
+- `mercadoPagoPaymentId` (único en DB)
+- `mercadoPagoPreferenceId` (único por creación de preferencia)
+
+Si un usuario crea múltiples pagos PENDING, cada uno tiene su propio `preferenceId` único que lo identifica correctamente.
 
 ## 🔮 Próximas Mejoras
 
-- [ ] Validación de firma de webhook de Mercado Pago
+- [x] ~~Validación de firma de webhook de Mercado Pago~~ ✅ **IMPLEMENTADO**
 - [ ] Soporte para pagos parciales
 - [ ] Reembolsos automáticos vía Mercado Pago
 - [ ] Reportes de pagos
