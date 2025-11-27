@@ -127,6 +127,28 @@ async function handleTeamStatusUpdate(
 ) {
   const currentStatus = team.registration1.registrationStatus
 
+  // Validación: No permitir PAID sin pago completado
+  if (validatedData.status === 'PAID') {
+    const hasCompletedPayment = await prisma.registrationPayment.findFirst({
+      where: {
+        registrationId: {
+          in: [team.registration1.id, team.registration2.id]
+        },
+        paymentStatus: 'PAID'
+      }
+    })
+
+    if (!hasCompletedPayment) {
+      return NextResponse.json(
+        {
+          error: "No se puede marcar como PAGADO sin un pago completado",
+          details: "Debe existir al menos un pago con estado PAID asociado a esta inscripción"
+        },
+        { status: 400 }
+      )
+    }
+  }
+
   // Validaciones de negocio
   const validationError = validateStatusChange(
     validatedData.status,
@@ -224,6 +246,26 @@ async function handleIndividualRegistrationStatusUpdate(
   request: NextRequest
 ) {
   const currentStatus = registration.registrationStatus
+
+  // Validación: No permitir PAID sin pago completado
+  if (validatedData.status === 'PAID') {
+    const hasCompletedPayment = await prisma.registrationPayment.findFirst({
+      where: {
+        registrationId: registrationId,
+        paymentStatus: 'PAID'
+      }
+    })
+
+    if (!hasCompletedPayment) {
+      return NextResponse.json(
+        {
+          error: "No se puede marcar como PAGADO sin un pago completado",
+          details: "Debe existir al menos un pago con estado PAID asociado a esta inscripción"
+        },
+        { status: 400 }
+      )
+    }
+  }
 
   // Validaciones de negocio
   const validationError = validateStatusChange(

@@ -9,6 +9,7 @@ import { GroupStandingsAndMatches } from "@/components/brackets/group-standings-
 import { BracketTree } from "@/components/brackets/bracket-tree"
 import { BracketVisualization } from "@/components/brackets/bracket-visualization"
 import { TournamentPoints } from "./tournament-points"
+import { RegistrationStatusBreakdown } from "./registration-status-breakdown"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
@@ -223,14 +224,26 @@ export function TournamentDetail({ tournament, currentUserId }: TournamentDetail
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardContent className="p-6">
-            <div className="flex items-center">
-              <Users className="h-4 w-4 text-muted-foreground" />
-              <div className="ml-3">
-                <p className="text-sm font-medium text-muted-foreground">Equipos</p>
-                <p className="text-2xl font-bold">
-                  {tournament.teams.length}
-                  {tournament.maxParticipants && ` / ${tournament.maxParticipants}`}
-                </p>
+            <div className="flex items-start">
+              <Users className="h-4 w-4 text-muted-foreground mt-1" />
+              <div className="ml-3 flex-1">
+                <p className="text-sm font-medium text-muted-foreground mb-2">Inscripciones</p>
+                {tournament.registrations && tournament.registrations.length > 0 ? (
+                  <RegistrationStatusBreakdown
+                    registrations={tournament.registrations}
+                    maxParticipants={tournament.maxParticipants}
+                  />
+                ) : (
+                  <div>
+                    <p className="text-2xl font-bold">
+                      {tournament.teams.length} equipos
+                      {tournament.maxParticipants && ` / ${tournament.maxParticipants}`}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      No hay inscripciones individuales
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </CardContent>

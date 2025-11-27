@@ -36,7 +36,10 @@ export interface TournamentWithDetails extends Tournament {
     }
     category: { name: string }
   })[]
-  registrations?: (Registration & {
+  registrations?: {
+    id: string
+    registrationStatus: 'PENDING' | 'CONFIRMED' | 'PAID' | 'CANCELLED' | 'WAITLIST'
+    categoryId: string
     player: {
       id: string
       firstName: string
@@ -53,7 +56,7 @@ export interface TournamentWithDetails extends Tournament {
       id: string
       name: string
     }
-  })[]
+  }[]
   matches: (Match & {
     team1?: {
       registration1: { player: { firstName: string; lastName: string } }

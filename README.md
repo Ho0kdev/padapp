@@ -483,16 +483,28 @@ padapp/
 - Dashboards personalizados por rol
 - Analytics en tiempo real
 
+#### 7. **Mejoras en Americano Social - Gestión de Jugadores Extra**
+- **Selección Manual de Jugadores cuando no es múltiplo de 4**:
+  - Interfaz para seleccionar qué jugadores quedan afuera cuando hay excedente
+  - Opciones de selección:
+    - Generar con primeros N jugadores (por fecha de inscripción)
+    - Generar con mejores N jugadores (por ranking)
+    - Selección manual específica del organizador
+  - Mover automáticamente jugadores excedentes a `WAITLIST`
+  - Notificaciones a jugadores afectados
+  - Vista previa de pools antes de confirmar generación
+- **Contexto**: Actualmente si hay 13 CONFIRMED/PAID el sistema devuelve error. Se requiere solución manual cambiando estado de 1 jugador.
+
 ### 🔸 **Funcionalidades Avanzadas - Futuro**
 
-#### 7. **Aplicación Móvil**
+#### 8. **Aplicación Móvil**
 - PWA (Progressive Web App)
 - App nativa (React Native)
 - Sincronización offline
 - Notificaciones push nativas
 - Cámara para fotos de resultados
 
-#### 8. **Integraciones Externas**
+#### 9. **Integraciones Externas**
 - APIs de federaciones nacionales/internacionales
 - Integración con sistemas de gestión de clubes
 - Importación/Exportación masiva de datos
@@ -500,7 +512,7 @@ padapp/
 - Webhooks configurables para eventos del sistema
 - Integración con plataformas de streaming (transmisión de partidos)
 
-#### 9. **Funcionalidades Sociales**
+#### 10. **Funcionalidades Sociales**
 - Perfiles públicos de jugadores con bio y stats
 - Sistema de comentarios en torneos y partidos
 - Galería de fotos por torneo
@@ -508,7 +520,7 @@ padapp/
 - Foros de discusión por comunidad
 - Sistema de badges y logros
 
-#### 10. **Optimizaciones y Rendimiento**
+#### 11. **Optimizaciones y Rendimiento**
 - Cache avanzado
 - Optimización de consultas
 - CDN para imágenes

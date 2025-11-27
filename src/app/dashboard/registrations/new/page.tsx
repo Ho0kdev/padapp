@@ -8,14 +8,20 @@ import { RegistrationForm } from "@/components/registrations/registration-form"
 export default async function NewRegistrationPage() {
   const session = await getServerSession(authOptions)
 
-  if (!session?.user) {
+  if (!session?.user?.id) {
+    console.error("No session or user ID found")
     redirect("/login")
   }
+
+  console.log("Session user ID:", session.user.id)
+  console.log("Session user email:", session.user.email)
 
   // Obtener información del usuario
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     select: {
+      id: true,
+      email: true,
       role: true,
       player: {
         select: {
@@ -25,7 +31,12 @@ export default async function NewRegistrationPage() {
     }
   })
 
+  console.log("User found:", user ? `Yes (${user.email})` : "No")
+  console.log("Player ID:", user?.player?.id || "No player profile")
+
   if (!user) {
+    console.error(`❌ User not found in database for session ID: ${session.user.id}`)
+    console.error("This might indicate a session/database mismatch. Try logging out and logging back in.")
     redirect("/dashboard")
   }
 

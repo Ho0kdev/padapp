@@ -83,7 +83,10 @@ async function getTournament(id: string) {
         }
       },
       registrations: {
-        include: {
+        select: {
+          id: true,
+          registrationStatus: true,
+          categoryId: true,
           player: {
             select: {
               id: true,

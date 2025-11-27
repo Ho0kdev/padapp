@@ -115,12 +115,14 @@ export async function POST(
       console.log(`✅ Pools y rankings anteriores eliminados`)
     }
 
-    // Obtener jugadores confirmados
+    // Obtener jugadores confirmados y pagados
     const registrations = await prisma.registration.findMany({
       where: {
         tournamentId: id,
         categoryId: validatedData.categoryId,
-        registrationStatus: "CONFIRMED"
+        registrationStatus: {
+          in: ["CONFIRMED", "PAID"]
+        }
       },
       include: {
         player: {
@@ -135,7 +137,7 @@ export async function POST(
     if (players.length % 4 !== 0) {
       return NextResponse.json(
         {
-          error: `Americano Social requiere múltiplo de 4 jugadores. Hay ${players.length} jugadores confirmados.`
+          error: `Americano Social requiere múltiplo de 4 jugadores. Hay ${players.length} jugadores confirmados/pagados. (Estados considerados: CONFIRMED, PAID)`
         },
         { status: 400 }
       )
@@ -143,7 +145,7 @@ export async function POST(
 
     if (players.length < 4) {
       return NextResponse.json(
-        { error: "Se requieren al menos 4 jugadores confirmados" },
+        { error: "Se requieren al menos 4 jugadores confirmados/pagados" },
         { status: 400 }
       )
     }

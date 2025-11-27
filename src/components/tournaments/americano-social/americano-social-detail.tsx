@@ -51,6 +51,7 @@ import { PoolCard } from "./pool-card"
 import { CategorySelector } from "./category-selector"
 import { AmericanoMatchCard } from "./americano-match-card"
 import { AmericanoMatchResultDialog } from "./americano-match-result-dialog"
+import { RegistrationStatusBreakdown } from "../registration-status-breakdown"
 import {
   getRegistrationStatusStyle,
   getRegistrationStatusLabel,
@@ -417,14 +418,14 @@ export function AmericanoSocialDetail({
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardContent className="p-6">
-            <div className="flex items-center">
-              <Users className="h-4 w-4 text-muted-foreground" />
-              <div className="ml-3">
-                <p className="text-sm font-medium text-muted-foreground">Jugadores</p>
-                <p className="text-2xl font-bold">
-                  {registrations.length}
-                  {tournament.maxParticipants && ` / ${tournament.maxParticipants}`}
-                </p>
+            <div className="flex items-start">
+              <Users className="h-4 w-4 text-muted-foreground mt-1" />
+              <div className="ml-3 flex-1">
+                <p className="text-sm font-medium text-muted-foreground mb-2">Jugadores</p>
+                <RegistrationStatusBreakdown
+                  registrations={registrations}
+                  maxParticipants={tournament.maxParticipants}
+                />
               </div>
             </div>
           </CardContent>
