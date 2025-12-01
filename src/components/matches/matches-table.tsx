@@ -285,9 +285,16 @@ export function MatchesTable() {
   }
 
   const handleRowClick = (matchId: string, e: React.MouseEvent) => {
-    // No navegar si se hizo click en el dropdown menu o sus elementos
+    // No navegar si se hizo click en elementos interactivos
     const target = e.target as HTMLElement
-    if (target.closest('button') || target.closest('[role="menuitem"]')) {
+    if (
+      target.closest('button') ||
+      target.closest('[role="menuitem"]') ||
+      target.closest('a') ||
+      target.closest('input') ||
+      target.closest('select') ||
+      target.closest('textarea')
+    ) {
       return
     }
     router.push(`/dashboard/matches/${matchId}`)

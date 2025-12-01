@@ -260,9 +260,16 @@ export function ClubsTable() {
   }
 
   const handleRowClick = (clubId: string, e: React.MouseEvent) => {
-    // No navegar si se hizo click en el dropdown menu o sus elementos
+    // No navegar si se hizo click en elementos interactivos
     const target = e.target as HTMLElement
-    if (target.closest('button') || target.closest('[role="menuitem"]') || target.closest('a')) {
+    if (
+      target.closest('button') ||
+      target.closest('[role="menuitem"]') ||
+      target.closest('a') ||
+      target.closest('input') ||
+      target.closest('select') ||
+      target.closest('textarea')
+    ) {
       return
     }
     router.push(`/dashboard/clubs/${clubId}`)

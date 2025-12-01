@@ -45,7 +45,7 @@ export function Header({ onMenuClick }: HeaderProps) {
     : user?.email?.[0]?.toUpperCase() || "U"
 
   return (
-    <header className="flex h-16 items-center justify-between border-b bg-white px-4 sm:px-6">
+    <header className="flex h-16 items-center justify-between border-b bg-background px-4 sm:px-6">
       <div className="flex items-center space-x-2 sm:space-x-4">
         {/* Botón hamburguesa - Solo visible en mobile */}
         <Button
@@ -57,7 +57,7 @@ export function Header({ onMenuClick }: HeaderProps) {
           <Menu className="h-6 w-6" />
         </Button>
 
-        <h1 className="text-base sm:text-lg lg:text-xl font-semibold text-gray-900">
+        <h1 className="text-base sm:text-lg lg:text-xl font-semibold text-foreground">
           {/* Texto corto en mobile, completo en desktop */}
           <span className="sm:hidden">PadApp</span>
           <span className="hidden sm:inline">Sistema de Torneos de Pádel</span>

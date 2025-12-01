@@ -2,6 +2,7 @@ import './globals.css'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { Providers } from "@/components/providers/session-provider"
+import { MobileNav } from "@/components/ui/mobile-nav"
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -19,7 +20,10 @@ export default function RootLayout({
     <html lang="es">
       <body className={inter.className}>
         <Providers>
-          {children}
+          <div className="min-h-screen pb-16 md:pb-0">
+            {children}
+          </div>
+          <MobileNav />
         </Providers>
       </body>
     </html>

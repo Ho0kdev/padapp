@@ -52,8 +52,8 @@ export function Sidebar({ mobile = false, open = false, onOpenChange }: SidebarP
           className="flex items-center space-x-2"
           onClick={onLinkClick}
         >
-          <Trophy className="h-8 w-8 text-blue-400" />
-          <span className="text-xl font-bold text-white">PadApp</span>
+          <Trophy className="h-8 w-8 text-primary" />
+          <span className="text-xl font-bold text-sidebar-foreground">PadApp</span>
         </Link>
       </div>
 
@@ -68,14 +68,14 @@ export function Sidebar({ mobile = false, open = false, onOpenChange }: SidebarP
               onClick={onLinkClick}
               className={cn(
                 isActive
-                  ? "bg-gray-800 text-white"
-                  : "text-gray-300 hover:bg-gray-700 hover:text-white",
+                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
                 "group flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors"
               )}
             >
               <item.icon
                 className={cn(
-                  isActive ? "text-white" : "text-gray-400 group-hover:text-white",
+                  isActive ? "text-sidebar-accent-foreground" : "text-sidebar-foreground/50 group-hover:text-sidebar-foreground",
                   "mr-3 h-5 w-5 flex-shrink-0 transition-colors"
                 )}
               />
@@ -91,7 +91,7 @@ export function Sidebar({ mobile = false, open = false, onOpenChange }: SidebarP
   if (mobile) {
     return (
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="left" className="w-64 p-0 bg-gray-900 border-gray-800">
+        <SheetContent side="left" className="w-64 p-0 bg-sidebar border-sidebar-border">
           <VisuallyHidden>
             <SheetTitle>Menú de navegación</SheetTitle>
           </VisuallyHidden>
@@ -105,7 +105,7 @@ export function Sidebar({ mobile = false, open = false, onOpenChange }: SidebarP
 
   // Desktop: Render normal
   return (
-    <div className="flex h-full w-64 flex-col bg-gray-900">
+    <div className="flex h-full w-64 flex-col bg-sidebar border-r border-sidebar-border">
       <SidebarContent />
     </div>
   )

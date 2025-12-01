@@ -18,15 +18,15 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-2 text-sm text-gray-600">Cargando...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-2 text-sm text-muted-foreground">Cargando...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-background">
       {/* Sidebar Desktop - Hidden on mobile */}
       <div className="hidden lg:block">
         <Sidebar />
@@ -37,7 +37,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header onMenuClick={() => setSidebarOpen(true)} />
-        <main className="flex-1 overflow-auto p-4 sm:p-6">
+        <main className="flex-1 overflow-auto p-4 sm:p-6 pb-20 md:pb-6">
           {children}
         </main>
       </div>

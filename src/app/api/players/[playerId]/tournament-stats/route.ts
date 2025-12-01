@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { requireAuth, handleAuthError } from "@/lib/rbac"
 import { prisma } from "@/lib/prisma"
 import { PointsCalculationService } from "@/lib/services/points-calculation-service"
+import { ForbiddenError } from "@/lib/rbac/errors"
 
 interface RouteContext {
   params: Promise<{ playerId: string }>
@@ -16,9 +17,17 @@ export async function GET(
   { params }: RouteContext
 ) {
   try {
-    await requireAuth()
+    const session = await requireAuth()
 
     const { playerId } = await params
+
+    // Verificar ownership: solo el propio jugador o ADMIN/CLUB_ADMIN pueden ver las stats
+    const isOwnStats = session.user.player?.id === playerId
+    const isAdminOrClubAdmin = session.user.role === 'ADMIN' || session.user.role === 'CLUB_ADMIN'
+
+    if (!isOwnStats && !isAdminOrClubAdmin) {
+      throw new ForbiddenError('No tienes permiso para ver las estadísticas de este jugador')
+    }
 
     // Obtener estadísticas de torneos del jugador
     const stats = await prisma.tournamentStats.findMany({
