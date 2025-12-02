@@ -365,7 +365,7 @@ export default async function TeamDetailPage({ params }: TeamDetailPageProps) {
                 Volver
               </Button>
             </Link>
-            <h1 className="text-3xl font-bold tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
               {team.name || (team.tournament.type === 'AMERICANO_SOCIAL'
                 ? `${team.registration1.player.lastName}, ${team.registration1.player.firstName} / ${team.registration2.player.lastName}, ${team.registration2.player.firstName}`
                 : `${team.registration1.player.firstName} ${team.registration1.player.lastName} / ${team.registration2.player.firstName} ${team.registration2.player.lastName}`

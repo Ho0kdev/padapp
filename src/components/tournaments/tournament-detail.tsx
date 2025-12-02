@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
+import { Breadcrumbs } from "@/components/ui/breadcrumbs"
 import { TournamentStatusManager } from "./tournament-status-manager"
 import { GroupStandingsAndMatches } from "@/components/brackets/group-standings-and-matches"
 import { BracketTree } from "@/components/brackets/bracket-tree"
@@ -138,11 +139,19 @@ export function TournamentDetail({ tournament, currentUserId }: TournamentDetail
 
   return (
     <div className="space-y-6">
+      {/* Breadcrumbs */}
+      <Breadcrumbs
+        items={[
+          { label: "Torneos", href: "/dashboard/tournaments" },
+          { label: tournament.name }
+        ]}
+      />
+
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="space-y-1">
           <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold tracking-tight">{tournament.name}</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{tournament.name}</h1>
             <TournamentStatusManager
               tournamentId={tournament.id}
               currentStatus={tournament.status}

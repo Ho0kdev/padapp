@@ -95,8 +95,8 @@ export default async function AmericanoSocialPage({
       <DashboardLayout>
         <div className="space-y-6">
           <div>
-            <h1 className="text-3xl font-bold">{tournament.name}</h1>
-            <p className="text-muted-foreground">Americano Social</p>
+            <h1 className="text-2xl sm:text-3xl font-bold">{tournament.name}</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">Americano Social</p>
           </div>
 
           <Card>

@@ -26,7 +26,7 @@ export default async function NewTournamentPage() {
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Crear Torneo</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Crear Torneo</h1>
           <p className="text-muted-foreground">
             Configure un nuevo torneo con todas sus características
           </p>

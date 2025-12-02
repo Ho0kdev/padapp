@@ -68,7 +68,7 @@ export default async function EditCourtPage({ params }: PageProps) {
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Editar Cancha</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Editar Cancha</h1>
           <p className="text-muted-foreground">
             Editar {court.name} de {court.club.name}
           </p>

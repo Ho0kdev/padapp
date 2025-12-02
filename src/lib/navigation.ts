@@ -82,12 +82,12 @@ export const navigation: NavigationItem[] = [
     icon: UsersRound
     // Sin roles = todos pueden ver equipos (jugadores ven sus equipos, admins gestionan todos)
   },
-  {
-    name: "Partidos",
-    href: "/dashboard/matches",
-    icon: FileText,
-    roles: ["ADMIN", "CLUB_ADMIN", "REFEREE"] // Admins, club admins y árbitros pueden gestionar partidos
-  },
+  // {
+  //   name: "Partidos",
+  //   href: "/dashboard/matches",
+  //   icon: FileText,
+  //   roles: ["ADMIN", "CLUB_ADMIN", "REFEREE"] // Admins, club admins y árbitros pueden gestionar partidos
+  // },
   {
     name: "Rankings",
     href: "/dashboard/rankings",

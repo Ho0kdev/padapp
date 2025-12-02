@@ -229,6 +229,74 @@ export async function PATCH(
       }
     })
 
+    // Si el torneo pasa a IN_PROGRESS, cancelar inscripciones no confirmadas/pagadas
+    if (newStatus === 'IN_PROGRESS') {
+      try {
+        // Obtener todas las inscripciones que NO están CONFIRMED ni PAID
+        const registrationsToCancell = await prisma.registration.findMany({
+          where: {
+            tournamentId: id,
+            registrationStatus: {
+              notIn: ['CONFIRMED', 'PAID']
+            }
+          },
+          include: {
+            player: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true
+              }
+            },
+            category: {
+              select: {
+                id: true,
+                name: true
+              }
+            }
+          }
+        })
+
+        if (registrationsToCancell.length > 0) {
+          // Cancelar todas estas inscripciones
+          await prisma.registration.updateMany({
+            where: {
+              id: {
+                in: registrationsToCancell.map(r => r.id)
+              }
+            },
+            data: {
+              registrationStatus: 'CANCELLED',
+              updatedAt: new Date()
+            }
+          })
+
+          // Log cada cancelación
+          const { RegistrationLogService } = await import('@/lib/services/registration-log-service')
+
+          for (const registration of registrationsToCancell) {
+            await RegistrationLogService.logRegistrationStatusChanged(
+              {
+                userId: session.user.id,
+                registrationId: registration.id,
+                ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0] ||
+                          request.headers.get('x-real-ip') || 'unknown',
+                userAgent: request.headers.get('user-agent') || 'unknown'
+              },
+              { ...registration, registrationStatus: 'CANCELLED' },
+              registration.registrationStatus,
+              'CANCELLED'
+            )
+          }
+
+          console.log(`✅ Auto-canceladas ${registrationsToCancell.length} inscripciones al iniciar torneo ${id}`)
+        }
+      } catch (cancelError) {
+        console.error('⚠️ Error al auto-cancelar inscripciones:', cancelError)
+        // No fallar la operación completa
+      }
+    }
+
     // Si el torneo volvió de COMPLETED a IN_PROGRESS, recalcular rankings
     if (currentStatus === 'COMPLETED' && newStatus === 'IN_PROGRESS') {
       try {

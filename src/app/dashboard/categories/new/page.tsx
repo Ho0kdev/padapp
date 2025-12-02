@@ -26,7 +26,7 @@ export default async function NewCategoryPage() {
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Nueva Categoría</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Nueva Categoría</h1>
           <p className="text-muted-foreground">
             Crear una nueva categoría para organizar torneos
           </p>

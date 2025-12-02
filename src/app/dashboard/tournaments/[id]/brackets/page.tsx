@@ -83,7 +83,7 @@ export default async function BracketsPage({ params }: BracketsPageProps) {
           <div>
             <div className="flex items-center gap-2">
               <Trophy className="h-8 w-8 text-muted-foreground" />
-              <h1 className="text-3xl font-bold tracking-tight">{tournament.name}</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{tournament.name}</h1>
             </div>
             <p className="text-muted-foreground mt-1">
               Gestión de Brackets y Cuadros de Partidos

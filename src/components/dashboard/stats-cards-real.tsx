@@ -64,7 +64,7 @@ interface StatsCardsProps {
 
 export function StatsCardsReal({ stats }: StatsCardsProps) {
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-4">
       <StatsCard
         title="Torneos Activos"
         value={stats.tournaments.active}

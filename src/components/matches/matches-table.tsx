@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import {
   Table,
   TableBody,
@@ -300,13 +301,156 @@ export function MatchesTable() {
     router.push(`/dashboard/matches/${matchId}`)
   }
 
+  const MatchCard = ({ match }: { match: Match }) => {
+    return (
+      <Card
+        className="overflow-hidden cursor-pointer hover:bg-muted/50 transition-colors"
+        onClick={(e) => handleRowClick(match.id, e)}
+      >
+        <CardHeader className="pb-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-base truncate">
+                {getTeamDisplay(match.team1)} vs {getTeamDisplay(match.team2)}
+              </h3>
+              <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
+                <Trophy className="h-3 w-3" />
+                <p className="truncate">
+                  {match.tournament.name} - {match.category.name}
+                </p>
+              </div>
+            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                  <Link href={`/dashboard/matches/${match.id}`}>
+                    <Eye className="mr-2 h-4 w-4" />
+                    Ver detalle
+                  </Link>
+                </DropdownMenuItem>
+
+                {canManageMatch(match) && match.status !== "COMPLETED" && match.status !== "WALKOVER" && (
+                  <>
+                    <DropdownMenuSeparator />
+
+                    <DropdownMenuItem
+                      onClick={() => handleScheduleMatch(match)}
+                    >
+                      <Calendar className="mr-2 h-4 w-4" />
+                      Programar partido
+                    </DropdownMenuItem>
+
+                    {match.status === "SCHEDULED" && (
+                      <DropdownMenuItem
+                        onClick={() => handleChangeStatus(match.id, "IN_PROGRESS")}
+                        disabled={statusLoading === match.id}
+                      >
+                        <Play className="mr-2 h-4 w-4" />
+                        Iniciar partido
+                      </DropdownMenuItem>
+                    )}
+
+                    <DropdownMenuItem
+                      onClick={() => handleLoadResult(match)}
+                    >
+                      <CheckCircle className="mr-2 h-4 w-4" />
+                      Cargar resultado
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3 pb-4">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Fase</span>
+            <Badge variant="outline" className="font-mono">
+              {getPhaseLabel(match.phaseType)}
+              {match.matchNumber && ` #${match.matchNumber}`}
+            </Badge>
+          </div>
+
+          {match.zone && (
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Grupo</span>
+              <Badge variant="secondary" className="font-mono">
+                {match.zone.name}
+              </Badge>
+            </div>
+          )}
+
+          {(match.status === "COMPLETED" || match.status === "WALKOVER") && match.winnerTeam && (
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Resultado</span>
+              <div className="text-right space-y-1">
+                <Badge variant="secondary" className="font-mono">
+                  {match.team1SetsWon} - {match.team2SetsWon}
+                </Badge>
+                <div className="text-xs text-muted-foreground">
+                  Ganador: {getTeamDisplay(match.team1?.id === match.winnerTeam.id ? match.team1 : match.team2)}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {match.scheduledAt && (
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Horario</span>
+              <div className="flex items-center gap-1">
+                <Calendar className="h-3 w-3 text-muted-foreground" />
+                <span>{format(new Date(match.scheduledAt), "dd/MM/yyyy HH:mm", { locale: es })}</span>
+              </div>
+            </div>
+          )}
+
+          {match.court && (
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Cancha</span>
+              <div className="flex items-center gap-1">
+                <MapPin className="h-3 w-3 text-muted-foreground" />
+                <span className="text-right truncate">{match.court.name} - {match.court.club.name}</span>
+              </div>
+            </div>
+          )}
+
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Estado</span>
+            <Badge variant="outline" className={getMatchStatusStyle(match.status)}>
+              {getMatchStatusLabel(match.status)}
+            </Badge>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
   if (loading) {
     return <div className="text-center py-8">Cargando partidos...</div>
   }
 
   return (
     <div className="space-y-4">
-      <div className="rounded-md border">
+      {/* Mobile cards view */}
+      <div className="lg:hidden space-y-3">
+        {matches.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            No se encontraron partidos
+          </div>
+        ) : (
+          matches.map((match) => (
+            <MatchCard key={match.id} match={match} />
+          ))
+        )}
+      </div>
+
+      {/* Desktop table view */}
+      <div className="hidden lg:block rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
@@ -478,6 +622,7 @@ export function MatchesTable() {
         </Table>
       </div>
 
+      {/* Desktop table pagination */}
       <DataTablePagination
         currentPage={pagination.page}
         totalPages={pagination.totalPages}

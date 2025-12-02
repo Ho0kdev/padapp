@@ -65,7 +65,7 @@ export default async function EditClubPage({ params }: EditClubPageProps) {
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Editar Club</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Editar Club</h1>
           <p className="text-muted-foreground">
             Modifica la información del club &quot;{club.name}&quot;
           </p>

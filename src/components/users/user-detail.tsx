@@ -18,6 +18,7 @@ import {
   MapPin
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Breadcrumbs } from '@/components/ui/breadcrumbs'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -423,26 +424,27 @@ export function UserDetail({ user }: UserDetailProps) {
 
   return (
     <div className="space-y-6">
+      {/* Breadcrumbs */}
+      <Breadcrumbs
+        items={[
+          { label: "Usuarios", href: "/dashboard/users" },
+          { label: user.player
+              ? `${user.player.firstName} ${user.player.lastName}`
+              : user.name
+          }
+        ]}
+      />
+
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.push('/dashboard/users')}
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Volver
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">
-              {user.player
-                ? `${user.player.firstName} ${user.player.lastName}`
-                : user.name
-              }
-            </h1>
-            <p className="text-muted-foreground">{user.email}</p>
-          </div>
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+            {user.player
+              ? `${user.player.firstName} ${user.player.lastName}`
+              : user.name
+            }
+          </h1>
+          <p className="text-sm sm:text-base text-muted-foreground">{user.email}</p>
         </div>
         {canEdit && (
           <Button onClick={() => router.push(`/dashboard/users/${user.id}/edit`)}>

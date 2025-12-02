@@ -38,7 +38,7 @@ export function DataTablePagination({
   return (
     <div className="flex items-center justify-between">
       <div className="text-sm text-muted-foreground">
-        Mostrando {startItem} - {endItem} de {total} {itemName}
+        {startItem}-{endItem} de {total}
       </div>
 
       <div className="flex items-center space-x-2">

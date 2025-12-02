@@ -26,7 +26,7 @@ export default async function NewClubPage() {
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Nuevo Club</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Nuevo Club</h1>
           <p className="text-muted-foreground">
             Registra un nuevo club de pádel en la plataforma
           </p>

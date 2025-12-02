@@ -88,7 +88,7 @@ export default async function EditTeamPage({ params }: EditTeamPageProps) {
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Editar Equipo</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Editar Equipo</h1>
           <p className="text-muted-foreground">
             {team.tournament.name} - {team.category.name}
           </p>

@@ -4,6 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
+import { Breadcrumbs } from "@/components/ui/breadcrumbs"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
@@ -215,21 +216,26 @@ export function ClubDetail({ club, currentUserId }: ClubDetailProps) {
 
   return (
     <div className="space-y-6">
+      {/* Breadcrumbs */}
+      <Breadcrumbs
+        items={[
+          { label: "Clubes", href: "/dashboard/clubs" },
+          { label: club.name }
+        ]}
+      />
+
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="space-y-1">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={() => router.back()}>
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
+          <div className="flex items-center gap-2 sm:gap-3">
             {club.logoUrl && (
               <img
                 src={club.logoUrl}
                 alt={`Logo de ${club.name}`}
-                className="h-12 w-12 rounded-full object-cover border-2"
+                className="h-10 w-10 sm:h-12 sm:w-12 rounded-full object-cover border-2 flex-shrink-0"
               />
             )}
-            <h1 className="text-3xl font-bold tracking-tight">{club.name}</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{club.name}</h1>
             <Badge variant="outline" className={getClubStatusStyle(club.status)}>
               {getClubStatusLabel(club.status)}
             </Badge>

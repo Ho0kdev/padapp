@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import {
   Table,
   TableBody,
@@ -347,9 +348,128 @@ export function RegistrationsTable() {
     return <div className="text-center py-8">Cargando inscripciones...</div>
   }
 
+  // Componente de tarjeta para mobile
+  const RegistrationCard = ({ registration }: { registration: Registration }) => {
+    return (
+      <Card
+        className="overflow-hidden cursor-pointer hover:bg-muted/50 transition-colors"
+        onClick={(e) => handleRowClick(registration.id, e)}
+      >
+        <CardHeader className="pb-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-base truncate">
+                {getDisplayName(registration)}
+              </h3>
+              <p className="text-sm text-muted-foreground truncate">
+                {registration.player.user?.email}
+              </p>
+            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 flex-shrink-0">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href={`/dashboard/registrations/${registration.id}`}>
+                    <Eye className="mr-2 h-4 w-4" />
+                    Ver detalles
+                  </Link>
+                </DropdownMenuItem>
+                {isAdmin && (
+                  <>
+                    <DropdownMenuItem asChild>
+                      <Link href={`/dashboard/registrations/${registration.id}/edit`}>
+                        <Edit className="mr-2 h-4 w-4" />
+                        Editar
+                      </Link>
+                    </DropdownMenuItem>
+                    {(registration.tournamentCategory?.registrationFee || 0) > 0 && (
+                      <DropdownMenuItem asChild>
+                        <Link href={`/dashboard/registrations/${registration.id}/payment`}>
+                          <CreditCard className="mr-2 h-4 w-4" />
+                          Gestionar Pago
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem
+                      className="text-destructive"
+                      disabled={['IN_PROGRESS', 'COMPLETED'].includes(registration.tournament.status)}
+                      onClick={() => {
+                        setRegistrationToDelete(registration)
+                        setDeleteDialogOpen(true)
+                      }}
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Eliminar
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3 pb-4">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Estado</span>
+            {getStatusBadge(registration.registrationStatus)}
+          </div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Torneo</span>
+            <span className="font-medium truncate max-w-[180px]">{registration.tournament.name}</span>
+          </div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Categoría</span>
+            <span className="truncate max-w-[180px]">{registration.category.name}</span>
+          </div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Tipo</span>
+            {getCategoryTypeBadge(registration.category.type)}
+          </div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Pago</span>
+            {getPaymentStatus(registration)}
+          </div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Equipo</span>
+            {getTeamStatus(registration)}
+          </div>
+          <div className="flex items-center justify-between text-sm pt-2 border-t">
+            <span className="text-muted-foreground">Estado Torneo</span>
+            {getTournamentStatusBadge(registration.tournament.status)}
+          </div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Fecha</span>
+            <span className="text-muted-foreground">
+              {format(new Date(registration.registeredAt), "dd/MM/yyyy", { locale: es })}
+            </span>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
   return (
     <div className="space-y-4">
-      <div className="rounded-md border">
+      {/* Mobile cards view */}
+      <div className="lg:hidden space-y-3">
+        {registrations.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            No se encontraron inscripciones.
+          </div>
+        ) : (
+          registrations.map((registration) => (
+            <RegistrationCard key={registration.id} registration={registration} />
+          ))
+        )}
+      </div>
+
+      {/* Desktop table view */}
+      <div className="hidden lg:block rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>

@@ -123,29 +123,43 @@ export function DataTableHeader({
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
-        <p className="text-muted-foreground">{description}</p>
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{title}</h1>
+        <p className="text-sm sm:text-base text-muted-foreground">{description}</p>
       </div>
 
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+      <div className="flex flex-col gap-2">
+        {/* Search bar - Primera línea en mobile */}
         <div className="flex gap-2">
-          <div className="relative">
+          <div className="relative flex-1">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder={searchPlaceholder}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onKeyPress={handleKeyPress}
-              className="pl-8 w-[250px]"
+              className="pl-8 w-full"
             />
           </div>
 
+          {/* Botón de crear - Solo en desktop al lado del search */}
+          {showCreateButton && createButtonText && createButtonHref && (
+            <Button asChild className="hidden sm:flex">
+              <Link href={createButtonHref}>
+                <Plus className="mr-2 h-4 w-4" />
+                {createButtonText}
+              </Link>
+            </Button>
+          )}
+        </div>
+
+        {/* Filters row - Segunda línea en mobile */}
+        <div className="flex flex-wrap gap-2">
           {filterOptions.length > 0 && (
             <Select
               value={searchParams.get(filterParamKey) || defaultFilterValue}
               onValueChange={handleFilter}
             >
-              <SelectTrigger className="w-[150px]">
+              <SelectTrigger className="w-[110px] sm:w-[150px]">
                 <SelectValue placeholder={filterLabel || "Filtrar"} />
               </SelectTrigger>
               <SelectContent>
@@ -164,7 +178,7 @@ export function DataTableHeader({
               value={searchParams.get(secondaryFilter.paramKey) || secondaryFilter.defaultValue || "all"}
               onValueChange={handleSecondaryFilter}
             >
-              <SelectTrigger className={secondaryFilter.width || "w-[120px]"}>
+              <SelectTrigger className={`w-[110px] sm:${secondaryFilter.width || "w-[140px]"}`}>
                 <SelectValue placeholder={secondaryFilter.label} />
               </SelectTrigger>
               <SelectContent>
@@ -183,7 +197,7 @@ export function DataTableHeader({
               value={searchParams.get(tertiaryFilter.paramKey) || tertiaryFilter.defaultValue || "all"}
               onValueChange={handleTertiaryFilter}
             >
-              <SelectTrigger className={tertiaryFilter.width || "w-[120px]"}>
+              <SelectTrigger className={`w-[110px] sm:${tertiaryFilter.width || "w-[140px]"}`}>
                 <SelectValue placeholder={tertiaryFilter.label} />
               </SelectTrigger>
               <SelectContent>
@@ -196,16 +210,17 @@ export function DataTableHeader({
               </SelectContent>
             </Select>
           )}
-        </div>
 
-        {showCreateButton && createButtonText && createButtonHref && (
-          <Button asChild>
-            <Link href={createButtonHref}>
-              <Plus className="mr-2 h-4 w-4" />
-              {createButtonText}
-            </Link>
-          </Button>
-        )}
+          {/* Botón de crear - Solo en mobile, tercera línea */}
+          {showCreateButton && createButtonText && createButtonHref && (
+            <Button asChild className="w-full sm:hidden">
+              <Link href={createButtonHref}>
+                <Plus className="mr-2 h-4 w-4" />
+                {createButtonText}
+              </Link>
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   )

@@ -59,7 +59,7 @@ export default async function NewCourtPage({ params }: PageProps) {
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Nueva Cancha</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Nueva Cancha</h1>
           <p className="text-muted-foreground">
             Crear una nueva cancha para {club.name}
           </p>
