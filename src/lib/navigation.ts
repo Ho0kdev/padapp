@@ -19,6 +19,7 @@ export interface NavigationItem {
   href: string
   icon: any
   roles?: UserRole[] // Si no se especifica, visible para todos los usuarios autenticados
+  quickAccess?: boolean // Si es true, aparece en los accesos directos del menú móvil
 }
 
 /**
@@ -44,7 +45,8 @@ export const navigation: NavigationItem[] = [
     name: "Dashboard",
     href: "/dashboard",
     icon: Home,
-    roles: ["ADMIN"] // Solo administradores pueden gestionar usuarios
+    roles: ["ADMIN"], // Solo administradores pueden gestionar usuarios
+    quickAccess: true // Aparece en accesos directos como "Inicio"
   },
   {
     name: "Usuarios",
@@ -68,13 +70,15 @@ export const navigation: NavigationItem[] = [
     name: "Torneos",
     href: "/dashboard/tournaments",
     icon: Trophy,
-    roles: ["ADMIN", "CLUB_ADMIN", "PLAYER", "REFEREE"] // Todos pueden ver torneos, solo admins/club admins pueden crear/gestionar
+    roles: ["ADMIN", "CLUB_ADMIN", "PLAYER", "REFEREE"], // Todos pueden ver torneos, solo admins/club admins pueden crear/gestionar
+    quickAccess: true // Aparece en accesos directos
   },
   {
     name: "Inscripciones",
     href: "/dashboard/registrations",
-    icon: UserPlus
+    icon: UserPlus,
     // Sin roles = todos pueden ver inscripciones (jugadores para inscribirse, admins para gestionar)
+    quickAccess: true // Aparece en accesos directos
   },
   {
     name: "Equipos",
@@ -82,17 +86,19 @@ export const navigation: NavigationItem[] = [
     icon: UsersRound
     // Sin roles = todos pueden ver equipos (jugadores ven sus equipos, admins gestionan todos)
   },
-  // {
-  //   name: "Partidos",
-  //   href: "/dashboard/matches",
-  //   icon: FileText,
-  //   roles: ["ADMIN", "CLUB_ADMIN", "REFEREE"] // Admins, club admins y árbitros pueden gestionar partidos
-  // },
+  {
+    name: "Partidos",
+    href: "/dashboard/matches",
+    icon: FileText,
+    roles: ["ADMIN", "CLUB_ADMIN", "REFEREE", "PLAYER"], // Todos pueden ver partidos, solo admins/club admins/referees pueden gestionarlos
+    quickAccess: true // Aparece en accesos directos
+  },
   {
     name: "Rankings",
     href: "/dashboard/rankings",
-    icon: Medal
+    icon: Medal,
     // Sin roles = todos pueden ver rankings públicos
+    quickAccess: true // Aparece en accesos directos
   },
   {
     name: "Panel de Admin",

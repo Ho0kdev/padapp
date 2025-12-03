@@ -1,7 +1,6 @@
 // src/components/layout/dashboard-layout.tsx
 "use client"
 
-import { useState } from "react"
 import { useAuth } from "@/hooks/use-auth"
 import { Sidebar } from "./sidebar"
 import { Header } from "./header"
@@ -12,7 +11,6 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { loading } = useAuth()
-  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   if (loading) {
     return (
@@ -32,11 +30,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <Sidebar />
       </div>
 
-      {/* Sidebar Mobile - Sheet overlay */}
-      <Sidebar mobile open={sidebarOpen} onOpenChange={setSidebarOpen} />
-
       <div className="flex flex-1 flex-col overflow-hidden">
-        <Header onMenuClick={() => setSidebarOpen(true)} />
+        <Header />
         <main className="flex-1 overflow-auto p-4 sm:p-6 pb-20 md:pb-6">
           {children}
         </main>

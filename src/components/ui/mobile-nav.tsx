@@ -2,33 +2,43 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Trophy, Users, Calendar, Menu } from "lucide-react"
+import { Menu } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/hooks/use-auth"
+import { navigation, NavigationItem, UserRole } from "@/lib/navigation"
 
 export function MobileNav() {
   const pathname = usePathname()
+  const { user } = useAuth()
 
+  // Función para verificar si el usuario tiene acceso a una opción del menú
+  const hasAccess = (item: NavigationItem): boolean => {
+    // Si no se especifican roles, la opción es visible para todos
+    if (!item.roles || item.roles.length === 0) {
+      return true
+    }
+
+    // Si el usuario no está autenticado, no tiene acceso
+    if (!user?.role) {
+      return false
+    }
+
+    // Verificar si el rol del usuario está en la lista de roles permitidos
+    return item.roles.includes(user.role as UserRole)
+  }
+
+  // Filtrar opciones que tienen quickAccess y que el usuario puede ver
+  const quickAccessItems = navigation
+    .filter(item => item.quickAccess && hasAccess(item))
+    .map(item => ({
+      href: item.href,
+      label: item.name === "Dashboard" ? "Inicio" : item.name, // Cambiar "Dashboard" por "Inicio"
+      icon: item.icon
+    }))
+
+  // Agregar el botón "Menú" al final
   const links = [
-    {
-      href: "/dashboard",
-      label: "Inicio",
-      icon: Home,
-    },
-    {
-      href: "/dashboard/tournaments",
-      label: "Torneos",
-      icon: Trophy,
-    },
-    {
-      href: "/dashboard/matches",
-      label: "Partidos",
-      icon: Calendar,
-    },
-    {
-      href: "/dashboard/players",
-      label: "Jugadores",
-      icon: Users,
-    },
+    ...quickAccessItems,
     {
       href: "/dashboard/menu",
       label: "Menú",

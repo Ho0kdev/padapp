@@ -13,14 +13,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Bell, LogOut, Settings, User, Menu } from "lucide-react"
+import { Bell, LogOut, Settings, User } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 
-interface HeaderProps {
-  onMenuClick: () => void
-}
-
-export function Header({ onMenuClick }: HeaderProps) {
+export function Header() {
   const { user } = useAuth()
   const router = useRouter()
 
@@ -47,16 +43,6 @@ export function Header({ onMenuClick }: HeaderProps) {
   return (
     <header className="flex h-16 items-center justify-between border-b bg-background px-4 sm:px-6">
       <div className="flex items-center space-x-2 sm:space-x-4">
-        {/* Botón hamburguesa - Solo visible en mobile */}
-        <Button
-          variant="ghost"
-          size="sm"
-          className="lg:hidden"
-          onClick={onMenuClick}
-        >
-          <Menu className="h-6 w-6" />
-        </Button>
-
         <h1 className="text-base sm:text-lg lg:text-xl font-semibold text-foreground">
           {/* Texto corto en mobile, completo en desktop */}
           <span className="sm:hidden">PadApp</span>
