@@ -153,13 +153,13 @@ export function DataTableHeader({
         </div>
 
         {/* Filters row - Segunda línea en mobile */}
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           {filterOptions.length > 0 && (
             <Select
               value={searchParams.get(filterParamKey) || defaultFilterValue}
               onValueChange={handleFilter}
             >
-              <SelectTrigger className="w-[110px] sm:w-[150px]">
+              <SelectTrigger className="w-full sm:w-[150px]">
                 <SelectValue placeholder={filterLabel || "Filtrar"} />
               </SelectTrigger>
               <SelectContent>
@@ -178,7 +178,7 @@ export function DataTableHeader({
               value={searchParams.get(secondaryFilter.paramKey) || secondaryFilter.defaultValue || "all"}
               onValueChange={handleSecondaryFilter}
             >
-              <SelectTrigger className={`w-[110px] sm:${secondaryFilter.width || "w-[140px]"}`}>
+              <SelectTrigger className={`w-full sm:${secondaryFilter.width || "w-[140px]"}`}>
                 <SelectValue placeholder={secondaryFilter.label} />
               </SelectTrigger>
               <SelectContent>
@@ -197,7 +197,7 @@ export function DataTableHeader({
               value={searchParams.get(tertiaryFilter.paramKey) || tertiaryFilter.defaultValue || "all"}
               onValueChange={handleTertiaryFilter}
             >
-              <SelectTrigger className={`w-[110px] sm:${tertiaryFilter.width || "w-[140px]"}`}>
+              <SelectTrigger className={`w-full sm:${tertiaryFilter.width || "w-[140px]"}`}>
                 <SelectValue placeholder={tertiaryFilter.label} />
               </SelectTrigger>
               <SelectContent>

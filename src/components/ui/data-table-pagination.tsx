@@ -37,11 +37,11 @@ export function DataTablePagination({
 
   return (
     <div className="flex items-center justify-between">
-      <div className="text-sm text-muted-foreground">
+      <div className="hidden md:block text-sm text-muted-foreground">
         {startItem}-{endItem} de {total}
       </div>
 
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center space-x-2 w-full md:w-auto justify-center md:justify-end">
         <Button
           variant="outline"
           size="sm"

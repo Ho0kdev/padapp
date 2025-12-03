@@ -45,6 +45,14 @@ import { MatchResultDialog } from "./match-result-dialog"
 import { MatchScheduleDialog } from "./match-schedule-dialog"
 import { useRouter } from "next/navigation"
 
+interface MatchSet {
+  setNumber: number
+  team1Games: number
+  team2Games: number
+  team1TiebreakPoints: number | null
+  team2TiebreakPoints: number | null
+}
+
 interface Match {
   id: string
   tournamentId: string
@@ -56,6 +64,8 @@ interface Match {
   scheduledAt: string | null
   team1SetsWon: number
   team2SetsWon: number
+  isAmericano?: boolean // Indica si es un partido de Americano Social
+  sets?: MatchSet[] // Sets del partido con puntajes
   tournament: {
     id: string
     name: string
@@ -202,6 +212,18 @@ export function MatchesTable() {
     return phases[phaseType] || phaseType
   }
 
+  const formatMatchScore = (match: Match) => {
+    if (!match.sets || match.sets.length === 0) {
+      return `${match.team1SetsWon} - ${match.team2SetsWon}`
+    }
+
+    return match.sets.map(set => {
+      const team1Score = `${set.team1Games}${set.team1TiebreakPoints !== null ? `⁽${set.team1TiebreakPoints}⁾` : ''}`
+      const team2Score = `${set.team2Games}${set.team2TiebreakPoints !== null ? `⁽${set.team2TiebreakPoints}⁾` : ''}`
+      return `${team1Score}-${team2Score}`
+    }).join(', ')
+  }
+
   const canManageMatch = (match: Match) => {
     // ADMIN y CLUB_ADMIN pueden gestionar todos los partidos
     if (isAdminOrClubAdmin) return true
@@ -285,7 +307,7 @@ export function MatchesTable() {
       : <ArrowDown className="ml-1 h-3 w-3" />
   }
 
-  const handleRowClick = (matchId: string, e: React.MouseEvent) => {
+  const handleRowClick = (match: Match, e: React.MouseEvent) => {
     // No navegar si se hizo click en elementos interactivos
     const target = e.target as HTMLElement
     if (
@@ -298,23 +320,35 @@ export function MatchesTable() {
     ) {
       return
     }
-    router.push(`/dashboard/matches/${matchId}`)
+
+    // Detectar tipo de partido y usar la ruta correcta
+    if (match.isAmericano) {
+      router.push(`/dashboard/americano-matches/${match.id}`)
+    } else {
+      router.push(`/dashboard/matches/${match.id}`)
+    }
+  }
+
+  const getMatchDetailUrl = (match: Match) => {
+    return match.isAmericano
+      ? `/dashboard/americano-matches/${match.id}`
+      : `/dashboard/matches/${match.id}`
   }
 
   const MatchCard = ({ match }: { match: Match }) => {
     return (
       <Card
         className="overflow-hidden cursor-pointer hover:bg-muted/50 transition-colors"
-        onClick={(e) => handleRowClick(match.id, e)}
+        onClick={(e) => handleRowClick(match, e)}
       >
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-base truncate">
+              <h3 className="font-semibold text-base break-words">
                 {getTeamDisplay(match.team1)} vs {getTeamDisplay(match.team2)}
               </h3>
               <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
-                <Trophy className="h-3 w-3" />
+                <Trophy className="h-3 w-3 flex-shrink-0" />
                 <p className="truncate">
                   {match.tournament.name} - {match.category.name}
                 </p>
@@ -322,19 +356,19 @@ export function MatchesTable() {
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="sm" className="flex-shrink-0">
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem asChild>
-                  <Link href={`/dashboard/matches/${match.id}`}>
+                  <Link href={getMatchDetailUrl(match)}>
                     <Eye className="mr-2 h-4 w-4" />
                     Ver detalle
                   </Link>
                 </DropdownMenuItem>
 
-                {canManageMatch(match) && match.status !== "COMPLETED" && match.status !== "WALKOVER" && (
+                {canManageMatch(match) && match.status !== "COMPLETED" && match.status !== "WALKOVER" && !match.isAmericano && (
                   <>
                     <DropdownMenuSeparator />
 
@@ -367,64 +401,62 @@ export function MatchesTable() {
             </DropdownMenu>
           </div>
         </CardHeader>
-        <CardContent className="space-y-3 pb-4">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Fase</span>
-            <Badge variant="outline" className="font-mono">
-              {getPhaseLabel(match.phaseType)}
-              {match.matchNumber && ` #${match.matchNumber}`}
-            </Badge>
-          </div>
-
-          {match.zone && (
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Grupo</span>
-              <Badge variant="secondary" className="font-mono">
-                {match.zone.name}
-              </Badge>
-            </div>
-          )}
-
-          {(match.status === "COMPLETED" || match.status === "WALKOVER") && match.winnerTeam && (
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Resultado</span>
-              <div className="text-right space-y-1">
-                <Badge variant="secondary" className="font-mono">
-                  {match.team1SetsWon} - {match.team2SetsWon}
-                </Badge>
-                <div className="text-xs text-muted-foreground">
-                  Ganador: {getTeamDisplay(match.team1?.id === match.winnerTeam.id ? match.team1 : match.team2)}
-                </div>
-              </div>
-            </div>
-          )}
-
+        <CardContent className="space-y-2 pb-4">
+          {/* Fecha y hora - PRIMERO si existe */}
           {match.scheduledAt && (
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Horario</span>
-              <div className="flex items-center gap-1">
+              <span className="text-muted-foreground">Fecha y hora</span>
+              <div className="flex items-center gap-1 font-medium">
                 <Calendar className="h-3 w-3 text-muted-foreground" />
                 <span>{format(new Date(match.scheduledAt), "dd/MM/yyyy HH:mm", { locale: es })}</span>
               </div>
             </div>
           )}
 
+          {/* Cancha - SEGUNDO si existe */}
           {match.court && (
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Cancha</span>
-              <div className="flex items-center gap-1">
-                <MapPin className="h-3 w-3 text-muted-foreground" />
-                <span className="text-right truncate">{match.court.name} - {match.court.club.name}</span>
+            <div className="flex items-center justify-between text-sm gap-2">
+              <span className="text-muted-foreground flex-shrink-0">Cancha</span>
+              <div className="flex items-center gap-1 text-right">
+                <MapPin className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                <span className="font-medium break-words">{match.court.name} - {match.court.club.name}</span>
               </div>
             </div>
           )}
 
+          {/* Estado */}
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Estado</span>
             <Badge variant="outline" className={getMatchStatusStyle(match.status)}>
               {getMatchStatusLabel(match.status)}
             </Badge>
           </div>
+
+          {/* Resultado si está completado */}
+          {(match.status === "COMPLETED" || match.status === "WALKOVER") && match.winnerTeam && (
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Resultado</span>
+              <Badge variant="secondary" className="font-mono font-semibold text-xs">
+                {formatMatchScore(match)}
+              </Badge>
+            </div>
+          )}
+
+          {/* Fase y grupo al final */}
+          <div className="flex items-center justify-between text-sm pt-2 border-t">
+            <span className="text-muted-foreground text-xs">Fase</span>
+            <span className="text-xs font-medium">
+              {getPhaseLabel(match.phaseType)}
+              {match.matchNumber && ` #${match.matchNumber}`}
+            </span>
+          </div>
+
+          {match.zone && (
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground text-xs">Grupo</span>
+              <span className="text-xs font-medium">{match.zone.name}</span>
+            </div>
+          )}
         </CardContent>
       </Card>
     )
@@ -493,7 +525,7 @@ export function MatchesTable() {
               matches.map((match) => (
                 <TableRow
                   key={match.id}
-                  onClick={(e) => handleRowClick(match.id, e)}
+                  onClick={(e) => handleRowClick(match, e)}
                   className="cursor-pointer hover:bg-muted/50"
                 >
                   <TableCell>
@@ -536,8 +568,8 @@ export function MatchesTable() {
                   <TableCell>
                     {(match.status === "COMPLETED" || match.status === "WALKOVER") && match.winnerTeam ? (
                       <div className="space-y-1">
-                        <Badge variant="secondary" className="font-mono">
-                          {match.team1SetsWon} - {match.team2SetsWon}
+                        <Badge variant="secondary" className="font-mono text-xs">
+                          {formatMatchScore(match)}
                         </Badge>
                         <div className="text-xs text-muted-foreground">
                           Ganador: {getTeamDisplay(match.team1?.id === match.winnerTeam.id ? match.team1 : match.team2)}
@@ -577,13 +609,13 @@ export function MatchesTable() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem asChild>
-                          <Link href={`/dashboard/matches/${match.id}`}>
+                          <Link href={getMatchDetailUrl(match)}>
                             <Eye className="mr-2 h-4 w-4" />
                             Ver detalle
                           </Link>
                         </DropdownMenuItem>
 
-                        {canManageMatch(match) && match.status !== "COMPLETED" && match.status !== "WALKOVER" && (
+                        {canManageMatch(match) && match.status !== "COMPLETED" && match.status !== "WALKOVER" && !match.isAmericano && (
                           <>
                             <DropdownMenuSeparator />
 
