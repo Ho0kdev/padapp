@@ -86,12 +86,15 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Copiar Prisma Client generado
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
+# Copiar Prisma schema
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 
-# Copiar node_modules de producción (necesario para Prisma)
+# Copiar node_modules de producción desde deps
 COPY --from=deps --chown=nextjs:nodejs /app/node_modules ./node_modules
+
+# Copiar Prisma Client generado desde builder
+# Con pnpm, necesitamos copiar la estructura completa de .pnpm para @prisma/client
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.pnpm/@prisma* ./node_modules/.pnpm/
 
 # Cambiar a usuario no-root
 USER nextjs
