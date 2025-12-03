@@ -2,30 +2,7 @@
 # Multi-stage build optimizado para producción
 
 # ============================================
-# Stage 1: Dependencies
-# ============================================
-FROM node:24-alpine AS deps
-
-# Instalar dependencias del sistema necesarias para Prisma
-RUN apk add --no-cache libc6-compat openssl
-
-# Habilitar Corepack para pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
-
-WORKDIR /app
-
-# Copiar archivos de dependencias
-COPY package.json pnpm-lock.yaml ./
-COPY prisma ./prisma/
-
-# Instalar dependencias de producción (ignorar scripts de postinstall)
-RUN pnpm install --frozen-lockfile --prod --ignore-scripts
-
-# Nota: Prisma Client se generará en el builder stage
-# y se copiará al runner stage desde ahí
-
-# ============================================
-# Stage 2: Builder
+# Stage 1: Builder
 # ============================================
 FROM node:24-alpine AS builder
 
@@ -89,12 +66,8 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 # Copiar Prisma schema
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 
-# Copiar node_modules de producción desde deps
-COPY --from=deps --chown=nextjs:nodejs /app/node_modules ./node_modules
-
-# Copiar Prisma Client generado desde builder
-# Con pnpm, necesitamos copiar la estructura completa de .pnpm para @prisma/client
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.pnpm/@prisma* ./node_modules/.pnpm/
+# Copiar node_modules del builder (incluye todas las dependencias + Prisma Client generado)
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 
 # Cambiar a usuario no-root
 USER nextjs
