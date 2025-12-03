@@ -18,8 +18,11 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
 COPY prisma ./prisma/
 
-# Instalar dependencias de producción
-RUN pnpm install --frozen-lockfile --prod
+# Instalar dependencias de producción (ignorar scripts de postinstall)
+RUN pnpm install --frozen-lockfile --prod --ignore-scripts
+
+# Nota: Prisma Client se generará en el builder stage
+# y se copiará al runner stage desde ahí
 
 # ============================================
 # Stage 2: Builder
@@ -39,7 +42,8 @@ COPY package.json pnpm-lock.yaml ./
 COPY prisma ./prisma/
 
 # Instalar todas las dependencias (incluyendo devDependencies)
-RUN pnpm install --frozen-lockfile
+# Ignorar scripts para tener control manual
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 # Copiar código fuente
 COPY . .
@@ -49,8 +53,8 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 ENV SKIP_ENV_VALIDATION=1
 
-# Generar Prisma Client
-RUN pnpm run db:generate
+# Generar Prisma Client manualmente
+RUN npx prisma generate
 
 # Build de Next.js
 RUN pnpm run build
