@@ -7,21 +7,27 @@
 
 import { MercadoPagoConfig, Preference, Payment } from 'mercadopago'
 
-// Validar que exista el access token
-if (!process.env.MERCADOPAGO_ACCESS_TOKEN) {
-  throw new Error('MERCADOPAGO_ACCESS_TOKEN no está configurado en las variables de entorno')
+// Función lazy para obtener el cliente de MercadoPago
+// Esto evita que se valide durante el build de Next.js
+function getMercadoPagoClient() {
+  // Validar que exista el access token
+  if (!process.env.MERCADOPAGO_ACCESS_TOKEN) {
+    throw new Error('MERCADOPAGO_ACCESS_TOKEN no está configurado en las variables de entorno')
+  }
+
+  // Configurar cliente de Mercado Pago
+  const client = new MercadoPagoConfig({
+    accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN,
+    options: {
+      timeout: 5000,
+    },
+  })
+
+  return {
+    preferenceClient: new Preference(client),
+    paymentClient: new Payment(client),
+  }
 }
-
-// Configurar cliente de Mercado Pago
-const client = new MercadoPagoConfig({
-  accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN,
-  options: {
-    timeout: 5000,
-  },
-})
-
-const preferenceClient = new Preference(client)
-const paymentClient = new Payment(client)
 
 export interface CreatePreferenceParams {
   registrationId: string
@@ -97,6 +103,7 @@ export async function createPaymentPreference(
       console.log('⚠️ auto_return deshabilitado (localhost detectado - usuario debe hacer clic en "Volver al sitio")')
     }
 
+    const { preferenceClient } = getMercadoPagoClient()
     const preference = await preferenceClient.create({
       body: preferenceBody,
     })
@@ -129,6 +136,7 @@ export async function createPaymentPreference(
  */
 export async function getPaymentInfo(paymentId: string) {
   try {
+    const { paymentClient } = getMercadoPagoClient()
     const payment = await paymentClient.get({ id: paymentId })
     return payment
   } catch (error) {
@@ -147,6 +155,7 @@ export async function verifyPaymentStatus(paymentId: string): Promise<{
   externalReference?: string
 }> {
   try {
+    const { paymentClient } = getMercadoPagoClient()
     const payment = await paymentClient.get({ id: paymentId })
 
     return {
