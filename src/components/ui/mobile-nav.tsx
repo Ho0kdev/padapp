@@ -51,7 +51,7 @@ export function MobileNav() {
   }
 
   return (
-    <div className="fixed bottom-0 left-0 z-50 w-full border-t bg-background/80 backdrop-blur-lg md:hidden">
+    <div className="fixed bottom-0 left-0 z-50 w-full border-t bg-background/80 backdrop-blur-lg lg:hidden">
       <div className="flex h-16 items-center justify-around px-2">
         {links.map(({ href, label, icon: Icon }) => {
           const isActive = pathname === href
