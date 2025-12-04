@@ -26,7 +26,7 @@ export function TeamsHeader() {
     const fetchData = async () => {
       try {
         // Cargar solo categorías y torneos que tienen equipos
-        const response = await fetch('/api/teams/filters')
+        const response = await fetch('/api/teams/_filters')
         if (response.ok) {
           const data = await response.json()
           setTournaments(data.tournaments || [])
