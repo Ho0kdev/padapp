@@ -40,6 +40,9 @@ DATABASE_URL="postgresql://postgres:padapp123@localhost:5432/padapp"
 NEXTAUTH_URL="http://localhost:3000"
 NEXTAUTH_SECRET="your-secret-key-here"
 
+# Next.js Server Configuration
+HOSTNAME="0.0.0.0" # REQUERIDO para Docker/Dokploy (permite healthcheck)
+
 # MercadoPago (Sistema de Pagos)
 MERCADOPAGO_ACCESS_TOKEN="TEST-your-access-token"
 MERCADOPAGO_PUBLIC_KEY="TEST-your-public-key"
