@@ -1399,6 +1399,54 @@ console.log('Tournament created:', {
 
 ## 🔧 Changelog - Mejoras Recientes
 
+### 🆕 Diciembre 4, 2024 - Mejoras en Filtros, Búsqueda Inteligente y Sistema de Pagos
+
+#### 🔍 Sistema de Búsqueda Inteligente Multi-Palabra
+1. **✅ Búsqueda Inteligente en 7 Módulos**
+   - Implementado en: Registrations, Users, Teams, Tournaments, Clubs, Categories, Rankings
+   - Una palabra: búsqueda con OR en todos los campos
+   - Múltiples palabras: búsqueda con AND (todas deben aparecer)
+   - Ejemplo: "Eduardo Mendoza" ahora encuentra correctamente jugadores con ambos nombres
+
+2. **✅ Filtros de Categoría Dinámicos**
+   - Agregado filtro terciario de categorías en página de Registrations
+   - Agregado filtro terciario de categorías en página de Teams
+   - Solo muestra categorías que tienen datos reales (no todas las activas)
+   - Nuevos endpoints: `/api/registrations/filters` y `/api/teams/filters`
+
+#### 💰 Correcciones Sistema de Pagos
+3. **✅ Lógica de Estado de Pago Centralizada**
+   - Movida toda la lógica a `status-styles.ts` para consistencia
+   - Helpers: `getTotalPaid()`, `getRegistrationPaymentStatus()`
+   - Prioridad correcta: Pagos → Fee → Estado
+   - Corregido problema de "Sin Costo" cuando hay pagos
+
+4. **✅ Sistema de Fallback para registrationFee**
+   - Implementado fallback automático cuando `tournamentCategory.registrationFee` es NULL
+   - Usa `tournament.registrationFee` como respaldo
+   - No requiere migración de datos
+   - Permite flexibilidad para fees diferentes por categoría
+
+5. **✅ Herencia Automática de Fees en Formulario**
+   - Formulario de torneo ahora hereda `registrationFee`, `prizePool` y `maxTeams` a cada categoría
+   - Previene valores NULL para torneos nuevos
+   - Mantiene compatibilidad con datos existentes
+
+#### 🏆 Gestión de Categorías de Torneos
+6. **✅ Validación Granular de Eliminación**
+   - Permite eliminar categorías vacías sin afectar otras con datos
+   - Valida específicamente las categorías a eliminar
+   - Solo bloquea si ESAS categorías tienen equipos/inscripciones
+   - Operaciones Prisma granulares (deleteMany específico, no todo)
+
+7. **✅ Optimización de Grid de Equipos**
+   - Cambiado grid de 3 a 4 columnas en detalle de torneo
+   - Mejor aprovechamiento del espacio
+
+**Archivos modificados**: 15 archivos
+**Nuevos endpoints**: 2 endpoints de filtros
+**Módulos con búsqueda inteligente**: 7 módulos
+
 ### 🆕 Octubre 20, 2025 - Actualización del README con Funcionalidades Implementadas
 - ✅ **Nueva sección "Sistema de Equipos"** - Documentada gestión completa con 6 endpoints
 - ✅ **Nueva sección "Gestión de Brackets/Llaves"** - Documentado BracketService completo (1,700+ líneas)

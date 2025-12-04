@@ -29,18 +29,51 @@ export async function GET(request: NextRequest) {
     const where: any = {}
 
     if (search) {
-      where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { email: { contains: search, mode: 'insensitive' } },
-        {
-          player: {
-            OR: [
-              { firstName: { contains: search, mode: 'insensitive' } },
-              { lastName: { contains: search, mode: 'insensitive' } }
-            ]
+      // Dividir la búsqueda en palabras para búsqueda inteligente
+      const searchWords = search.trim().split(/\s+/)
+
+      if (searchWords.length === 1) {
+        // Una sola palabra: buscar en name, email, firstName O lastName
+        where.OR = [
+          { name: { contains: searchWords[0], mode: 'insensitive' } },
+          { email: { contains: searchWords[0], mode: 'insensitive' } },
+          {
+            player: {
+              OR: [
+                { firstName: { contains: searchWords[0], mode: 'insensitive' } },
+                { lastName: { contains: searchWords[0], mode: 'insensitive' } }
+              ]
+            }
           }
-        }
-      ]
+        ]
+      } else {
+        // Múltiples palabras: buscar que TODAS aparezcan en name, email, O en firstName/lastName del player
+        where.OR = [
+          // Opción 1: Todas las palabras en name
+          {
+            AND: searchWords.map(word => ({
+              name: { contains: word, mode: 'insensitive' }
+            }))
+          },
+          // Opción 2: Todas las palabras en email
+          {
+            AND: searchWords.map(word => ({
+              email: { contains: word, mode: 'insensitive' }
+            }))
+          },
+          // Opción 3: Todas las palabras en firstName/lastName del player
+          {
+            player: {
+              AND: searchWords.map(word => ({
+                OR: [
+                  { firstName: { contains: word, mode: 'insensitive' } },
+                  { lastName: { contains: word, mode: 'insensitive' } }
+                ]
+              }))
+            }
+          }
+        ]
+      }
     }
 
     if (role && role !== 'all') {

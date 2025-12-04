@@ -20,7 +20,7 @@ import {
   getRegistrationStatusStyle,
   getRegistrationStatusLabel
 } from "@/lib/utils/status-styles"
-import { registrationFormSchema, RegistrationFormData } from "@/lib/validations/registration"
+import { registrationFormSchema, RegistrationFormData, registrationStatusOptions } from "@/lib/validations/registration"
 
 interface Tournament {
   id: string
@@ -114,6 +114,7 @@ export function RegistrationForm({ isAdmin = false, currentPlayerId = null }: Re
       playerId: "",
       notes: "",
       acceptTerms: false,
+      registrationStatus: "PENDING", // Default para ADMINs
     }
   })
 
@@ -336,6 +337,7 @@ export function RegistrationForm({ isAdmin = false, currentPlayerId = null }: Re
         playerId: data.playerId,
         notes: data.notes,
         acceptTerms: data.acceptTerms,
+        registrationStatus: isAdmin ? data.registrationStatus : undefined, // Solo ADMINs pueden establecer el estado
       }
 
       const response = await fetch('/api/registrations', {
@@ -366,6 +368,7 @@ export function RegistrationForm({ isAdmin = false, currentPlayerId = null }: Re
         playerId: "",
         notes: "",
         acceptTerms: false,
+        registrationStatus: "PENDING", // Reset al default
       })
 
       // Limpiar estado
@@ -697,6 +700,37 @@ export function RegistrationForm({ isAdmin = false, currentPlayerId = null }: Re
                     </FormItem>
                   )}
                 />
+
+                {/* Estado de inscripción - Solo para ADMINs */}
+                {isAdmin && (
+                  <FormField
+                    control={form.control}
+                    name="registrationStatus"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Estado de Inscripción</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecciona el estado inicial" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {registrationStatusOptions.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          Como administrador, puedes establecer el estado inicial de la inscripción
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
               </CardContent>
             </Card>
           )}

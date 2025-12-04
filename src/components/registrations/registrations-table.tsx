@@ -49,7 +49,9 @@ import {
   getRegistrationStatusStyle,
   getRegistrationStatusLabel,
   getTeamFormationStatusStyle,
-  getTeamFormationStatusLabel
+  getTeamFormationStatusLabel,
+  getRegistrationPaymentStatus,
+  type RegistrationPayment
 } from "@/lib/utils/status-styles"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
@@ -77,6 +79,7 @@ interface Registration {
     name: string
     type: string
     status: string
+    registrationFee: number
   }
   category: {
     id: string
@@ -256,30 +259,21 @@ export function RegistrationsTable() {
     return `${registration.player.firstName} ${registration.player.lastName}`
   }
 
-  const getTotalPaid = (payments: Registration['payments']) => {
-    if (!payments || payments.length === 0) return 0
-    return payments
-      .filter(p => p.paymentStatus === 'PAID')
-      .reduce((sum, p) => sum + p.amount, 0)
-  }
-
   const getPaymentStatus = (registration: Registration) => {
-    const registrationFee = registration.tournamentCategory?.registrationFee || 0
-    const totalPaid = getTotalPaid(registration.payments)
+    // Usar registrationFee de la categoría, o del torneo como fallback
+    const registrationFee = registration.tournamentCategory?.registrationFee ?? registration.tournament.registrationFee
+    const payments = registration.payments as RegistrationPayment[]
+    const paymentInfo = getRegistrationPaymentStatus(registrationFee, payments)
 
-    if (registrationFee === 0) {
-      return <Badge variant="secondary">Sin Costo</Badge>
-    }
+    // Determinar el variant basado en el status
+    const variant = paymentInfo.status === 'PAID' ? 'default' :
+                    paymentInfo.status === 'PARTIAL' ? 'outline' :
+                    paymentInfo.status === 'PENDING' ? 'destructive' :
+                    'secondary'
 
-    if (totalPaid >= registrationFee) {
-      return <Badge variant="default" className="bg-green-600">Pagado</Badge>
-    }
-
-    if (totalPaid > 0) {
-      return <Badge variant="outline">Parcial</Badge>
-    }
-
-    return <Badge variant="destructive">Pendiente</Badge>
+    return (
+      <Badge variant={variant} className={paymentInfo.css}>{paymentInfo.label}</Badge>
+    )
   }
 
   const getTeamStatus = (registration: Registration) => {

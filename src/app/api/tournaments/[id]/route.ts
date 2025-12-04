@@ -364,27 +364,103 @@ export async function PUT(
                                 JSON.stringify(newCategories.sort((a: any, b: any) => a.categoryId.localeCompare(b.categoryId)))
 
       if (categoriesChanged) {
-        // Verificar si hay equipos asociados al torneo
-        const teamsCount = await prisma.team.count({
-          where: { tournamentId: id }
-        })
+        // Detectar qué categorías se están eliminando
+        const currentCategoryIds = currentCategories.map((c: any) => c.categoryId)
+        const newCategoryIds = newCategories.map((c: any) => c.categoryId)
+        const categoriesToDelete = currentCategoryIds.filter((id: string) => !newCategoryIds.includes(id))
 
-        if (teamsCount > 0) {
-          // Si hay equipos, NO permitir cambiar las categorías
-          return NextResponse.json(
-            { error: "No se pueden modificar las categorías porque ya hay equipos formados en el torneo. Elimina los equipos primero." },
-            { status: 400 }
-          )
+        // Si se están eliminando categorías, verificar que no tengan equipos ni inscripciones
+        if (categoriesToDelete.length > 0) {
+          // Verificar equipos en las categorías a eliminar
+          const teamsInDeletedCategories = await prisma.team.findMany({
+            where: {
+              tournamentId: id,
+              categoryId: { in: categoriesToDelete }
+            },
+            include: {
+              category: { select: { name: true } }
+            }
+          })
+
+          if (teamsInDeletedCategories.length > 0) {
+            const categoryNames = [...new Set(teamsInDeletedCategories.map(t => t.category.name))].join(', ')
+            return NextResponse.json(
+              { error: `No se pueden eliminar las categorías con equipos formados: ${categoryNames}. Elimina los equipos de estas categorías primero.` },
+              { status: 400 }
+            )
+          }
+
+          // Verificar inscripciones en las categorías a eliminar
+          const registrationsInDeletedCategories = await prisma.registration.findMany({
+            where: {
+              tournamentId: id,
+              categoryId: { in: categoriesToDelete }
+            },
+            include: {
+              category: { select: { name: true } }
+            }
+          })
+
+          if (registrationsInDeletedCategories.length > 0) {
+            const categoryNames = [...new Set(registrationsInDeletedCategories.map(r => r.category.name))].join(', ')
+            return NextResponse.json(
+              { error: `No se pueden eliminar las categorías con inscripciones: ${categoryNames}. Elimina las inscripciones de estas categorías primero.` },
+              { status: 400 }
+            )
+          }
         }
 
-        // Si no hay equipos, permitir cambiar categorías
-        updateData.categories = {
-          deleteMany: {},
-          create: categories.map((cat: any) => ({
-            categoryId: cat.categoryId,
-            maxTeams: cat.maxTeams,
-            registrationFee: cat.registrationFee,
-            prizePool: cat.prizePool,
+        // Si pasó todas las validaciones, actualizar categorías de forma granular
+
+        // 1. Identificar qué categorías son nuevas y cuáles ya existen
+        const categoriesToCreate = newCategoryIds.filter((id: string) => !currentCategoryIds.includes(id))
+
+        // Construir el objeto de actualización
+        updateData.categories = {}
+
+        // 2. Eliminar solo las categorías que se están quitando (ya validamos que están vacías)
+        if (categoriesToDelete.length > 0) {
+          updateData.categories.deleteMany = {
+            tournamentId: id,
+            categoryId: { in: categoriesToDelete }
+          }
+        }
+
+        // 3. Crear solo las categorías nuevas
+        if (categoriesToCreate.length > 0) {
+          updateData.categories.create = categories
+            .filter((cat: any) => categoriesToCreate.includes(cat.categoryId))
+            .map((cat: any) => ({
+              categoryId: cat.categoryId,
+              maxTeams: cat.maxTeams,
+              registrationFee: cat.registrationFee,
+              prizePool: cat.prizePool,
+            }))
+        }
+
+        // 4. Actualizar las existentes que cambiaron valores
+        const categoriesToUpdate = newCategories.filter((newCat: any) => {
+          const currentCat = currentCategories.find((c: any) => c.categoryId === newCat.categoryId)
+          if (!currentCat) return false // Es nueva, no update
+          // Comparar si cambió algún valor
+          return currentCat.maxTeams !== newCat.maxTeams ||
+                 currentCat.registrationFee !== newCat.registrationFee ||
+                 currentCat.prizePool !== newCat.prizePool
+        })
+
+        if (categoriesToUpdate.length > 0) {
+          updateData.categories.update = categoriesToUpdate.map((cat: any) => ({
+            where: {
+              tournamentId_categoryId: {
+                tournamentId: id,
+                categoryId: cat.categoryId
+              }
+            },
+            data: {
+              maxTeams: cat.maxTeams,
+              registrationFee: cat.registrationFee,
+              prizePool: cat.prizePool,
+            }
           }))
         }
       }

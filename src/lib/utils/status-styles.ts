@@ -390,3 +390,98 @@ export const getPaymentMethodLabel = (method: string) => {
   const option = paymentMethodOptions.find(opt => opt.value === method)
   return option ? option.label : method
 }
+
+// ============================================================================
+// ESTADO DE PAGO DE INSCRIPCIONES (Registration Payment Status)
+// ============================================================================
+
+// Tipo para pagos de inscripción
+export interface RegistrationPayment {
+  id: string
+  amount: number
+  paymentStatus: string
+  paymentMethod: string
+  paidAt: Date | null
+}
+
+// Opciones de estado de pago de inscripción (calculado)
+export const registrationPaymentStatusOptions = [
+  { value: "PAID", label: "Pagado", color: "green", css: "bg-green-100 text-green-800 border-green-200" },
+  { value: "PARTIAL", label: "Parcial", color: "purple", css: "bg-purple-100 text-purple-800 border-purple-200" },
+  { value: "PENDING", label: "Pendiente", color: "orange", css: "bg-orange-100 text-orange-800 border-orange-200" },
+  { value: "FREE", label: "Sin Costo", color: "teal", css: "bg-teal-100 text-teal-800 border-teal-200" },
+] as const
+
+// Helper para calcular el total pagado de una inscripción
+export const getTotalPaid = (payments: RegistrationPayment[]): number => {
+  if (!payments || payments.length === 0) return 0
+  return payments
+    .filter(p => p.paymentStatus === 'PAID')
+    .reduce((sum, p) => sum + p.amount, 0)
+}
+
+// Helper para obtener el estado de pago de una inscripción
+export const getRegistrationPaymentStatus = (
+  registrationFee: number | null | undefined,
+  payments: RegistrationPayment[]
+): { status: 'PAID' | 'PARTIAL' | 'PENDING' | 'FREE', label: string, css: string } => {
+  const fee = registrationFee ?? 0
+  const totalPaid = getTotalPaid(payments)
+  const hasPayments = payments && payments.length > 0
+
+  // Si hay pagos registrados, evaluar según el monto
+  if (hasPayments && totalPaid > 0) {
+    if (totalPaid >= fee && fee > 0) {
+      return {
+        status: 'PAID',
+        label: `$${totalPaid}`,
+        css: 'bg-green-100 text-green-800 border-green-200'
+      }
+    }
+    if (fee > 0) {
+      return {
+        status: 'PARTIAL',
+        label: `$${totalPaid} / $${fee}`,
+        css: 'bg-purple-100 text-purple-800 border-purple-200'
+      }
+    }
+    // Si hay pagos pero registrationFee es 0, mostrar que se pagó
+    return {
+      status: 'PAID',
+      label: `$${totalPaid}`,
+      css: 'bg-green-100 text-green-800 border-green-200'
+    }
+  }
+
+  // Si no hay pagos y el registrationFee es 0, es sin costo
+  if (fee === 0) {
+    return {
+      status: 'FREE',
+      label: 'Sin Costo',
+      css: 'bg-teal-100 text-teal-800 border-teal-200'
+    }
+  }
+
+  // Si no hay pagos y hay registrationFee, está pendiente
+  return {
+    status: 'PENDING',
+    label: `$0 / $${fee}`,
+    css: 'bg-orange-100 text-orange-800 border-orange-200'
+  }
+}
+
+// Helper para obtener solo el label del estado de pago
+export const getRegistrationPaymentLabel = (
+  registrationFee: number | null | undefined,
+  payments: RegistrationPayment[]
+): string => {
+  return getRegistrationPaymentStatus(registrationFee, payments).label
+}
+
+// Helper para obtener solo el CSS del estado de pago
+export const getRegistrationPaymentStyle = (
+  registrationFee: number | null | undefined,
+  payments: RegistrationPayment[]
+): string => {
+  return getRegistrationPaymentStatus(registrationFee, payments).css
+}

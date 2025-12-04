@@ -72,56 +72,77 @@ export async function GET(request: NextRequest) {
       ]
     }
 
-    // Búsqueda por nombre de equipo o nombre de jugadores
+    // Búsqueda inteligente por nombre de equipo o nombre de jugadores
     if (search) {
-      where.OR = [
-        {
-          name: {
-            contains: search,
-            mode: 'insensitive'
-          }
-        },
-        {
-          registration1: {
-            player: {
-              OR: [
-                {
-                  firstName: {
-                    contains: search,
-                    mode: 'insensitive'
-                  }
-                },
-                {
-                  lastName: {
-                    contains: search,
-                    mode: 'insensitive'
-                  }
-                }
-              ]
+      const searchWords = search.trim().split(/\s+/)
+
+      if (searchWords.length === 1) {
+        // Una sola palabra: buscar en nombre del equipo O nombres de jugadores
+        where.OR = [
+          {
+            name: {
+              contains: searchWords[0],
+              mode: 'insensitive'
+            }
+          },
+          {
+            registration1: {
+              player: {
+                OR: [
+                  { firstName: { contains: searchWords[0], mode: 'insensitive' } },
+                  { lastName: { contains: searchWords[0], mode: 'insensitive' } }
+                ]
+              }
+            }
+          },
+          {
+            registration2: {
+              player: {
+                OR: [
+                  { firstName: { contains: searchWords[0], mode: 'insensitive' } },
+                  { lastName: { contains: searchWords[0], mode: 'insensitive' } }
+                ]
+              }
             }
           }
-        },
-        {
-          registration2: {
-            player: {
-              OR: [
-                {
-                  firstName: {
-                    contains: search,
-                    mode: 'insensitive'
-                  }
-                },
-                {
-                  lastName: {
-                    contains: search,
-                    mode: 'insensitive'
-                  }
-                }
-              ]
+        ]
+      } else {
+        // Múltiples palabras: buscar que TODAS aparezcan en nombre del equipo O en jugadores
+        where.OR = [
+          // Opción 1: Todas las palabras en el nombre del equipo
+          {
+            AND: searchWords.map(word => ({
+              name: { contains: word, mode: 'insensitive' }
+            }))
+          },
+          // Opción 2: Todas las palabras en el jugador 1
+          {
+            registration1: {
+              player: {
+                AND: searchWords.map(word => ({
+                  OR: [
+                    { firstName: { contains: word, mode: 'insensitive' } },
+                    { lastName: { contains: word, mode: 'insensitive' } }
+                  ]
+                }))
+              }
+            }
+          },
+          // Opción 3: Todas las palabras en el jugador 2
+          {
+            registration2: {
+              player: {
+                AND: searchWords.map(word => ({
+                  OR: [
+                    { firstName: { contains: word, mode: 'insensitive' } },
+                    { lastName: { contains: word, mode: 'insensitive' } }
+                  ]
+                }))
+              }
             }
           }
-        }
-      ]
+        ]
+      }
     }
 
     // Aplicar filtrado basado en permisos RBAC

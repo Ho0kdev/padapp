@@ -537,7 +537,7 @@ export function TournamentDetail({ tournament, currentUserId }: TournamentDetail
                       return (
                         <div key={category.id}>
                           <h4 className="font-medium mb-3">{category.category.name}</h4>
-                          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                             {categoryTeams.map((team) => (
                               <div key={team.id} className="border rounded-lg p-3">
                                 <div className="flex items-center justify-between mb-2">

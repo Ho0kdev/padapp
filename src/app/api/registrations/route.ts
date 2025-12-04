@@ -23,6 +23,13 @@ const createRegistrationSchema = z.object({
   acceptTerms: z.boolean().refine(val => val === true, {
     message: "Debe aceptar los términos y condiciones"
   }),
+  registrationStatus: z.enum([
+    "PENDING",
+    "CONFIRMED",
+    "PAID",
+    "CANCELLED",
+    "WAITLIST"
+  ]).optional(), // Solo ADMINs pueden establecer el estado inicial
 })
 
 const getRegistrationsSchema = z.object({
@@ -101,21 +108,47 @@ export async function GET(request: NextRequest) {
     }
 
     if (search) {
-      where.player = {
-        OR: [
-          {
-            firstName: {
-              contains: search,
-              mode: 'insensitive'
+      // Dividir la búsqueda en palabras para buscar nombre completo
+      const searchWords = search.trim().split(/\s+/)
+
+      if (searchWords.length === 1) {
+        // Una sola palabra: buscar en firstName O lastName
+        where.player = {
+          OR: [
+            {
+              firstName: {
+                contains: searchWords[0],
+                mode: 'insensitive'
+              }
+            },
+            {
+              lastName: {
+                contains: searchWords[0],
+                mode: 'insensitive'
+              }
             }
-          },
-          {
-            lastName: {
-              contains: search,
-              mode: 'insensitive'
-            }
-          }
-        ]
+          ]
+        }
+      } else {
+        // Múltiples palabras: buscar que TODAS las palabras aparezcan en firstName O lastName
+        where.player = {
+          AND: searchWords.map(word => ({
+            OR: [
+              {
+                firstName: {
+                  contains: word,
+                  mode: 'insensitive'
+                }
+              },
+              {
+                lastName: {
+                  contains: word,
+                  mode: 'insensitive'
+                }
+              }
+            ]
+          }))
+        }
       }
     }
 
@@ -158,6 +191,7 @@ export async function GET(request: NextRequest) {
               status: true,
               registrationStart: true,
               registrationEnd: true,
+              registrationFee: true,
             }
           },
           category: {
@@ -379,7 +413,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 5. Verificar cupo disponible
+    // 5. Verificar cupo disponible y determinar estado
     const currentRegistrationsCount = await prisma.registration.count({
       where: {
         tournamentId: validatedData.tournamentId,
@@ -390,8 +424,15 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    const isWaitlist = shouldBeWaitlisted(currentRegistrationsCount, tournamentCategory.maxTeams)
-    const registrationStatus = getInitialRegistrationStatus(isWaitlist)
+    // Permitir que ADMINs establezcan el estado inicial manualmente
+    let registrationStatus
+    if (validatedData.registrationStatus && (session.user.role === 'ADMIN' || session.user.role === 'CLUB_ADMIN')) {
+      registrationStatus = validatedData.registrationStatus as "PENDING" | "CONFIRMED" | "PAID" | "CANCELLED" | "WAITLIST"
+    } else {
+      // Para jugadores normales, calcular automáticamente
+      const isWaitlist = shouldBeWaitlisted(currentRegistrationsCount, tournamentCategory.maxTeams)
+      registrationStatus = getInitialRegistrationStatus(isWaitlist)
+    }
 
     // 6. Crear la registration
     const registration = await prisma.registration.create({

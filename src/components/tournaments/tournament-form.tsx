@@ -212,7 +212,12 @@ export function TournamentForm({
         registrationEnd: data.registrationEnd.toISOString(),
         tournamentStart: data.tournamentStart.toISOString(),
         tournamentEnd: data.tournamentEnd?.toISOString(),
-        categories: selectedCategories.map(categoryId => ({ categoryId })),
+        categories: selectedCategories.map(categoryId => ({
+          categoryId,
+          registrationFee: data.registrationFee || 0,
+          prizePool: data.prizePool || 0,
+          maxTeams: data.maxParticipants,
+        })),
         clubs: allClubs,
       }
 

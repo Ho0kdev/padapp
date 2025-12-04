@@ -1028,3 +1028,108 @@ Implemented comprehensive UI/UX improvements across all 8 main pages with:
   - `src/components/tournaments/tournament-points.tsx`
   - `src/components/rankings/ranking-detail.tsx`
 
+### Data Filtering and Search Improvements (December 2024)
+
+**Category Filters for Registrations and Teams**
+- Added tertiary filter for categories in registrations page
+- Added tertiary filter for categories in teams page
+- Filters show only categories that have actual data (not all active categories)
+- New API endpoints:
+  - `GET /api/registrations/filters` - Returns categories/tournaments with registrations
+  - `GET /api/teams/filters` - Returns categories/tournaments with teams
+- Files modified:
+  - `src/components/registrations/registrations-header.tsx`
+  - `src/components/teams/teams-header.tsx`
+  - `src/app/api/registrations/filters/route.ts` (created)
+  - `src/app/api/teams/filters/route.ts` (created)
+
+**Intelligent Multi-Word Search System**
+- Implemented intelligent search across 7 modules: Registrations, Users, Teams, Tournaments, Clubs, Categories, Rankings
+- Single word: searches with OR logic across all searchable fields
+- Multiple words: searches with AND logic (all words must appear in at least one field)
+- Example: "Eduardo Mendoza" now correctly finds players with both names
+- Pattern implementation:
+  ```typescript
+  const searchWords = search.trim().split(/\s+/)
+  if (searchWords.length === 1) {
+    where.OR = [/* single field searches */]
+  } else {
+    where.AND = searchWords.map(word => ({
+      OR: [/* field searches for each word */]
+    }))
+  }
+  ```
+- Files modified:
+  - `src/app/api/registrations/route.ts`
+  - `src/app/api/users/route.ts`
+  - `src/app/api/teams/route.ts`
+  - `src/app/api/tournaments/route.ts`
+  - `src/app/api/clubs/route.ts`
+  - `src/app/api/categories/route.ts`
+  - `src/app/api/rankings/route.ts`
+
+### Tournament Category Management Improvements (December 2024)
+
+**Granular Category Deletion Validation**
+- Changed category deletion validation to be granular instead of blocking all changes
+- Now only blocks deletion of categories that have teams or registrations
+- Allows deletion of empty categories even when other categories have data
+- Validation checks specific categories to delete:
+  - Counts teams in categories to delete
+  - Counts registrations in categories to delete
+  - Only shows error if THOSE specific categories have data
+- Uses granular Prisma operations:
+  - `deleteMany: { tournamentId, categoryId: { in: categoriesToDelete } }`
+  - `create: [/* only new categories */]`
+  - `update: [/* only modified categories */]`
+- File: `src/app/api/tournaments/[id]/route.ts` (lines 165-262)
+
+**Tournament Grid Layout Optimization**
+- Changed inscribed teams grid from 3 to 4 columns for better space utilization
+- File: `src/components/tournaments/tournament-detail.tsx` (line 540)
+- Change: `lg:grid-cols-3` → `lg:grid-cols-4`
+
+### Payment Status Display Fixes (December 2024)
+
+**Centralized Payment Status Logic**
+- Moved all payment status calculation logic to `status-styles.ts` for consistency
+- Created helper functions:
+  - `getTotalPaid(payments)` - Calculates total paid from PAID payments
+  - `getRegistrationPaymentStatus(fee, payments)` - Determines status with proper priority
+- Status priority logic:
+  1. Check if payments exist and total > 0 → Show PAID or PARTIAL
+  2. Check if registrationFee is 0 → Show FREE
+  3. Otherwise → Show PENDING
+- Fixed issue where "Sin Costo" was shown even when payments existed
+- File: `src/lib/utils/status-styles.ts` (lines 156-206)
+
+**Registration Fee Fallback System**
+- Implemented automatic fallback for NULL registrationFee in tournament categories
+- Uses tournament's registrationFee when category's registrationFee is NULL
+- Pattern: `registration.tournamentCategory?.registrationFee ?? registration.tournament.registrationFee`
+- Eliminates need for data migration
+- Allows flexibility for different category fees while maintaining backwards compatibility
+- Files modified:
+  - `src/components/registrations/registrations-table.tsx` (line 264)
+  - `src/app/api/registrations/route.ts` (line 194) - Added registrationFee to tournament select
+
+**Tournament Form Category Inheritance**
+- Tournament form now automatically inherits registrationFee, prizePool, and maxTeams to each category
+- Prevents NULL values in tournament_categories table for new tournaments
+- Pattern:
+  ```typescript
+  categories: selectedCategories.map(categoryId => ({
+    categoryId,
+    registrationFee: data.registrationFee || 0,
+    prizePool: data.prizePool || 0,
+    maxTeams: data.maxParticipants,
+  }))
+  ```
+- File: `src/components/tournaments/tournament-form.tsx` (lines 215-220)
+
+**Impact**:
+- ✅ No data migration required for existing tournaments
+- ✅ Payment status correctly shows "Pendiente" for unpaid registrations
+- ✅ New tournaments automatically populate category fees
+- ✅ Flexible system allows different fees per category if needed
+

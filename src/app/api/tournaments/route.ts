@@ -98,6 +98,9 @@ export async function GET(request: NextRequest) {
     }
 
     if (search) {
+      // Dividir la búsqueda en palabras para búsqueda inteligente
+      const searchWords = search.trim().split(/\s+/)
+
       // Mapear búsquedas de tipos legibles a códigos de base de datos
       const typeMapping: Record<string, string[]> = {
         'eliminacion': ['SINGLE_ELIMINATION', 'DOUBLE_ELIMINATION'],
@@ -120,14 +123,53 @@ export async function GET(request: NextRequest) {
         }
       })
 
-      where.OR = [
-        { name: { contains: search, mode: "insensitive" } },
-        { description: { contains: search, mode: "insensitive" } },
-        { mainClub: { name: { contains: search, mode: "insensitive" } } },
-        { mainClub: { city: { contains: search, mode: "insensitive" } } },
-        { categories: { some: { category: { name: { contains: search, mode: "insensitive" } } } } },
-        ...typeFilters
-      ]
+      if (searchWords.length === 1) {
+        // Una sola palabra: búsqueda simple
+        where.OR = [
+          { name: { contains: searchWords[0], mode: "insensitive" } },
+          { description: { contains: searchWords[0], mode: "insensitive" } },
+          { mainClub: { name: { contains: searchWords[0], mode: "insensitive" } } },
+          { mainClub: { city: { contains: searchWords[0], mode: "insensitive" } } },
+          { categories: { some: { category: { name: { contains: searchWords[0], mode: "insensitive" } } } } },
+          ...typeFilters
+        ]
+      } else {
+        // Múltiples palabras: buscar que TODAS aparezcan
+        where.OR = [
+          // Opción 1: Todas las palabras en el nombre
+          {
+            AND: searchWords.map(word => ({
+              name: { contains: word, mode: "insensitive" }
+            }))
+          },
+          // Opción 2: Todas las palabras en la descripción
+          {
+            AND: searchWords.map(word => ({
+              description: { contains: word, mode: "insensitive" }
+            }))
+          },
+          // Opción 3: Todas las palabras en el club
+          {
+            mainClub: {
+              OR: [
+                {
+                  AND: searchWords.map(word => ({
+                    name: { contains: word, mode: "insensitive" }
+                  }))
+                },
+                {
+                  AND: searchWords.map(word => ({
+                    city: { contains: word, mode: "insensitive" }
+                  }))
+                }
+              ]
+            }
+          },
+          // Mantener búsqueda en categorías y tipos como antes
+          { categories: { some: { category: { name: { contains: search, mode: "insensitive" } } } } },
+          ...typeFilters
+        ]
+      }
     }
 
     // Build orderBy clause dynamically

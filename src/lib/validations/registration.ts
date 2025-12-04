@@ -6,6 +6,13 @@ export const createRegistrationSchema = z.object({
   categoryId: z.string().min(1, "La categoría es requerida"),
   playerId: z.string().min(1, "El jugador es requerido"),
   notes: z.string().max(500, "Las notas no pueden tener más de 500 caracteres").optional(),
+  registrationStatus: z.enum([
+    "PENDING",
+    "CONFIRMED",
+    "PAID",
+    "CANCELLED",
+    "WAITLIST"
+  ]).optional(), // Solo ADMINs pueden establecer el estado inicial
 })
 
 // Schema para formulario de inscripción (Frontend)
@@ -14,7 +21,14 @@ export const registrationFormSchema = z.object({
   categoryId: z.string().min(1, "Debe seleccionar una categoría"),
   playerId: z.string().min(1, "Debe seleccionar un jugador"),
   notes: z.string().max(500, "Las notas no pueden tener más de 500 caracteres").optional(),
-  acceptTerms: z.boolean().refine(val => val === true, "Debe aceptar los términos y condiciones")
+  acceptTerms: z.boolean().refine(val => val === true, "Debe aceptar los términos y condiciones"),
+  registrationStatus: z.enum([
+    "PENDING",
+    "CONFIRMED",
+    "PAID",
+    "CANCELLED",
+    "WAITLIST"
+  ]).optional(), // Solo para ADMINs
 })
 
 // Alias para retrocompatibilidad (deprecado)

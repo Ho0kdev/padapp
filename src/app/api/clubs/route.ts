@@ -37,11 +37,39 @@ export async function GET(request: NextRequest) {
     }
 
     if (search) {
-      whereClause.OR = [
-        { name: { contains: search, mode: "insensitive" } },
-        { city: { contains: search, mode: "insensitive" } },
-        { address: { contains: search, mode: "insensitive" } }
-      ]
+      // Dividir la búsqueda en palabras para búsqueda inteligente
+      const searchWords = search.trim().split(/\s+/)
+
+      if (searchWords.length === 1) {
+        // Una sola palabra: buscar en name, city O address
+        whereClause.OR = [
+          { name: { contains: searchWords[0], mode: "insensitive" } },
+          { city: { contains: searchWords[0], mode: "insensitive" } },
+          { address: { contains: searchWords[0], mode: "insensitive" } }
+        ]
+      } else {
+        // Múltiples palabras: buscar que TODAS aparezcan
+        whereClause.OR = [
+          // Opción 1: Todas las palabras en el nombre
+          {
+            AND: searchWords.map(word => ({
+              name: { contains: word, mode: "insensitive" }
+            }))
+          },
+          // Opción 2: Todas las palabras en la ciudad
+          {
+            AND: searchWords.map(word => ({
+              city: { contains: word, mode: "insensitive" }
+            }))
+          },
+          // Opción 3: Todas las palabras en la dirección
+          {
+            AND: searchWords.map(word => ({
+              address: { contains: word, mode: "insensitive" }
+            }))
+          }
+        ]
+      }
     }
 
     // Build orderBy clause dynamically

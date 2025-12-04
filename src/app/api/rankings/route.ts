@@ -42,18 +42,34 @@ export async function GET(request: NextRequest) {
     }
 
     if (search) {
-      where.OR = [
-        {
-          player: {
-            firstName: { contains: search, mode: "insensitive" }
+      // Dividir la búsqueda en palabras para búsqueda inteligente
+      const searchWords = search.trim().split(/\s+/)
+
+      if (searchWords.length === 1) {
+        // Una sola palabra: buscar en firstName O lastName
+        where.OR = [
+          {
+            player: {
+              firstName: { contains: searchWords[0], mode: "insensitive" }
+            }
+          },
+          {
+            player: {
+              lastName: { contains: searchWords[0], mode: "insensitive" }
+            }
           }
-        },
-        {
-          player: {
-            lastName: { contains: search, mode: "insensitive" }
-          }
+        ]
+      } else {
+        // Múltiples palabras: buscar que TODAS aparezcan en firstName O lastName
+        where.player = {
+          AND: searchWords.map(word => ({
+            OR: [
+              { firstName: { contains: word, mode: "insensitive" } },
+              { lastName: { contains: word, mode: "insensitive" } }
+            ]
+          }))
         }
-      ]
+      }
     }
 
     // Build orderBy clause dynamically

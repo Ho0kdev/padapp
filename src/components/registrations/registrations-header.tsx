@@ -9,31 +9,41 @@ interface Tournament {
   name: string
 }
 
+interface Category {
+  id: string
+  name: string
+}
+
 export function RegistrationsHeader() {
   const [tournaments, setTournaments] = useState<Tournament[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
 
   useEffect(() => {
-    const fetchTournaments = async () => {
+    const fetchData = async () => {
       try {
-        // Filtrar solo torneos activos (no draft, no cancelados, no completados)
-        const statuses = ['PUBLISHED', 'REGISTRATION_OPEN', 'REGISTRATION_CLOSED', 'IN_PROGRESS']
-        const statusQuery = statuses.map(s => `status=${s}`).join('&')
-        const response = await fetch(`/api/tournaments?${statusQuery}&limit=100`)
+        // Cargar solo categorías y torneos que tienen inscripciones
+        const response = await fetch('/api/registrations/filters')
         if (response.ok) {
           const data = await response.json()
           setTournaments(data.tournaments || [])
+          setCategories(data.categories || [])
         }
       } catch (error) {
-        console.error("Error fetching tournaments:", error)
+        console.error("Error fetching filters:", error)
       }
     }
 
-    fetchTournaments()
+    fetchData()
   }, [])
 
   const tournamentOptions = tournaments.map(tournament => ({
     value: tournament.id,
     label: tournament.name
+  }))
+
+  const categoryOptions = categories.map(category => ({
+    value: category.id,
+    label: category.name
   }))
 
   return (
@@ -50,6 +60,12 @@ export function RegistrationsHeader() {
         options: tournamentOptions,
         paramKey: "tournamentId",
         width: "w-[200px]"
+      }}
+      tertiaryFilter={{
+        label: "Categoría",
+        options: categoryOptions,
+        paramKey: "categoryId",
+        width: "w-[180px]"
       }}
       basePath="/dashboard/registrations"
     />

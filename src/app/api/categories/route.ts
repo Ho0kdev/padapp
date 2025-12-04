@@ -50,10 +50,32 @@ export async function GET(request: NextRequest) {
     }
 
     if (search) {
-      where.OR = [
-        { name: { contains: search, mode: "insensitive" } },
-        { description: { contains: search, mode: "insensitive" } }
-      ]
+      // Dividir la búsqueda en palabras para búsqueda inteligente
+      const searchWords = search.trim().split(/\s+/)
+
+      if (searchWords.length === 1) {
+        // Una sola palabra: buscar en name O description
+        where.OR = [
+          { name: { contains: searchWords[0], mode: "insensitive" } },
+          { description: { contains: searchWords[0], mode: "insensitive" } }
+        ]
+      } else {
+        // Múltiples palabras: buscar que TODAS aparezcan
+        where.OR = [
+          // Opción 1: Todas las palabras en el nombre
+          {
+            AND: searchWords.map(word => ({
+              name: { contains: word, mode: "insensitive" }
+            }))
+          },
+          // Opción 2: Todas las palabras en la descripción
+          {
+            AND: searchWords.map(word => ({
+              description: { contains: word, mode: "insensitive" }
+            }))
+          }
+        ]
+      }
     }
 
     const [categories, total] = await Promise.all([
