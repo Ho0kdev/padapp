@@ -22,7 +22,7 @@ export function RegistrationsHeader() {
     const fetchData = async () => {
       try {
         // Cargar solo categorías y torneos que tienen inscripciones
-        const response = await fetch('/api/registrations/_filters')
+        const response = await fetch('/api/registrations/filters')
         if (response.ok) {
           const data = await response.json()
           setTournaments(data.tournaments || [])
@@ -55,6 +55,7 @@ export function RegistrationsHeader() {
       createButtonHref="/dashboard/registrations/new"
       filterLabel="Estado"
       filterOptions={registrationStatusOptions as any}
+      filterParamKey="status"
       secondaryFilter={{
         label: "Torneo",
         options: tournamentOptions,
