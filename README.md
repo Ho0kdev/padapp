@@ -139,6 +139,7 @@ padapp/
 - **Cálculo Automático de Puntos**: Sistema complejo basado en posición, victorias y multiplicadores
 - **Múltiples Formatos de Torneo**: Single/Double Elimination, Round Robin, Swiss, etc.
 - **Sistema de Pagos Completo**: Integración con Mercado Pago + Pagos manuales (ver [PAYMENT_SYSTEM.md](PAYMENT_SYSTEM.md))
+- **Integridad de Torneos**: Validación de estado para generación de brackets + cancelación automática de inscripciones no confirmadas
 - **Notificaciones**: Sistema de notificaciones en tiempo real
 - **Logs de Auditoría**: Seguimiento completo de todas las acciones
 
@@ -180,6 +181,11 @@ padapp/
   - Premio en metálico
   - Reglas de sets y games
   - Golden Point opcional
+- **🆕 Validaciones de Integridad**:
+  - **Control de Generación de Brackets**: Solo permite generar cuando `status = REGISTRATION_CLOSED` o `IN_PROGRESS`
+  - **Limpieza Automática al Inicio**: Cancela inscripciones no confirmadas cuando torneo → `IN_PROGRESS`
+  - **Protección contra Inscripciones Tardías**: Previene corrupción de brackets
+  - **Auditoría Completa**: Registra todas las cancelaciones automáticas
 
 ### ✅ **Sistema de Puntos Automático** ⭐ MEJORADO
 - **🆕 Puntos Base Configurables por Torneo**: Cada torneo define su nivel de importancia (100-5,000 pts)

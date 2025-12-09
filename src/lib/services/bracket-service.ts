@@ -1322,6 +1322,10 @@ export class BracketService {
       errors.push("El torneo debe estar publicado antes de generar el bracket")
     }
 
+    if (tournament.status === 'PUBLISHED' || tournament.status === 'REGISTRATION_OPEN') {
+      errors.push("Las inscripciones deben estar cerradas antes de generar el bracket")
+    }
+
     if (tournament.status === 'COMPLETED') {
       errors.push("No se puede regenerar el bracket de un torneo completado")
     }

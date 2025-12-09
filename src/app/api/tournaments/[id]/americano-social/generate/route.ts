@@ -24,6 +24,7 @@ export async function POST(
         id: true,
         name: true,
         type: true,
+        status: true,
         americanoRounds: true,
         categories: {
           where: { categoryId: validatedData.categoryId },
@@ -46,6 +47,28 @@ export async function POST(
     if (tournament.type !== "AMERICANO_SOCIAL") {
       return NextResponse.json(
         { error: "Este torneo no es de tipo Americano Social" },
+        { status: 400 }
+      )
+    }
+
+    // Validar que las inscripciones estén cerradas
+    if (tournament.status === 'DRAFT') {
+      return NextResponse.json(
+        { error: "El torneo debe estar publicado antes de generar los pools" },
+        { status: 400 }
+      )
+    }
+
+    if (tournament.status === 'PUBLISHED' || tournament.status === 'REGISTRATION_OPEN') {
+      return NextResponse.json(
+        { error: "Las inscripciones deben estar cerradas antes de generar los pools" },
+        { status: 400 }
+      )
+    }
+
+    if (tournament.status === 'COMPLETED') {
+      return NextResponse.json(
+        { error: "No se pueden regenerar los pools de un torneo completado" },
         { status: 400 }
       )
     }

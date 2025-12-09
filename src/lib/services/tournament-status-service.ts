@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/prisma"
+import { RegistrationLogService } from "./registration-log-service"
+import { TeamLogService } from "./team-log-service"
 
 export class TournamentStatusService {
   /**
@@ -66,6 +68,12 @@ export class TournamentStatusService {
               updatedAt: now
             }
           })
+
+          // Cancelar inscripciones y equipos no confirmados/pagados
+          const cancellationResult = await this.cancelUnconfirmedRegistrations(tournament.id)
+          if (cancellationResult.success) {
+            console.log(`✅ Torneo ${tournament.id}: ${cancellationResult.cancelledRegistrations} inscripciones y ${cancellationResult.cancelledTeams} equipos cancelados`)
+          }
         }
       }
 
@@ -164,6 +172,169 @@ export class TournamentStatusService {
         return "Fecha de inicio del torneo alcanzada"
       default:
         return "Cambio automático sugerido"
+    }
+  }
+
+  /**
+   * Cancela inscripciones y equipos no confirmados/pagados cuando un torneo pasa a IN_PROGRESS
+   * También cancela inscripciones sin pagos parciales
+   */
+  static async cancelUnconfirmedRegistrations(tournamentId: string, userId?: string) {
+    try {
+      // 1. Obtener todas las inscripciones del torneo que NO estén confirmadas o pagadas
+      const registrationsToCancel = await prisma.registration.findMany({
+        where: {
+          tournamentId,
+          registrationStatus: {
+            notIn: ['CONFIRMED', 'PAID', 'CANCELLED']
+          }
+        },
+        include: {
+          payments: {
+            select: {
+              paymentStatus: true,
+              amount: true
+            }
+          },
+          player: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true
+            }
+          },
+          category: {
+            select: {
+              name: true
+            }
+          }
+        }
+      })
+
+      const cancelledRegistrations: string[] = []
+      const cancelledTeams: string[] = []
+
+      // 2. Cancelar cada inscripción que:
+      //    - NO esté en CONFIRMED o PAID
+      //    - NO tenga pagos parciales (al menos un pago con status PAID)
+      for (const registration of registrationsToCancel) {
+        const hasPartialPayment = registration.payments.some(p => p.paymentStatus === 'PAID')
+
+        // Si tiene pago parcial, no cancelar
+        if (hasPartialPayment) {
+          console.log(`⏭️  Inscripción ${registration.id} tiene pago parcial, no se cancela`)
+          continue
+        }
+
+        const oldRegistration = { ...registration }
+
+        // Cancelar la inscripción
+        await prisma.registration.update({
+          where: { id: registration.id },
+          data: { registrationStatus: 'CANCELLED' }
+        })
+
+        cancelledRegistrations.push(registration.id)
+
+        // Registrar en el log
+        await RegistrationLogService.logRegistrationStatusChanged(
+          {
+            userId: userId || 'SYSTEM',
+            registrationId: registration.id
+          },
+          { ...oldRegistration, registrationStatus: 'CANCELLED' },
+          oldRegistration.registrationStatus,
+          'CANCELLED'
+        )
+
+        console.log(`❌ Inscripción ${registration.id} cancelada (${registration.player.firstName} ${registration.player.lastName} - ${registration.category.name})`)
+      }
+
+      // 3. Buscar equipos que tengan al menos una inscripción cancelada
+      const teamsToCancel = await prisma.team.findMany({
+        where: {
+          tournamentId,
+          status: {
+            not: 'CANCELLED'
+          },
+          OR: [
+            {
+              registration1Id: {
+                in: cancelledRegistrations
+              }
+            },
+            {
+              registration2Id: {
+                in: cancelledRegistrations
+              }
+            }
+          ]
+        },
+        include: {
+          registration1: {
+            include: {
+              player: {
+                select: {
+                  firstName: true,
+                  lastName: true
+                }
+              }
+            }
+          },
+          registration2: {
+            include: {
+              player: {
+                select: {
+                  firstName: true,
+                  lastName: true
+                }
+              }
+            }
+          }
+        }
+      })
+
+      // 4. Cancelar los equipos
+      for (const team of teamsToCancel) {
+        const oldTeam = { ...team }
+
+        await prisma.team.update({
+          where: { id: team.id },
+          data: { status: 'CANCELLED' }
+        })
+
+        cancelledTeams.push(team.id)
+
+        // Registrar en el log
+        await TeamLogService.logTeamStatusChanged(
+          {
+            userId: userId || 'SYSTEM',
+            teamId: team.id
+          },
+          { ...oldTeam, status: 'CANCELLED' },
+          oldTeam.status,
+          'CANCELLED'
+        )
+
+        console.log(`❌ Equipo ${team.id} cancelado (${team.name})`)
+      }
+
+      return {
+        success: true,
+        cancelledRegistrations: cancelledRegistrations.length,
+        cancelledTeams: cancelledTeams.length,
+        registrationIds: cancelledRegistrations,
+        teamIds: cancelledTeams
+      }
+
+    } catch (error) {
+      console.error("❌ Error cancelando inscripciones no confirmadas:", error)
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+        cancelledRegistrations: 0,
+        cancelledTeams: 0
+      }
     }
   }
 

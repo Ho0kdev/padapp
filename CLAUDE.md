@@ -265,7 +265,10 @@ import { getPaymentStatusStyle, getPaymentStatusLabel } from '@/lib/utils/status
 **Key Flows**:
 
 1. **Generate Bracket**: `POST /api/tournaments/[id]/generate-bracket`
+   - **VALIDATION**: Only allowed when `status = REGISTRATION_CLOSED` or `IN_PROGRESS`
+   - **ERROR**: Returns error if `status = PUBLISHED` or `REGISTRATION_OPEN`
    - Creates matches, assigns teams, sets progression links
+   - Applies to all 7 formats (conventional + Americano Social via `/americano-social/generate`)
 
 2. **Load Match Result**: `POST /api/matches/[id]/result`
    - Validates scores/sets/tiebreaks
@@ -277,6 +280,12 @@ import { getPaymentStatusStyle, getPaymentStatusLabel } from '@/lib/utils/status
    - Selects top N + best seconds/thirds
    - Assigns to playoff bracket
 
+4. **Tournament Start (IN_PROGRESS)**: Automatic cleanup
+   - Cancels registrations NOT in `CONFIRMED` or `PAID` (without partial payments)
+   - Cancels teams with cancelled registrations
+   - Triggered automatically (by date) or manually (status change)
+   - Full audit logging via `TournamentStatusService.cancelUnconfirmedRegistrations()`
+
 ### Critical Business Rules
 
 1. **Registration Anti-Duplicates**: One player = ONE team per tournament category (`/api/registrations/check-players`)
@@ -284,6 +293,11 @@ import { getPaymentStatusStyle, getPaymentStatusLabel } from '@/lib/utils/status
 3. **Match Score Validation**: Sets array required, tiebreak at 7-6 needs points, winner team specified
 4. **Bracket Progression**: Winners auto-advance via match references
 5. **Group Standings**: Ordered by points → set diff → game diff → sets won
+6. **Bracket Generation Validation**: Brackets/pools can ONLY be generated when `status = REGISTRATION_CLOSED` or `IN_PROGRESS`. Error if `PUBLISHED` or `REGISTRATION_OPEN`.
+7. **Automatic Registration Cleanup**: When tournament → `IN_PROGRESS`, system automatically cancels:
+   - Registrations NOT in `CONFIRMED`/`PAID` AND without partial payments
+   - Teams with at least one cancelled registration
+   - Preserves registrations with partial payments (at least one `PAID` payment)
 
 ## UI/UX Patterns - Data Tables
 
@@ -394,10 +408,19 @@ Regenerate Prisma client when:
 2. Publish → Change status to REGISTRATION_OPEN
 3. Players create registrations
 4. Form teams (2 registrations → 1 team)
-5. Generate bracket
-6. Load match results (auto-progresses winners)
-7. Complete tournament
-8. Calculate points: `POST /api/tournaments/[id]/calculate-points`
+5. **Close registrations** → Change status to REGISTRATION_CLOSED
+6. Generate bracket (⚠️ ONLY works when REGISTRATION_CLOSED or IN_PROGRESS)
+7. **Start tournament** → Change status to IN_PROGRESS
+   - System automatically cancels unconfirmed registrations/teams
+   - Only CONFIRMED/PAID participants remain
+8. Load match results (auto-progresses winners)
+9. Complete tournament
+10. Calculate points: `POST /api/tournaments/[id]/calculate-points`
+
+**Important Status Transitions**:
+- `DRAFT` → `PUBLISHED` → `REGISTRATION_OPEN` → `REGISTRATION_CLOSED` → `IN_PROGRESS` → `COMPLETED`
+- ⚠️ Cannot generate brackets in `PUBLISHED` or `REGISTRATION_OPEN`
+- ⚠️ When → `IN_PROGRESS`: automatic cleanup of unconfirmed registrations
 
 ### Database Reset
 ```bash
@@ -441,6 +464,7 @@ npm run db:seed     # Loads test data
 ## Recent Updates
 
 📄 **See [CHANGELOG.md](CHANGELOG.md) for detailed changelog** including:
+- **Tournament integrity controls** (bracket generation validation + auto-cleanup, Dec 2024)
 - Security audit (MercadoPago, 5 vulnerabilities fixed, Dec 2024)
 - UI/UX overhaul (8 pages, sorting, filtering, clickable rows, Dec 2024)
 - Americano Social multi-round system

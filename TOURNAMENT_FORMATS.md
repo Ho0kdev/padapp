@@ -6,6 +6,7 @@ Este documento describe todos los formatos de torneo implementados y pendientes 
 
 ## 📋 Índice
 
+- [Validaciones Generales de Generación de Brackets](#-validaciones-generales-de-generación-de-brackets)
 - [Formatos Implementados](#formatos-implementados)
   - [Eliminación Simple](#eliminación-simple)
   - [Round Robin (Todos contra Todos)](#round-robin-todos-contra-todos)
@@ -15,6 +16,57 @@ Este documento describe todos los formatos de torneo implementados y pendientes 
   - [Americano Social](#americano-social)
 - [Formatos Pendientes](#formatos-pendientes)
   - [Sistema Suizo](#sistema-suizo)
+
+---
+
+## 🔒 Validaciones Generales de Generación de Brackets
+
+**IMPORTANTE**: Todas las generaciones de brackets y pools (para todos los formatos) están sujetas a las siguientes validaciones de integridad:
+
+### Validación de Estado del Torneo
+
+**Regla**: Los brackets/pools **SOLO pueden generarse** cuando el torneo está en uno de estos estados:
+- ✅ `REGISTRATION_CLOSED` (Inscripciones cerradas)
+- ✅ `IN_PROGRESS` (Torneo en progreso)
+
+**Estados NO permitidos** para generación:
+- ❌ `DRAFT` - Error: "El torneo debe estar publicado antes de generar el bracket"
+- ❌ `PUBLISHED` - Error: "Las inscripciones deben estar cerradas antes de generar el bracket"
+- ❌ `REGISTRATION_OPEN` - Error: "Las inscripciones deben estar cerradas antes de generar el bracket"
+- ❌ `COMPLETED` - Error: "No se puede regenerar el bracket de un torneo completado"
+
+**Razón**: Esta validación previene que nuevos jugadores/equipos se inscriban después de que el bracket ha sido generado, lo cual corrompería la estructura del torneo.
+
+### Limpieza Automática al Iniciar Torneo
+
+Cuando un torneo cambia a estado `IN_PROGRESS` (ya sea automáticamente por fecha o manualmente), el sistema ejecuta una **limpieza automática**:
+
+**Se cancelan automáticamente**:
+1. **Inscripciones** que cumplan TODAS estas condiciones:
+   - Estado ≠ `CONFIRMED` o `PAID`
+   - NO tienen pagos parciales (ningún pago con status `PAID`)
+   - NO están ya canceladas
+
+2. **Equipos** que:
+   - Tienen al menos una inscripción cancelada
+
+**Se preservan**:
+- ✅ Inscripciones con estado `CONFIRMED` o `PAID`
+- ✅ Inscripciones con pagos parciales (aunque no estén 100% pagadas)
+
+**Auditoría**:
+- Todas las cancelaciones se registran en `RegistrationLog` y `TeamLog`
+- Usuario: `'SYSTEM'` (automático) o el ID del usuario que cambió el estado (manual)
+
+**Implementación**:
+- Servicio: `TournamentStatusService.cancelUnconfirmedRegistrations()`
+- Archivo: `src/lib/services/tournament-status-service.ts:176-331`
+
+### API Endpoints Afectados
+
+Todos estos endpoints validan el estado del torneo antes de generar:
+- `POST /api/tournaments/[id]/generate-bracket` (formatos convencionales)
+- `POST /api/tournaments/[id]/americano-social/generate` (Americano Social)
 
 ---
 

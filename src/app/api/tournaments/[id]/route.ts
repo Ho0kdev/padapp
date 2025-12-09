@@ -291,12 +291,30 @@ export async function PUT(
     const validatedData = updateTournamentSchema.parse(body)
     const { categories, clubs, ...tournamentData } = validatedData
 
-    // Verificar que no se pueda editar un torneo que ya empezó
-    if (existingTournament.status === "IN_PROGRESS" || existingTournament.status === "COMPLETED") {
+    // Verificar que no se pueda editar un torneo que ya está completado
+    if (existingTournament.status === "COMPLETED") {
       return NextResponse.json(
-        { error: "No se puede editar un torneo que ya está en progreso o completado" },
+        { error: "No se puede editar un torneo que ya está completado" },
         { status: 400 }
       )
+    }
+
+    // Si el torneo ya está en progreso, solo permitir cambios de estado o campos menores
+    if (existingTournament.status === "IN_PROGRESS" && validatedData.status !== "IN_PROGRESS") {
+      // Lista de campos que se pueden modificar cuando el torneo está en progreso
+      const allowedFieldsWhileInProgress = ['status', 'description']
+      const changedFields = Object.keys(tournamentData).filter(
+        key => tournamentData[key as keyof typeof tournamentData] !== (existingTournament as any)[key]
+      )
+
+      const hasUnallowedChanges = changedFields.some(field => !allowedFieldsWhileInProgress.includes(field))
+
+      if (hasUnallowedChanges) {
+        return NextResponse.json(
+          { error: "No se pueden modificar los detalles de un torneo que ya está en progreso. Solo se puede cambiar el estado o la descripción." },
+          { status: 400 }
+        )
+      }
     }
 
     // Verificar que el club principal esté activo
@@ -509,6 +527,19 @@ export async function PUT(
         }
       }
     })
+
+    // Si el estado cambió a IN_PROGRESS, cancelar inscripciones y equipos no confirmados
+    if (existingTournament.status !== 'IN_PROGRESS' && tournament.status === 'IN_PROGRESS') {
+      const { TournamentStatusService } = await import('@/lib/services/tournament-status-service')
+      const cancellationResult = await TournamentStatusService.cancelUnconfirmedRegistrations(
+        tournament.id,
+        session.user.id
+      )
+
+      if (cancellationResult.success && cancellationResult.cancelledRegistrations > 0) {
+        console.log(`✅ Torneo ${tournament.id} pasó a IN_PROGRESS: ${cancellationResult.cancelledRegistrations} inscripciones y ${cancellationResult.cancelledTeams} equipos cancelados automáticamente`)
+      }
+    }
 
     // Registrar auditoría
     await AuditLogger.log(

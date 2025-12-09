@@ -4,6 +4,76 @@ Historial detallado de cambios y mejoras del proyecto PadApp.
 
 ## December 2024
 
+### 🔐 Tournament Integrity - Registration & Bracket Generation Controls
+
+**Complete tournament lifecycle validation system**
+
+**Summary**: Implemented strict controls to prevent bracket generation during open registrations and automatic cancellation of unconfirmed registrations when tournaments start.
+
+**Features Added**:
+
+1. **🚫 Bracket Generation Validation**
+   - **Rule**: Brackets/pools can ONLY be generated when `status = REGISTRATION_CLOSED` or `IN_PROGRESS`
+   - **Prevention**: Cannot generate brackets when `status = PUBLISHED` or `REGISTRATION_OPEN`
+   - **Reason**: Prevents new players/teams from joining after brackets are created
+   - **Applies to**: All 7 tournament formats (conventional + Americano Social)
+   - **Files Modified**:
+     - `src/lib/services/bracket-service.ts:1325-1327` (validation in `validateBracketGeneration`)
+     - `src/app/api/tournaments/[id]/americano-social/generate/route.ts:54-74` (Americano Social validation)
+
+2. **🧹 Automatic Registration Cancellation on Tournament Start**
+   - **Rule**: When tournament changes to `IN_PROGRESS`, automatically cancel unconfirmed registrations/teams
+   - **What gets cancelled**:
+     - Registrations with status ≠ `CONFIRMED` or `PAID`
+     - Registrations WITHOUT partial payments (no payment with status `PAID`)
+     - Teams with at least one cancelled registration
+   - **What does NOT get cancelled**:
+     - Registrations with status `CONFIRMED` or `PAID`
+     - Registrations with partial payments (at least one `PAID` payment)
+   - **Triggers**: Both automatic (by date) and manual status changes
+   - **Logging**: Full audit trail with `RegistrationLogService` and `TeamLogService`
+   - **Files Modified**:
+     - `src/lib/services/tournament-status-service.ts:176-331` (NEW `cancelUnconfirmedRegistrations` method)
+     - `src/lib/services/tournament-status-service.ts:72-77` (automatic trigger)
+     - `src/app/api/tournaments/[id]/route.ts:513-524` (manual trigger)
+
+3. **⚙️ Tournament Edit Validation Improvements**
+   - **Rule**: Allow status changes to `IN_PROGRESS` without blocking other operations
+   - **Validation**: Tournaments in `IN_PROGRESS` can only modify: `status` and `description`
+   - **File**: `src/app/api/tournaments/[id]/route.ts:294-318`
+
+**Business Logic Flow**:
+```
+Tournament Status Change → IN_PROGRESS
+  ↓
+1. Check all registrations (PENDING, WAITLIST, etc.)
+  ↓
+2. For each registration:
+   - Has partial payment? → Keep
+   - Is CONFIRMED/PAID? → Keep
+   - Otherwise → Cancel
+  ↓
+3. Find teams with cancelled registrations → Cancel teams
+  ↓
+4. Log all cancellations in audit trail
+```
+
+**Impact**:
+- ✅ Prevents bracket corruption from late registrations
+- ✅ Ensures only confirmed/paid participants compete
+- ✅ Maintains tournament integrity automatically
+- ✅ Full audit trail for all cancellations
+
+**Error Messages** (user-facing):
+- `"Las inscripciones deben estar cerradas antes de generar el bracket"`
+- `"Las inscripciones deben estar cerradas antes de generar los pools"` (Americano Social)
+
+**Files Modified**: 4 files
+**Lines Added**: ~170 lines
+**Type-Check**: ✅ Passed
+
+---
+
 ### 🔒 Security Audit - MercadoPago Payment System
 
 **Complete security audit and correction of the payment system**
