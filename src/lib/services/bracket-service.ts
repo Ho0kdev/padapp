@@ -1712,6 +1712,7 @@ export class BracketService {
   /**
    * Asigna equipos clasificados a la primera ronda eliminatoria
    * Usa el sistema de seeding estándar (1 vs último, 2 vs penúltimo, etc.)
+   * EVITA cruces entre equipos del mismo grupo
    */
   private static async assignClassifiedTeamsToPlayoffs(
     matches: Array<{ id: string; matchNumber: number | null }>,
@@ -1729,7 +1730,7 @@ export class BracketService {
 
     // Emparejamientos según número de clasificados
     // Standard bracket seeding: 1 vs N, 2 vs N-1, 3 vs N-2, etc.
-    const pairings: Array<[number, number]> = []
+    let pairings: Array<[number, number]> = []
 
     if (totalClassified === 4) {
       pairings.push([0, 3], [1, 2]) // SF1: 1A vs 2B, SF2: 1B vs 2A
@@ -1747,6 +1748,11 @@ export class BracketService {
         pairings.push([i, 31 - i])
       }
     }
+
+    // ═══════════════════════════════════════════════════
+    // ALGORITMO ANTI-CRUCES: Evitar equipos del mismo grupo
+    // ═══════════════════════════════════════════════════
+    pairings = this.avoidSameGroupMatchups(pairings, seeds)
 
     // Asignar emparejamientos a matches
     for (let i = 0; i < pairings.length && i < matches.length; i++) {
@@ -1766,6 +1772,117 @@ export class BracketService {
         console.log(`✅ Match ${i + 1}: ${team1.groupName}-${team1.position} vs ${team2.groupName}-${team2.position}`)
       }
     }
+  }
+
+  /**
+   * Algoritmo para evitar que equipos del mismo grupo se enfrenten en primera ronda
+   * Intenta intercambiar pairings para evitar cruces RESPETANDO la jerarquía de posiciones
+   * (1° siempre debe enfrentar a 2° o inferiores, nunca a otro 1°)
+   */
+  private static avoidSameGroupMatchups(
+    pairings: Array<[number, number]>,
+    seeds: Array<{ teamId: string; groupName: string; position: number }>
+  ): Array<[number, number]> {
+    const result = [...pairings]
+    let modified = true
+    let iterations = 0
+    const maxIterations = 100 // Prevenir loops infinitos
+
+    while (modified && iterations < maxIterations) {
+      modified = false
+      iterations++
+
+      // Verificar cada pairing
+      for (let i = 0; i < result.length; i++) {
+        const [idx1, idx2] = result[i]
+        const team1 = seeds[idx1]
+        const team2 = seeds[idx2]
+
+        // Si son del mismo grupo, intentar intercambiar
+        if (team1 && team2 && team1.groupName === team2.groupName) {
+          console.log(`⚠️ Cruce detectado: ${team1.groupName}-${team1.position} vs ${team2.groupName}-${team2.position}`)
+
+          // Intentar intercambiar con otro pairing
+          let swapped = false
+          for (let j = i + 1; j < result.length && !swapped; j++) {
+            const [idx3, idx4] = result[j]
+            const team3 = seeds[idx3]
+            const team4 = seeds[idx4]
+
+            if (!team3 || !team4) continue
+
+            // IMPORTANTE: Solo intercambiar si NO rompe la jerarquía de posiciones
+            // Team1 debe tener mejor posición que Team2 (posición menor = mejor)
+            // Team3 debe tener mejor posición que Team4
+
+            // Opción 1: Intercambiar team2 (peor seed de match i) con team4 (peor seed de match j)
+            // Resultado: team1 vs team4, team3 vs team2
+            if (team1.groupName !== team4.groupName &&
+                team3.groupName !== team2.groupName &&
+                team1.position < team4.position && // Mantener jerarquía
+                team3.position < team2.position) { // Mantener jerarquía
+              result[i] = [idx1, idx4]
+              result[j] = [idx3, idx2]
+              console.log(`🔄 Intercambiado peores seeds: Match ${i + 1} (${team1.groupName}-${team1.position} vs ${team4.groupName}-${team4.position}) y Match ${j + 1} (${team3.groupName}-${team3.position} vs ${team2.groupName}-${team2.position})`)
+              modified = true
+              swapped = true
+              break
+            }
+
+            // Opción 2: Intercambiar team2 con team3 (intercambio cruzado)
+            // Resultado: team1 vs team3, team2 vs team4
+            // SOLO si team3 es peor que team1 y team2 es peor que team4
+            if (team1.groupName !== team3.groupName &&
+                team2.groupName !== team4.groupName &&
+                team1.position < team3.position && // team1 mejor que team3
+                team2.position < team4.position) { // team2 mejor que team4 (pero esto rompe el seeding original...)
+              // Este intercambio puede no ser ideal, solo usar si no hay otra opción
+              continue // Saltar por ahora
+            }
+          }
+
+          if (!swapped) {
+            console.log(`⚠️ No se pudo evitar cruce en Match ${i + 1}: ${team1.groupName} vs ${team2.groupName} (sin romper jerarquía)`)
+          }
+        }
+      }
+    }
+
+    if (iterations >= maxIterations) {
+      console.log(`⚠️ Algoritmo anti-cruces alcanzó máximo de iteraciones`)
+    }
+
+    // Verificación final
+    let hasSameGroupMatchup = false
+    let hasWrongSeeding = false
+
+    for (let i = 0; i < result.length; i++) {
+      const [idx1, idx2] = result[i]
+      const team1 = seeds[idx1]
+      const team2 = seeds[idx2]
+
+      if (team1 && team2) {
+        // Verificar cruces del mismo grupo
+        if (team1.groupName === team2.groupName) {
+          console.log(`⚠️ ADVERTENCIA: Aún existe cruce en Match ${i + 1}: ${team1.groupName}-${team1.position} vs ${team2.groupName}-${team2.position}`)
+          hasSameGroupMatchup = true
+        }
+
+        // Verificar jerarquía de posiciones (el primero debe tener mejor posición)
+        if (team1.position >= team2.position) {
+          console.log(`⚠️ ADVERTENCIA: Jerarquía incorrecta en Match ${i + 1}: ${team1.groupName}-${team1.position} vs ${team2.groupName}-${team2.position} (debería ser mejor vs peor)`)
+          hasWrongSeeding = true
+        }
+      }
+    }
+
+    if (!hasSameGroupMatchup && !hasWrongSeeding) {
+      console.log(`✅ Algoritmo anti-cruces exitoso: No hay cruces del mismo grupo y se respeta la jerarquía`)
+    } else if (!hasSameGroupMatchup) {
+      console.log(`⚠️ No hay cruces del mismo grupo, pero hay problemas de jerarquía`)
+    }
+
+    return result
   }
 
   /**
