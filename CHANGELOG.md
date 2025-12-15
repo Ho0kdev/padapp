@@ -4,6 +4,103 @@ Historial detallado de cambios y mejoras del proyecto PDLShot.
 
 ## December 2024
 
+### 🎨 UI/UX Improvements & Bug Fixes (Dec 15, 2024)
+
+**Complete UI refresh and critical stats bug fix**
+
+**Summary**: Enhanced visual design with larger logos, new color theme, fixed playoff bracket algorithm, and corrected player statistics calculation bug.
+
+**Features Added**:
+
+1. **🖼️ Logo Size Improvements**
+   - **Header**: Increased from 32x32 to 64x64 pixels
+   - **Sidebar**: Increased to 96x96 pixels with centered layout
+   - **Login/Register**: Increased to 140x140 pixels
+   - **Text Removal**: Removed "PdlShot" text labels, keeping only logos for cleaner design
+   - **Files Modified**:
+     - `src/components/layout/header.tsx:58-65`
+     - `src/components/layout/sidebar.tsx:51-68`
+     - `src/app/auth/login/page.tsx:10-20`
+     - `src/app/auth/register/page.tsx:10-20`
+
+2. **🎨 Theme System - Cyan/Blue Color Scheme**
+   - **Installation**: Installed tweakcn theme using `npx shadcn@latest add`
+   - **Color Space**: Changed from RGB to OKLCH (perceptually uniform)
+   - **Primary Color**: Changed from orange (#e05d38) to cyan/blue (oklch(0.7238 0.1028 221.0232))
+   - **Radius**: Changed from 0.75rem to 0.5rem for more modern look
+   - **Files Modified**:
+     - `src/app/globals.css` (complete theme variables update)
+
+3. **🎯 Color Consistency - Status Badges**
+   - **Approach**: Hybrid system using theme variables + Tailwind colors
+   - **Theme Variables**: primary, destructive, muted for main states
+   - **Tailwind Colors**: Specific colors (blue, purple, amber) for differentiation
+   - **Badge Systems Updated**: 12+ systems (Tournament Status, Payment Status, Match Status, etc.)
+   - **Files Modified**:
+     - `src/lib/utils/status-styles.ts` (hybrid color approach)
+
+4. **⚙️ Next.js 16 Compatibility**
+   - **themeColor Migration**: Moved from metadata to viewport export
+   - **Middleware Rename**: Renamed middleware.ts to proxy.ts
+   - **Files Modified**:
+     - `src/app/layout.tsx:30-35` (viewport export)
+     - `src/middleware.ts` → `src/proxy.ts` (renamed)
+
+5. **🏆 Playoff Bracket Fix - Anti-Cross Algorithm**
+   - **Problem**: Teams from same group facing each other in playoff brackets
+   - **Solution**: Implemented `avoidSameGroupMatchups` algorithm
+   - **Features**:
+     - Prevents same-group matchups in playoffs
+     - Respects position hierarchy (1st vs 2nd, not 1st vs 1st)
+     - Shows INFO for valid same-position/different-group matchups
+     - Handles edge cases (5 groups, 8 qualified teams)
+   - **Files Modified**:
+     - `src/lib/services/bracket-service.ts:1777-1891` (NEW algorithm)
+   - **Validation**:
+     - ERROR: Same group, different position → Swaps teams
+     - INFO: Different group, same position → Normal with many groups
+
+6. **🐛 Critical Bug Fix - Player Statistics Double-Counting**
+   - **Problem**: Player stats counted twice (e.g., 3 matches showing as 6W-6L)
+   - **Root Cause**: Recalculate-stats using increment inside transaction
+   - **Solution**: Complete rewrite of recalculate-stats endpoint
+   - **New Approach**:
+     - Calculate all stats in memory first (Map structure)
+     - Use short transaction for delete + createMany batch
+     - Avoids increment issues in Prisma transactions
+     - More efficient and robust
+   - **Files Modified**:
+     - `src/app/api/tournaments/[id]/recalculate-stats/route.ts:35-182` (complete rewrite)
+   - **Impact**: Stats now calculate correctly for all users
+
+**Business Logic Flow** (Stats Recalculation):
+```
+1. Fetch all completed matches
+   ↓
+2. Calculate stats in memory (Map<playerId, stats>)
+   - Accumulate: matches, wins, sets, games
+   - Handle both teams per match
+   ↓
+3. Transaction:
+   - Delete all existing stats for tournament
+   - Create all new stats with createMany
+   ↓
+4. Return success with counts
+```
+
+**Impact**:
+- ✅ Cleaner, more modern UI with larger logos
+- ✅ Consistent color theme across all components
+- ✅ Next.js 16 ready (no deprecation warnings)
+- ✅ Fair playoff brackets (no same-group rematches)
+- ✅ Accurate player statistics (no double-counting)
+
+**Files Modified**: 8 files
+**Lines Added/Modified**: ~350 lines
+**Type-Check**: ✅ Passed
+
+---
+
 ### 🔐 Tournament Integrity - Registration & Bracket Generation Controls
 
 **Complete tournament lifecycle validation system**

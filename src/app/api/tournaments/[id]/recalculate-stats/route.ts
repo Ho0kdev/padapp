@@ -34,13 +34,7 @@ export async function POST(
 
     console.log(`🔄 Recalculando estadísticas para torneo: ${tournament.name}`)
 
-    // 1. Borrar todas las estadísticas existentes del torneo
-    await prisma.tournamentStats.deleteMany({
-      where: { tournamentId }
-    })
-    console.log(`✅ Estadísticas anteriores eliminadas`)
-
-    // 2. Obtener todos los partidos completados del torneo
+    // 1. Obtener todos los partidos completados del torneo
     const completedMatches = await prisma.match.findMany({
       where: {
         tournamentId,
@@ -67,8 +61,17 @@ export async function POST(
 
     console.log(`📊 Procesando ${completedMatches.length} partidos completados`)
 
-    // 3. Procesar cada partido y actualizar estadísticas
-    let playersUpdated = 0
+    // 2. Calcular todas las estadísticas en memoria primero
+    const playerStatsMap = new Map<string, {
+      tournamentId: string
+      playerId: string
+      matchesPlayed: number
+      matchesWon: number
+      setsWon: number
+      setsLost: number
+      gamesWon: number
+      gamesLost: number
+    }>()
 
     for (const match of completedMatches) {
       if (!match.team1 || !match.team2 || !match.winnerTeamId) {
@@ -104,70 +107,79 @@ export async function POST(
 
       const team1Won = match.winnerTeamId === match.team1.id
 
-      // Actualizar estadísticas para jugadores del equipo 1
+      // Acumular estadísticas para jugadores del equipo 1
       for (const playerId of team1Players) {
-        await prisma.tournamentStats.upsert({
-          where: {
-            tournamentId_playerId: {
-              tournamentId,
-              playerId
-            }
-          },
-          create: {
-            tournamentId,
-            playerId,
-            matchesPlayed: 1,
-            matchesWon: team1Won ? 1 : 0,
-            setsWon: team1SetsWon,
-            setsLost: team2SetsWon,
-            gamesWon: team1GamesWon,
-            gamesLost: team2GamesWon
-          },
-          update: {
-            matchesPlayed: { increment: 1 },
-            matchesWon: { increment: team1Won ? 1 : 0 },
-            setsWon: { increment: team1SetsWon },
-            setsLost: { increment: team2SetsWon },
-            gamesWon: { increment: team1GamesWon },
-            gamesLost: { increment: team2GamesWon }
-          }
-        })
-        playersUpdated++
+        const key = `${tournamentId}-${playerId}`
+        const existing = playerStatsMap.get(key) || {
+          tournamentId,
+          playerId,
+          matchesPlayed: 0,
+          matchesWon: 0,
+          setsWon: 0,
+          setsLost: 0,
+          gamesWon: 0,
+          gamesLost: 0
+        }
+
+        existing.matchesPlayed++
+        if (team1Won) existing.matchesWon++
+        existing.setsWon += team1SetsWon
+        existing.setsLost += team2SetsWon
+        existing.gamesWon += team1GamesWon
+        existing.gamesLost += team2GamesWon
+
+        playerStatsMap.set(key, existing)
       }
 
-      // Actualizar estadísticas para jugadores del equipo 2
+      // Acumular estadísticas para jugadores del equipo 2
       for (const playerId of team2Players) {
-        await prisma.tournamentStats.upsert({
-          where: {
-            tournamentId_playerId: {
-              tournamentId,
-              playerId
-            }
-          },
-          create: {
-            tournamentId,
-            playerId,
-            matchesPlayed: 1,
-            matchesWon: !team1Won ? 1 : 0,
-            setsWon: team2SetsWon,
-            setsLost: team1SetsWon,
-            gamesWon: team2GamesWon,
-            gamesLost: team1GamesWon
-          },
-          update: {
-            matchesPlayed: { increment: 1 },
-            matchesWon: { increment: !team1Won ? 1 : 0 },
-            setsWon: { increment: team2SetsWon },
-            setsLost: { increment: team1SetsWon },
-            gamesWon: { increment: team2GamesWon },
-            gamesLost: { increment: team1GamesWon }
-          }
-        })
-        playersUpdated++
+        const key = `${tournamentId}-${playerId}`
+        const existing = playerStatsMap.get(key) || {
+          tournamentId,
+          playerId,
+          matchesPlayed: 0,
+          matchesWon: 0,
+          setsWon: 0,
+          setsLost: 0,
+          gamesWon: 0,
+          gamesLost: 0
+        }
+
+        existing.matchesPlayed++
+        if (!team1Won) existing.matchesWon++
+        existing.setsWon += team2SetsWon
+        existing.setsLost += team1SetsWon
+        existing.gamesWon += team2GamesWon
+        existing.gamesLost += team1GamesWon
+
+        playerStatsMap.set(key, existing)
       }
     }
 
-    console.log(`✅ Estadísticas recalculadas: ${playersUpdated} actualizaciones de jugadores`)
+    // 3. Usar transacción para borrar y recrear todas las estadísticas
+    const result = await prisma.$transaction(async (tx) => {
+      // Borrar todas las estadísticas existentes del torneo
+      const deleted = await tx.tournamentStats.deleteMany({
+        where: { tournamentId }
+      })
+      console.log(`✅ ${deleted.count} estadísticas anteriores eliminadas`)
+
+      // Crear todas las nuevas estadísticas
+      const statsToCreate = Array.from(playerStatsMap.values())
+
+      if (statsToCreate.length > 0) {
+        await tx.tournamentStats.createMany({
+          data: statsToCreate
+        })
+      }
+
+      console.log(`✅ ${statsToCreate.length} estadísticas creadas`)
+
+      return {
+        matchesProcessed: completedMatches.length,
+        playerStatsUpdated: statsToCreate.length
+      }
+    })
 
     return NextResponse.json({
       success: true,
@@ -175,8 +187,8 @@ export async function POST(
       data: {
         tournamentId,
         tournamentName: tournament.name,
-        matchesProcessed: completedMatches.length,
-        playerStatsUpdated: playersUpdated
+        matchesProcessed: result.matchesProcessed,
+        playerStatsUpdated: result.playerStatsUpdated
       }
     })
 

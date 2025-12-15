@@ -401,6 +401,24 @@ Regenerate Prisma client when:
 
 **Solution**: Stop dev server → `npx prisma generate` → Restart dev server
 
+### Player Statistics Incorrect (Double-Counting)
+
+**Problem**: Player stats show incorrect values (e.g., 3 matches showing as 6W-6L)
+
+**Cause**: Stats were counted twice, usually from a failed recalculate operation
+
+**Solution**:
+```bash
+# Run recalculate-stats endpoint for the affected tournament
+POST /api/tournaments/[tournamentId]/recalculate-stats
+```
+
+**Technical Details**:
+- The recalculate endpoint now uses an optimized approach (Dec 15, 2024)
+- Calculates all stats in memory first, then uses transaction for delete + createMany
+- This prevents double-counting issues that occurred with the old increment approach
+- Safe to run multiple times - it will always produce correct results
+
 ## Testing Workflows
 
 ### Complete Tournament Flow
@@ -464,6 +482,9 @@ npm run db:seed     # Loads test data
 ## Recent Updates
 
 📄 **See [CHANGELOG.md](CHANGELOG.md) for detailed changelog** including:
+- **UI/UX improvements** (larger logos, cyan/blue theme, Next.js 16 ready, Dec 15 2024)
+- **Playoff bracket fix** (anti-cross algorithm prevents same-group matchups, Dec 15 2024)
+- **Stats bug fix** (recalculate-stats rewritten, fixes double-counting, Dec 15 2024)
 - **Tournament integrity controls** (bracket generation validation + auto-cleanup, Dec 2024)
 - Security audit (MercadoPago, 5 vulnerabilities fixed, Dec 2024)
 - UI/UX overhaul (8 pages, sorting, filtering, clickable rows, Dec 2024)
