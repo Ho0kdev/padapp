@@ -1,4 +1,4 @@
-# 🏓 PadApp - Sistema de Gestión de Torneos de Pádel
+# 🏓 PdlShot - Sistema de Gestión de Torneos de Pádel
 
 [![Next.js](https://img.shields.io/badge/Next.js-15-black)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19-blue)](https://reactjs.org/)
@@ -8,7 +8,7 @@
 
 ## 📋 Descripción del Proyecto
 
-PadApp es una aplicación web completa para la gestión integral de torneos de pádel. Desarrollada con tecnologías modernas, permite administrar torneos, jugadores, clubes, rankings y mucho más de manera eficiente y profesional.
+PdlShot es una aplicación web completa para la gestión integral de torneos de pádel. Desarrollada con tecnologías modernas, permite administrar torneos, jugadores, clubes, rankings y mucho más de manera eficiente y profesional.
 
 **Estado Actual**: ✅ **99% completo** - Sistema production-ready con 46 API endpoints (100% RBAC protegidos), 91+ componentes React, 30+ tablas de base de datos, y sistema de UI/UX profesional con ordenamiento, filtros y navegación avanzada en 8 páginas principales.
 
@@ -53,7 +53,7 @@ PadApp es una aplicación web completa para la gestión integral de torneos de p
 ## 📂 Estructura del Proyecto
 
 ```
-padapp/
+padelshot/
 ├── .env                          # Variables de entorno
 ├── .env.example                  # Ejemplo de configuración
 ├── docker-compose.yml           # Docker para PostgreSQL local
@@ -545,7 +545,7 @@ padapp/
 1. **Clonar el repositorio**
 ```bash
 git clone <repository-url>
-cd padapp
+cd padelshot
 ```
 
 2. **Instalar dependencias**
@@ -570,7 +570,7 @@ cp .env.example .env
 npm run db:select
 
 # O editar .env manualmente
-DATABASE_URL="postgresql://postgres:padapp123@localhost:5432/padapp"
+DATABASE_URL="postgresql://postgres:padelshot123@localhost:5432/padelshot"
 NEXTAUTH_URL="http://localhost:3000"
 NEXTAUTH_SECRET="tu-secret-key-aqui"
 ```
@@ -646,7 +646,7 @@ npm run db:seed
 ```
 
 **Credenciales de administrador por defecto:**
-- Email: `admin@padapp.com`
+- Email: `admin@padelshot.com`
 - Contraseña: `123456`
 
 Los seeds incluyen:
@@ -744,7 +744,7 @@ GET /api/admin/logs
 
 ## 🔒 Sistema de Autenticación y RBAC (Role-Based Access Control)
 
-PadApp implementa un sistema completo de control de acceso basado en roles con permisos granulares, auditoría y validaciones de seguridad en todos los niveles.
+PdlShot implementa un sistema completo de control de acceso basado en roles con permisos granulares, auditoría y validaciones de seguridad en todos los niveles.
 
 ### 🎭 Roles de Usuario
 
@@ -1652,7 +1652,7 @@ Para preguntas, sugerencias o reportar problemas:
 
 ---
 
-**🏓 PadApp** - Sistema completo de gestión de torneos de pádel desarrollado con las mejores prácticas y tecnologías modernas.
+**🏓 PdlShot** - Sistema completo de gestión de torneos de pádel desarrollado con las mejores prácticas y tecnologías modernas.
 
 ### 📊 Estadísticas del Proyecto
 

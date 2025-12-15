@@ -1,6 +1,6 @@
 # Changelog
 
-Historial detallado de cambios y mejoras del proyecto PadApp.
+Historial detallado de cambios y mejoras del proyecto PdlShot.
 
 ## December 2024
 

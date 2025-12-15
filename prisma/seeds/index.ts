@@ -91,7 +91,7 @@ async function main() {
   const systemUser = await prisma.user.create({
     data: {
       id: 'system', // ID fijo para fácil referencia
-      email: 'system@padapp.internal',
+      email: 'system@padelshot.internal',
       password: null, // Sin contraseña - no se puede autenticar
       name: 'Sistema Automático',
       role: UserRole.ADMIN,
@@ -113,7 +113,7 @@ async function main() {
 
   const adminUser = await prisma.user.create({
     data: {
-      email: 'admin@padapp.com',
+      email: 'admin@padelshot.app',
       password: hashedPassword,
       name: 'Administrador Sistema',
       role: UserRole.ADMIN,
@@ -364,7 +364,7 @@ async function main() {
       country: 'Argentina',
       postalCode: '4400',
       phone: '+543876125650',
-      email: 'padel.noa@padapp.com',
+      email: 'padel.noa@padelshot.app',
       latitude: -24.7875941,
       longitude: -65.428035817,
       status: 'ACTIVE',
@@ -413,8 +413,8 @@ async function main() {
       country: 'Argentina',
       postalCode: '4400',
       phone: '+543874000000',
-      email: 'ciudad.padel@padapp.com',
-      website: 'https://www.padapp.com',
+      email: 'ciudad.padel@padelshot.app',
+      website: 'https://www.padelshot.app',
       latitude: -24.7947983,
       longitude: -65.433748217,
       status: 'ACTIVE',
@@ -486,7 +486,7 @@ async function main() {
       country: 'Argentina',
       postalCode: '4400',
       phone: '+543874555666',
-      email: 'pipo.padel@padapp.com',
+      email: 'pipo.padel@padelshot.app',
       latitude: -24.7995751,
       longitude: -65.391268417,
       status: 'ACTIVE',
@@ -750,7 +750,7 @@ async function main() {
   console.log('   • Ciudad Padel (4 canchas)')
   console.log('   • Pipo Padel (2 canchas)')
   console.log('\n🔑 Credenciales de prueba:')
-  console.log('   Admin: admin@padapp.com / 123456')
+  console.log('   Admin: admin@padelshot.app / 123456')
   console.log('   Jugadores: [nombre].[apellido][numero]@email.com / 123456')
   console.log('   (Todos los usuarios tienen contraseña: 123456)')
 }

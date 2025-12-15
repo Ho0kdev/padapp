@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**PadApp** is a comprehensive paddle tennis (pádel) tournament management system built with Next.js 15, React 19, TypeScript, Prisma, and PostgreSQL. The system handles tournament creation, player registrations, bracket generation (6 different formats), match management, rankings, and administrative tasks with full RBAC (Role-Based Access Control) and audit logging.
+**PdlShot** is a comprehensive paddle tennis (pádel) tournament management system built with Next.js 15, React 19, TypeScript, Prisma, and PostgreSQL. The system handles tournament creation, player registrations, bracket generation (6 different formats), match management, rankings, and administrative tasks with full RBAC (Role-Based Access Control) and audit logging.
 
 **Current Status**: 99% core functionality complete, production-ready with 46 API endpoints (100% RBAC protected), 91+ React components, 30+ database tables, and advanced UI/UX system with sorting, filtering, and clickable navigation on 8 main pages.
 
@@ -31,7 +31,7 @@ npm run db:seed          # Load seed data
 
 ### Environment Variables Required
 ```bash
-DATABASE_URL="postgresql://postgres:padapp123@localhost:5432/padapp"
+DATABASE_URL="postgresql://postgres:padelshot123@localhost:5432/padelshot"
 NEXTAUTH_URL="http://localhost:3000"
 NEXTAUTH_SECRET="your-secret-key-here"
 HOSTNAME="0.0.0.0" # REQUIRED for Docker/Dokploy
@@ -44,9 +44,9 @@ MERCADOPAGO_WEBHOOK_SECRET="your-webhook-secret" # REQUIRED in production
 ```
 
 ### Default Test Credentials
-- Admin: `admin@padapp.com` / `123456`
-- Club Admin: `clubadmin@padapp.com` / `123456`
-- Player: `player@padapp.com` / `123456`
+- Admin: `admin@padelshot.com` / `123456`
+- Club Admin: `clubadmin@padelshot.com` / `123456`
+- Player: `player@padelshot.com` / `123456`
 
 ## Architecture & Core Concepts
 

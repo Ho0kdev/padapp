@@ -1270,13 +1270,13 @@ export function middleware(request: NextRequest) {
 
 ### vs AccessControl.js
 
-| Característica | AccessControl.js | PadApp RBAC | Estado |
+| Característica | AccessControl.js | PdlShot RBAC | Estado |
 |----------------|------------------|-------------|--------|
 | RBAC básico | ✅ | ✅ | Paridad |
 | Ownership contextual | ✅ | ✅ | Paridad |
 | Herencia de roles | ✅ | ⏳ Mejora #4 | AccessControl superior |
-| Caché de permisos | ❌ | ✅ | **PadApp superior** |
-| Auditoría | ❌ | ✅ | **PadApp superior** |
+| Caché de permisos | ❌ | ✅ | **PdlShot superior** |
+| Auditoría | ❌ | ✅ | **PdlShot superior** |
 | TypeScript nativo | ✅ | ✅ | Paridad |
 | Tests incluidos | ✅ | ⏳ Mejora #5 | AccessControl superior |
 
@@ -1286,7 +1286,7 @@ export function middleware(request: NextRequest) {
 
 ### vs Oso (Framework Empresarial)
 
-| Característica | Oso | PadApp RBAC | Estado |
+| Característica | Oso | PdlShot RBAC | Estado |
 |----------------|-----|-------------|--------|
 | RBAC | ✅ | ✅ | Paridad |
 | ReBAC (relaciones) | ✅ | ✅ (ownership) | Paridad |
@@ -1294,10 +1294,10 @@ export function middleware(request: NextRequest) {
 | Lenguaje de políticas | ✅ Polar DSL | TypeScript | Diferente enfoque |
 | Testing built-in | ✅ | ⏳ Mejora #5 | Oso superior |
 | Performance | ✅ | ✅ Con caché | Paridad |
-| Auditoría | ⚠️ Externa | ✅ Built-in | **PadApp superior** |
-| Curva de aprendizaje | Alta | Baja | **PadApp superior** |
+| Auditoría | ⚠️ Externa | ✅ Built-in | **PdlShot superior** |
+| Curva de aprendizaje | Alta | Baja | **PdlShot superior** |
 
-**Conclusión**: Oso es más potente y flexible, pero PadApp RBAC es más simple y suficiente para las necesidades del proyecto.
+**Conclusión**: Oso es más potente y flexible, pero PdlShot RBAC es más simple y suficiente para las necesidades del proyecto.
 
 ---
 
@@ -1349,7 +1349,7 @@ export function middleware(request: NextRequest) {
 
 ## 💡 Conclusión
 
-El sistema RBAC de PadApp está **production-ready** con:
+El sistema RBAC de PdlShot está **production-ready** con:
 - ✅ 100% de rutas protegidas (46/46)
 - ✅ 9 servicios de logging
 - ✅ Ownership contextual

@@ -89,7 +89,7 @@ export async function createPaymentPreference(
       },
       notification_url: `${baseUrl}/api/webhooks/mercadopago`,
       external_reference: params.registrationId,
-      statement_descriptor: 'PADAPP',
+      statement_descriptor: 'PADEL SHOT',
       metadata: {
         registration_id: params.registrationId,
       },

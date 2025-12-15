@@ -2,10 +2,11 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/hooks/use-auth"
-import { Trophy } from "lucide-react"
+import { useTheme } from "next-themes"
 import { navigation, NavigationItem, UserRole } from "@/lib/navigation"
 import {
   Sheet,
@@ -23,6 +24,7 @@ interface SidebarProps {
 export function Sidebar({ mobile = false, open = false, onOpenChange }: SidebarProps) {
   const pathname = usePathname()
   const { user } = useAuth()
+  const { theme } = useTheme()
 
   // Función para verificar si el usuario tiene acceso a una opción del menú
   const hasAccess = (item: NavigationItem): boolean => {
@@ -46,14 +48,22 @@ export function Sidebar({ mobile = false, open = false, onOpenChange }: SidebarP
   // Contenido del sidebar (reutilizable para desktop y mobile)
   const SidebarContent = ({ onLinkClick }: { onLinkClick?: () => void }) => (
     <>
-      <div className="flex h-16 shrink-0 items-center px-6">
+      <div className="flex h-16 shrink-0 items-center justify-center px-6">
         <Link
           href="/dashboard"
-          className="flex items-center space-x-2"
+          className="flex items-center group"
           onClick={onLinkClick}
         >
-          <Trophy className="h-8 w-8 text-primary" />
-          <span className="text-xl font-bold text-sidebar-foreground">PadApp</span>
+          <div className="relative shrink-0 transition-transform duration-300 ease-in-out group-hover:scale-110 group-hover:rotate-6">
+            <Image
+              src={theme === 'dark' ? '/images/logo-white.svg' : '/images/logo.svg'}
+              alt="PdlShot"
+              width={96}
+              height={96}
+              className="shrink-0"
+              priority
+            />
+          </div>
         </Link>
       </div>
 

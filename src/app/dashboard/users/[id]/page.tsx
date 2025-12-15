@@ -10,7 +10,7 @@ interface Props {
 }
 
 export const metadata: Metadata = {
-  title: 'Perfil de Usuario | PadApp'
+  title: 'Perfil de Usuario | PdlShot'
 }
 
 export const dynamic = 'force-dynamic'

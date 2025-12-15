@@ -1,8 +1,10 @@
 // src/components/layout/header.tsx
 "use client"
 
+import Image from "next/image"
 import { signOut } from "next-auth/react"
 import { useRouter } from "next/navigation"
+import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -19,6 +21,7 @@ import { useAuth } from "@/hooks/use-auth"
 export function Header() {
   const { user } = useAuth()
   const router = useRouter()
+  const { theme } = useTheme()
 
   const handleSignOut = () => {
     signOut({ callbackUrl: "/auth/login" })
@@ -43,10 +46,18 @@ export function Header() {
   return (
     <header className="flex h-16 items-center justify-between border-b bg-background px-4 sm:px-6">
       <div className="flex items-center space-x-2 sm:space-x-4">
-        <h1 className="text-base sm:text-lg lg:text-xl font-semibold text-foreground">
-          {/* Texto corto en mobile, completo en desktop */}
-          <span className="sm:hidden">PadApp</span>
-          <span className="hidden sm:inline">Sistema de Torneos de Pádel</span>
+        {/* Logo en mobile, texto completo en desktop */}
+        <div className="sm:hidden transition-transform duration-300 ease-in-out hover:scale-110 hover:rotate-6">
+          <Image
+            src={theme === 'dark' ? '/images/logo-white.svg' : '/images/logo.svg'}
+            alt="PdlShot"
+            width={64}
+            height={64}
+            priority
+          />
+        </div>
+        <h1 className="hidden sm:block text-base sm:text-lg lg:text-xl font-semibold text-foreground">
+          Sistema de Torneos de Pádel
         </h1>
       </div>
 

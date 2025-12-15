@@ -1,4 +1,4 @@
-# 📝 Sistema de Logs y Auditoría - PadApp
+# 📝 Sistema de Logs y Auditoría - PdlShot
 
 *Última actualización: Octubre 17, 2025*
 

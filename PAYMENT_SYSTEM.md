@@ -1,4 +1,4 @@
-# Sistema de Pagos - PadApp
+# Sistema de Pagos - PdlShot
 
 Sistema completo de pagos integrado con Mercado Pago y gestión manual de pagos.
 
@@ -146,13 +146,13 @@ Para probar con diferentes roles:
 
 ```bash
 # Admin (puede confirmar pagos manualmente)
-admin@padapp.com / 123456
+admin@padelshot.app / 123456
 
 # Club Admin (puede confirmar pagos de sus torneos)
-clubadmin@padapp.com / 123456
+clubadmin@padelshot.app / 123456
 
 # Player (solo puede pagar con Mercado Pago)
-player@padapp.com / 123456
+player@padelshot.app / 123456
 ```
 
 ## 💻 Uso en el Código

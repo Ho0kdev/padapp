@@ -11,7 +11,7 @@ interface Props {
 }
 
 export const metadata: Metadata = {
-  title: 'Editar Usuario | PadApp'
+  title: 'Editar Usuario | PdlShot'
 }
 
 async function getUser(id: string, sessionUserId: string) {

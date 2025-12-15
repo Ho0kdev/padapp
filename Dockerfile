@@ -1,4 +1,4 @@
-# Dockerfile para PadApp - Next.js 16 + pnpm + Prisma
+# Dockerfile para PdlShot - Next.js 16 + pnpm + Prisma
 # Multi-stage build optimizado para producción
 
 # ============================================

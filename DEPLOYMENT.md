@@ -1,6 +1,6 @@
-# 🚀 Guía de Deployment - PadApp
+# 🚀 Guía de Deployment - PdlShot
 
-Esta guía explica cómo desplegar PadApp en producción usando Docker y Dokploy.
+Esta guía explica cómo desplegar PdlShot en producción usando Docker y Dokploy.
 
 ## 📋 Requisitos previos
 
@@ -185,7 +185,7 @@ EMAIL_SERVER_HOST="smtp.gmail.com"
 EMAIL_SERVER_PORT=587
 EMAIL_SERVER_USER="your-email@gmail.com"
 EMAIL_SERVER_PASSWORD="your-app-password"
-EMAIL_FROM="noreply@padapp.com"
+EMAIL_FROM="noreply@padelshot.com"
 
 # Build optimization
 NEXT_SKIP_LINT=1  # Saltear ESLint en build (más rápido)
