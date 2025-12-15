@@ -50,7 +50,7 @@ export function Header() {
         <div className="sm:hidden transition-transform duration-300 ease-in-out hover:scale-110 hover:rotate-6">
           <Image
             src={theme === 'dark' ? '/images/logo-white.svg' : '/images/logo.svg'}
-            alt="PdlShot"
+            alt="PDLShot"
             width={64}
             height={64}
             priority

@@ -1,6 +1,6 @@
 {
-  "name": "PdlShot - Sistema de Torneos de Pádel",
-  "short_name": "PdlShot",
+  "name": "PDLShot - Sistema de Torneos de Pádel",
+  "short_name": "PDLShot",
   "description": "Gestión completa de torneos de pádel",
   "start_url": "/",
   "display": "standalone",

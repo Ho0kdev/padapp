@@ -1,26 +1,26 @@
 // Opciones de estados de torneo con labels, colores y estilos CSS
 export const tournamentStatusOptions = [
-  { value: "DRAFT", label: "Borrador", color: "gray", css: "bg-gray-100 text-gray-800 border-gray-200" },
-  { value: "PUBLISHED", label: "Publicado", color: "blue", css: "bg-blue-100 text-blue-800 border-blue-200" },
+  { value: "DRAFT", label: "Borrador", color: "gray", css: "bg-muted text-muted-foreground border-border" },
+  { value: "PUBLISHED", label: "Publicado", color: "primary", css: "bg-primary/10 text-primary border-primary/20" },
   { value: "REGISTRATION_OPEN", label: "Inscripciones Abiertas", color: "green", css: "bg-green-100 text-green-800 border-green-200" },
   { value: "REGISTRATION_CLOSED", label: "Inscripciones Cerradas", color: "yellow", css: "bg-yellow-100 text-yellow-800 border-yellow-200" },
   { value: "IN_PROGRESS", label: "En Progreso", color: "orange", css: "bg-orange-100 text-orange-800 border-orange-200" },
-  { value: "COMPLETED", label: "Completado", color: "purple", css: "bg-purple-100 text-purple-800 border-purple-200" },
-  { value: "CANCELLED", label: "Cancelado", color: "red", css: "bg-red-100 text-red-800 border-red-200" },
+  { value: "COMPLETED", label: "Completado", color: "green", css: "bg-green-100 text-green-800 border-green-200" },
+  { value: "CANCELLED", label: "Cancelado", color: "destructive", css: "bg-destructive/10 text-destructive border-destructive/20" },
 ] as const
 
 // Opciones de estados de inscripción con labels, colores y estilos CSS
 export const registrationStatusOptions = [
   { value: "PENDING", label: "Pendiente", color: "yellow", css: "bg-yellow-100 text-yellow-800 border-yellow-200" },
-  { value: "CONFIRMED", label: "Confirmado", color: "blue", css: "bg-blue-100 text-blue-800 border-blue-200" },
+  { value: "CONFIRMED", label: "Confirmado", color: "primary", css: "bg-primary/10 text-primary border-primary/20" },
   { value: "PAID", label: "Pagado", color: "green", css: "bg-green-100 text-green-800 border-green-200" },
-  { value: "CANCELLED", label: "Cancelado", color: "red", css: "bg-red-100 text-red-800 border-red-200" },
-  { value: "WAITLIST", label: "Lista de Espera", color: "gray", css: "bg-gray-100 text-gray-800 border-gray-200" },
+  { value: "CANCELLED", label: "Cancelado", color: "destructive", css: "bg-destructive/10 text-destructive border-destructive/20" },
+  { value: "WAITLIST", label: "Lista de Espera", color: "muted", css: "bg-muted text-muted-foreground border-border" },
 ] as const
 
 // Opciones de tipos de categoría con labels, colores y estilos CSS
 export const categoryTypeStyleOptions = [
-  { value: "AGE", label: "Por Edad", color: "blue", css: "bg-blue-100 text-blue-800 border-blue-200" },
+  { value: "AGE", label: "Por Edad", color: "primary", css: "bg-primary/10 text-primary border-primary/20" },
   { value: "SKILL", label: "Por Habilidad", color: "green", css: "bg-green-100 text-green-800 border-green-200" },
   { value: "RANKING", label: "Por Ranking", color: "purple", css: "bg-purple-100 text-purple-800 border-purple-200" },
   { value: "GENDER", label: "Por Género", color: "pink", css: "bg-pink-100 text-pink-800 border-pink-200" },
@@ -65,9 +65,9 @@ export const getCategoryTypeLabel = (type: string) => {
 
 // Opciones de género con estilos CSS
 export const genderRestrictionOptions = [
-  { value: "MALE", label: "Masculino", color: "blue", css: "bg-blue-100 text-blue-800 border-blue-200" },
+  { value: "MALE", label: "Masculino", color: "primary", css: "bg-primary/10 text-primary border-primary/20" },
   { value: "FEMALE", label: "Femenino", color: "pink", css: "bg-pink-100 text-pink-800 border-pink-200" },
-  { value: "MIXED", label: "Mixto", color: "gray", css: "bg-gray-100 text-gray-800 border-gray-200" },
+  { value: "MIXED", label: "Mixto", color: "muted", css: "bg-muted text-muted-foreground border-border" },
 ] as const
 
 // Helper para obtener estilos de restricción de género
@@ -187,7 +187,7 @@ export const getPlayerStatusLabel = (isActive: boolean) => {
 // Opciones de estado de club
 export const clubStatusOptions = [
   { value: "ACTIVE", label: "Activo", color: "green", css: "bg-green-100 text-green-800 border-green-200" },
-  { value: "INACTIVE", label: "Inactivo", color: "red", css: "bg-red-100 text-red-800 border-red-200" },
+  { value: "INACTIVE", label: "Inactivo", color: "destructive", css: "bg-destructive/10 text-destructive border-destructive/20" },
   { value: "MAINTENANCE", label: "Mantenimiento", color: "yellow", css: "bg-yellow-100 text-yellow-800 border-yellow-200" },
 ] as const
 
@@ -207,8 +207,8 @@ export const getClubStatusLabel = (status: string) => {
 export const courtStatusOptions = [
   { value: "AVAILABLE", label: "Disponible", color: "green", css: "bg-green-100 text-green-800 border-green-200" },
   { value: "MAINTENANCE", label: "Mantenimiento", color: "yellow", css: "bg-yellow-100 text-yellow-800 border-yellow-200" },
-  { value: "RESERVED", label: "Reservada", color: "blue", css: "bg-blue-100 text-blue-800 border-blue-200" },
-  { value: "UNAVAILABLE", label: "No Disponible", color: "red", css: "bg-red-100 text-red-800 border-red-200" },
+  { value: "RESERVED", label: "Reservada", color: "primary", css: "bg-primary/10 text-primary border-primary/20" },
+  { value: "UNAVAILABLE", label: "No Disponible", color: "destructive", css: "bg-destructive/10 text-destructive border-destructive/20" },
 ] as const
 
 // Helper para obtener estilos de estado de cancha
@@ -225,10 +225,10 @@ export const getCourtStatusLabel = (status: string) => {
 
 // Opciones de superficie de cancha
 export const courtSurfaceOptions = [
-  { value: "CONCRETE", label: "Concreto", color: "gray", css: "bg-gray-100 text-gray-800 border-gray-200" },
+  { value: "CONCRETE", label: "Concreto", color: "muted", css: "bg-muted text-muted-foreground border-border" },
   { value: "ARTIFICIAL_GRASS", label: "Césped Artificial", color: "green", css: "bg-green-100 text-green-800 border-green-200" },
   { value: "CERAMIC", label: "Cerámica", color: "orange", css: "bg-orange-100 text-orange-800 border-orange-200" },
-  { value: "OTHER", label: "Otra", color: "blue", css: "bg-blue-100 text-blue-800 border-blue-200" },
+  { value: "OTHER", label: "Otra", color: "primary", css: "bg-primary/10 text-primary border-primary/20" },
 ] as const
 
 // Helper para obtener estilos de superficie de cancha
@@ -245,10 +245,10 @@ export const getCourtSurfaceLabel = (surface: string) => {
 
 // Opciones de estado de partido
 export const matchStatusOptions = [
-  { value: "SCHEDULED", label: "Programado", color: "blue", css: "bg-blue-100 text-blue-800 border-blue-200" },
-  { value: "IN_PROGRESS", label: "En Progreso", color: "yellow", css: "bg-yellow-100 text-yellow-800 border-yellow-200" },
+  { value: "SCHEDULED", label: "Programado", color: "primary", css: "bg-primary/10 text-primary border-primary/20" },
+  { value: "IN_PROGRESS", label: "En Progreso", color: "orange", css: "bg-orange-100 text-orange-800 border-orange-200" },
   { value: "COMPLETED", label: "Completado", color: "green", css: "bg-green-100 text-green-800 border-green-200" },
-  { value: "CANCELLED", label: "Cancelado", color: "red", css: "bg-red-100 text-red-800 border-red-200" },
+  { value: "CANCELLED", label: "Cancelado", color: "destructive", css: "bg-destructive/10 text-destructive border-destructive/20" },
   { value: "WALKOVER", label: "Walkover", color: "purple", css: "bg-purple-100 text-purple-800 border-purple-200" },
 ] as const
 
@@ -291,9 +291,9 @@ export const formatCategoryLevel = (categoryName: string, level: number) => {
 
 // Opciones de estado de equipo
 export const teamStatusOptions = [
-  { value: "DRAFT", label: "Borrador", color: "gray", css: "bg-gray-100 text-gray-800 border-gray-200" },
+  { value: "DRAFT", label: "Borrador", color: "muted", css: "bg-muted text-muted-foreground border-border" },
   { value: "CONFIRMED", label: "Confirmado", color: "green", css: "bg-green-100 text-green-800 border-green-200" },
-  { value: "CANCELLED", label: "Cancelado", color: "red", css: "bg-red-100 text-red-800 border-red-200" },
+  { value: "CANCELLED", label: "Cancelado", color: "destructive", css: "bg-destructive/10 text-destructive border-destructive/20" },
 ] as const
 
 // Helper para obtener estilos de estado de equipo
@@ -310,8 +310,8 @@ export const getTeamStatusLabel = (status: string) => {
 
 // Opciones de estado de formación de equipo (para inscripciones)
 export const teamFormationStatusOptions = [
-  { value: "HAS_TEAM", label: "Formado", color: "blue", css: "bg-blue-600 hover:bg-blue-700" },
-  { value: "NO_TEAM", label: "Sin Equipo", color: "gray", css: "text-muted-foreground" },
+  { value: "HAS_TEAM", label: "Formado", color: "primary", css: "bg-primary hover:bg-primary/90 text-primary-foreground" },
+  { value: "NO_TEAM", label: "Sin Equipo", color: "muted", css: "text-muted-foreground" },
 ] as const
 
 // Helper para obtener estilos de formación de equipo
@@ -328,7 +328,7 @@ export const getTeamFormationStatusLabel = (hasTeam: boolean) => {
 
 // Opciones de fase de partido (PhaseType)
 export const phaseTypeOptions = [
-  { value: "GROUP_STAGE", label: "Fase de Grupos", color: "blue", css: "bg-blue-100 text-blue-800 border-blue-200" },
+  { value: "GROUP_STAGE", label: "Fase de Grupos", color: "primary", css: "bg-primary/10 text-primary border-primary/20" },
   { value: "ROUND_OF_32", label: "32avos de Final", color: "cyan", css: "bg-cyan-100 text-cyan-800 border-cyan-200" },
   { value: "ROUND_OF_16", label: "Octavos de Final", color: "teal", css: "bg-teal-100 text-teal-800 border-teal-200" },
   { value: "QUARTERFINALS", label: "Cuartos de Final", color: "green", css: "bg-green-100 text-green-800 border-green-200" },
@@ -353,9 +353,9 @@ export const getPhaseTypeLabel = (phaseType: string) => {
 export const paymentStatusOptions = [
   { value: "PENDING", label: "Pendiente", color: "yellow", css: "bg-yellow-100 text-yellow-800 border-yellow-200" },
   { value: "PAID", label: "Pagado", color: "green", css: "bg-green-100 text-green-800 border-green-200" },
-  { value: "FAILED", label: "Fallido", color: "red", css: "bg-red-100 text-red-800 border-red-200" },
+  { value: "FAILED", label: "Fallido", color: "destructive", css: "bg-destructive/10 text-destructive border-destructive/20" },
   { value: "REFUNDED", label: "Reembolsado", color: "purple", css: "bg-purple-100 text-purple-800 border-purple-200" },
-  { value: "CANCELLED", label: "Cancelado", color: "gray", css: "bg-gray-100 text-gray-800 border-gray-200" },
+  { value: "CANCELLED", label: "Cancelado", color: "muted", css: "bg-muted text-muted-foreground border-border" },
 ] as const
 
 // Helper para obtener estilos de estado de pago
@@ -372,7 +372,7 @@ export const getPaymentStatusLabel = (status: string) => {
 
 // Opciones de método de pago
 export const paymentMethodOptions = [
-  { value: "MERCADOPAGO_CARD", label: "Tarjeta (MercadoPago)", color: "blue", css: "bg-blue-100 text-blue-800 border-blue-200" },
+  { value: "MERCADOPAGO_CARD", label: "Tarjeta (MercadoPago)", color: "primary", css: "bg-primary/10 text-primary border-primary/20" },
   { value: "MERCADOPAGO_WALLET", label: "Wallet Digital", color: "purple", css: "bg-purple-100 text-purple-800 border-purple-200" },
   { value: "BANK_TRANSFER", label: "Transferencia Bancaria", color: "teal", css: "bg-teal-100 text-teal-800 border-teal-200" },
   { value: "CASH", label: "Efectivo", color: "green", css: "bg-green-100 text-green-800 border-green-200" },

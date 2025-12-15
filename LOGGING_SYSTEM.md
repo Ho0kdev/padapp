@@ -1,4 +1,4 @@
-# 📝 Sistema de Logs y Auditoría - PdlShot
+# 📝 Sistema de Logs y Auditoría - PDLShot
 
 *Última actualización: Octubre 17, 2025*
 

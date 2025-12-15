@@ -1,4 +1,4 @@
-# Sistema de Pagos - PdlShot
+# Sistema de Pagos - PDLShot
 
 Sistema completo de pagos integrado con Mercado Pago y gestión manual de pagos.
 

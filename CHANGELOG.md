@@ -1,6 +1,6 @@
 # Changelog
 
-Historial detallado de cambios y mejoras del proyecto PdlShot.
+Historial detallado de cambios y mejoras del proyecto PDLShot.
 
 ## December 2024
 

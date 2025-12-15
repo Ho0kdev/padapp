@@ -57,7 +57,7 @@ export function Sidebar({ mobile = false, open = false, onOpenChange }: SidebarP
           <div className="relative shrink-0 transition-transform duration-300 ease-in-out group-hover:scale-110 group-hover:rotate-6">
             <Image
               src={theme === 'dark' ? '/images/logo-white.svg' : '/images/logo.svg'}
-              alt="PdlShot"
+              alt="PDLShot"
               width={96}
               height={96}
               className="shrink-0"

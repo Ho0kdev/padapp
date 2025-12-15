@@ -1,4 +1,4 @@
-# 🏓 PdlShot - Sistema de Gestión de Torneos de Pádel
+# 🏓 PDLShot - Sistema de Gestión de Torneos de Pádel
 
 [![Next.js](https://img.shields.io/badge/Next.js-15-black)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19-blue)](https://reactjs.org/)
@@ -8,7 +8,7 @@
 
 ## 📋 Descripción del Proyecto
 
-PdlShot es una aplicación web completa para la gestión integral de torneos de pádel. Desarrollada con tecnologías modernas, permite administrar torneos, jugadores, clubes, rankings y mucho más de manera eficiente y profesional.
+PDLShot es una aplicación web completa para la gestión integral de torneos de pádel. Desarrollada con tecnologías modernas, permite administrar torneos, jugadores, clubes, rankings y mucho más de manera eficiente y profesional.
 
 **Estado Actual**: ✅ **99% completo** - Sistema production-ready con 46 API endpoints (100% RBAC protegidos), 91+ componentes React, 30+ tablas de base de datos, y sistema de UI/UX profesional con ordenamiento, filtros y navegación avanzada en 8 páginas principales.
 
@@ -744,7 +744,7 @@ GET /api/admin/logs
 
 ## 🔒 Sistema de Autenticación y RBAC (Role-Based Access Control)
 
-PdlShot implementa un sistema completo de control de acceso basado en roles con permisos granulares, auditoría y validaciones de seguridad en todos los niveles.
+PDLShot implementa un sistema completo de control de acceso basado en roles con permisos granulares, auditoría y validaciones de seguridad en todos los niveles.
 
 ### 🎭 Roles de Usuario
 
@@ -1652,7 +1652,7 @@ Para preguntas, sugerencias o reportar problemas:
 
 ---
 
-**🏓 PdlShot** - Sistema completo de gestión de torneos de pádel desarrollado con las mejores prácticas y tecnologías modernas.
+**🏓 PDLShot** - Sistema completo de gestión de torneos de pádel desarrollado con las mejores prácticas y tecnologías modernas.
 
 ### 📊 Estadísticas del Proyecto
 

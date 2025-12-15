@@ -1,6 +1,6 @@
-# 🚀 Guía de Deployment - PdlShot
+# 🚀 Guía de Deployment - PDLShot
 
-Esta guía explica cómo desplegar PdlShot en producción usando Docker y Dokploy.
+Esta guía explica cómo desplegar PDLShot en producción usando Docker y Dokploy.
 
 ## 📋 Requisitos previos
 

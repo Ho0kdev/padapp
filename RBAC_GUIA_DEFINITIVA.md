@@ -1275,8 +1275,8 @@ export function middleware(request: NextRequest) {
 | RBAC básico | ✅ | ✅ | Paridad |
 | Ownership contextual | ✅ | ✅ | Paridad |
 | Herencia de roles | ✅ | ⏳ Mejora #4 | AccessControl superior |
-| Caché de permisos | ❌ | ✅ | **PdlShot superior** |
-| Auditoría | ❌ | ✅ | **PdlShot superior** |
+| Caché de permisos | ❌ | ✅ | **PDLShot superior** |
+| Auditoría | ❌ | ✅ | **PDLShot superior** |
 | TypeScript nativo | ✅ | ✅ | Paridad |
 | Tests incluidos | ✅ | ⏳ Mejora #5 | AccessControl superior |
 
@@ -1286,7 +1286,7 @@ export function middleware(request: NextRequest) {
 
 ### vs Oso (Framework Empresarial)
 
-| Característica | Oso | PdlShot RBAC | Estado |
+| Característica | Oso | PDLShot RBAC | Estado |
 |----------------|-----|-------------|--------|
 | RBAC | ✅ | ✅ | Paridad |
 | ReBAC (relaciones) | ✅ | ✅ (ownership) | Paridad |
@@ -1294,10 +1294,10 @@ export function middleware(request: NextRequest) {
 | Lenguaje de políticas | ✅ Polar DSL | TypeScript | Diferente enfoque |
 | Testing built-in | ✅ | ⏳ Mejora #5 | Oso superior |
 | Performance | ✅ | ✅ Con caché | Paridad |
-| Auditoría | ⚠️ Externa | ✅ Built-in | **PdlShot superior** |
-| Curva de aprendizaje | Alta | Baja | **PdlShot superior** |
+| Auditoría | ⚠️ Externa | ✅ Built-in | **PDLShot superior** |
+| Curva de aprendizaje | Alta | Baja | **PDLShot superior** |
 
-**Conclusión**: Oso es más potente y flexible, pero PdlShot RBAC es más simple y suficiente para las necesidades del proyecto.
+**Conclusión**: Oso es más potente y flexible, pero PDLShot RBAC es más simple y suficiente para las necesidades del proyecto.
 
 ---
 
@@ -1349,7 +1349,7 @@ export function middleware(request: NextRequest) {
 
 ## 💡 Conclusión
 
-El sistema RBAC de PdlShot está **production-ready** con:
+El sistema RBAC de PDLShot está **production-ready** con:
 - ✅ 100% de rutas protegidas (46/46)
 - ✅ 9 servicios de logging
 - ✅ Ownership contextual

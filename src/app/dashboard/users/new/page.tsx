@@ -7,7 +7,7 @@ import { DashboardLayout } from '@/components/layout/dashboard-layout'
 import { UserForm } from '@/components/users/user-form'
 
 export const metadata: Metadata = {
-  title: 'Nuevo Usuario | PdlShot',
+  title: 'Nuevo Usuario | PDLShot',
   description: 'Crear nuevo usuario en el sistema'
 }
 

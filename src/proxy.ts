@@ -1,4 +1,4 @@
-// src/middleware.ts
+// src/proxy.ts
 import { withAuth } from "next-auth/middleware"
 import { NextRequest, NextResponse } from "next/server"
 import { checkRoleAccess } from "@/lib/navigation"
@@ -52,12 +52,12 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
 }
 
 /**
- * Middleware mejorado con separación de autenticación y autorización
+ * Proxy mejorado con separación de autenticación y autorización
  * Usa el nuevo sistema RBAC para verificar permisos
  * Incluye headers de seguridad HTTP
  */
 export default withAuth(
-  function middleware(req: any) {
+  function proxy(req: any) {
     const { pathname } = req.nextUrl
     const token = req.nextauth.token
 

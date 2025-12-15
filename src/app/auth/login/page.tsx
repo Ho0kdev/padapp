@@ -11,7 +11,7 @@ export default function LoginPage() {
             <div className="transition-transform duration-500 ease-out hover:scale-110 hover:rotate-12">
               <Image
                 src="/images/logo.svg"
-                alt="PdlShot"
+                alt="PDLShot"
                 width={140}
                 height={140}
                 priority

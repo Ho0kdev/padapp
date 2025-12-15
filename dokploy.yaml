@@ -1,4 +1,4 @@
-# Configuración de Dokploy para PdlShot
+# Configuración de Dokploy para PDLShot
 version: "1.0"
 
 build:

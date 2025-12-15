@@ -1,5 +1,5 @@
 import './globals.css'
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import { Providers } from "@/components/providers/session-provider"
 import { MobileNav } from "@/components/ui/mobile-nav"
@@ -7,7 +7,7 @@ import { MobileNav } from "@/components/ui/mobile-nav"
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'PdlShot - Sistema de Torneos de Pádel',
+  title: 'PDLShot - Sistema de Torneos de Pádel',
   description: 'Gestión completa de torneos de pádel',
   icons: {
     icon: [
@@ -20,15 +20,18 @@ export const metadata: Metadata = {
     ],
   },
   manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'PDLShot',
+  },
+}
+
+export const viewport: Viewport = {
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: '#ffffff' },
     { media: '(prefers-color-scheme: dark)', color: '#191f3a' },
   ],
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: 'default',
-    title: 'PdlShot',
-  },
 }
 
 export default function RootLayout({
