@@ -1868,10 +1868,15 @@ export class BracketService {
           hasSameGroupMatchup = true
         }
 
-        // Verificar jerarquía de posiciones (el primero debe tener mejor posición)
+        // Verificar jerarquía de posiciones
         if (team1.position >= team2.position) {
-          console.log(`⚠️ ADVERTENCIA: Jerarquía incorrecta en Match ${i + 1}: ${team1.groupName}-${team1.position} vs ${team2.groupName}-${team2.position} (debería ser mejor vs peor)`)
-          hasWrongSeeding = true
+          // Si son de la misma posición pero diferentes grupos, es aceptable (ej: dos primeros de grupos distintos)
+          if (team1.position === team2.position && team1.groupName !== team2.groupName) {
+            console.log(`ℹ️ INFO: Match ${i + 1}: ${team1.groupName}-${team1.position} vs ${team2.groupName}-${team2.position} (misma posición, diferentes grupos - normal con muchos grupos)`)
+          } else {
+            console.log(`⚠️ ADVERTENCIA: Jerarquía incorrecta en Match ${i + 1}: ${team1.groupName}-${team1.position} vs ${team2.groupName}-${team2.position} (debería ser mejor vs peor)`)
+            hasWrongSeeding = true
+          }
         }
       }
     }
@@ -1879,7 +1884,7 @@ export class BracketService {
     if (!hasSameGroupMatchup && !hasWrongSeeding) {
       console.log(`✅ Algoritmo anti-cruces exitoso: No hay cruces del mismo grupo y se respeta la jerarquía`)
     } else if (!hasSameGroupMatchup) {
-      console.log(`⚠️ No hay cruces del mismo grupo, pero hay problemas de jerarquía`)
+      console.log(`ℹ️ No hay cruces del mismo grupo. Algunos matches tienen equipos de misma posición (normal con muchos grupos)`)
     }
 
     return result
