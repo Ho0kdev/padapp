@@ -468,57 +468,55 @@ export function UserForm({ initialData, userId, currentUserRole, isOwnProfile }:
                     )}
                   />
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="gender"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Género *</FormLabel>
-                          <Select onValueChange={handleGenderChange} defaultValue={field.value} disabled={!canEditSensitiveFields}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Selecciona género" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="MALE">Masculino</SelectItem>
-                              <SelectItem value="FEMALE">Femenino</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          {!canEditSensitiveFields && (
-                            <FormDescription className="text-amber-600">
-                              Solo administradores pueden modificar el género
-                            </FormDescription>
-                          )}
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                  <FormField
+                    control={form.control}
+                    name="gender"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Género *</FormLabel>
+                        <Select onValueChange={handleGenderChange} defaultValue={field.value} disabled={!canEditSensitiveFields}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecciona género" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="MALE">Masculino</SelectItem>
+                            <SelectItem value="FEMALE">Femenino</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {!canEditSensitiveFields && (
+                          <FormDescription className="text-amber-600">
+                            Solo administradores pueden modificar el género
+                          </FormDescription>
+                        )}
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                    <FormField
-                      control={form.control}
-                      name="dominantHand"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Mano dominante</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Selecciona mano" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="RIGHT">Diestro</SelectItem>
-                              <SelectItem value="LEFT">Zurdo</SelectItem>
-                              <SelectItem value="AMBIDEXTROUS">Ambidiestro</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                  <FormField
+                    control={form.control}
+                    name="dominantHand"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Mano dominante</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecciona mano" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="RIGHT">Diestro</SelectItem>
+                            <SelectItem value="LEFT">Zurdo</SelectItem>
+                            <SelectItem value="AMBIDEXTROUS">Ambidiestro</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
                   <FormField
                     control={form.control}
@@ -629,36 +627,34 @@ export function UserForm({ initialData, userId, currentUserRole, isOwnProfile }:
                   Contacto de Emergencia (Opcional)
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="emergencyContactName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Nombre del contacto</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="María Pérez" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+              <CardContent className="grid gap-4 md:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="emergencyContactName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nombre del contacto</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="María Pérez" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                  <FormField
-                    control={form.control}
-                    name="emergencyContactPhone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Teléfono del contacto</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="+54 9 11 9876-5432" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                <FormField
+                  control={form.control}
+                  name="emergencyContactPhone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Teléfono del contacto</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="+54 9 11 9876-5432" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </CardContent>
             </Card>
           )}
@@ -729,16 +725,17 @@ export function UserForm({ initialData, userId, currentUserRole, isOwnProfile }:
           )}
 
           {/* Actions */}
-          <div className="flex justify-end space-x-4">
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
             <Button
               type="button"
               variant="outline"
               onClick={() => router.back()}
               disabled={loading}
+              className="w-full sm:w-auto"
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={loading} className="w-full sm:w-auto">
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               <Save className="mr-2 h-4 w-4" />
               {isEditing ? 'Guardar Cambios' : 'Crear Usuario'}

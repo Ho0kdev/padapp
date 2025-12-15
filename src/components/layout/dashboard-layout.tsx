@@ -14,7 +14,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center">
+      <div className="flex h-dvh items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
           <p className="mt-2 text-sm text-muted-foreground">Cargando...</p>
@@ -24,15 +24,15 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   }
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex min-h-dvh bg-background">
       {/* Sidebar Desktop - Hidden on mobile */}
       <div className="hidden lg:block">
         <Sidebar />
       </div>
 
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex flex-1 flex-col">
         <Header />
-        <main className="flex-1 overflow-auto p-4 sm:p-6 pb-20 lg:pb-6">
+        <main className="flex-1 p-4 sm:p-6 pb-20 lg:pb-6">
           {children}
         </main>
       </div>

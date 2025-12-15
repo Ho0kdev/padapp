@@ -4,7 +4,7 @@ import { RegisterForm } from "@/components/auth/register-form"
 
 export default function RegisterPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-dvh flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center animate-in fade-in slide-in-from-top-4 duration-500">
           <div className="flex justify-center mb-6">
