@@ -559,7 +559,20 @@ export function UserDetail({ user }: UserDetailProps) {
         {/* Stats Cards */}
         <div className="md:col-span-2 space-y-4">
           {user.player && (
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-2">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Porcentaje de Victoria</CardTitle>
+                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{winRate}%</div>
+                  <p className="text-xs text-muted-foreground">
+                    {overallStats?.matchesWon} victorias de {overallStats?.matchesPlayed} partidos
+                  </p>
+                </CardContent>
+              </Card>
+
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Categoría Principal</CardTitle>
@@ -600,19 +613,6 @@ export function UserDetail({ user }: UserDetailProps) {
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Porcentaje de Victoria</CardTitle>
-                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{winRate}%</div>
-                  <p className="text-xs text-muted-foreground">
-                    {overallStats?.matchesWon} victorias de {overallStats?.matchesPlayed} partidos
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Torneos Activos</CardTitle>
                   <Trophy className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
@@ -628,19 +628,6 @@ export function UserDetail({ user }: UserDetailProps) {
                   </p>
                 </CardContent>
               </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Torneos Organizados</CardTitle>
-                  <Award className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{user.organizerTournaments.length}</div>
-                  <p className="text-xs text-muted-foreground">
-                    Como organizador
-                  </p>
-                </CardContent>
-              </Card>
             </div>
           )}
         </div>
@@ -648,7 +635,7 @@ export function UserDetail({ user }: UserDetailProps) {
 
       {/* Detailed Information Tabs */}
       <Tabs defaultValue="matches" className="space-y-4">
-        <TabsList>
+        <TabsList className="w-full justify-start overflow-x-auto flex-nowrap">
           {user.player && (
             <>
               {((user.player.upcomingMatches && user.player.upcomingMatches.length > 0) ||
@@ -663,7 +650,6 @@ export function UserDetail({ user }: UserDetailProps) {
           {user.organizerTournaments.length > 0 && (
             <TabsTrigger value="organized">Torneos Organizados</TabsTrigger>
           )}
-          <TabsTrigger value="notifications">Notificaciones</TabsTrigger>
         </TabsList>
 
         {user.player && (
@@ -733,14 +719,11 @@ export function UserDetail({ user }: UserDetailProps) {
                           <div>
                             <h4 className="font-medium">{ranking.category?.name || 'No especificada'}</h4>
                             <p className="text-sm text-muted-foreground">
-                              {ranking.category?.description || 'Sin descripción'}
+                              Temporada {ranking.seasonYear}
                             </p>
                           </div>
                           <div className="text-right">
                             <div className="font-bold">{ranking.currentPoints} pts</div>
-                            <div className="text-sm text-muted-foreground">
-                              Temporada {ranking.seasonYear}
-                            </div>
                           </div>
                         </div>
                       ))}
@@ -767,31 +750,36 @@ export function UserDetail({ user }: UserDetailProps) {
                           key={team.id}
                           className="p-4 border rounded-lg space-y-2"
                         >
-                          {/* Línea 1: Torneo - Categoría | Estado del Torneo */}
-                          <div className="flex items-center justify-between">
-                            <div className="font-medium text-lg">
-                              <span className="font-medium">{team.tournament.name}</span> - {team.category.name}
-                            </div>
+                          {/* Línea 1: Torneo - Categoría */}
+                          <div className="font-medium text-sm truncate">
+                            {team.tournament.name} - {team.category.name}
+                          </div>
+
+                          {/* Línea 2: Género + Status del Torneo */}
+                          <div className="flex items-center gap-2">
+                            {team.category.genderRestriction && (
+                              <Badge
+                                variant="outline"
+                                className={`text-xs ${
+                                  team.category.genderRestriction === 'MALE'
+                                    ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300'
+                                    : team.category.genderRestriction === 'FEMALE'
+                                    ? 'bg-pink-50 text-pink-700 border-pink-200 dark:bg-pink-950 dark:text-pink-300'
+                                    : 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950 dark:text-purple-300'
+                                }`}
+                              >
+                                {team.category.genderRestriction === 'MALE'
+                                  ? 'Masculino'
+                                  : team.category.genderRestriction === 'FEMALE'
+                                  ? 'Femenino'
+                                  : 'Mixto'}
+                              </Badge>
+                            )}
                             {getTournamentStatusBadge(team.tournament.status)}
                           </div>
 
-                          {/* Línea 2: Restricciones de la categoría */}
-                          {getCategoryRestrictionsArray(team.category as any).length > 0 && (
-                            <div className="flex items-center gap-1 flex-wrap">
-                              {getCategoryRestrictionsArray(team.category as any).map((restriction, index) => (
-                                <Badge
-                                  key={`${restriction.type}-${index}`}
-                                  variant="outline"
-                                  className={restriction.style}
-                                >
-                                  {restriction.label}
-                                </Badge>
-                              ))}
-                            </div>
-                          )}
-
                           {/* Línea 3: Nombre del equipo */}
-                          <h4 className="text-md text-muted-foreground">{team.name}</h4>
+                          <h4 className="text-sm font-medium">{team.name}</h4>
 
                           {/* Línea 4: Compañero */}
                           <p className="text-sm text-muted-foreground">
@@ -800,7 +788,7 @@ export function UserDetail({ user }: UserDetailProps) {
 
                           {/* Línea 5: Fechas del torneo */}
                           {formatTournamentDates(team.tournament.tournamentStart, team.tournament.tournamentEnd) && (
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-xs text-muted-foreground">
                               {formatTournamentDates(team.tournament.tournamentStart, team.tournament.tournamentEnd)}
                             </p>
                           )}
@@ -911,40 +899,6 @@ export function UserDetail({ user }: UserDetailProps) {
           </TabsContent>
         )}
 
-        <TabsContent value="notifications">
-          <Card>
-            <CardHeader>
-              <CardTitle>Notificaciones Recientes</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {user.notifications.length > 0 ? (
-                <div className="space-y-4">
-                  {user.notifications.map((notification) => (
-                    <div
-                      key={notification.id}
-                      className="p-4 border rounded-lg space-y-2"
-                    >
-                      <div className="flex items-center justify-between">
-                        <h4 className="font-medium">{notification.title}</h4>
-                        <Badge variant={notification.status === 'SENT' ? 'default' : 'secondary'}>
-                          {notification.status}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground">{notification.message}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {format(new Date(notification.createdAt), 'dd/MM/yyyy HH:mm', { locale: es })}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-center text-muted-foreground py-8">
-                  No hay notificaciones
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
       </Tabs>
     </div>
   )

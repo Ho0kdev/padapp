@@ -139,12 +139,12 @@ export function MatchCard({
     <Card className="hover:shadow-md transition-shadow">
       <CardContent className="p-4">
         <div className="space-y-3">
-          {/* Header: Match number/Tournament info + Status */}
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
+          {/* Header: Tournament info */}
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex-1 min-w-0">
               {showTournamentInfo && tournament && category ? (
                 <>
-                  <div className="font-medium text-sm">
+                  <div className="font-medium text-sm truncate">
                     {tournament.name} - {category.name}
                   </div>
                   <div className="flex items-center gap-2 mt-1">
@@ -153,11 +153,7 @@ export function MatchCard({
                         {getPhaseTypeLabel(match.phaseType)}
                       </Badge>
                     )}
-                    {match.matchNumber && (
-                      <span className="text-xs text-muted-foreground">
-                        Partido {match.matchNumber}
-                      </span>
-                    )}
+                    {getStatusBadge()}
                   </div>
                 </>
               ) : (
@@ -170,57 +166,55 @@ export function MatchCard({
                   <span className="text-xs font-medium text-muted-foreground">
                     Partido {match.matchNumber}
                   </span>
+                  {getStatusBadge()}
                 </div>
               )}
             </div>
-            <div className="flex items-center gap-2">
-              {getStatusBadge()}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm">
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem asChild>
-                    <Link href={`/dashboard/matches/${match.id}`}>
-                      <Eye className="mr-2 h-4 w-4" />
-                      Ver detalle
-                    </Link>
-                  </DropdownMenuItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 flex-shrink-0">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                  <Link href={`/dashboard/matches/${match.id}`}>
+                    <Eye className="mr-2 h-4 w-4" />
+                    Ver detalle
+                  </Link>
+                </DropdownMenuItem>
 
-                  {canManage && match.status !== "COMPLETED" && match.status !== "WALKOVER" && (
-                    <>
-                      <DropdownMenuSeparator />
+                {canManage && match.status !== "COMPLETED" && match.status !== "WALKOVER" && (
+                  <>
+                    <DropdownMenuSeparator />
 
-                      {onSchedule && (
-                        <DropdownMenuItem onClick={onSchedule}>
-                          <Calendar className="mr-2 h-4 w-4" />
-                          Programar partido
-                        </DropdownMenuItem>
-                      )}
+                    {onSchedule && (
+                      <DropdownMenuItem onClick={onSchedule}>
+                        <Calendar className="mr-2 h-4 w-4" />
+                        Programar partido
+                      </DropdownMenuItem>
+                    )}
 
-                      {match.status === "SCHEDULED" && onStartMatch && (
-                        <DropdownMenuItem
-                          onClick={onStartMatch}
-                          disabled={statusLoading}
-                        >
-                          <Play className="mr-2 h-4 w-4" />
-                          Iniciar partido
-                        </DropdownMenuItem>
-                      )}
+                    {match.status === "SCHEDULED" && onStartMatch && (
+                      <DropdownMenuItem
+                        onClick={onStartMatch}
+                        disabled={statusLoading}
+                      >
+                        <Play className="mr-2 h-4 w-4" />
+                        Iniciar partido
+                      </DropdownMenuItem>
+                    )}
 
-                      {onLoadResult && match.team1 && match.team2 && (
-                        <DropdownMenuItem onClick={onLoadResult}>
-                          <CheckCircle className="mr-2 h-4 w-4" />
-                          Cargar resultado
-                        </DropdownMenuItem>
-                      )}
-                    </>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+                    {onLoadResult && match.team1 && match.team2 && (
+                      <DropdownMenuItem onClick={onLoadResult}>
+                        <CheckCircle className="mr-2 h-4 w-4" />
+                        Cargar resultado
+                      </DropdownMenuItem>
+                    )}
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           {/* Teams Grid */}
@@ -230,7 +224,7 @@ export function MatchCard({
               <div className="divide-y">
                 <div
                   className={cn(
-                    "p-2 text-sm",
+                    "p-1.5 text-xs md:text-sm h-10 flex items-center leading-tight",
                     team1Won && "bg-green-50 dark:bg-green-950 font-semibold"
                   )}
                 >
@@ -238,7 +232,7 @@ export function MatchCard({
                 </div>
                 <div
                   className={cn(
-                    "p-2 text-sm",
+                    "p-1.5 text-xs md:text-sm h-10 flex items-center leading-tight",
                     team2Won && "bg-green-50 dark:bg-green-950 font-semibold"
                   )}
                 >
@@ -250,10 +244,10 @@ export function MatchCard({
               {isCompleted && match.sets && match.sets.length > 0 && (
                 <div className="flex divide-x">
                   {match.sets.map((set) => (
-                    <div key={set.setNumber} className="divide-y min-w-[40px]">
+                    <div key={set.setNumber} className="divide-y w-12">
                       <div
                         className={cn(
-                          "p-2 text-center font-mono text-sm",
+                          "p-2 text-center font-mono text-sm h-10 flex items-center justify-center",
                           set.team1Games > set.team2Games && "bg-green-100 dark:bg-green-900 font-bold"
                         )}
                       >
@@ -261,7 +255,7 @@ export function MatchCard({
                       </div>
                       <div
                         className={cn(
-                          "p-2 text-center font-mono text-sm",
+                          "p-2 text-center font-mono text-sm h-10 flex items-center justify-center",
                           set.team2Games > set.team1Games && "bg-green-100 dark:bg-green-900 font-bold"
                         )}
                       >

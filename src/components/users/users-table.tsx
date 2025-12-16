@@ -417,18 +417,6 @@ export function UsersTable() {
         </CardHeader>
         <CardContent className="space-y-3 pb-4">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Rol</span>
-            {getRoleBadge(user.role)}
-          </div>
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Estado</span>
-            {getStatusBadge(user.status)}
-          </div>
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Género</span>
-            {getGenderBadge(user.player?.gender) || <span className="text-muted-foreground">-</span>}
-          </div>
-          <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Categoría</span>
             {user.player?.primaryCategory ? (
               <div className="flex items-center gap-1">
@@ -535,8 +523,8 @@ export function UsersTable() {
 
   return (
     <div className="space-y-4">
-      {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      {/* Stats Cards - Oculto en mobile */}
+      <div className="hidden md:grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Usuarios</CardTitle>
