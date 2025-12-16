@@ -268,7 +268,7 @@ export function UserForm({ initialData, userId, currentUserRole, isOwnProfile }:
                 Información de Usuario
               </CardTitle>
             </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-2">
+            <CardContent className="grid gap-4 md:grid-cols-2 [&>*]:min-w-0">
                 <FormField
                   control={form.control}
                   name="email"
@@ -432,7 +432,7 @@ export function UserForm({ initialData, userId, currentUserRole, isOwnProfile }:
                   Información del Jugador
                 </CardTitle>
               </CardHeader>
-              <CardContent className="grid gap-4 md:grid-cols-2">
+              <CardContent className="grid gap-4 md:grid-cols-2 [&>*]:min-w-0">
                   <FormField
                     control={form.control}
                     name="phone"
@@ -547,11 +547,6 @@ export function UserForm({ initialData, userId, currentUserRole, isOwnProfile }:
                                 {category.genderRestriction === 'MIXED' && (
                                   <span className="text-blue-500 ml-2 text-xs">(Mixta)</span>
                                 )}
-                                {category.description && (
-                                  <span className="text-muted-foreground ml-2">
-                                    - {category.description}
-                                  </span>
-                                )}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -627,7 +622,7 @@ export function UserForm({ initialData, userId, currentUserRole, isOwnProfile }:
                   Contacto de Emergencia (Opcional)
                 </CardTitle>
               </CardHeader>
-              <CardContent className="grid gap-4 md:grid-cols-2">
+              <CardContent className="grid gap-4 md:grid-cols-2 [&>*]:min-w-0">
                 <FormField
                   control={form.control}
                   name="emergencyContactName"
