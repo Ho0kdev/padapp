@@ -378,7 +378,7 @@ export function CategoriesTable() {
       </div>
 
       {/* Vista desktop con tabla clickeable */}
-      <div className="hidden lg:block rounded-md border">
+      <div className="hidden lg:block rounded-md border overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>

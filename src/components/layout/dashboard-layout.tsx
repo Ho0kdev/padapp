@@ -24,15 +24,15 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   }
 
   return (
-    <div className="flex min-h-dvh bg-background">
+    <div className="flex min-h-dvh bg-background max-w-full">
       {/* Sidebar Desktop - Hidden on mobile */}
       <div className="hidden lg:block">
         <Sidebar />
       </div>
 
-      <div className="flex flex-1 flex-col">
+      <div className="flex flex-1 flex-col min-w-0 max-w-full">
         <Header />
-        <main className="flex-1 p-4 sm:p-6 pb-20 lg:pb-6">
+        <main className="flex-1 p-3 sm:p-6 pb-20 lg:pb-6 min-w-0">
           {children}
         </main>
       </div>

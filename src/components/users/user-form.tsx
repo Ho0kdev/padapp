@@ -257,7 +257,7 @@ export function UserForm({ initialData, userId, currentUserRole, isOwnProfile }:
   }
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
+    <div className="w-full max-w-5xl mx-auto space-y-6">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           {/* Información básica de usuario */}

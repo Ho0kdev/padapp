@@ -482,7 +482,7 @@ export function MatchesTable() {
       </div>
 
       {/* Desktop table view */}
-      <div className="hidden lg:block rounded-md border">
+      <div className="hidden lg:block rounded-md border overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>

@@ -585,7 +585,7 @@ export function UsersTable() {
       </div>
 
       {/* Vista de tabla para desktop */}
-      <div className="hidden lg:block rounded-md border">
+      <div className="hidden lg:block rounded-md border overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>

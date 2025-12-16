@@ -44,7 +44,7 @@ export function Header() {
     : user?.email?.[0]?.toUpperCase() || "U"
 
   return (
-    <header className="flex h-16 items-center justify-between border-b bg-background px-4 sm:px-6">
+    <header className="flex h-16 items-center justify-between border-b bg-background px-3 sm:px-6">
       <div className="flex items-center space-x-2 sm:space-x-4">
         {/* Logo en mobile, texto completo en desktop */}
         <div className="sm:hidden transition-transform duration-300 ease-in-out hover:scale-110 hover:rotate-6">
