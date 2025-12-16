@@ -36,13 +36,13 @@ export function UsersHeader() {
         label: "Rol",
         options: roleOptions,
         paramKey: "role",
-        width: "w-[140px]"
+        width: "w-full sm:w-[140px]"
       }}
       tertiaryFilter={{
         label: "Género",
         options: genderOptions,
         paramKey: "gender",
-        width: "w-[140px]"
+        width: "w-full sm:w-[140px]"
       }}
       basePath="/dashboard/users"
     />

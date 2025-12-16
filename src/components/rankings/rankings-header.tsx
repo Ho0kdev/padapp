@@ -100,7 +100,7 @@ export function RankingsHeader() {
         options: seasons,
         paramKey: "seasonYear",
         defaultValue: new Date().getFullYear().toString(),
-        width: "w-[120px]"
+        width: "w-full sm:w-[120px]"
       }}
       basePath="/dashboard/rankings"
     />

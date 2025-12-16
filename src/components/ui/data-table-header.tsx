@@ -178,7 +178,7 @@ export function DataTableHeader({
               value={searchParams.get(secondaryFilter.paramKey) || secondaryFilter.defaultValue || "all"}
               onValueChange={handleSecondaryFilter}
             >
-              <SelectTrigger className={`w-full sm:${secondaryFilter.width || "w-[140px]"}`}>
+              <SelectTrigger className={secondaryFilter.width || "w-full sm:w-[140px]"}>
                 <SelectValue placeholder={secondaryFilter.label} />
               </SelectTrigger>
               <SelectContent>
@@ -197,7 +197,7 @@ export function DataTableHeader({
               value={searchParams.get(tertiaryFilter.paramKey) || tertiaryFilter.defaultValue || "all"}
               onValueChange={handleTertiaryFilter}
             >
-              <SelectTrigger className={`w-full sm:${tertiaryFilter.width || "w-[140px]"}`}>
+              <SelectTrigger className={tertiaryFilter.width || "w-full sm:w-[140px]"}>
                 <SelectValue placeholder={tertiaryFilter.label} />
               </SelectTrigger>
               <SelectContent>

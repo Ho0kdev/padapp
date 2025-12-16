@@ -44,13 +44,13 @@ export function ClubsHeader() {
         label: "Ciudad",
         options: cities,
         paramKey: "city",
-        width: "w-[150px]"
+        width: "w-full sm:w-[150px]"
       } : undefined}
       tertiaryFilter={countries.length > 0 ? {
         label: "País",
         options: countries,
         paramKey: "country",
-        width: "w-[140px]"
+        width: "w-full sm:w-[140px]"
       } : undefined}
       basePath="/dashboard/clubs"
     />

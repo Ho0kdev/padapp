@@ -60,13 +60,13 @@ export function RegistrationsHeader() {
         label: "Torneo",
         options: tournamentOptions,
         paramKey: "tournamentId",
-        width: "w-[200px]"
+        width: "w-full sm:w-[200px]"
       }}
       tertiaryFilter={{
         label: "Categoría",
         options: categoryOptions,
         paramKey: "categoryId",
-        width: "w-[180px]"
+        width: "w-full sm:w-[180px]"
       }}
       basePath="/dashboard/registrations"
     />
