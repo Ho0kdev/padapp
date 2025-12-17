@@ -51,6 +51,7 @@ import { PoolCard } from "./pool-card"
 import { CategorySelector } from "./category-selector"
 import { AmericanoMatchCard } from "./americano-match-card"
 import { AmericanoMatchResultDialog } from "./americano-match-result-dialog"
+import { AmericanoPoolsSetup } from "./americano-pools-setup"
 import { RegistrationStatusBreakdown } from "../registration-status-breakdown"
 import {
   getRegistrationStatusStyle,
@@ -90,6 +91,7 @@ export function AmericanoSocialDetail({
   const [ranking, setRanking] = useState<any[]>([])
   const [registrations, setRegistrations] = useState<any[]>([])
   const [selectedMatch, setSelectedMatch] = useState<any>(null)
+  const [poolsSetupOpen, setPoolsSetupOpen] = useState(false)
 
   const isOwner = tournament.organizerId === currentUserId
   const canManage = isOwner || isAdminOrClubAdmin
@@ -152,32 +154,8 @@ export function AmericanoSocialDetail({
     }
   }
 
-  const generatePools = async (force = false) => {
+  const generatePools = async (selectedCategoryId: string, numberOfRounds: number, force = false) => {
     try {
-      // Si no se está forzando y ya hay pools, mostrar confirmación
-      if (!force && hasPools) {
-        // Calcular información de los pools existentes
-        const totalMatches = pools.reduce((sum, pool) => sum + (pool.matches?.length || 0), 0)
-        const completedMatches = pools.reduce((sum, pool) => {
-          return sum + (pool.matches?.filter((m: any) => m.status === 'COMPLETED').length || 0)
-        }, 0)
-
-        // Calcular número de rondas únicas
-        const uniqueRounds = new Set(pools.map((pool: any) => pool.roundNumber))
-        const numberOfRounds = uniqueRounds.size
-        const poolsPerRound = numberOfRounds > 0 ? Math.round(pools.length / numberOfRounds) : 0
-
-        setExistingPoolsInfo({
-          totalPools: pools.length,
-          totalMatches,
-          completedMatches,
-          numberOfRounds,
-          poolsPerRound
-        })
-        setRegenerateDialogOpen(true)
-        return
-      }
-
       setGenerating(true)
 
       const response = await fetch(
@@ -185,7 +163,7 @@ export function AmericanoSocialDetail({
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ categoryId, force })
+          body: JSON.stringify({ categoryId: selectedCategoryId, numberOfRounds, force })
         }
       )
 
@@ -347,35 +325,10 @@ export function AmericanoSocialDetail({
         </div>
 
         <div className="flex items-center gap-2">
-          {canManage && hasPools && (
-            <Button variant="default" onClick={() => generatePools(false)} disabled={generating}>
-              {generating ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Regenerando...
-                </>
-              ) : (
-                <>
-                  <Play className="mr-2 h-4 w-4" />
-                  Regenerar Pools
-                </>
-              )}
-            </Button>
-          )}
-
-          {canManage && !hasPools && (
-            <Button variant="default" onClick={() => generatePools(false)} disabled={generating}>
-              {generating ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Generando...
-                </>
-              ) : (
-                <>
-                  <Play className="mr-2 h-4 w-4" />
-                  Generar Pools
-                </>
-              )}
+          {canManage && (
+            <Button variant="default" onClick={() => setPoolsSetupOpen(true)} disabled={generating}>
+              <Play className="mr-2 h-4 w-4" />
+              {hasPools ? "Regenerar Pools" : "Generar Pools"}
             </Button>
           )}
 
@@ -583,7 +536,12 @@ export function AmericanoSocialDetail({
                   <div key={tournamentCategory.id} className="border rounded-lg p-4">
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="font-medium">{tournamentCategory.category.name}</h4>
-                      <Badge variant="outline">{registrations.filter((r: any) => r.categoryId === tournamentCategory.categoryId).length} jugadores</Badge>
+                      <Badge variant="outline">
+                        {registrations.filter((r: any) =>
+                          r.categoryId === tournamentCategory.categoryId &&
+                          (r.registrationStatus === 'CONFIRMED' || r.registrationStatus === 'PAID')
+                        ).length} jugadores
+                      </Badge>
                     </div>
                     {tournamentCategory.category.description && (
                       <p className="text-sm text-muted-foreground mb-2">
@@ -686,22 +644,13 @@ export function AmericanoSocialDetail({
               <CardContent>
                 {canManage ? (
                   <Button
-                    onClick={() => generatePools(false)}
+                    onClick={() => setPoolsSetupOpen(true)}
                     disabled={generating}
                     size="lg"
                     className="w-full md:w-auto"
                   >
-                    {generating ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Generando...
-                      </>
-                    ) : (
-                      <>
-                        <Play className="mr-2 h-4 w-4" />
-                        Generar Pools
-                      </>
-                    )}
+                    <Play className="mr-2 h-4 w-4" />
+                    Generar Pools
                   </Button>
                 ) : (
                   <p className="text-muted-foreground text-sm">
@@ -973,6 +922,16 @@ export function AmericanoSocialDetail({
           }}
         />
       )}
+
+      {/* Pools Setup Dialog */}
+      <AmericanoPoolsSetup
+        open={poolsSetupOpen}
+        onOpenChange={setPoolsSetupOpen}
+        tournamentId={tournament.id}
+        categoryId={categoryId}
+        categories={tournament.categories}
+        onGenerate={generatePools}
+      />
     </div>
   )
 }

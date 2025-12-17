@@ -173,8 +173,8 @@ export async function POST(
       )
     }
 
-    // Obtener número de rondas del torneo
-    const numberOfRounds = tournament.americanoRounds || 1
+    // Usar el número de rondas del request, o el configurado en el torneo como fallback
+    const numberOfRounds = validatedData.numberOfRounds || tournament.americanoRounds || 1
 
     // Generar pools para todas las rondas
     await AmericanoSocialService.generateAmericanoSocialPools(

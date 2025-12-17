@@ -11,7 +11,8 @@
       "Bash(npm run type-check:*)",
       "Bash(find:*)",
       "Bash(npx shadcn@latest add:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(ls:*)"
     ],
     "deny": [],
     "ask": []

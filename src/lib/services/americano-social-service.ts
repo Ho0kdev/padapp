@@ -11,6 +11,42 @@ interface SetResult {
 
 export class AmericanoSocialService {
   /**
+   * Calcula el número óptimo de rondas para un número dado de jugadores
+   *
+   * Lógica:
+   * - Con N jugadores, cada pool tiene 4 jugadores
+   * - En cada ronda, un jugador conoce a 3 jugadores nuevos
+   * - Número máximo teórico de rondas sin repetir = (N-1) / 3
+   * - Recomendamos un número conservador para evitar repeticiones
+   *
+   * @param numPlayers Número de jugadores
+   * @returns { min, optimal, max } rondas recomendadas
+   */
+  static calculateOptimalRounds(numPlayers: number): { min: number; optimal: number; max: number } {
+    if (numPlayers < 4 || numPlayers % 4 !== 0) {
+      return { min: 1, optimal: 1, max: 1 }
+    }
+
+    // Número máximo teórico de rondas sin que ningún jugador se repita
+    // En cada ronda, cada jugador conoce a 3 jugadores nuevos
+    const theoreticalMax = Math.floor((numPlayers - 1) / 3)
+
+    // Número óptimo: balancear variedad con tiempo
+    // Para 8 jugadores: 2 rondas (cada jugador conoce a todos)
+    // Para 12 jugadores: 3 rondas
+    // Para 16+ jugadores: 3-4 rondas
+    const optimal = Math.min(Math.max(2, Math.floor(theoreticalMax * 0.7)), 5)
+
+    // Máximo práctico: limitar a 10 rondas para evitar torneos muy largos
+    const max = Math.min(theoreticalMax, 10)
+
+    // Mínimo siempre es 1
+    const min = 1
+
+    return { min, optimal, max }
+  }
+
+  /**
    * Genera pools y partidos para Americano Social con múltiples rondas
    *
    * Formato Americano Social:

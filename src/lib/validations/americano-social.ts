@@ -3,6 +3,7 @@ import { z } from "zod"
 // Schema para generar pools
 export const generatePoolsSchema = z.object({
   categoryId: z.string().min(1, "La categoría es requerida"),
+  numberOfRounds: z.number().int().min(1).max(10).optional(), // Número de rondas (1-10)
   force: z.boolean().optional() // Permite regenerar eliminando pools existentes
 })
 
