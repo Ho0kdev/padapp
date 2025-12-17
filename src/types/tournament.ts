@@ -91,9 +91,14 @@ export interface TournamentListItem extends Tournament {
   americanoPools: {
     players: any[]
   }[]
+  registrations: {
+    id: string
+    registrationStatus: string
+  }[]
   _count: {
     teams: number
     matches: number
+    registrations: number
   }
 }
 

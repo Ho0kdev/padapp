@@ -130,8 +130,10 @@ export function AmericanoSocialDetail({
 
   const loadRegistrations = async () => {
     try {
+      // Para Americano Social, cargar todas las inscripciones del torneo
+      // No filtrar por categoryId porque puede que no exista o esté mal configurado
       const response = await fetch(
-        `/api/registrations?tournamentId=${tournament.id}&categoryId=${categoryId}&limit=1000`
+        `/api/registrations?tournamentId=${tournament.id}&limit=1000`
       )
 
       if (!response.ok) {
@@ -139,7 +141,12 @@ export function AmericanoSocialDetail({
       }
 
       const data = await response.json()
-      setRegistrations(data.registrations || [])
+
+      // Filtrar todas las inscripciones activas (excluir solo CANCELLED)
+      const activeRegistrations = (data.registrations || []).filter(
+        (reg: any) => reg.registrationStatus !== 'CANCELLED'
+      )
+      setRegistrations(activeRegistrations)
     } catch (error) {
       console.error("Error:", error)
     }
@@ -576,7 +583,7 @@ export function AmericanoSocialDetail({
                   <div key={tournamentCategory.id} className="border rounded-lg p-4">
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="font-medium">{tournamentCategory.category.name}</h4>
-                      <Badge variant="outline">{ranking.filter((r: any) => r.categoryId === tournamentCategory.categoryId).length} jugadores</Badge>
+                      <Badge variant="outline">{registrations.filter((r: any) => r.categoryId === tournamentCategory.categoryId).length} jugadores</Badge>
                     </div>
                     {tournamentCategory.category.description && (
                       <p className="text-sm text-muted-foreground mb-2">

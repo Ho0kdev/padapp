@@ -177,14 +177,10 @@ export function TournamentsTable() {
   // Función para obtener el número de participantes según el tipo de torneo
   const getParticipantsCount = (tournament: TournamentListItem): number => {
     if (tournament.type === "AMERICANO_SOCIAL") {
-      // Para americano social, contar jugadores únicos en los pools
-      const uniquePlayers = new Set<string>()
-      tournament.americanoPools?.forEach(pool => {
-        pool.players?.forEach(player => {
-          uniquePlayers.add(player.playerId)
-        })
-      })
-      return uniquePlayers.size
+      // Para americano social, contar inscripciones activas (PENDING, CONFIRMED, PAID)
+      return tournament.registrations?.filter(
+        r => r.registrationStatus !== 'CANCELLED' && r.registrationStatus !== 'WAITLIST'
+      ).length || 0
     }
     // Para otros torneos, usar el conteo de teams
     return tournament._count.teams

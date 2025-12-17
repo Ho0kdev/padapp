@@ -210,10 +210,17 @@ export async function GET(request: NextRequest) {
               players: true
             }
           },
+          registrations: {
+            select: {
+              id: true,
+              registrationStatus: true
+            }
+          },
           _count: {
             select: {
               teams: true,
-              matches: true
+              matches: true,
+              registrations: true
             }
           }
         }

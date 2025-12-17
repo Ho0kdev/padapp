@@ -27,8 +27,8 @@ export function RegistrationStatusBreakdown({
     WAITLIST: registrations.filter(r => r.registrationStatus === 'WAITLIST').length,
   }
 
-  // Total de jugadores que van a participar (solo CONFIRMED + PAID)
-  const activeParticipants = statusCounts.CONFIRMED + statusCounts.PAID
+  // Total de jugadores activos (PENDING, CONFIRMED, PAID - excluye CANCELLED y WAITLIST)
+  const activeParticipants = statusCounts.PENDING + statusCounts.CONFIRMED + statusCounts.PAID
   const totalRegistrations = registrations.length
 
   return (
