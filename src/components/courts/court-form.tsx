@@ -37,7 +37,9 @@ import {
   Trees,
   Eye,
   Layers,
-  Grid
+  Grid,
+  Save,
+  Loader2
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import {
@@ -423,17 +425,20 @@ export function CourtForm({ initialData, courtId, clubId, clubName }: CourtFormP
           </Card>
 
           {/* Botones */}
-          <div className="flex items-center justify-end space-x-4">
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
             <Button
               type="button"
               variant="outline"
               onClick={() => router.back()}
               disabled={loading}
+              className="w-full sm:w-auto"
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? "Guardando..." : courtId ? "Actualizar Cancha" : "Crear Cancha"}
+            <Button type="submit" disabled={loading} className="w-full sm:w-auto">
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              <Save className="mr-2 h-4 w-4" />
+              {courtId ? "Guardar Cambios" : "Crear Cancha"}
             </Button>
           </div>
         </form>

@@ -352,65 +352,162 @@ export function CourtsList({ clubId }: CourtsListProps) {
 
   return (
     <div className="space-y-6">
-      {/* Header con filtros */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <SquareSplitHorizontal className="h-5 w-5" />
-              Canchas de {club?.name} ({filteredCourts.length})
-            </CardTitle>
-            {isAdminOrClubAdmin && (
-              <Link href={`/dashboard/clubs/${clubId}/courts/new`}>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Nueva Cancha
-                </Button>
-              </Link>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar canchas (nombre, superficie, características)..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-8"
-              />
-            </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Estado" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos los estados</SelectItem>
-                <SelectItem value="AVAILABLE">Disponible</SelectItem>
-                <SelectItem value="MAINTENANCE">Mantenimiento</SelectItem>
-                <SelectItem value="RESERVED">Reservada</SelectItem>
-                <SelectItem value="UNAVAILABLE">No Disponible</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={surfaceFilter} onValueChange={setSurfaceFilter}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Superficie" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas las superficies</SelectItem>
-                <SelectItem value="CONCRETE">Concreto</SelectItem>
-                <SelectItem value="ARTIFICIAL_GRASS">Césped Artificial</SelectItem>
-                <SelectItem value="CERAMIC">Cerámica</SelectItem>
-                <SelectItem value="OTHER">Otra</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold flex items-center gap-2">
+          <SquareSplitHorizontal className="h-5 w-5" />
+          Canchas ({filteredCourts.length})
+        </h3>
+        {isAdminOrClubAdmin && (
+          <Link href={`/dashboard/clubs/${clubId}/courts/new`}>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Nueva Cancha
+            </Button>
+          </Link>
+        )}
+      </div>
 
-      {/* Tabla de canchas */}
-      <Card>
+      {/* Vista Mobile - Cards */}
+      <div className="md:hidden space-y-4">
+        {filteredCourts.length === 0 ? (
+          <Card>
+            <CardContent className="p-6 text-center text-muted-foreground">
+              No hay canchas registradas
+            </CardContent>
+          </Card>
+        ) : (
+          filteredCourts.map((court) => (
+            <Card key={court.id}>
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-medium truncate">{court.name}</h3>
+                    {court.notes && (
+                      <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
+                        {court.notes}
+                      </p>
+                    )}
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 flex-shrink-0">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <Link href={`/dashboard/clubs/${clubId}/courts/${court.id}`}>
+                        <DropdownMenuItem>
+                          <Eye className="mr-2 h-4 w-4" />
+                          Ver detalles
+                        </DropdownMenuItem>
+                      </Link>
+                      {isAdminOrClubAdmin && (
+                        <>
+                          <Link href={`/dashboard/clubs/${clubId}/courts/${court.id}/edit`}>
+                            <DropdownMenuItem>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Editar
+                            </DropdownMenuItem>
+                          </Link>
+                          <DropdownMenuSeparator />
+                          {court.status === "AVAILABLE" ? (
+                            <>
+                              <DropdownMenuItem
+                                className="text-yellow-600"
+                                onClick={() => {
+                                  setCourtToMaintenance(court)
+                                  setMaintenanceDialogOpen(true)
+                                }}
+                              >
+                                <Wrench className="mr-2 h-4 w-4" />
+                                Mantenimiento
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="text-blue-600"
+                                onClick={() => {
+                                  setCourtToReserve(court)
+                                  setReserveDialogOpen(true)
+                                }}
+                              >
+                                <Calendar className="mr-2 h-4 w-4" />
+                                Reservar
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="text-red-600"
+                                onClick={() => {
+                                  setCourtToDelete(court)
+                                  setDeleteDialogOpen(true)
+                                }}
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Desactivar
+                              </DropdownMenuItem>
+                            </>
+                          ) : (
+                            <DropdownMenuItem
+                              className="text-green-600"
+                              onClick={() => {
+                                setCourtToActivate(court)
+                                setActivateDialogOpen(true)
+                              }}
+                            >
+                              <CheckCircle className="mr-2 h-4 w-4" />
+                              Poner Disponible
+                            </DropdownMenuItem>
+                          )}
+                        </>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3 pb-4">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Superficie</span>
+                  <Badge variant="outline" className={getCourtSurfaceStyle(court.surface)}>
+                    {getCourtSurfaceLabel(court.surface)}
+                  </Badge>
+                </div>
+
+                {(court.hasLighting || court.hasRoof || court.isOutdoor || court.hasPanoramicGlass || court.hasConcreteWall || court.hasNet4m) && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Características</span>
+                    <div className="flex flex-wrap gap-1 justify-end">
+                      {court.hasLighting && <div className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Luz</div>}
+                      {court.hasRoof && <div className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Techo</div>}
+                      {court.isOutdoor && <div className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Exterior</div>}
+                      {court.hasPanoramicGlass && <div className="text-xs bg-cyan-100 text-cyan-800 px-2 py-1 rounded">Cristal</div>}
+                    </div>
+                  </div>
+                )}
+
+                {court.hourlyRate && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Precio/Hora</span>
+                    <span className="font-medium">${court.hourlyRate}</span>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Partidos</span>
+                  <span className="font-medium">{court._count.matches}</span>
+                </div>
+
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Estado</span>
+                  <Badge variant="outline" className={getCourtStatusStyle(court.status)}>
+                    {getCourtStatusLabel(court.status)}
+                  </Badge>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </div>
+
+      {/* Vista Desktop - Tabla */}
+      <Card className="hidden md:block">
         <CardContent className="p-0">
           <Table>
             <TableHeader>
@@ -428,10 +525,7 @@ export function CourtsList({ clubId }: CourtsListProps) {
               {filteredCourts.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-8">
-                    {searchTerm || statusFilter !== "all" || surfaceFilter !== "all"
-                      ? "No se encontraron canchas con los filtros aplicados"
-                      : "No hay canchas registradas"
-                    }
+                    No hay canchas registradas
                   </TableCell>
                 </TableRow>
               ) : (

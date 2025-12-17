@@ -214,29 +214,31 @@ export function CourtDetail({ court, currentUserId }: CourtDetailProps) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div className="space-y-1">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={() => router.back()}>
+      <div className="flex items-start justify-between gap-4">
+        <div className="space-y-2 flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={() => router.back()} className="flex-shrink-0">
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <h1 className="text-3xl font-bold tracking-tight">{court.name}</h1>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight truncate">{court.name}</h1>
+          </div>
+          <div className="flex items-center gap-2 ml-10 md:ml-12">
             <Badge variant="outline" className={getCourtStatusStyle(court.status)}>
               {getCourtStatusLabel(court.status)}
             </Badge>
           </div>
-          <p className="text-muted-foreground">
+          <p className="text-sm md:text-base text-muted-foreground ml-10 md:ml-12">
             {court.club.name}
           </p>
           {court.notes && (
-            <p className="text-muted-foreground max-w-3xl">{court.notes}</p>
+            <p className="text-sm text-muted-foreground max-w-3xl ml-10 md:ml-12">{court.notes}</p>
           )}
         </div>
 
         {isAdminOrClubAdmin && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="flex-shrink-0">
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -406,97 +408,163 @@ export function CourtDetail({ court, currentUserId }: CourtDetailProps) {
         </TabsContent>
 
         <TabsContent value="matches" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Historial de Partidos</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {court.matches.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">
-                  No hay partidos programados en esta cancha
-                </p>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Fecha</TableHead>
-                      <TableHead>Torneo</TableHead>
-                      <TableHead>Equipos</TableHead>
-                      <TableHead>Estado</TableHead>
-                      <TableHead>Acciones</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {court.matches.map((match) => (
-                      <TableRow key={match.id}>
-                        <TableCell>
-                          {match.scheduledAt ? (
-                            <div>
+          {court.matches.length === 0 ? (
+            <Card>
+              <CardContent className="p-6 text-center text-muted-foreground">
+                No hay partidos programados en esta cancha
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              {/* Vista Mobile - Cards */}
+              <div className="md:hidden space-y-3">
+                {court.matches.map((match) => (
+                  <div
+                    key={match.id}
+                    onClick={() => router.push(`/dashboard/matches/${match.id}`)}
+                    className="cursor-pointer"
+                  >
+                    <Card className="hover:bg-accent transition-colors">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-medium text-sm truncate">{match.tournament.name}</h4>
+                            <div className="flex items-center gap-2 mt-1 flex-wrap">
+                              <Badge variant="outline" className={getTournamentStatusStyle(match.tournament.status)}>
+                                {getTournamentStatusLabel(match.tournament.status)}
+                              </Badge>
+                              <Badge variant="outline" className={getMatchStatusStyle(match.status)}>
+                                {getMatchStatusLabel(match.status)}
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-2 pb-4">
+                        {match.scheduledAt && (
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-muted-foreground">Fecha</span>
+                            <div className="text-right">
                               <div className="font-medium">
                                 {new Date(match.scheduledAt).toLocaleDateString('es')}
                               </div>
-                              <div className="text-sm text-muted-foreground">
+                              <div className="text-xs text-muted-foreground">
                                 {new Date(match.scheduledAt).toLocaleTimeString('es', {
                                   hour: '2-digit',
                                   minute: '2-digit'
                                 })}
                               </div>
                             </div>
-                          ) : (
-                            <span className="text-muted-foreground">Sin programar</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <div>
-                            <div className="font-medium">{match.tournament.name}</div>
-                            <div className="text-sm">
-                              <Badge variant="outline" className={getTournamentStatusStyle(match.tournament.status)}>
-                                {getTournamentStatusLabel(match.tournament.status)}
-                              </Badge>
-                            </div>
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="space-y-1">
+                        )}
+
+                        <div className="flex items-start justify-between text-sm">
+                          <span className="text-muted-foreground">Equipos</span>
+                          <div className="text-right space-y-0.5 flex-1 ml-2">
                             {match.team1 && (
-                              <div className="text-sm">
-                                <span className={match.winnerTeam?.id === match.team1.id ? "font-medium" : ""}>
-                                  {formatTeamName(match.team1)}
-                                </span>
+                              <div className={`text-xs ${match.winnerTeam?.id === match.team1.id ? "font-medium" : ""}`}>
+                                {formatTeamName(match.team1)}
                               </div>
                             )}
                             {match.team2 && (
-                              <div className="text-sm">
-                                <span className={match.winnerTeam?.id === match.team2.id ? "font-medium" : ""}>
-                                  {formatTeamName(match.team2)}
-                                </span>
+                              <div className={`text-xs ${match.winnerTeam?.id === match.team2.id ? "font-medium" : ""}`}>
+                                {formatTeamName(match.team2)}
                               </div>
                             )}
                             {!match.team1 && !match.team2 && (
-                              <span className="text-muted-foreground text-sm">Equipos por definir</span>
+                              <span className="text-muted-foreground text-xs">Equipos por definir</span>
                             )}
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className={getMatchStatusStyle(match.status)}>
-                            {getMatchStatusLabel(match.status)}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Link href={`/dashboard/tournaments/${match.tournament.id}/matches/${match.id}`}>
-                            <Button variant="outline" size="sm">
-                              <Eye className="h-3 w-3 mr-1" />
-                              Ver
-                            </Button>
-                          </Link>
-                        </TableCell>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                ))}
+              </div>
+
+              {/* Vista Desktop - Tabla */}
+              <Card className="hidden md:block">
+                <CardHeader>
+                  <CardTitle>Historial de Partidos</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Fecha</TableHead>
+                        <TableHead>Torneo</TableHead>
+                        <TableHead>Equipos</TableHead>
+                        <TableHead>Estado</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
+                    </TableHeader>
+                    <TableBody>
+                      {court.matches.map((match) => (
+                        <TableRow
+                          key={match.id}
+                          onClick={() => router.push(`/dashboard/matches/${match.id}`)}
+                          className="cursor-pointer hover:bg-accent"
+                        >
+                          <TableCell>
+                            {match.scheduledAt ? (
+                              <div>
+                                <div className="font-medium">
+                                  {new Date(match.scheduledAt).toLocaleDateString('es')}
+                                </div>
+                                <div className="text-sm text-muted-foreground">
+                                  {new Date(match.scheduledAt).toLocaleTimeString('es', {
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}
+                                </div>
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground">Sin programar</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <div className="font-medium">{match.tournament.name}</div>
+                              <div className="text-sm">
+                                <Badge variant="outline" className={getTournamentStatusStyle(match.tournament.status)}>
+                                  {getTournamentStatusLabel(match.tournament.status)}
+                                </Badge>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="space-y-1">
+                              {match.team1 && (
+                                <div className="text-sm">
+                                  <span className={match.winnerTeam?.id === match.team1.id ? "font-medium" : ""}>
+                                    {formatTeamName(match.team1)}
+                                  </span>
+                                </div>
+                              )}
+                              {match.team2 && (
+                                <div className="text-sm">
+                                  <span className={match.winnerTeam?.id === match.team2.id ? "font-medium" : ""}>
+                                    {formatTeamName(match.team2)}
+                                  </span>
+                                </div>
+                              )}
+                              {!match.team1 && !match.team2 && (
+                                <span className="text-muted-foreground text-sm">Equipos por definir</span>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className={getMatchStatusStyle(match.status)}>
+                              {getMatchStatusLabel(match.status)}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </>
+          )}
         </TabsContent>
       </Tabs>
 

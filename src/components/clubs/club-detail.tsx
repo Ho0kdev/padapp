@@ -331,31 +331,11 @@ export function ClubDetail({ club, currentUserId }: ClubDetailProps) {
                   </div>
                 )}
 
-                <div>
-                  <h4 className="font-medium mb-2">Estado</h4>
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">Estado</span>
                   <Badge variant="outline" className={getClubStatusStyle(club.status)}>
                     {getClubStatusLabel(club.status)}
                   </Badge>
-                </div>
-
-                <Separator />
-
-                <div className="space-y-2">
-                  <h4 className="font-medium">Estadísticas</h4>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="text-muted-foreground">Canchas:</span>
-                      <span className="ml-2 font-medium">{club._count.courts}</span>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Torneos como sede principal:</span>
-                      <span className="ml-2 font-medium">{club._count.tournaments}</span>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Torneos como sede auxiliar:</span>
-                      <span className="ml-2 font-medium">{club._count.tournamentClubs}</span>
-                    </div>
-                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -460,9 +440,12 @@ export function ClubDetail({ club, currentUserId }: ClubDetailProps) {
               ) : (
                 <div className="space-y-4">
                   {club.tournaments.map((tournament) => (
-                    <div key={tournament.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div>
-                        <h4 className="font-medium">{tournament.name}</h4>
+                    <Link key={tournament.id} href={`/dashboard/tournaments/${tournament.id}`}>
+                      <div className="p-4 border rounded-lg space-y-2 hover:bg-accent transition-colors cursor-pointer">
+                        <div className="flex items-start justify-between gap-2">
+                          <h4 className="font-medium flex-1">{tournament.name}</h4>
+                          {getTournamentStatusBadge(tournament.status)}
+                        </div>
                         <p className="text-sm text-muted-foreground">
                           {new Date(tournament.tournamentStart).toLocaleDateString('es', {
                             year: 'numeric',
@@ -471,15 +454,7 @@ export function ClubDetail({ club, currentUserId }: ClubDetailProps) {
                           })}
                         </p>
                       </div>
-                      <div className="flex items-center gap-2">
-                        {getTournamentStatusBadge(tournament.status)}
-                        <Link href={`/dashboard/tournaments/${tournament.id}`}>
-                          <Button variant="outline" size="sm">
-                            Ver torneo
-                          </Button>
-                        </Link>
-                      </div>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               )}
@@ -499,9 +474,12 @@ export function ClubDetail({ club, currentUserId }: ClubDetailProps) {
               ) : (
                 <div className="space-y-4">
                   {(club.auxiliaryTournaments || []).map((tournament) => (
-                    <div key={tournament.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div>
-                        <h4 className="font-medium">{tournament.name}</h4>
+                    <Link key={tournament.id} href={`/dashboard/tournaments/${tournament.id}`}>
+                      <div className="p-4 border rounded-lg space-y-2 hover:bg-accent transition-colors cursor-pointer">
+                        <div className="flex items-start justify-between gap-2">
+                          <h4 className="font-medium flex-1">{tournament.name}</h4>
+                          {getTournamentStatusBadge(tournament.status)}
+                        </div>
                         <p className="text-sm text-muted-foreground">
                           Sede principal: <span className="font-medium">{tournament.mainClubName}</span>
                         </p>
@@ -513,15 +491,7 @@ export function ClubDetail({ club, currentUserId }: ClubDetailProps) {
                           })}
                         </p>
                       </div>
-                      <div className="flex items-center gap-2">
-                        {getTournamentStatusBadge(tournament.status)}
-                        <Link href={`/dashboard/tournaments/${tournament.id}`}>
-                          <Button variant="outline" size="sm">
-                            Ver torneo
-                          </Button>
-                        </Link>
-                      </div>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               )}

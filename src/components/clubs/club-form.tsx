@@ -25,7 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
-import { Building, MapPin, Phone, Mail, Globe, Image } from "lucide-react"
+import { Building, MapPin, Phone, Mail, Globe, Image, Save, Loader2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import {
   clubFormSchema,
@@ -408,17 +408,20 @@ export function ClubForm({ initialData, clubId }: ClubFormProps) {
           </Card>
 
           {/* Botones */}
-          <div className="flex items-center justify-end space-x-4">
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
             <Button
               type="button"
               variant="outline"
               onClick={() => router.back()}
               disabled={loading}
+              className="w-full sm:w-auto"
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? "Guardando..." : clubId ? "Actualizar Club" : "Crear Club"}
+            <Button type="submit" disabled={loading} className="w-full sm:w-auto">
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              <Save className="mr-2 h-4 w-4" />
+              {clubId ? "Guardar Cambios" : "Crear Club"}
             </Button>
           </div>
         </form>
