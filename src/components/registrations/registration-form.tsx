@@ -173,11 +173,11 @@ export function RegistrationForm({ isAdmin = false, currentPlayerId = null }: Re
             }
           }
 
-          // Filtrar por nivel (el jugador puede jugar en su categoría o categorías superiores)
-          // Números más bajos = mejor nivel (categorías superiores)
-          // Un jugador de 7ma (nivel 7) puede jugar en 7ma, 6ta, 5ta, 4ta, pero NO en 8va (nivel 8)
+          // Filtrar por nivel (el jugador solo puede jugar en su nivel o niveles superiores - números más altos)
+          // Nivel 8 = principiante, Nivel 4 = experto
+          // Ejemplo: jugador nivel 5 puede jugar en 5, 4, 3, 2, 1 pero NO en 6, 7, 8
           if (cat.category.level !== null && currentPlayer.primaryCategory?.level !== null && currentPlayer.primaryCategory?.level !== undefined) {
-            if (cat.category.level > currentPlayer.primaryCategory?.level) {
+            if (currentPlayer.primaryCategory.level < cat.category.level) {
               return false
             }
           }
@@ -237,7 +237,7 @@ export function RegistrationForm({ isAdmin = false, currentPlayerId = null }: Re
 
   // Filtrar jugadores disponibles según género, nivel y registrados
   const getAvailablePlayers = () => {
-    return players.filter(player => {
+    const filtered = players.filter(player => {
       // Si no es admin, solo mostrar el jugador actual
       if (!isAdmin && currentPlayerId && player.id !== currentPlayerId) return false
 
@@ -246,17 +246,23 @@ export function RegistrationForm({ isAdmin = false, currentPlayerId = null }: Re
 
       // Filtrar por restricción de género si existe
       if (genderRestriction) {
-        if (genderRestriction === 'MALE' && player.gender !== 'MALE') return false
-        if (genderRestriction === 'FEMALE' && player.gender !== 'FEMALE') return false
+        const passesGender = (genderRestriction === 'MALE' && player.gender === 'MALE') ||
+                             (genderRestriction === 'FEMALE' && player.gender === 'FEMALE')
+        if (!passesGender) return false
       }
 
       // Filtrar por nivel de categoría
+      // Nivel 8 = principiante, Nivel 4 = experto
+      // Un jugador solo puede jugar en su nivel o niveles superiores (números más altos)
+      // Ejemplo: jugador nivel 5 puede jugar en 5, 4, 3, 2, 1 pero NO en 6, 7, 8
       if (categoryLevel !== null && player.primaryCategory?.level !== null && player.primaryCategory?.level !== undefined) {
         if (player.primaryCategory.level < categoryLevel) return false
       }
 
       return true
     })
+
+    return filtered
   }
 
   const fetchData = async () => {

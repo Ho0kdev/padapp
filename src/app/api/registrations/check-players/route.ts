@@ -36,12 +36,13 @@ export async function GET(request: NextRequest) {
     })
 
     // Buscar todas las registrations activas en esta categoría
+    // Excluimos solo CANCELLED (REJECTED no existe en el enum)
     const registrations = await prisma.registration.findMany({
       where: {
         tournamentId,
         categoryId,
         registrationStatus: {
-          in: ['PENDING', 'CONFIRMED', 'WAITLIST']
+          not: 'CANCELLED'
         }
       },
       select: {

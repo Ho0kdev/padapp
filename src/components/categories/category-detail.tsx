@@ -4,6 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
+import { Breadcrumbs } from "@/components/ui/breadcrumbs"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
@@ -32,10 +33,7 @@ import {
   Trophy,
   Users,
   Tag,
-  Settings,
   Trash2,
-  Copy,
-  TrendingUp,
   Activity
 } from "lucide-react"
 import { format } from "date-fns"
@@ -145,23 +143,6 @@ export function CategoryDetail({ category, currentUserId }: CategoryDetailProps)
     }
   }
 
-  const handleCopyLink = async () => {
-    try {
-      await navigator.clipboard.writeText(window.location.href)
-      toast({
-        title: "✅ Enlace copiado",
-        description: "El enlace de la categoría ha sido copiado al portapapeles",
-        variant: "success",
-      })
-    } catch (error) {
-      toast({
-        title: "❌ Error",
-        description: "No se pudo copiar el enlace",
-        variant: "destructive",
-      })
-    }
-  }
-
   const getStatusBadge = (status: string) => {
     return (
       <Badge variant="outline" className={getTournamentStatusStyle(status)}>
@@ -172,159 +153,122 @@ export function CategoryDetail({ category, currentUserId }: CategoryDetailProps)
 
   return (
     <div className="space-y-6">
+      {/* Breadcrumbs */}
+      <Breadcrumbs
+        items={[
+          { label: "Categorías", href: "/dashboard/categories" },
+          { label: category.name }
+        ]}
+      />
+
       {/* Header */}
       <div className="flex items-start justify-between">
-        <div className="space-y-1">
-          <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold tracking-tight">{category.name}</h1>
-            <Badge variant={category.isActive ? "default" : "secondary"}>
-              {category.isActive ? "Activa" : "Inactiva"}
-            </Badge>
-            <Badge variant="outline" className={getCategoryTypeStyle(category.type)}>
-              {typeConfig?.label}
-            </Badge>
+        <div className="space-y-1 flex-1 min-w-0">
+          <div className="flex items-start sm:items-center gap-2 flex-wrap">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight break-words">{category.name}</h1>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <Badge variant={category.isActive ? "default" : "secondary"}>
+                {category.isActive ? "Activa" : "Inactiva"}
+              </Badge>
+              <Badge variant="outline" className={getCategoryTypeStyle(category.type)}>
+                {typeConfig?.label}
+              </Badge>
+            </div>
           </div>
           {category.description && (
-            <p className="text-muted-foreground">{category.description}</p>
+            <p className="text-muted-foreground max-w-3xl">{category.description}</p>
           )}
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <Trophy className="h-4 w-4" />
-              {category._count.tournamentCategories} torneos
-            </div>
-            <div className="flex items-center gap-1">
-              <Users className="h-4 w-4" />
-              {totalTeams} equipos totales
-            </div>
-            <div className="flex items-center gap-1">
-              <Calendar className="h-4 w-4" />
-              Creada {category.createdAt ? format(new Date(category.createdAt), "dd/MM/yyyy", { locale: es }) : "fecha no disponible"}
-            </div>
-          </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={handleCopyLink}>
-            <Copy className="mr-2 h-4 w-4" />
-            Copiar enlace
-          </Button>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem asChild>
-                <Link href={`/dashboard/categories/${category.id}/edit`}>
-                  <Edit className="mr-2 h-4 w-4" />
-                  Editar
-                </Link>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm">
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <Link href={`/dashboard/categories/${category.id}/edit`}>
+              <DropdownMenuItem>
+                <Edit className="mr-2 h-4 w-4" />
+                Editar
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className="text-red-600"
-                onClick={() => setDeleteDialogOpen(true)}
-                disabled={category._count.tournamentCategories > 0}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Desactivar
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <Trophy className="h-4 w-4 text-muted-foreground" />
-              <div className="ml-3">
-                <p className="text-sm font-medium text-muted-foreground">Torneos</p>
-                <p className="text-2xl font-bold">{category._count.tournamentCategories}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <Users className="h-4 w-4 text-muted-foreground" />
-              <div className="ml-3">
-                <p className="text-sm font-medium text-muted-foreground">Equipos</p>
-                <p className="text-2xl font-bold">{totalTeams}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <Activity className="h-4 w-4 text-muted-foreground" />
-              <div className="ml-3">
-                <p className="text-sm font-medium text-muted-foreground">Activos</p>
-                <p className="text-2xl font-bold">{activeTournaments}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <Tag className="h-4 w-4 text-muted-foreground" />
-              <div className="ml-3">
-                <p className="text-sm font-medium text-muted-foreground">Estado</p>
-                <p className="text-2xl font-bold">{category.isActive ? "Activa" : "Inactiva"}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </Link>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="text-red-600"
+              onClick={() => setDeleteDialogOpen(true)}
+              disabled={category._count.tournamentCategories > 0}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Desactivar
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="info" className="space-y-4">
+      <Tabs defaultValue="info" className="space-y-6">
         <TabsList>
           <TabsTrigger value="info">Información</TabsTrigger>
-          <TabsTrigger value="tournaments">Torneos</TabsTrigger>
-          <TabsTrigger value="teams">Equipos</TabsTrigger>
+          <TabsTrigger value="tournaments">Torneos ({category._count.tournamentCategories})</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="info" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
+        <TabsContent value="info" className="space-y-6">
+          <div className="grid gap-6 md:grid-cols-2">
             {/* Información General */}
             <Card>
               <CardHeader>
-                <CardTitle>Información General</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Tag className="h-5 w-5" />
+                  Información General
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Tipo de Categoría</p>
-                  <p>{typeConfig?.label}</p>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-muted-foreground">Tipo de Categoría</span>
+                  <span className="font-medium">{typeConfig?.label}</span>
                 </div>
 
-                {category.level && (
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Nivel</p>
-                    <p>Nivel {category.level}</p>
-                  </div>
-                )}
-
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Estado</p>
-                  <p>{category.isActive ? "Activa" : "Inactiva"}</p>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-muted-foreground">Estado</span>
+                  <Badge variant={category.isActive ? "default" : "secondary"}>
+                    {category.isActive ? "Activa" : "Inactiva"}
+                  </Badge>
                 </div>
 
+                <Separator />
+
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Fechas</p>
+                  <p className="text-sm font-medium text-muted-foreground mb-2">Estadísticas</p>
                   <div className="space-y-1 text-sm">
-                    <div>Creada: {category.createdAt ? format(new Date(category.createdAt), "dd/MM/yyyy", { locale: es }) : "No disponible"}</div>
-                    <div>Actualizada: {category.updatedAt ? format(new Date(category.updatedAt), "dd/MM/yyyy", { locale: es }) : "No disponible"}</div>
+                    <div className="flex items-center gap-2">
+                      <Trophy className="h-4 w-4 text-muted-foreground" />
+                      {category._count.tournamentCategories} torneos
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4 text-muted-foreground" />
+                      {totalTeams} equipos totales
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Activity className="h-4 w-4 text-muted-foreground" />
+                      {activeTournaments} torneos activos
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground mb-2">Fechas</p>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      Creada: {category.createdAt ? format(new Date(category.createdAt), "dd/MM/yyyy", { locale: es }) : "No disponible"}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      Actualizada: {category.updatedAt ? format(new Date(category.updatedAt), "dd/MM/yyyy", { locale: es }) : "No disponible"}
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -333,11 +277,14 @@ export function CategoryDetail({ category, currentUserId }: CategoryDetailProps)
             {/* Restricciones */}
             <Card>
               <CardHeader>
-                <CardTitle>Restricciones</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Restricciones
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Edad */}
-                {(category.type === "AGE" || category.type === "MIXED") && (
+                {(category.minAge !== null || category.maxAge !== null) && (
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Edad</p>
                     <p>
@@ -345,24 +292,22 @@ export function CategoryDetail({ category, currentUserId }: CategoryDetailProps)
                         ? `${category.minAge} - ${category.maxAge} años`
                         : category.minAge !== null
                         ? `Mínimo ${category.minAge} años`
-                        : category.maxAge !== null
-                        ? `Máximo ${category.maxAge} años`
-                        : "Sin restricción de edad"
+                        : `Máximo ${category.maxAge} años`
                       }
                     </p>
                   </div>
                 )}
 
                 {/* Género */}
-                {(category.type === "GENDER" || category.type === "MIXED") && (
+                {category.genderRestriction && (
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Género</p>
-                    <p>{genderConfig?.label || "Sin restricción"}</p>
+                    <p>{genderConfig?.label}</p>
                   </div>
                 )}
 
                 {/* Ranking */}
-                {(category.type === "RANKING" || category.type === "SKILL" || category.type === "MIXED") && (
+                {(category.minRankingPoints !== null || category.maxRankingPoints !== null) && (
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Puntos de Ranking</p>
                     <p>
@@ -370,12 +315,28 @@ export function CategoryDetail({ category, currentUserId }: CategoryDetailProps)
                         ? `${category.minRankingPoints} - ${category.maxRankingPoints} puntos`
                         : category.minRankingPoints !== null
                         ? `Mínimo ${category.minRankingPoints} puntos`
-                        : category.maxRankingPoints !== null
-                        ? `Máximo ${category.maxRankingPoints} puntos`
-                        : "Sin restricción de ranking"
+                        : `Máximo ${category.maxRankingPoints} puntos`
                       }
                     </p>
                   </div>
+                )}
+
+                {/* Nivel (para SKILL) */}
+                {category.level && (
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Nivel de Habilidad</p>
+                    <p>Nivel {category.level}</p>
+                  </div>
+                )}
+
+                {/* Mensaje si no hay restricciones */}
+                {!category.genderRestriction &&
+                 category.minAge === null &&
+                 category.maxAge === null &&
+                 category.minRankingPoints === null &&
+                 category.maxRankingPoints === null &&
+                 !category.level && (
+                  <p className="text-sm text-muted-foreground">Esta categoría no tiene restricciones específicas</p>
                 )}
               </CardContent>
             </Card>
@@ -385,7 +346,10 @@ export function CategoryDetail({ category, currentUserId }: CategoryDetailProps)
         <TabsContent value="tournaments">
           <Card>
             <CardHeader>
-              <CardTitle>Torneos que Usan esta Categoría</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Trophy className="h-5 w-5" />
+                Torneos que Usan esta Categoría
+              </CardTitle>
             </CardHeader>
             <CardContent>
               {category.tournamentCategories.length === 0 ? (
@@ -396,19 +360,14 @@ export function CategoryDetail({ category, currentUserId }: CategoryDetailProps)
                 <div className="space-y-4">
                   {category.tournamentCategories.map((tournamentCategory) => (
                     <div key={tournamentCategory.id} className="border rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-3">
-                          <Link
-                            href={`/dashboard/tournaments/${tournamentCategory.tournament.id}`}
-                            className="font-medium hover:underline"
-                          >
-                            {tournamentCategory.tournament.name}
-                          </Link>
-                          {getStatusBadge(tournamentCategory.tournament.status)}
-                        </div>
-                        <Badge variant="outline">
-                          {tournamentCategory.teams.length} equipos
-                        </Badge>
+                      <div className="flex items-start sm:items-center justify-between gap-3 mb-3">
+                        <Link
+                          href={`/dashboard/tournaments/${tournamentCategory.tournament.id}`}
+                          className="font-medium hover:underline text-base break-words flex-1"
+                        >
+                          {tournamentCategory.tournament.name}
+                        </Link>
+                        {getStatusBadge(tournamentCategory.tournament.status)}
                       </div>
 
                       <div className="text-sm text-muted-foreground space-y-1">
@@ -418,6 +377,7 @@ export function CategoryDetail({ category, currentUserId }: CategoryDetailProps)
                             ` - ${format(new Date(tournamentCategory.tournament.tournamentEnd), "dd/MM/yyyy", { locale: es })}`
                           )}
                         </div>
+                        <div>Equipos inscritos: {tournamentCategory.teams.length}</div>
                         {tournamentCategory.maxTeams && (
                           <div>Máximo equipos: {tournamentCategory.maxTeams}</div>
                         )}
@@ -427,53 +387,6 @@ export function CategoryDetail({ category, currentUserId }: CategoryDetailProps)
                       </div>
                     </div>
                   ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="teams">
-          <Card>
-            <CardHeader>
-              <CardTitle>Todos los Equipos en esta Categoría</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {totalTeams === 0 ? (
-                <p className="text-center text-muted-foreground py-8">
-                  No hay equipos inscritos en esta categoría aún
-                </p>
-              ) : (
-                <div className="space-y-6">
-                  {category.tournamentCategories.map((tournamentCategory) => {
-                    if (tournamentCategory.teams.length === 0) return null
-
-                    return (
-                      <div key={tournamentCategory.id}>
-                        <h4 className="font-medium mb-3 flex items-center gap-2">
-                          <Link
-                            href={`/dashboard/tournaments/${tournamentCategory.tournament.id}`}
-                            className="hover:underline"
-                          >
-                            {tournamentCategory.tournament.name}
-                          </Link>
-                          {getStatusBadge(tournamentCategory.tournament.status)}
-                        </h4>
-                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                          {tournamentCategory.teams.map((team) => (
-                            <div key={team.id} className="border rounded-lg p-3">
-                              <p className="font-medium">
-                                {team.name || `${team.registration1.player.firstName} ${team.registration1.player.lastName} / ${team.registration2.player.firstName} ${team.registration2.player.lastName}`}
-                              </p>
-                              <p className="text-sm text-muted-foreground">
-                                {team.registration1.player.firstName} {team.registration1.player.lastName} - {team.registration2.player.firstName} {team.registration2.player.lastName}
-                              </p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )
-                  })}
                 </div>
               )}
             </CardContent>
