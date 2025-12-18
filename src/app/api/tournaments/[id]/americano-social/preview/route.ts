@@ -120,13 +120,54 @@ export async function GET(
     const numPools = numPlayers / 4
     const roundsRecommendation = AmericanoSocialService.calculateOptimalRounds(numPlayers)
 
-    // Verificar si ya existen pools
-    const existingPools = await prisma.americanoPool.count({
+    // Verificar si ya existen pools y obtener información detallada
+    const existingPools = await prisma.americanoPool.findMany({
       where: {
         tournamentId: id,
         categoryId
+      },
+      include: {
+        matches: {
+          select: {
+            id: true,
+            status: true
+          }
+        }
+      },
+      orderBy: {
+        roundNumber: 'asc'
       }
     })
+
+    const hasExistingPools = existingPools.length > 0
+
+    // Calcular estadísticas de pools existentes
+    let existingPoolsInfo = null
+    if (hasExistingPools) {
+      const totalPools = existingPools.length
+      const totalMatches = existingPools.reduce((acc, pool) => acc + pool.matches.length, 0)
+      const completedMatches = existingPools.reduce(
+        (acc, pool) => acc + pool.matches.filter(m => m.status === 'COMPLETED').length,
+        0
+      )
+
+      // Agrupar pools por ronda
+      const roundsMap = new Map<number, number>()
+      existingPools.forEach(pool => {
+        const round = pool.roundNumber || 1
+        roundsMap.set(round, (roundsMap.get(round) || 0) + 1)
+      })
+      const numberOfRounds = roundsMap.size
+      const poolsPerRound = roundsMap.get(1) || 0 // Pools en la primera ronda
+
+      existingPoolsInfo = {
+        totalPools,
+        totalMatches,
+        completedMatches,
+        numberOfRounds,
+        poolsPerRound
+      }
+    }
 
     return NextResponse.json({
       isValid: true,
@@ -134,8 +175,9 @@ export async function GET(
       numPools,
       roundsRecommendation,
       currentRounds: tournament.americanoRounds || 1,
-      hasExistingPools: existingPools > 0,
-      existingPoolsCount: existingPools,
+      hasExistingPools,
+      existingPoolsCount: existingPools.length,
+      existingPoolsInfo,
       category: tournamentCategory.category,
       players
     })

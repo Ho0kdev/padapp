@@ -40,7 +40,8 @@ import {
   Settings,
   Download,
   Trash2,
-  AlertTriangle
+  AlertTriangle,
+  Printer
 } from "lucide-react"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
@@ -92,6 +93,7 @@ export function AmericanoSocialDetail({
   const [registrations, setRegistrations] = useState<any[]>([])
   const [selectedMatch, setSelectedMatch] = useState<any>(null)
   const [poolsSetupOpen, setPoolsSetupOpen] = useState(false)
+  const [categoriesSummary, setCategoriesSummary] = useState<any[]>([])
 
   const isOwner = tournament.organizerId === currentUserId
   const canManage = isOwner || isAdminOrClubAdmin
@@ -101,6 +103,7 @@ export function AmericanoSocialDetail({
   useEffect(() => {
     loadData()
     loadRegistrations()
+    loadCategoriesSummary()
   }, [categoryId])
 
   const loadData = async () => {
@@ -154,6 +157,23 @@ export function AmericanoSocialDetail({
     }
   }
 
+  const loadCategoriesSummary = async () => {
+    try {
+      const response = await fetch(
+        `/api/tournaments/${tournament.id}/americano-social/categories-summary`
+      )
+
+      if (!response.ok) {
+        throw new Error("Error cargando resumen de categorías")
+      }
+
+      const data = await response.json()
+      setCategoriesSummary(data.categories || [])
+    } catch (error) {
+      console.error("Error:", error)
+    }
+  }
+
   const generatePools = async (selectedCategoryId: string, numberOfRounds: number, force = false) => {
     try {
       setGenerating(true)
@@ -182,6 +202,7 @@ export function AmericanoSocialDetail({
       setRegenerateDialogOpen(false)
       setExistingPoolsInfo(null)
       await loadData()
+      await loadCategoriesSummary()
     } catch (error) {
       console.error("Error:", error)
       toast({
@@ -196,7 +217,9 @@ export function AmericanoSocialDetail({
 
   const handleConfirmRegenerate = () => {
     setRegenerateDialogOpen(false)
-    generatePools(true)
+    // Usar la categoría actual y las rondas configuradas en el torneo
+    const rounds = tournament.americanoRounds || 1
+    generatePools(categoryId, rounds, true)
   }
 
   const handleDelete = async () => {
@@ -247,7 +270,160 @@ export function AmericanoSocialDetail({
     }
   }
 
+  const handlePrintAllPools = async () => {
+    try {
+      // Importar jsPDF dinámicamente
+      const { jsPDF } = await import('jspdf')
+
+      // Crear PDF
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      })
+
+      let isFirstPage = true
+
+      pools.forEach((pool) => {
+        // Agregar nueva página (excepto la primera)
+        if (!isFirstPage) {
+          doc.addPage()
+        }
+        isFirstPage = false
+
+        // Header - Torneo
+        doc.setFontSize(14)
+        doc.setFont('helvetica', 'normal')
+        doc.text(tournament.name, 20, 20)
+
+        // Header - Pool
+        doc.setFontSize(24)
+        doc.setFont('helvetica', 'bold')
+        doc.text(pool.name, 20, 30)
+
+        doc.setFontSize(16)
+        doc.setFont('helvetica', 'normal')
+        doc.text(`Ronda ${pool.roundNumber}`, 20, 40)
+
+        // Cancha (si existe)
+        if (pool.court) {
+          doc.setFontSize(12)
+          doc.setFont('helvetica', 'normal')
+          doc.text(`Cancha: ${pool.court.name}`, 20, 48)
+        }
+
+        // Línea separadora
+        doc.setLineWidth(0.5)
+        doc.line(20, pool.court ? 52 : 45, 190, pool.court ? 52 : 45)
+
+        // Jugadores
+        let yPos = pool.court ? 60 : 55
+        doc.setFontSize(14)
+        doc.setFont('helvetica', 'bold')
+        doc.text('Jugadores', 20, yPos)
+        yPos += 3
+        doc.setLineWidth(1)
+        doc.line(20, yPos, 100, yPos)
+        yPos += 8
+
+        doc.setFontSize(12)
+        doc.setFont('helvetica', 'normal')
+        pool.players.forEach((p: any) => {
+          doc.text(`${p.player.firstName} ${p.player.lastName}`, 20, yPos)
+          yPos += 7
+        })
+
+        // Partidos
+        yPos += 5
+        doc.setFontSize(14)
+        doc.setFont('helvetica', 'bold')
+        doc.text('Partidos', 20, yPos)
+        yPos += 3
+        doc.setLineWidth(1)
+        doc.line(20, yPos, 100, yPos)
+        yPos += 10
+
+        pool.matches.forEach((match: any, idx: number) => {
+          // Título del partido
+          doc.setFontSize(12)
+          doc.setFont('helvetica', 'bold')
+          doc.text(`Partido ${idx + 1}`, 20, yPos)
+
+          // Fecha/hora programada (si existe)
+          if (match.scheduledFor) {
+            doc.setFontSize(10)
+            doc.setFont('helvetica', 'normal')
+            const scheduledDate = typeof match.scheduledFor === 'string'
+              ? new Date(match.scheduledFor)
+              : match.scheduledFor
+            const dateText = format(scheduledDate, "dd/MM/yyyy HH:mm", { locale: es })
+            doc.text(dateText, 70, yPos)
+          }
+
+          yPos += 7
+
+          // Equipo 1
+          doc.setFont('helvetica', 'normal')
+          const team1Text = `${match.player1.firstName} ${match.player1.lastName} / ${match.player2.firstName} ${match.player2.lastName}`
+          doc.text(team1Text, 25, yPos)
+
+          // Recuadro para resultado equipo 1
+          doc.setLineWidth(0.5)
+          doc.rect(160, yPos - 5, 25, 10)
+
+          yPos += 8
+
+          // Equipo 2
+          const team2Text = `${match.player3.firstName} ${match.player3.lastName} / ${match.player4.firstName} ${match.player4.lastName}`
+          doc.text(team2Text, 25, yPos)
+
+          // Recuadro para resultado equipo 2
+          doc.rect(160, yPos - 5, 25, 10)
+
+          yPos += 12
+
+          // Línea divisoria entre partidos
+          if (idx < pool.matches.length - 1) {
+            doc.setLineWidth(0.2)
+            doc.line(20, yPos, 190, yPos)
+            yPos += 5
+          }
+        })
+      })
+
+      // Descargar el PDF
+      doc.save(`planillas-${tournament.name.replace(/\s+/g, '-')}.pdf`)
+
+      toast({
+        title: "✅ PDF generado",
+        description: "Las planillas se han descargado correctamente",
+        variant: "success",
+      })
+    } catch (error) {
+      console.error('Error:', error)
+      toast({
+        title: "❌ Error",
+        description: "Error al generar el PDF de las planillas",
+        variant: "destructive",
+      })
+    }
+  }
+
   const hasPools = pools.length > 0
+
+  // Preparar datos para planilla imprimible
+  const currentCategory = tournament.categories.find((c: any) => c.categoryId === categoryId)
+  const scoresheetTournamentData = {
+    name: tournament.name,
+    tournamentStart: tournament.tournamentStart,
+    setsToWin: tournament.setsToWin,
+    gamesToWinSet: tournament.gamesToWinSet,
+    tiebreakAt: tournament.tiebreakAt,
+    goldenPoint: tournament.goldenPoint
+  }
+  const scoresheetCategoryData = currentCategory ? {
+    name: currentCategory.category.name
+  } : null
 
   // Agrupar pools por ronda
   const poolsByRound = useMemo(() => {
@@ -630,93 +806,301 @@ export function AmericanoSocialDetail({
 
         {/* Tab: Pools */}
         <TabsContent value="pools" className="space-y-4">
-          {!hasPools ? (
-            <Card>
-              <CardHeader>
-                <CardTitle>Pools</CardTitle>
-                <CardDescription>
-                  {canManage
-                    ? "Los jugadores confirmados se dividirán automáticamente en pools de 4. Cada pool jugará 3 partidos donde todos rotan parejas."
-                    : "Los pools aún no han sido generados. Espera a que el organizador genere los pools."
-                  }
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {canManage ? (
-                  <Button
-                    onClick={() => setPoolsSetupOpen(true)}
-                    disabled={generating}
-                    size="lg"
-                    className="w-full md:w-auto"
-                  >
-                    <Play className="mr-2 h-4 w-4" />
-                    Generar Pools
-                  </Button>
-                ) : (
-                  <p className="text-muted-foreground text-sm">
-                    Solo administradores y organizadores pueden generar pools.
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          ) : numberOfRounds > 1 ? (
-            // Múltiples rondas: mostrar con tabs
-            <Tabs defaultValue="round-1">
-              <TabsList>
-                {poolsByRound.map(([roundNum]) => (
-                  <TabsTrigger key={roundNum} value={`round-${roundNum}`}>
-                    Ronda {roundNum}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
+          {/* Estado por categoría */}
+          {tournament.categories.length > 1 && categoriesSummary.length > 0 ? (
+            <>
+              {/* Card: Estado por Categoría */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Estado por Categoría</CardTitle>
+                  <CardDescription>
+                    Resumen del estado de pools para cada categoría del torneo
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {categoriesSummary.map((catSummary: any) => (
+                      <div
+                        key={catSummary.categoryId}
+                        className="border rounded-lg p-4"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-semibold">{catSummary.categoryName}</h4>
+                          <Badge variant="outline">
+                            <Users className="h-3 w-3 mr-1" />
+                            {catSummary.confirmedPlayers} jugadores
+                          </Badge>
+                        </div>
 
-              {poolsByRound.map(([roundNum, roundPools]) => (
-                <TabsContent key={roundNum} value={`round-${roundNum}`} className="space-y-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <h3 className="text-lg font-semibold">Ronda {roundNum}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {roundPools.length} pool{roundPools.length > 1 ? 's' : ''} • {roundPools.length * 3} partidos
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {roundPools.map((pool) => (
-                      <PoolCard
-                        key={pool.id}
-                        pool={pool}
-                        onMatchUpdate={loadData}
-                        hasPreviousRoundsIncomplete={hasIncompletePreviousRounds.get(roundNum) || false}
-                      />
+                        {!catSummary.hasPools ? (
+                          <div className="flex items-center justify-between">
+                            <p className="text-sm text-muted-foreground">
+                              Pools no generados
+                            </p>
+                            {canManage && (
+                              <Button
+                                size="sm"
+                                onClick={() => {
+                                  router.push(`/dashboard/tournaments/${tournament.id}/americano-social?categoryId=${catSummary.categoryId}`)
+                                  setPoolsSetupOpen(true)
+                                }}
+                              >
+                                <Play className="mr-2 h-4 w-4" />
+                                Generar
+                              </Button>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
+                            <div>
+                              <span className="text-muted-foreground">Rondas:</span>
+                              <span className="ml-2 font-semibold">{catSummary.poolsStats.numberOfRounds}</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Pools:</span>
+                              <span className="ml-2 font-semibold">{catSummary.poolsStats.totalPools}</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Partidos:</span>
+                              <span className="ml-2 font-semibold">{catSummary.poolsStats.totalMatches}</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Completados:</span>
+                              <span className="ml-2 font-semibold text-green-600">
+                                {catSummary.poolsStats.completedMatches}/{catSummary.poolsStats.totalMatches}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     ))}
                   </div>
-                </TabsContent>
-              ))}
-            </Tabs>
+                </CardContent>
+              </Card>
+
+              {/* Card: Detalle de Pools (solo si hay pools generados en alguna categoría) */}
+              {categoriesSummary.some((cat: any) => cat.hasPools) && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Detalle de Pools</CardTitle>
+                    <CardDescription>
+                      Selecciona una categoría para ver el detalle de sus pools
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Tabs value={categoryId} onValueChange={(value) => router.push(`/dashboard/tournaments/${tournament.id}/americano-social?categoryId=${value}`)}>
+                      <TabsList className="mb-4">
+                        {categoriesSummary
+                          .filter((cat: any) => cat.hasPools)
+                          .map((cat: any) => (
+                            <TabsTrigger key={cat.categoryId} value={cat.categoryId}>
+                              {cat.categoryName}
+                            </TabsTrigger>
+                          ))}
+                      </TabsList>
+
+                      {categoriesSummary
+                        .filter((cat: any) => cat.hasPools)
+                        .map((cat: any) => (
+                          <TabsContent key={cat.categoryId} value={cat.categoryId}>
+                            {cat.categoryId === categoryId && hasPools && (
+                              numberOfRounds > 1 ? (
+                                // Múltiples rondas: mostrar con subtabs
+                                <Tabs defaultValue="round-1">
+                                  <TabsList>
+                                    {poolsByRound.map(([roundNum]) => (
+                                      <TabsTrigger key={roundNum} value={`round-${roundNum}`}>
+                                        Ronda {roundNum}
+                                      </TabsTrigger>
+                                    ))}
+                                  </TabsList>
+
+                                  {poolsByRound.map(([roundNum, roundPools]) => (
+                                    <TabsContent key={roundNum} value={`round-${roundNum}`} className="space-y-4">
+                                      <div className="flex items-center justify-between mb-4">
+                                        <div>
+                                          <h3 className="text-lg font-semibold">Ronda {roundNum}</h3>
+                                          <p className="text-sm text-muted-foreground">
+                                            {roundPools.length} pool{roundPools.length > 1 ? 's' : ''} • {roundPools.length * 3} partidos
+                                          </p>
+                                        </div>
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={handlePrintAllPools}
+                                        >
+                                          <Printer className="mr-2 h-4 w-4" />
+                                          Imprimir todas las planillas
+                                        </Button>
+                                      </div>
+
+                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        {roundPools.map((pool) => (
+                                          <PoolCard
+                                            key={pool.id}
+                                            pool={pool}
+                                            tournament={scoresheetTournamentData}
+                                            category={scoresheetCategoryData}
+                                            onMatchUpdate={loadData}
+                                            hasPreviousRoundsIncomplete={hasIncompletePreviousRounds.get(roundNum) || false}
+                                          />
+                                        ))}
+                                      </div>
+                                    </TabsContent>
+                                  ))}
+                                </Tabs>
+                              ) : (
+                                // Una sola ronda: mostrar directamente
+                                <div>
+                                  <div className="flex items-center justify-between mb-4">
+                                    <div>
+                                      <h3 className="text-lg font-semibold">Pools</h3>
+                                      <p className="text-sm text-muted-foreground">
+                                        {pools.length} pool{pools.length > 1 ? 's' : ''} • {pools.length * 3} partidos
+                                      </p>
+                                    </div>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={handlePrintAllPools}
+                                    >
+                                      <Printer className="mr-2 h-4 w-4" />
+                                      Imprimir todas las planillas
+                                    </Button>
+                                  </div>
+
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {pools.map((pool) => (
+                                      <PoolCard
+                                        key={pool.id}
+                                        pool={pool}
+                                        tournament={scoresheetTournamentData}
+                                        category={scoresheetCategoryData}
+                                        onMatchUpdate={loadData}
+                                        hasPreviousRoundsIncomplete={false}
+                                      />
+                                    ))}
+                                  </div>
+                                </div>
+                              )
+                            )}
+                          </TabsContent>
+                        ))}
+                    </Tabs>
+                  </CardContent>
+                </Card>
+              )}
+            </>
           ) : (
-            // Una sola ronda: mostrar directamente
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="text-lg font-semibold">Pools</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {pools.length} pool{pools.length > 1 ? 's' : ''} • {pools.length * 3} partidos
-                  </p>
+            // Torneo con una sola categoría: mantener UI original
+            !hasPools ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Pools</CardTitle>
+                  <CardDescription>
+                    {canManage
+                      ? "Los jugadores confirmados se dividirán automáticamente en pools de 4. Cada pool jugará 3 partidos donde todos rotan parejas."
+                      : "Los pools aún no han sido generados. Espera a que el organizador genere los pools."
+                    }
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {canManage ? (
+                    <Button
+                      onClick={() => setPoolsSetupOpen(true)}
+                      disabled={generating}
+                      size="lg"
+                      className="w-full md:w-auto"
+                    >
+                      <Play className="mr-2 h-4 w-4" />
+                      Generar Pools
+                    </Button>
+                  ) : (
+                    <p className="text-muted-foreground text-sm">
+                      Solo administradores y organizadores pueden generar pools.
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            ) : numberOfRounds > 1 ? (
+              // Múltiples rondas: mostrar con tabs
+              <Tabs defaultValue="round-1">
+                <TabsList>
+                  {poolsByRound.map(([roundNum]) => (
+                    <TabsTrigger key={roundNum} value={`round-${roundNum}`}>
+                      Ronda {roundNum}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+
+                {poolsByRound.map(([roundNum, roundPools]) => (
+                  <TabsContent key={roundNum} value={`round-${roundNum}`} className="space-y-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h3 className="text-lg font-semibold">Ronda {roundNum}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {roundPools.length} pool{roundPools.length > 1 ? 's' : ''} • {roundPools.length * 3} partidos
+                        </p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handlePrintAllPools}
+                      >
+                        <Printer className="mr-2 h-4 w-4" />
+                        Imprimir todas las planillas
+                      </Button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {roundPools.map((pool) => (
+                        <PoolCard
+                          key={pool.id}
+                          pool={pool}
+                          tournament={scoresheetTournamentData}
+                          category={scoresheetCategoryData}
+                          onMatchUpdate={loadData}
+                          hasPreviousRoundsIncomplete={hasIncompletePreviousRounds.get(roundNum) || false}
+                        />
+                      ))}
+                    </div>
+                  </TabsContent>
+                ))}
+              </Tabs>
+            ) : (
+              // Una sola ronda: mostrar directamente
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-lg font-semibold">Pools</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {pools.length} pool{pools.length > 1 ? 's' : ''} • {pools.length * 3} partidos
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handlePrintAllPools}
+                  >
+                    <Printer className="mr-2 h-4 w-4" />
+                    Imprimir todas las planillas
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {pools.map((pool) => (
+                    <PoolCard
+                      key={pool.id}
+                      pool={pool}
+                      tournament={scoresheetTournamentData}
+                      category={scoresheetCategoryData}
+                      onMatchUpdate={loadData}
+                      hasPreviousRoundsIncomplete={false}
+                    />
+                  ))}
                 </div>
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {pools.map((pool) => (
-                  <PoolCard
-                    key={pool.id}
-                    pool={pool}
-                    onMatchUpdate={loadData}
-                    hasPreviousRoundsIncomplete={false}
-                  />
-                ))}
-              </div>
-            </div>
+            )
           )}
         </TabsContent>
 
@@ -753,6 +1137,7 @@ export function AmericanoSocialDetail({
                                   match={match}
                                   canManage={canManage}
                                   onLoadResult={() => setSelectedMatch(match)}
+                                  poolCourt={pool.court}
                                   showPoolInfo={false}
                                   hasPreviousRoundsIncomplete={hasIncompletePreviousRounds.get(roundNum) || false}
                                   matchNumber={index + 1}
@@ -778,6 +1163,7 @@ export function AmericanoSocialDetail({
                             match={match}
                             canManage={canManage}
                             onLoadResult={() => setSelectedMatch(match)}
+                            poolCourt={pool.court}
                             showPoolInfo={false}
                             hasPreviousRoundsIncomplete={false}
                             matchNumber={index + 1}

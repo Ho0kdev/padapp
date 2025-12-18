@@ -939,12 +939,15 @@ Partido 3: (A, D) vs (B, C)  // roundNumber: 3
 **Componentes UI**:
 - Vista principal: `src/app/dashboard/tournaments/[id]/americano-social/page.tsx`
 - Detalle de pools: `src/components/tournaments/americano-social/americano-social-detail.tsx`
+- Configuración de pools: `src/components/tournaments/americano-social/americano-pools-setup.tsx` ⭐ NUEVO
 - Carga de resultados: `src/components/tournaments/americano-social/americano-match-result-dialog.tsx`
 - Tabla de pools: `src/components/tournaments/americano-social/pool-card.tsx`
 - Ranking global: `src/components/tournaments/americano-social/global-ranking-table.tsx`
 
 **APIs Implementadas**:
+- Preview de configuración: `GET /api/tournaments/[id]/americano-social/preview?categoryId=xxx` ⭐ NUEVO
 - Generar pools: `POST /api/tournaments/[id]/americano-social/generate`
+  - Body: `{ categoryId, numberOfRounds?, force? }`
 - Ver pools: `GET /api/tournaments/[id]/americano-social/pools?categoryId=xxx`
 - Cargar resultado: `POST /api/americano-social/matches/[id]/result`
 
@@ -996,19 +999,110 @@ Partido 3: (A, D) vs (B, C)  // roundNumber: 3
 }
 ```
 
-**Flujo de Trabajo**:
-1. Admin selecciona categoría de torneo con tipo AMERICANO_SOCIAL
-2. Verifica número de jugadores inscritos (debe ser múltiplo de 4)
-3. Click en "Generar Pools" → Sistema crea pools y partidos automáticamente
-4. Jugadores se dividen aleatoriamente (o por ranking) en pools de 4
-5. Se generan 3 partidos por pool con rotación automática
-6. Admin/Árbitro carga resultados partido por partido
-7. Rankings se actualizan automáticamente (pool y global)
-8. Al final: Ranking global determina ganadores 1°, 2°, 3°
+**Flujo de Trabajo (Actualizado Dic 2025)**:
+1. Admin selecciona torneo con tipo AMERICANO_SOCIAL
+2. Click en "Generar Pools" → Se abre dialog de configuración ⭐ NUEVO
+3. **Dialog de Configuración Automática**:
+   - Selector de categoría (si hay múltiples)
+   - Sistema calcula automáticamente:
+     * Número de jugadores CONFIRMED/PAID
+     * Número de pools que se generarían (N/4)
+     * Rondas recomendadas (mín, óptimo, máx)
+   - Slider interactivo para seleccionar rondas (1-10)
+   - Preview en tiempo real:
+     * Total de pools y partidos
+     * Distribución por ronda
+     * Lista de jugadores confirmados
+   - Advertencia si hay pools existentes
+4. Validación automática:
+   - ✅ Múltiplo de 4 jugadores (4, 8, 12, 16...)
+   - ✅ Solo jugadores CONFIRMED o PAID
+   - ⚠️ Error si no cumple requisitos
+5. Admin confirma → Sistema genera pools y partidos
+6. Jugadores se dividen aleatoriamente en pools de 4
+7. Se generan 3 partidos × pools × rondas con rotación automática
+8. Admin/Árbitro carga resultados partido por partido
+9. Rankings se actualizan automáticamente (pool y global)
+10. Al final: Ranking global determina ganadores 1°, 2°, 3°
+
+**Sistema de Configuración Automática de Rondas (Dic 2025)** ⭐:
+
+El sistema ahora incluye un **dialog de configuración inteligente** que calcula automáticamente el número óptimo de rondas:
+
+```typescript
+// Servicio: AmericanoSocialService
+static calculateOptimalRounds(numPlayers: number): {
+  min: number
+  optimal: number
+  max: number
+} {
+  if (numPlayers < 4 || numPlayers % 4 !== 0) {
+    return { min: 1, optimal: 1, max: 1 }
+  }
+
+  // Fórmula teórica: Con N jugadores, máximo = (N-1) / 3
+  const theoreticalMax = Math.floor((numPlayers - 1) / 3)
+
+  // Óptimo = 70% del máximo teórico, cap a 5 rondas
+  const optimal = Math.min(Math.max(2, Math.floor(theoreticalMax * 0.7)), 5)
+
+  // Máximo = teórico, cap a 10 rondas
+  const max = Math.min(theoreticalMax, 10)
+
+  return { min: 1, optimal, max }
+}
+
+// Ejemplos:
+// 8 jugadores  → { min: 1, optimal: 2, max: 2 }
+// 12 jugadores → { min: 1, optimal: 2, max: 3 }
+// 16 jugadores → { min: 1, optimal: 3, max: 5 }
+// 20 jugadores → { min: 1, optimal: 4, max: 6 }
+```
+
+**API Preview** (`GET /api/tournaments/[id]/americano-social/preview`):
+```typescript
+// Respuesta del endpoint preview
+{
+  isValid: boolean                    // true si múltiplo de 4
+  numPlayers: number                  // Jugadores CONFIRMED + PAID
+  numPools: number                    // N / 4
+  roundsRecommendation: {
+    min: number                       // Siempre 1
+    optimal: number                   // Calculado automáticamente
+    max: number                       // Máximo recomendado
+  }
+  hasExistingPools: boolean          // Advertencia si hay pools
+  existingPoolsCount: number
+  category: { id, name }
+  players: Array<{id, firstName, lastName}>
+  error?: string                      // Si no es válido
+}
+```
+
+**Características del Dialog**:
+- ✅ Selector de categoría (múltiples categorías en torneo)
+- ✅ Cálculo automático de rondas óptimas
+- ✅ Slider interactivo (mín → óptimo → máx)
+- ✅ Badges visuales: "Recomendado", "Pocas rondas", "Muchas rondas"
+- ✅ Preview de distribución:
+  - Total de pools y partidos
+  - Breakdown por ronda
+  - Lista de jugadores confirmados
+- ✅ Validación en tiempo real
+- ✅ Advertencia si pools existentes (regeneración)
+
+**Estados de Registro Considerados**:
+- ✅ `CONFIRMED` - Jugador confirmado
+- ✅ `PAID` - Jugador pagado
+- ❌ `PENDING` - NO se cuenta (aún no confirmado)
+- ❌ `CANCELLED` - NO se cuenta (cancelado)
+- ❌ `WAITLIST` - NO se cuenta (lista de espera)
+
+**Lógica**: Solo jugadores que **definitivamente van a participar** se cuentan para generar pools.
 
 ---
 
-### 🆕 Sistema de Múltiples Rondas (Actualizado: Dic 2024)
+### 🆕 Sistema de Múltiples Rondas (Actualizado: Dic 2025)
 
 **Descripción**:
 El sistema Americano Social ahora soporta **múltiples rondas** con rotación inteligente que minimiza la repetición de parejas entre rondas.

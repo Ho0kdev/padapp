@@ -220,3 +220,26 @@ body[data-scroll-locked] {
   padding-right: 0 !important;
   margin-right: 0 !important;
 }
+
+/* Print styles */
+@media print {
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  body {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* Force show print:block elements */
+  .print\:block {
+    display: block !important;
+  }
+
+  /* Force hide print:hidden elements */
+  .print\:hidden {
+    display: none !important;
+  }
+}

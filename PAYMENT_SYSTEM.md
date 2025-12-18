@@ -299,7 +299,7 @@ import {
 
 ## 🛡️ Seguridad
 
-### Validación de Webhooks (Actualizado Diciembre 2024)
+### Validación de Webhooks (Actualizado Diciembre 2025)
 
 El sistema implementa **validación completa de firma** para todos los webhooks de MercadoPago:
 
@@ -357,7 +357,7 @@ Respuesta:
 ```json
 {
   "message": "Webhook de Mercado Pago funcionando",
-  "timestamp": "2024-12-XX..."
+  "timestamp": "2025-12-XX..."
 }
 ```
 
@@ -388,7 +388,7 @@ SELECT * FROM payment_logs WHERE action = 'PAYMENT_MANUALLY_CONFIRMED';
 
 5. **Seguridad del Webhook**: ✅ **IMPLEMENTADO** - El sistema valida firma x-signature y timestamp de todos los webhooks de MercadoPago.
 
-## 🔐 Auditoría de Seguridad (Diciembre 2024)
+## 🔐 Auditoría de Seguridad (Diciembre 2025)
 
 ### Vulnerabilidades Corregidas
 

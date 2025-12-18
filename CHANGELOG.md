@@ -2,9 +2,77 @@
 
 Historial detallado de cambios y mejoras del proyecto PDLShot.
 
-## December 2024
+## December 2025
 
-### 🎨 UI/UX Improvements & Bug Fixes (Dec 15, 2024)
+### ⚙️ Americano Social - Auto Configuration System (Dec 17, 2025)
+
+**Automatic rounds calculation and improved player counting**
+
+**Summary**: Implemented intelligent dialog for automatic rounds configuration with preview, fixed registration status filtering to only count confirmed/paid players.
+
+**Features Added**:
+
+1. **🎯 Automatic Rounds Calculation**
+   - **Algorithm**: `calculateOptimalRounds(numPlayers)` - returns min, optimal, max
+   - **Formula**: Theoretical max = `(N-1) / 3`, optimal = 70% of theoretical (capped at 5)
+   - **Examples**:
+     - 8 players → { min: 1, optimal: 2, max: 2 }
+     - 12 players → { min: 1, optimal: 2, max: 3 }
+     - 16 players → { min: 1, optimal: 3, max: 5 }
+     - 20 players → { min: 1, optimal: 4, max: 6 }
+   - **File**: `src/lib/services/americano-social-service.ts:13-47`
+
+2. **📋 Preview API Endpoint**
+   - **Endpoint**: `GET /api/tournaments/[id]/americano-social/preview?categoryId=xxx`
+   - **Returns**: Player count (CONFIRMED + PAID only), pools count, rounds recommendation, existing pools warning
+   - **File**: `src/app/api/tournaments/[id]/americano-social/preview/route.ts` (NEW)
+
+3. **🎨 Pools Setup Dialog Component**
+   - **Category Selector**: Multi-category support with dropdown
+   - **Interactive Slider**: Select rounds from min to max with visual feedback
+   - **Smart Badges**: "Recomendado", "Pocas rondas", "Muchas rondas"
+   - **Real-time Preview**:
+     - Total pools and matches
+     - Distribution per round breakdown
+     - List of confirmed players
+   - **Validation**: Real-time validation, error messages for invalid configurations
+   - **File**: `src/components/tournaments/americano-social/americano-pools-setup.tsx` (NEW, 305 lines)
+
+4. **✅ Registration Status Filtering Fix**
+   - **Issue**: Category cards showing incorrect player count
+   - **Before**: Counted all registrations including PENDING
+   - **After**: Only counts CONFIRMED + PAID (players who will actually participate)
+   - **Affected Components**:
+     - Category cards in americano-social-detail.tsx:539-544
+     - Preview API filtering
+   - **Rationale**: Only confirmed/paid players are eligible for pool generation
+
+5. **🔄 Generate Endpoint Update**
+   - **New Parameter**: `numberOfRounds` in request body (optional)
+   - **Fallback**: Uses tournament.americanoRounds if not provided
+   - **Validation**: Accepts 1-10 rounds
+   - **File**: `src/app/api/tournaments/[id]/americano-social/generate/route.ts:177`
+
+**Files Modified**:
+- `src/lib/services/americano-social-service.ts` (calculateOptimalRounds method)
+- `src/app/api/tournaments/[id]/americano-social/preview/route.ts` (NEW)
+- `src/app/api/tournaments/[id]/americano-social/generate/route.ts` (numberOfRounds parameter)
+- `src/components/tournaments/americano-social/americano-pools-setup.tsx` (NEW)
+- `src/components/tournaments/americano-social/americano-social-detail.tsx` (integration)
+- `src/lib/validations/americano-social.ts` (schema update)
+- `src/components/ui/slider.tsx` (NEW - shadcn component)
+
+**User Experience Improvements**:
+- ✅ No more manual rounds configuration in tournament settings
+- ✅ System recommends optimal rounds automatically
+- ✅ Visual preview before generating pools
+- ✅ Clear warnings if player count invalid
+- ✅ Multi-category support in single dialog
+- ✅ Accurate player counts (only confirmed/paid)
+
+---
+
+### 🎨 UI/UX Improvements & Bug Fixes (Dec 15, 2025)
 
 **Complete UI refresh and critical stats bug fix**
 

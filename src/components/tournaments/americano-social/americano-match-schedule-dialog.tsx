@@ -78,13 +78,17 @@ interface AmericanoMatchScheduleDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSuccess: () => void
+  poolName?: string
+  tournamentName?: string
 }
 
 export function AmericanoMatchScheduleDialog({
   match,
   open,
   onOpenChange,
-  onSuccess
+  onSuccess,
+  poolName,
+  tournamentName
 }: AmericanoMatchScheduleDialogProps) {
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
@@ -220,7 +224,7 @@ export function AmericanoMatchScheduleDialog({
             Programar Partido Americano
           </DialogTitle>
           <DialogDescription>
-            {match.tournament.name}
+            {tournamentName || match.tournament?.name}
           </DialogDescription>
         </DialogHeader>
 
@@ -228,7 +232,7 @@ export function AmericanoMatchScheduleDialog({
         <div className="space-y-2 py-2 border-y">
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Pool:</span>
-            <span className="font-medium">{match.pool.name}</span>
+            <span className="font-medium">{poolName || match.pool?.name}</span>
           </div>
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Ronda:</span>

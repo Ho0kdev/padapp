@@ -16,6 +16,16 @@ import { Slider } from "@/components/ui/slider"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -37,6 +47,13 @@ interface PreviewData {
   currentRounds?: number
   hasExistingPools?: boolean
   existingPoolsCount?: number
+  existingPoolsInfo?: {
+    totalPools: number
+    totalMatches: number
+    completedMatches: number
+    numberOfRounds: number
+    poolsPerRound: number
+  }
   category: {
     id: string
     name: string
@@ -79,6 +96,7 @@ export function AmericanoPoolsSetup({
   const [previewData, setPreviewData] = useState<PreviewData | null>(null)
   const [selectedRounds, setSelectedRounds] = useState(1)
   const [selectedCategoryId, setSelectedCategoryId] = useState(initialCategoryId)
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false)
 
   useEffect(() => {
     if (open) {
@@ -129,10 +147,24 @@ export function AmericanoPoolsSetup({
   const handleGenerate = async () => {
     if (!previewData?.isValid || !selectedCategoryId) return
 
+    // Si hay pools existentes, mostrar diálogo de confirmación
+    if (previewData.hasExistingPools) {
+      setShowConfirmDialog(true)
+      return
+    }
+
+    // Si no hay pools existentes, generar directamente
+    await executeGenerate()
+  }
+
+  const executeGenerate = async () => {
+    if (!previewData?.isValid || !selectedCategoryId) return
+
     try {
       setGenerating(true)
       const force = previewData.hasExistingPools || false
       await onGenerate(selectedCategoryId, selectedRounds, force)
+      setShowConfirmDialog(false)
       onOpenChange(false)
     } catch (error) {
       // El error ya se maneja en el componente padre
@@ -219,11 +251,16 @@ export function AmericanoPoolsSetup({
             </Card>
 
             {/* Advertencia si hay pools existentes */}
-            {previewData.hasExistingPools && (
+            {previewData.hasExistingPools && previewData.existingPoolsInfo && (
               <Alert>
                 <AlertTriangle className="h-4 w-4" />
                 <AlertDescription>
-                  Ya existen {previewData.existingPoolsCount} pools generados. Al continuar, se eliminarán y se crearán nuevos.
+                  Ya existen pools generados para esta categoría. Al generar nuevos pools, se eliminarán todos los datos existentes.
+                  {previewData.existingPoolsInfo.completedMatches > 0 && (
+                    <span className="block mt-2 font-semibold text-orange-600">
+                      ⚠️ Hay {previewData.existingPoolsInfo.completedMatches} partido(s) completado(s) que se perderán.
+                    </span>
+                  )}
                 </AlertDescription>
               </Alert>
             )}
@@ -351,6 +388,84 @@ export function AmericanoPoolsSetup({
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      {/* Diálogo de confirmación para regenerar pools */}
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-orange-500" />
+              ¿Regenerar pools existentes?
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <div className="text-base">
+                  Ya existen pools generados para la categoría{" "}
+                  <strong>{previewData?.category.name}</strong>. Si continúas, se eliminarán{" "}
+                  <strong>todos los pools y partidos existentes</strong> y se crearán nuevos
+                  según la configuración seleccionada ({selectedRounds} {selectedRounds === 1 ? 'ronda' : 'rondas'}).
+                </div>
+
+                {previewData?.existingPoolsInfo && (
+                  <div className="bg-orange-50 dark:bg-orange-950 border border-orange-200 dark:border-orange-800 rounded-lg p-4 space-y-2">
+                    <div className="font-semibold text-orange-900 dark:text-orange-100">
+                      Datos que se eliminarán:
+                    </div>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-orange-800 dark:text-orange-200">Número de rondas:</span>
+                        <Badge variant="secondary">{previewData.existingPoolsInfo.numberOfRounds}</Badge>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-orange-800 dark:text-orange-200">Pools por ronda:</span>
+                        <Badge variant="secondary">{previewData.existingPoolsInfo.poolsPerRound}</Badge>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-orange-800 dark:text-orange-200">Total de pools:</span>
+                        <Badge variant="secondary">{previewData.existingPoolsInfo.totalPools}</Badge>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-orange-800 dark:text-orange-200">Total de partidos:</span>
+                        <Badge variant="secondary">{previewData.existingPoolsInfo.totalMatches}</Badge>
+                      </div>
+                      {previewData.existingPoolsInfo.completedMatches > 0 && (
+                        <div className="flex justify-between">
+                          <span className="text-orange-800 dark:text-orange-200">Partidos completados:</span>
+                          <Badge className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100">
+                            {previewData.existingPoolsInfo.completedMatches}
+                          </Badge>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                <div className="text-sm text-muted-foreground">
+                  Esta acción <strong>no se puede deshacer</strong>. Se perderán todos los
+                  resultados cargados hasta el momento.
+                </div>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={generating}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={executeGenerate}
+              disabled={generating}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              {generating ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Generando...
+                </>
+              ) : (
+                'Sí, eliminar y regenerar'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   )
 }

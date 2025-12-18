@@ -15,7 +15,7 @@ El sistema otorga puntos basándose en **4 factores principales**:
 
 ## 🆕 NOVEDAD: Puntos Base Configurables por Torneo
 
-A partir del 30 de septiembre de 2024, **cada torneo puede tener su propio valor base de puntos de ranking** (`rankingPoints`), lo que permite diferenciar torneos por nivel:
+A partir del 30 de septiembre de 2025, **cada torneo puede tener su propio valor base de puntos de ranking** (`rankingPoints`), lo que permite diferenciar torneos por nivel:
 
 - **Torneo Premium/Nacional**: 1000-1500 pts
 - **Torneo Regional Alto**: 600-900 pts
@@ -453,7 +453,7 @@ En la página de cada jugador en el ranking (`/dashboard/rankings/{id}`):
 - ✅ Integración completa con sistema de logs y auditoría
 - ✅ Sistema funcionando correctamente con 6 formatos de torneos
 
-### Septiembre 30, 2024 - Sistema de Puntos Configurables
+### Septiembre 30, 2025 - Sistema de Puntos Configurables
 - ✅ Agregado campo `rankingPoints` al modelo Tournament
 - ✅ Sistema de porcentajes para posiciones (proporcionales a rankingPoints)
 - ✅ Bonus de victorias y sets proporcionales

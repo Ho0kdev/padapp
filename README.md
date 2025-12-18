@@ -171,7 +171,7 @@ padelshot/
   - ✅ Round Robin (Todos contra Todos)
   - ✅ Group Stage + Elimination (Fase de Grupos + Eliminación)
   - ✅ Americano (Round-Robin Circle Method - Equipos fijos)
-  - ✅ Americano Social (Jugadores individuales en pools de 4)
+  - ✅ Americano Social (Jugadores individuales en pools de 4 con configuración automática de rondas)
   - ⏳ Swiss System (Pendiente)
 - **Estados de Torneo**: Draft → Published → Registration → In Progress → Completed
 - **Configuración Avanzada**:
@@ -299,7 +299,7 @@ padelshot/
 - **Reglas de Negocio**: Un jugador puede inscribirse en múltiples categorías, pero solo un equipo por categoría
 - **Protección RBAC**: Permisos granulares por rol
 
-### ✅ **Sistema de Pagos Completo** ⭐ NUEVO (Diciembre 2024) 🔒 SEGURO
+### ✅ **Sistema de Pagos Completo** ⭐ NUEVO (Diciembre 2025) 🔒 SEGURO
 - **Integración con Mercado Pago**:
   - SDK oficial de Mercado Pago instalado
   - Creación automática de preferencias de pago
@@ -324,7 +324,7 @@ padelshot/
   - `POST /api/webhooks/mercadopago` - Recibir notificaciones de Mercado Pago (🔒 firma validada)
   - `POST /api/registrations/[id]/payment/manual` - Confirmar pago manualmente
   - `GET /api/registrations/[id]/payment` - Obtener historial de pagos
-- **🔒 Seguridad Avanzada** (Auditoría Diciembre 2024):
+- **🔒 Seguridad Avanzada** (Auditoría Diciembre 2025):
   - **Validación de firma x-signature**: Webhooks verificados criptográficamente
   - **Validación de timestamp**: Prevención de replay attacks (máx. 5 minutos)
   - **Validación de monto**: Verifica que el monto pagado coincida exactamente
@@ -385,7 +385,7 @@ padelshot/
 - **Filtros**: Por torneo, fecha, cancha, estado
 - ⏳ **Pendiente**: Asignación automática de canchas, detección de conflictos, notificaciones de cambios
 
-### ✅ **Sistema de UI/UX Avanzado** ⭐ NUEVO (Diciembre 2024)
+### ✅ **Sistema de UI/UX Avanzado** ⭐ NUEVO (Diciembre 2025)
 - **🆕 Ordenamiento Dinámico en Todas las Tablas**:
   - **8 Páginas Mejoradas**: Usuarios, Clubes, Categorías, Equipos, Partidos, Rankings, Torneos, Inscripciones
   - **27+ Columnas Ordenables**: Click en header para ordenar ASC/DESC
@@ -1306,7 +1306,7 @@ interface CalculatePointsResponse {
 
 #### Rankings
 ```typescript
-// GET /api/rankings?categoryId=xxx&seasonYear=2024
+// GET /api/rankings?categoryId=xxx&seasonYear=2025
 interface GetRankingsResponse {
   rankings: PlayerRanking[]
   category: Category
@@ -1405,7 +1405,7 @@ console.log('Tournament created:', {
 
 ## 🔧 Changelog - Mejoras Recientes
 
-### 🆕 Diciembre 4, 2024 - Mejoras en Filtros, Búsqueda Inteligente y Sistema de Pagos
+### 🆕 Diciembre 4, 2025 - Mejoras en Filtros, Búsqueda Inteligente y Sistema de Pagos
 
 #### 🔍 Sistema de Búsqueda Inteligente Multi-Palabra
 1. **✅ Búsqueda Inteligente en 7 Módulos**
@@ -1475,7 +1475,7 @@ console.log('Tournament created:', {
 - 📚 **Guía de referencia** - Archivos destacados por módulo
 - 🔒 **9 servicios de logging** - Auditoría completa implementada
 
-### 🆕 Septiembre 30, 2024 - Sistema de Inscripciones, RBAC y Puntos Configurables
+### 🆕 Septiembre 30, 2025 - Sistema de Inscripciones, RBAC y Puntos Configurables
 
 #### 🎯 Sistema de Puntos Configurables por Torneo [NUEVO]
 1. **✅ Campo rankingPoints en Tournament**
@@ -1578,7 +1578,7 @@ console.log('Tournament created:', {
 ### Octubre 3, 2025
 - **✅ Migración de Inscripciones Completada** - Sistema desacoplado: inscripciones individuales + formación de equipos
 
-### Octubre 1, 2024
+### Octubre 1, 2025
 - **✅ Formato Americano Implementado** - Sistema completo de Round-Robin usando Circle Method
   - Algoritmo de rotación con bye automático para equipos impares
   - Generación de 4-10 rondas adaptativas
@@ -1586,11 +1586,11 @@ console.log('Tournament created:', {
   - Implementado en `bracket-service.ts:1432-1531`
   - Documentación completa actualizada en `TOURNAMENT_FORMATS.md`
 
-### Octubre 2024
+### Octubre 2025
 - **✅ Fix: Conteo de torneos en categorías** - Corregido filtro para solo contar torneos en curso (PUBLISHED, REGISTRATION_OPEN, REGISTRATION_CLOSED, IN_PROGRESS)
 - **✅ Fix: Botón Volver en detalle de usuario** - Navegación corregida de `router.back()` a `router.push('/dashboard/users')`
 
-### Septiembre 2024
+### Septiembre 2025
 - Sistema de puntos automático implementado
 - Rankings y temporadas funcionales
 - Panel administrativo completo

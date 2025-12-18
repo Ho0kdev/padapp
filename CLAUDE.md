@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**PDLShot** is a comprehensive paddle tennis (pádel) tournament management system built with Next.js 15, React 19, TypeScript, Prisma, and PostgreSQL. The system handles tournament creation, player registrations, bracket generation (6 different formats), match management, rankings, and administrative tasks with full RBAC (Role-Based Access Control) and audit logging.
+**PDLShot** is a comprehensive paddle tennis (pádel) tournament management system built with Next.js 16, React 19, TypeScript, Prisma, and PostgreSQL. The system handles tournament creation, player registrations, bracket generation (6 different formats), match management, rankings, and administrative tasks with full RBAC (Role-Based Access Control) and audit logging.
 
 **Current Status**: 99% core functionality complete, production-ready with 46 API endpoints (100% RBAC protected), 91+ React components, 30+ database tables, and advanced UI/UX system with sorting, filtering, and clickable navigation on 8 main pages.
 
@@ -189,7 +189,7 @@ Calculation via `POST /api/tournaments/[id]/calculate-points`:
 - Audit trail with PaymentLogService
 - Partial payment support
 
-**Security Score**: **9/10** ⭐ (audited Dec 2024, 5 vulnerabilities corrected)
+**Security Score**: **9/10** ⭐ (audited Dec 2025, 5 vulnerabilities corrected)
 
 📄 **Complete Payment Documentation**: See [PAYMENT_SYSTEM.md](PAYMENT_SYSTEM.md) for security audit, configuration, API endpoints, and testing.
 
@@ -414,7 +414,7 @@ POST /api/tournaments/[tournamentId]/recalculate-stats
 ```
 
 **Technical Details**:
-- The recalculate endpoint now uses an optimized approach (Dec 15, 2024)
+- The recalculate endpoint now uses an optimized approach (Dec 15, 2025)
 - Calculates all stats in memory first, then uses transaction for delete + createMany
 - This prevents double-counting issues that occurred with the old increment approach
 - Safe to run multiple times - it will always produce correct results
@@ -454,7 +454,7 @@ npm run db:seed     # Loads test data
 - `LOGGING_SYSTEM.md` - Audit logging guide (9 services)
 - `TOURNAMENT_FORMATS.md` - All bracket formats (1,637 lines)
 - `PAYMENT_SYSTEM.md` - Payment system + security audit
-- `CHANGELOG.md` - Detailed changelog (Dec 2024+)
+- `CHANGELOG.md` - Detailed changelog (Dec 2025+)
 
 ## Technology Stack
 
@@ -478,18 +478,3 @@ npm run db:seed     # Loads test data
 5. **Configurable Tournament Points**: Each tournament defines `rankingPoints` (100-5000) for flexible ranking
 6. **Americano Social as Separate Tables**: Independent from main Match system (different structure: 4 players vs 2 teams)
 7. **Multiple Rounds for Americano Social**: Tournament-level config (1-10 rounds) with greedy algorithm minimizing pool repetitions
-
-## Recent Updates
-
-📄 **See [CHANGELOG.md](CHANGELOG.md) for detailed changelog** including:
-- **UI/UX improvements** (larger logos, cyan/blue theme, Next.js 16 ready, Dec 15 2024)
-- **Playoff bracket fix** (anti-cross algorithm prevents same-group matchups, Dec 15 2024)
-- **Stats bug fix** (recalculate-stats rewritten, fixes double-counting, Dec 15 2024)
-- **Tournament integrity controls** (bracket generation validation + auto-cleanup, Dec 2024)
-- Security audit (MercadoPago, 5 vulnerabilities fixed, Dec 2024)
-- UI/UX overhaul (8 pages, sorting, filtering, clickable rows, Dec 2024)
-- Americano Social multi-round system
-- Points visualization and tournament reversion
-- Intelligent multi-word search
-- Payment status display fixes
-- And more...

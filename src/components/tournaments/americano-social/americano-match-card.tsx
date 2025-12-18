@@ -32,7 +32,7 @@ interface AmericanoMatch {
   player4: Player
   teamAScore?: number | null
   teamBScore?: number | null
-  scheduledAt?: Date | string | null
+  scheduledFor?: Date | string | null
   court?: {
     id: string
     name: string
@@ -47,6 +47,10 @@ interface AmericanoMatchCardProps {
   onStartMatch?: () => void
   showPoolInfo?: boolean
   poolName?: string
+  poolCourt?: {
+    id: string
+    name: string
+  } | null
   hasPreviousRoundsIncomplete?: boolean
   matchNumber?: number
   statusLoading?: boolean
@@ -60,6 +64,7 @@ export function AmericanoMatchCard({
   onStartMatch,
   showPoolInfo = false,
   poolName,
+  poolCourt,
   hasPreviousRoundsIncomplete = false,
   matchNumber,
   statusLoading = false
@@ -224,23 +229,23 @@ export function AmericanoMatchCard({
           </div>
 
           {/* Date and Court info */}
-          {(match.scheduledAt || match.court) && (
+          {(match.scheduledFor || poolCourt) && (
             <div className="pt-2 space-y-1 border-t">
-              {match.scheduledAt && (
+              {match.scheduledFor && (
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Calendar className="h-3 w-3" />
                   {format(
-                    typeof match.scheduledAt === 'string' ? new Date(match.scheduledAt) : match.scheduledAt,
+                    typeof match.scheduledFor === 'string' ? new Date(match.scheduledFor) : match.scheduledFor,
                     "dd/MM/yyyy HH:mm",
                     { locale: es }
                   )}
                 </div>
               )}
 
-              {match.court && (
+              {poolCourt && (
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <MapPin className="h-3 w-3" />
-                  {match.court.name}
+                  {poolCourt.name}
                 </div>
               )}
             </div>

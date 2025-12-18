@@ -47,7 +47,7 @@ export default function RootLayout({
     <html lang="es">
       <body className={inter.className}>
         <Providers>
-          <div className="min-h-dvh pb-16 md:pb-0">
+          <div className="min-h-dvh pb-16 md:pb-0 print:p-0 print:min-h-0">
             {children}
           </div>
           <MobileNav />
