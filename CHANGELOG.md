@@ -4,6 +4,78 @@ Historial detallado de cambios y mejoras del proyecto PDLShot.
 
 ## December 2025
 
+### 📅 Americano Social - Match Scheduling & PDF Enhancements (Dec 18, 2025)
+
+**Complete match scheduling functionality and enhanced scoresheet generation**
+
+**Summary**: Implemented full match scheduling capabilities in pool view, fixed scheduled date/time display, and enhanced PDF scoresheets with court and schedule information.
+
+**Features Added**:
+
+1. **🗓️ Match Scheduling in Pool View**
+   - **Dialog Component**: `AmericanoMatchScheduleDialog` with date and time picker
+   - **Features**:
+     - Select date and time (15-minute intervals)
+     - View/edit existing schedule
+     - Clear schedule option
+     - Real-time validation
+   - **Integration**: Available from pool view dropdown menu
+   - **Files**:
+     - `src/components/tournaments/americano-social/americano-match-schedule-dialog.tsx`
+     - `src/components/tournaments/americano-social/pool-card.tsx:147-159`
+   - **API Endpoint**: `PATCH /api/americano-matches/[id]/schedule`
+
+2. **▶️ Start Match Functionality**
+   - **Feature**: Ability to start scheduled matches from pool view
+   - **Confirmation Dialog**: Alert before changing match status
+   - **Status Transition**: SCHEDULED → IN_PROGRESS
+   - **File**: `src/components/tournaments/americano-social/pool-card.tsx:158-178`
+   - **API Endpoint**: `PATCH /api/americano-matches/[id]/status`
+
+3. **🐛 Fixed Scheduled Date/Time Display**
+   - **Issue**: `scheduledFor` field not included in pool query, `scheduledAt` vs `scheduledFor` mismatch
+   - **Root Cause**: Field name inconsistency (component expected `scheduledAt`, DB has `scheduledFor`)
+   - **Solution**:
+     - Updated interface to use `scheduledFor` instead of `scheduledAt`
+     - Added `poolCourt` prop to `AmericanoMatchCard` (matches use pool's court)
+     - Display court from pool, not individual match
+   - **Files Modified**:
+     - `src/components/tournaments/americano-social/americano-match-card.tsx:35,50-53,227-247`
+     - `src/components/tournaments/americano-social/pool-card.tsx:127,237`
+     - `src/components/tournaments/americano-social/americano-social-detail.tsx:1121,1147`
+
+4. **📄 Enhanced PDF Scoresheets**
+   - **New Information Displayed**:
+     - Pool's court assignment (if exists)
+     - Match scheduled date/time (if programmed)
+   - **Format**: Court shown in header, date/time next to match number
+   - **Dynamic Spacing**: Adjusts layout when court is present
+   - **Files Modified**:
+     - `src/components/tournaments/americano-social/pool-card.tsx:64-74,110-118`
+     - `src/components/tournaments/americano-social/americano-social-detail.tsx:308-320,352-361`
+   - **Date Format**: `dd/MM/yyyy HH:mm` (e.g., "18/12/2025 15:30")
+
+5. **🔧 Dialog Props Enhancement**
+   - **Issue**: `AmericanoMatchScheduleDialog` expected `match.tournament.name` but match object didn't include tournament relation
+   - **Solution**: Added optional `poolName` and `tournamentName` props with fallback
+   - **Pattern**: `{tournamentName || match.tournament?.name}`
+   - **File**: `src/components/tournaments/americano-social/americano-match-schedule-dialog.tsx:81-82,223,231`
+
+**Technical Details**:
+
+- **Database Schema**: `AmericanoPoolMatch.scheduledFor` (DateTime?), court comes from `AmericanoPool.courtId`
+- **Client-side PDF**: Uses jsPDF with dynamic imports
+- **Date Formatting**: date-fns library with Spanish locale
+- **State Management**: React useState for dialog control and match selection
+
+**User Experience Improvements**:
+
+- ✅ Can schedule matches directly from pool view (no need to go to individual match page)
+- ✅ Scheduled date/time visible on match cards
+- ✅ Pool court displayed on match cards
+- ✅ PDF scoresheets include all scheduling information
+- ✅ Confirmation dialogs prevent accidental status changes
+
 ### ⚙️ Americano Social - Auto Configuration System (Dec 17, 2025)
 
 **Automatic rounds calculation and improved player counting**

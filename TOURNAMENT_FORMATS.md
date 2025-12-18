@@ -1267,6 +1267,230 @@ Tab: Pools
     └─ R3 - Pool B (4 jugadores, 3 partidos)
 ```
 
+---
+
+### 📅 Sistema de Programación de Partidos (Actualizado: Dic 18, 2025)
+
+**Descripción**:
+Sistema completo de programación de partidos con fecha, hora y cancha para torneos Americano Social.
+
+**Características**:
+- ✅ Programar partidos desde vista de pools (no solo vista individual)
+- ✅ Selector de fecha y hora (intervalos de 15 minutos)
+- ✅ Visualización de información programada en tarjetas de partido
+- ✅ Iniciar partidos programados (SCHEDULED → IN_PROGRESS)
+- ✅ Información de cancha y horario en PDFs de planillas
+
+**Modelo de Datos**:
+```prisma
+model AmericanoPoolMatch {
+  id           String
+  poolId       String
+  tournamentId String
+  categoryId   String
+  roundNumber  Int
+
+  // Jugadores del partido
+  player1Id String
+  player2Id String
+  player3Id String
+  player4Id String
+
+  // Resultado
+  status     MatchStatus @default(SCHEDULED)
+  teamAScore Int?
+  teamBScore Int?
+  winnerTeam String?
+
+  // Programación
+  scheduledFor DateTime?  // ⭐ Fecha y hora programada
+  completedAt  DateTime?
+
+  // Nota: La cancha se asigna al pool, no al partido individual
+  pool AmericanoPool @relation(fields: [poolId], references: [id])
+}
+
+model AmericanoPool {
+  id           String
+  tournamentId String
+  categoryId   String
+  name         String
+  courtId      String?  // ⭐ Cancha asignada al pool
+  poolNumber   Int
+  roundNumber  Int
+
+  court   Court?                @relation(fields: [courtId], references: [id])
+  players AmericanoPoolPlayer[]
+  matches AmericanoPoolMatch[]
+}
+```
+
+**Componentes UI**:
+
+1. **Dialog de Programación** (`AmericanoMatchScheduleDialog`):
+```tsx
+<AmericanoMatchScheduleDialog
+  match={match}
+  poolName={pool.name}           // Props opcionales
+  tournamentName={tournament.name}
+  open={isOpen}
+  onSuccess={handleRefresh}
+/>
+
+// Características:
+// - Selector de fecha (date input)
+// - Selector de hora (dropdown con intervalos de 15 min)
+// - Vista previa de programación actual
+// - Botón para limpiar programación
+// - Validación en tiempo real
+```
+
+2. **Tarjeta de Partido** (`AmericanoMatchCard`):
+```tsx
+<AmericanoMatchCard
+  match={match}
+  poolCourt={pool.court}  // ⭐ Cancha del pool
+  canManage={true}
+  onSchedule={() => openScheduleDialog(match)}
+  onStartMatch={() => confirmStart(match)}
+  onLoadResult={() => openResultDialog(match)}
+/>
+
+// Muestra:
+// - Fecha/hora si está programado (scheduledFor)
+// - Nombre de cancha del pool (poolCourt.name)
+// - Dropdown con acciones: Programar, Iniciar, Cargar resultado
+```
+
+**API Endpoints**:
+
+```typescript
+// Programar partido
+PATCH /api/americano-matches/[id]/schedule
+Body: {
+  scheduledFor: string | null  // ISO 8601 datetime o null para limpiar
+}
+Response: { success: true, match: {...} }
+
+// Iniciar partido
+PATCH /api/americano-matches/[id]/status
+Body: {
+  status: "IN_PROGRESS" | "SCHEDULED" | "COMPLETED"
+}
+Response: { success: true, match: {...} }
+
+// El resultado se carga igual que antes
+POST /api/americano-matches/[id]/result
+```
+
+**Flujo de Trabajo**:
+
+1. **Admin programa partido**:
+   - Click en menú del partido → "Programar partido"
+   - Selecciona fecha: "18/12/2025"
+   - Selecciona hora: "15:30"
+   - Guarda → Estado: SCHEDULED
+
+2. **Info visible en tarjeta**:
+   ```
+   ┌─────────────────────────────────────────┐
+   │ Partido 1               [PROGRAMADO]    │
+   │ ─────────────────────────────────────   │
+   │ Alice Silva / Bob Jones                 │
+   │         6-4  6-3                        │
+   │ Carol White / David Brown               │
+   │ ─────────────────────────────────────   │
+   │ 📅 18/12/2025 15:30                     │
+   │ 📍 Cancha Principal                     │
+   └─────────────────────────────────────────┘
+   ```
+
+3. **Inicio de partido**:
+   - Click en menú → "Iniciar partido"
+   - Confirmación → Estado: IN_PROGRESS
+   - El partido aparece como "En Progreso"
+
+4. **Carga de resultado**:
+   - Click en menú → "Cargar resultado"
+   - Ingresa sets y games
+   - Guarda → Estado: COMPLETED
+
+**PDFs de Planillas (Scoresheets)**:
+
+Los PDFs ahora incluyen información de programación:
+
+```
+┌────────────────────────────────────────────────────────────┐
+│ Torneo Social de Pádel                                     │
+│                                                            │
+│ R1 - Pool A                                                │
+│ Ronda 1                                                    │
+│ Cancha: Cancha Principal          ⭐ NUEVO                │
+│ ──────────────────────────────────────────────────────── │
+│                                                            │
+│ Jugadores                                                  │
+│ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━                         │
+│ Alice Silva                                                │
+│ Bob Jones                                                  │
+│ Carol White                                                │
+│ David Brown                                                │
+│                                                            │
+│ Partidos                                                   │
+│ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━                         │
+│ Partido 1   18/12/2025 15:30      ⭐ NUEVO                │
+│   Alice Silva / Bob Jones          [  ]                   │
+│   Carol White / David Brown        [  ]                   │
+│                                                            │
+│ Partido 2   18/12/2025 16:45      ⭐ NUEVO                │
+│   Alice Silva / Carol White        [  ]                   │
+│   Bob Jones / David Brown          [  ]                   │
+│                                                            │
+│ Partido 3                                                  │
+│   Alice Silva / David Brown        [  ]                   │
+│   Bob Jones / Carol White          [  ]                   │
+└────────────────────────────────────────────────────────────┘
+```
+
+**Implementación**:
+
+**Archivos modificados**:
+- `src/components/tournaments/americano-social/americano-match-card.tsx`:
+  - Cambio de `scheduledAt` a `scheduledFor` (nombre correcto del campo)
+  - Prop `poolCourt` para mostrar cancha del pool
+  - Visualización de fecha/hora y cancha
+
+- `src/components/tournaments/americano-social/pool-card.tsx`:
+  - State para `matchToSchedule` y `matchToStart`
+  - Dialog `AmericanoMatchScheduleDialog`
+  - AlertDialog para confirmación de inicio
+  - PDF generation con cancha y fecha/hora
+
+- `src/components/tournaments/americano-social/americano-social-detail.tsx`:
+  - PDF generation para "Imprimir todas las planillas"
+  - Incluye cancha y fecha/hora en cada página
+
+- `src/components/tournaments/americano-social/americano-match-schedule-dialog.tsx`:
+  - Props opcionales `poolName` y `tournamentName`
+  - Fallback a `match.pool?.name` y `match.tournament?.name`
+
+**Características Técnicas**:
+- **Client-side PDF**: jsPDF con dynamic imports
+- **Date formatting**: date-fns con locale español
+- **State management**: React useState para dialogs
+- **Spacing dinámico**: Layout se ajusta si hay cancha o no
+
+**Validaciones**:
+- ✅ Solo usuarios autorizados pueden programar (ADMIN, CLUB_ADMIN, REFEREE, Organizer)
+- ✅ Solo partidos en estado SCHEDULED pueden iniciarse
+- ✅ Fecha/hora se valida en el frontend (campo requerido)
+- ✅ Confirmación antes de cambiar estado del partido
+
+**User Experience**:
+- ✅ Programación desde pool view (no navegar a match individual)
+- ✅ Información visible en tarjetas
+- ✅ PDFs listos para imprimir y usar en cancha
+- ✅ Confirmaciones previenen errores accidentales
+
 **Tab de Partidos (organizado por ronda)**:
 ```
 Ronda 1
