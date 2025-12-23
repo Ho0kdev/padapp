@@ -6,10 +6,39 @@ import { Menu } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/hooks/use-auth"
 import { navigation, NavigationItem, UserRole } from "@/lib/navigation"
+import { useEffect, useRef } from "react"
 
 export function MobileNav() {
   const pathname = usePathname()
   const { user } = useAuth()
+  const navRef = useRef<HTMLDivElement>(null)
+
+  // Fix iOS Safari address bar hiding issue
+  useEffect(() => {
+    const updatePosition = () => {
+      if (navRef.current && typeof window !== 'undefined') {
+        // Calculate position using window.innerHeight
+        // This automatically accounts for browser chrome changes
+        const windowHeight = window.innerHeight
+        const navHeight = navRef.current.offsetHeight || 64
+
+        navRef.current.style.top = `${windowHeight - navHeight}px`
+      }
+    }
+
+    // Initial position
+    updatePosition()
+
+    // Update on resize and scroll
+    window.addEventListener('resize', updatePosition)
+    window.addEventListener('scroll', updatePosition, { passive: true })
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('resize', updatePosition)
+      window.removeEventListener('scroll', updatePosition)
+    }
+  }, [])
 
   // Función para verificar si el usuario tiene acceso a una opción del menú
   const hasAccess = (item: NavigationItem): boolean => {
@@ -51,7 +80,14 @@ export function MobileNav() {
   }
 
   return (
-    <div className="fixed bottom-0 left-0 z-50 w-full border-t bg-background/80 backdrop-blur-lg lg:hidden">
+    <div
+      ref={navRef}
+      className="fixed left-0 z-50 w-full border-t bg-background/80 backdrop-blur-lg lg:hidden"
+      style={{
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        transition: 'top 0.2s ease-out',
+      }}
+    >
       <div className="flex h-16 items-center justify-around px-2">
         {links.map(({ href, label, icon: Icon }) => {
           const isActive = pathname === href

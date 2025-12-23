@@ -243,3 +243,24 @@ body[data-scroll-locked] {
     display: none !important;
   }
 }
+
+/* Mobile Navigation - Fixed positioning for iOS Safari */
+@supports (height: 100dvh) {
+  /* Use dvh (dynamic viewport height) when supported for better mobile behavior */
+  @media (max-width: 1023px) {
+    body {
+      min-height: 100dvh;
+    }
+  }
+}
+
+/* Ensure mobile nav stays at the bottom on iOS when address bar hides */
+@media (max-width: 1023px) {
+  @supports (-webkit-touch-callout: none) {
+    /* iOS-specific: Use svh (small viewport height) to account for browser chrome */
+    .mobile-nav-ios {
+      bottom: max(0px, env(safe-area-inset-bottom, 0px)) !important;
+      position: fixed !important;
+    }
+  }
+}

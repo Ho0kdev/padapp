@@ -17,7 +17,9 @@
       "Bash(pnpm add:*)",
       "Bash(npx tsc:*)",
       "Bash(netstat:*)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []

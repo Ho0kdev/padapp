@@ -51,8 +51,6 @@ import {
   Settings,
   Trash2,
   Download,
-  Copy,
-  Share2,
   GitBranch,
   CalendarDays,
   LayoutList
@@ -119,23 +117,6 @@ export function TournamentDetail({ tournament, currentUserId }: TournamentDetail
     }
   }
 
-  const handleCopyLink = async () => {
-    try {
-      await navigator.clipboard.writeText(window.location.href)
-      toast({
-        title: "✅ Enlace copiado",
-        description: "El enlace del torneo ha sido copiado al portapapeles",
-        variant: "success",
-      })
-    } catch (error) {
-      toast({
-        title: "❌ Error",
-        description: "No se pudo copiar el enlace",
-        variant: "destructive",
-      })
-    }
-  }
-
 
   return (
     <div className="space-y-6">
@@ -148,83 +129,78 @@ export function TournamentDetail({ tournament, currentUserId }: TournamentDetail
       />
 
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div className="space-y-1">
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{tournament.name}</h1>
-            <TournamentStatusManager
-              tournamentId={tournament.id}
-              currentStatus={tournament.status}
-              isOwner={isOwner}
-            />
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div className="space-y-1 flex-1">
+            <div className="flex items-center gap-3 flex-wrap">
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{tournament.name}</h1>
+              <TournamentStatusManager
+                tournamentId={tournament.id}
+                currentStatus={tournament.status}
+                isOwner={isOwner}
+              />
+            </div>
+            {tournament.description && (
+              <p className="text-muted-foreground">{tournament.description}</p>
+            )}
+            <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
+              <div className="flex items-center gap-1">
+                <Trophy className="h-4 w-4" />
+                {typeLabel}
+              </div>
+              <div className="flex items-center gap-1">
+                <Users className="h-4 w-4" />
+                {tournament.teams.length} equipos
+              </div>
+              <div className="flex items-center gap-1">
+                <Calendar className="h-4 w-4" />
+                {format(new Date(tournament.tournamentStart), "dd/MM/yyyy", { locale: es })}
+              </div>
+            </div>
           </div>
-          {tournament.description && (
-            <p className="text-muted-foreground">{tournament.description}</p>
-          )}
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <Trophy className="h-4 w-4" />
-              {typeLabel}
-            </div>
-            <div className="flex items-center gap-1">
-              <Users className="h-4 w-4" />
-              {tournament.teams.length} equipos
-            </div>
-            <div className="flex items-center gap-1">
-              <Calendar className="h-4 w-4" />
-              {format(new Date(tournament.tournamentStart), "dd/MM/yyyy", { locale: es })}
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {isOwner && (
-            <Link href={`/dashboard/tournaments/${tournament.id}/brackets`}>
-              <Button variant="default">
-                <GitBranch className="mr-2 h-4 w-4" />
-                Gestionar Brackets
-              </Button>
-            </Link>
-          )}
-
-          <Button variant="outline" onClick={handleCopyLink}>
-            <Copy className="mr-2 h-4 w-4" />
-            Copiar enlace
-          </Button>
 
           {isOwner && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon">
-                  <MoreHorizontal className="h-4 w-4" />
+            <div className="flex items-center gap-2 sm:shrink-0">
+              <Link href={`/dashboard/tournaments/${tournament.id}/brackets`} className="flex-1 sm:flex-initial">
+                <Button variant="default" className="w-full">
+                  <GitBranch className="mr-2 h-4 w-4" />
+                  Gestionar Brackets
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem asChild>
-                  <Link href={`/dashboard/tournaments/${tournament.id}/edit`}>
-                    <Edit className="mr-2 h-4 w-4" />
-                    Editar
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Settings className="mr-2 h-4 w-4" />
-                  Configuración
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Download className="mr-2 h-4 w-4" />
-                  Exportar
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  className="text-red-600"
-                  onClick={() => setDeleteDialogOpen(true)}
-                  disabled={tournament.teams.length > 0}
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Eliminar
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+              </Link>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem asChild>
+                    <Link href={`/dashboard/tournaments/${tournament.id}/edit`}>
+                      <Edit className="mr-2 h-4 w-4" />
+                      Editar
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Settings className="mr-2 h-4 w-4" />
+                    Configuración
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Download className="mr-2 h-4 w-4" />
+                    Exportar
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="text-red-600"
+                    onClick={() => setDeleteDialogOpen(true)}
+                    disabled={tournament.teams.length > 0}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Eliminar
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           )}
         </div>
       </div>
@@ -297,10 +273,9 @@ export function TournamentDetail({ tournament, currentUserId }: TournamentDetail
 
       {/* Tabs */}
       <Tabs defaultValue="info" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="info">Información</TabsTrigger>
-          <TabsTrigger value="teams">Equipos</TabsTrigger>
-          <TabsTrigger value="matches">Clasificación</TabsTrigger>
+        <TabsList className="w-full grid grid-cols-4">
+          <TabsTrigger value="info">Info</TabsTrigger>
+          <TabsTrigger value="matches">Zonas</TabsTrigger>
           <TabsTrigger value="bracket">Llaves</TabsTrigger>
           <TabsTrigger value="points">Puntos</TabsTrigger>
         </TabsList>
@@ -459,118 +434,10 @@ export function TournamentDetail({ tournament, currentUserId }: TournamentDetail
           )}
         </TabsContent>
 
-        <TabsContent value="teams">
-          <Card>
-            <CardHeader>
-              <CardTitle>{tournament.type === 'AMERICANO_SOCIAL' ? 'Jugadores Inscritos' : 'Equipos Inscritos'}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {tournament.type === 'AMERICANO_SOCIAL' ? (
-                // Vista para Americano Social - Jugadores individuales
-                tournament.registrations && tournament.registrations.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-8">
-                    No hay jugadores inscritos aún
-                  </p>
-                ) : (
-                  <div className="space-y-4">
-                    {tournament.categories.map((category) => {
-                      const categoryPlayers = tournament.registrations?.filter(
-                        reg => reg.categoryId === category.categoryId
-                      ) || []
-
-                      if (categoryPlayers.length === 0) return null
-
-                      return (
-                        <div key={category.id}>
-                          <h4 className="font-medium mb-3">{category.category.name}</h4>
-                          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                            {categoryPlayers.map((registration) => (
-                              <div key={registration.id} className="border rounded-lg p-3">
-                                <div className="flex items-center justify-between mb-2">
-                                  <p className="font-medium">
-                                    {registration.player.firstName} {registration.player.lastName}
-                                  </p>
-                                  <Badge className={getRegistrationStatusStyle(registration.registrationStatus)}>
-                                    {getRegistrationStatusLabel(registration.registrationStatus)}
-                                  </Badge>
-                                </div>
-                                <div className="space-y-2">
-                                  <div className="text-sm text-muted-foreground">
-                                    Puntos: {registration.player.rankingPoints}
-                                  </div>
-                                  <div className="flex flex-wrap gap-2">
-                                    {registration.player.primaryCategory && (
-                                      <Badge className={getCategoryLevelStyle(registration.player.primaryCategory.level)}>
-                                        {formatCategoryLevel(registration.player.primaryCategory.name, registration.player.primaryCategory.level)}
-                                      </Badge>
-                                    )}
-                                    {registration.player.gender && (
-                                      <Badge className={getGenderRestrictionStyle(registration.player.gender)}>
-                                        {getGenderRestrictionLabel(registration.player.gender)}
-                                      </Badge>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                )
-              ) : (
-                // Vista para torneos convencionales - Equipos
-                tournament.teams.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-8">
-                    No hay equipos inscritos aún
-                  </p>
-                ) : (
-                  <div className="space-y-4">
-                    {tournament.categories.map((category) => {
-                      const categoryTeams = tournament.teams.filter(
-                        team => team.categoryId === category.categoryId
-                      )
-
-                      if (categoryTeams.length === 0) return null
-
-                      return (
-                        <div key={category.id}>
-                          <h4 className="font-medium mb-3">{category.category.name}</h4>
-                          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                            {categoryTeams.map((team) => (
-                              <div key={team.id} className="border rounded-lg p-3">
-                                <div className="flex items-center justify-between mb-2">
-                                  <p className="font-medium">
-                                    {team.name || `${team.registration1.player.firstName} ${team.registration1.player.lastName} / ${team.registration2.player.firstName} ${team.registration2.player.lastName}`}
-                                  </p>
-                                  <Badge className={getTeamStatusStyle(team.status)}>
-                                    {getTeamStatusLabel(team.status)}
-                                  </Badge>
-                                </div>
-                                <div className="space-y-2">
-                                  <div className="text-sm text-muted-foreground">
-                                    <div>{team.registration1.player.firstName} {team.registration1.player.lastName}</div>
-                                    <div>{team.registration2.player.firstName} {team.registration2.player.lastName}</div>
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                )
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
         <TabsContent value="matches">
           <Card>
             <CardHeader>
-              <CardTitle>Clasificación</CardTitle>
+              <CardTitle>Zonas y Clasificación</CardTitle>
             </CardHeader>
             <CardContent>
               {tournament.type === 'GROUP_STAGE_ELIMINATION' || tournament.type === 'ROUND_ROBIN' ? (

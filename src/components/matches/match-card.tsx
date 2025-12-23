@@ -129,7 +129,7 @@ export function MatchCard({
     }
 
     return (
-      <Badge variant="outline" className={`text-xs ${styles[match.status] || styles.SCHEDULED}`}>
+      <Badge variant="outline" className={`text-[10px] md:text-xs px-1.5 py-0 ${styles[match.status] || styles.SCHEDULED}`}>
         {labels[match.status] || match.status}
       </Badge>
     )
@@ -137,10 +137,10 @@ export function MatchCard({
 
   return (
     <Card className="hover:shadow-md transition-shadow">
-      <CardContent className="p-4">
-        <div className="space-y-3">
-          {/* Header: Tournament info */}
-          <div className="flex items-start justify-between gap-2">
+      <CardContent className="p-3 md:p-4">
+        <div className="space-y-2 md:space-y-3">
+          {/* Header: Desktop */}
+          <div className="hidden md:flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
               {showTournamentInfo && tournament && category ? (
                 <>
@@ -217,14 +217,76 @@ export function MatchCard({
             </DropdownMenu>
           </div>
 
-          {/* Teams Grid */}
-          <div className="border rounded-md overflow-hidden">
+          {/* Header: Mobile (vertical layout) */}
+          <div className="md:hidden space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-semibold text-muted-foreground">
+                Partido {match.matchNumber}
+              </span>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                    <MoreHorizontal className="h-3.5 w-3.5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem asChild>
+                    <Link href={`/dashboard/matches/${match.id}`}>
+                      <Eye className="mr-2 h-4 w-4" />
+                      Ver detalle
+                    </Link>
+                  </DropdownMenuItem>
+
+                  {canManage && match.status !== "COMPLETED" && match.status !== "WALKOVER" && (
+                    <>
+                      <DropdownMenuSeparator />
+
+                      {onSchedule && (
+                        <DropdownMenuItem onClick={onSchedule}>
+                          <Calendar className="mr-2 h-4 w-4" />
+                          Programar partido
+                        </DropdownMenuItem>
+                      )}
+
+                      {match.status === "SCHEDULED" && onStartMatch && (
+                        <DropdownMenuItem
+                          onClick={onStartMatch}
+                          disabled={statusLoading}
+                        >
+                          <Play className="mr-2 h-4 w-4" />
+                          Iniciar partido
+                        </DropdownMenuItem>
+                      )}
+
+                      {onLoadResult && match.team1 && match.team2 && (
+                        <DropdownMenuItem onClick={onLoadResult}>
+                          <CheckCircle className="mr-2 h-4 w-4" />
+                          Cargar resultado
+                        </DropdownMenuItem>
+                      )}
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {match.phaseType && (
+                <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${getPhaseTypeStyle(match.phaseType)}`}>
+                  {getPhaseTypeLabel(match.phaseType)}
+                </Badge>
+              )}
+              {getStatusBadge()}
+            </div>
+          </div>
+
+          {/* Teams Grid - Desktop */}
+          <div className="hidden md:block border rounded-md overflow-hidden">
             <div className="grid grid-cols-[1fr_auto] divide-x">
               {/* Team Names Column */}
               <div className="divide-y">
                 <div
                   className={cn(
-                    "p-1.5 text-xs md:text-sm h-10 flex items-center leading-tight",
+                    "p-1.5 text-sm h-10 flex items-center leading-tight",
                     team1Won && "bg-green-50 dark:bg-green-950 font-semibold"
                   )}
                 >
@@ -232,7 +294,7 @@ export function MatchCard({
                 </div>
                 <div
                   className={cn(
-                    "p-1.5 text-xs md:text-sm h-10 flex items-center leading-tight",
+                    "p-1.5 text-sm h-10 flex items-center leading-tight",
                     team2Won && "bg-green-50 dark:bg-green-950 font-semibold"
                   )}
                 >
@@ -268,11 +330,70 @@ export function MatchCard({
             </div>
           </div>
 
+          {/* Teams Grid - Mobile (compact vertical) */}
+          <div className="md:hidden border rounded-md overflow-hidden">
+            <div className="divide-y">
+              {/* Team 1 */}
+              <div className="flex items-center gap-1">
+                <div
+                  className={cn(
+                    "flex-1 p-1.5 text-[10px] leading-tight min-w-0",
+                    team1Won && "bg-green-50 dark:bg-green-950 font-semibold"
+                  )}
+                >
+                  <span className="line-clamp-2">{getTeamDisplay(match.team1)}</span>
+                </div>
+                {isCompleted && match.sets && match.sets.length > 0 && (
+                  <div className="flex gap-px pr-1">
+                    {match.sets.map((set) => (
+                      <div
+                        key={`team1-set${set.setNumber}`}
+                        className={cn(
+                          "w-7 h-7 flex items-center justify-center text-[10px] font-mono border-l",
+                          set.team1Games > set.team2Games && "bg-green-100 dark:bg-green-900 font-bold"
+                        )}
+                      >
+                        {set.team1Games}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Team 2 */}
+              <div className="flex items-center gap-1">
+                <div
+                  className={cn(
+                    "flex-1 p-1.5 text-[10px] leading-tight min-w-0",
+                    team2Won && "bg-green-50 dark:bg-green-950 font-semibold"
+                  )}
+                >
+                  <span className="line-clamp-2">{getTeamDisplay(match.team2)}</span>
+                </div>
+                {isCompleted && match.sets && match.sets.length > 0 && (
+                  <div className="flex gap-px pr-1">
+                    {match.sets.map((set) => (
+                      <div
+                        key={`team2-set${set.setNumber}`}
+                        className={cn(
+                          "w-7 h-7 flex items-center justify-center text-[10px] font-mono border-l",
+                          set.team2Games > set.team1Games && "bg-green-100 dark:bg-green-900 font-bold"
+                        )}
+                      >
+                        {set.team2Games}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
           {/* Date and Court info */}
           {(match.scheduledAt || match.court) && (
-            <div className="pt-2 space-y-1 border-t">
+            <div className="pt-1 md:pt-2 space-y-0.5 md:space-y-1 border-t">
               {match.scheduledAt && (
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <div className="flex items-center gap-1 text-[10px] md:text-xs text-muted-foreground">
                   <Calendar className="h-3 w-3" />
                   {format(
                     typeof match.scheduledAt === 'string' ? new Date(match.scheduledAt) : match.scheduledAt,
@@ -283,7 +404,7 @@ export function MatchCard({
               )}
 
               {match.court && (
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <div className="flex items-center gap-1 text-[10px] md:text-xs text-muted-foreground">
                   <MapPin className="h-3 w-3" />
                   {match.court.name} - {match.court.club.name}
                 </div>

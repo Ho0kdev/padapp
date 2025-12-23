@@ -7,10 +7,18 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet"
+import {
   Users,
   AlertCircle,
   Trophy,
-  RefreshCw
+  RefreshCw,
+  ChevronRight
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { MatchResultDialog } from "@/components/matches/match-result-dialog"
@@ -126,6 +134,8 @@ export function GroupStandingsAndMatches({
   const [resultDialogOpen, setResultDialogOpen] = useState(false)
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false)
   const [statusLoading, setStatusLoading] = useState<string | null>(null)
+  const [selectedTeamStats, setSelectedTeamStats] = useState<TeamStats | null>(null)
+  const [statsSheetOpen, setStatsSheetOpen] = useState(false)
   const { isAdminOrClubAdmin, isReferee } = useAuth()
   const { toast } = useToast()
 
@@ -323,14 +333,16 @@ export function GroupStandingsAndMatches({
           </CardHeader>
           <CardContent>
             <div className="grid gap-6 lg:grid-cols-2">
+              {/* <div> */}
               {/* Left: Standings */}
               <div>
                 <h4 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wide">
                   Clasificación
                 </h4>
                 {zone.standings && zone.standings.length > 0 ? (
-                  <div className="border rounded-lg overflow-hidden">
-                    <table className="w-full text-xs">
+                  <div className="border rounded-lg overflow-x-auto">
+                    {/* Desktop: Full table */}
+                    <table className="w-full text-xs hidden md:table">
                       <thead className="bg-muted/50">
                         <tr className="border-b">
                           <th className="text-left py-2 px-2 font-semibold text-muted-foreground w-8">#</th>
@@ -415,6 +427,69 @@ export function GroupStandingsAndMatches({
                         })}
                       </tbody>
                     </table>
+
+                    {/* Mobile: Compact table with click to view details */}
+                    <table className="w-full text-xs md:hidden min-w-0">
+                      <thead className="bg-muted/50">
+                        <tr className="border-b">
+                          <th className="text-left py-2 px-1 font-semibold text-muted-foreground w-6">#</th>
+                          <th className="text-left py-2 px-1 font-semibold text-muted-foreground min-w-0">Equipo</th>
+                          <th className="text-center py-2 px-0.5 font-semibold text-muted-foreground w-8" title="Puntos">PTS</th>
+                          <th className="text-center py-2 px-0.5 font-semibold text-muted-foreground w-7" title="Partidos Jugados">PJ</th>
+                          <th className="text-center py-2 px-0.5 font-semibold text-muted-foreground w-7" title="Partidos Ganados">PG</th>
+                          <th className="text-center py-2 px-0.5 font-semibold text-muted-foreground w-7" title="Partidos Perdidos">PP</th>
+                          <th className="w-5"></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {zone.standings.map((stats, index) => {
+                          return (
+                            <tr
+                              key={stats.teamId}
+                              className={cn(
+                                "border-b last:border-0 transition-colors cursor-pointer",
+                                index < 2 ? "bg-green-50/50 dark:bg-green-950/20" : "hover:bg-muted/50"
+                              )}
+                              onClick={() => {
+                                setSelectedTeamStats(stats)
+                                setStatsSheetOpen(true)
+                              }}
+                            >
+                              <td className="py-2 px-1">
+                                <div className={cn(
+                                  "flex items-center justify-center w-4 h-4 rounded-full text-[9px] font-semibold",
+                                  index < 2
+                                    ? "bg-green-600 text-white"
+                                    : "bg-muted text-muted-foreground"
+                                )}>
+                                  {index + 1}
+                                </div>
+                              </td>
+                              <td className="py-2 px-1 max-w-0">
+                                <p className="text-[10px] font-medium leading-tight line-clamp-2 overflow-hidden text-ellipsis">
+                                  {stats.teamName}
+                                </p>
+                              </td>
+                              <td className="text-center py-2 px-0.5 font-bold text-primary whitespace-nowrap text-[10px]">
+                                {stats.points}
+                              </td>
+                              <td className="text-center py-2 px-0.5 whitespace-nowrap text-[10px]">
+                                {stats.matchesPlayed}
+                              </td>
+                              <td className="text-center py-2 px-0.5 whitespace-nowrap text-[10px] text-green-600">
+                                {stats.matchesWon}
+                              </td>
+                              <td className="text-center py-2 px-0.5 whitespace-nowrap text-[10px] text-red-600">
+                                {stats.matchesLost}
+                              </td>
+                              <td className="py-2 px-0.5">
+                                <ChevronRight className="h-3 w-3 text-muted-foreground" />
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
                   </div>
                 ) : (
                   <Alert>
@@ -428,7 +503,7 @@ export function GroupStandingsAndMatches({
 
               {/* Right: Matches */}
               <div>
-                <h4 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wide">
+                <h4 className="text-sm font-semibold mb-3 text-muted-foreground uppercase ">
                   Partidos
                 </h4>
                 {zone.matches && zone.matches.length > 0 ? (
@@ -477,6 +552,167 @@ export function GroupStandingsAndMatches({
           />
         </>
       )}
+
+      {/* Mobile: Team Stats Detail Sheet */}
+      <Sheet open={statsSheetOpen} onOpenChange={setStatsSheetOpen}>
+        <SheetContent side="bottom" className="h-[85vh] overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle className="text-left">Estadísticas Detalladas</SheetTitle>
+            <SheetDescription className="text-left">
+              {selectedTeamStats?.teamName}
+            </SheetDescription>
+          </SheetHeader>
+
+          {selectedTeamStats && (
+            <div className="mt-6 space-y-4 pb-8">
+              {/* Position Badge */}
+              <div className="flex items-center justify-center mb-4">
+                <div className="flex items-center gap-3 bg-muted/50 rounded-lg p-4">
+                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary text-primary-foreground text-lg font-bold">
+                    #{(() => {
+                      const currentZone = zones.find(z =>
+                        z.standings?.some(s => s.teamId === selectedTeamStats.teamId)
+                      )
+                      const position = currentZone?.standings?.findIndex(
+                        s => s.teamId === selectedTeamStats.teamId
+                      )
+                      return position !== undefined ? position + 1 : '-'
+                    })()}
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Posición</p>
+                    <p className="text-lg font-semibold">
+                      {(() => {
+                        const currentZone = zones.find(z =>
+                          z.standings?.some(s => s.teamId === selectedTeamStats.teamId)
+                        )
+                        return currentZone?.name || 'Grupo'
+                      })()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Stats Grid */}
+              <div className="space-y-3">
+                {/* Puntos */}
+                <div className="flex items-center justify-between px-5 py-3 border-b">
+                  <span className="text-sm font-medium text-muted-foreground">Puntos</span>
+                  <span className="text-2xl font-bold text-primary">{selectedTeamStats.points}</span>
+                </div>
+
+                {/* Partidos */}
+                <div className="bg-muted/30 rounded-lg p-4 space-y-3">
+                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Partidos</h4>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="text-center">
+                      <p className="text-xs text-muted-foreground mb-1">Jugados</p>
+                      <p className="text-2xl font-bold">{selectedTeamStats.matchesPlayed}</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-xs text-muted-foreground mb-1">Ganados</p>
+                      <p className="text-2xl font-bold text-green-600">{selectedTeamStats.matchesWon}</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-xs text-muted-foreground mb-1">Perdidos</p>
+                      <p className="text-2xl font-bold text-red-600">{selectedTeamStats.matchesLost}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Sets */}
+                <div className="bg-muted/30 rounded-lg p-4 space-y-3">
+                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Sets</h4>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="text-center">
+                      <p className="text-xs text-muted-foreground mb-1">A Favor</p>
+                      <p className="text-xl font-semibold">{selectedTeamStats.setsWon}</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-xs text-muted-foreground mb-1">En Contra</p>
+                      <p className="text-xl font-semibold">{selectedTeamStats.setsLost}</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-xs text-muted-foreground mb-1">Diferencia</p>
+                      <p className={cn(
+                        "text-xl font-bold",
+                        selectedTeamStats.setsWon - selectedTeamStats.setsLost > 0
+                          ? "text-green-600"
+                          : selectedTeamStats.setsWon - selectedTeamStats.setsLost < 0
+                          ? "text-red-600"
+                          : ""
+                      )}>
+                        {selectedTeamStats.setsWon - selectedTeamStats.setsLost > 0 ? "+" : ""}
+                        {selectedTeamStats.setsWon - selectedTeamStats.setsLost}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Games */}
+                <div className="bg-muted/30 rounded-lg p-4 space-y-3">
+                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Games</h4>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="text-center">
+                      <p className="text-xs text-muted-foreground mb-1">A Favor</p>
+                      <p className="text-xl font-semibold">{selectedTeamStats.gamesWon}</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-xs text-muted-foreground mb-1">En Contra</p>
+                      <p className="text-xl font-semibold">{selectedTeamStats.gamesLost}</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-xs text-muted-foreground mb-1">Diferencia</p>
+                      <p className={cn(
+                        "text-xl font-bold",
+                        selectedTeamStats.gamesWon - selectedTeamStats.gamesLost > 0
+                          ? "text-green-600"
+                          : selectedTeamStats.gamesWon - selectedTeamStats.gamesLost < 0
+                          ? "text-red-600"
+                          : ""
+                      )}>
+                        {selectedTeamStats.gamesWon - selectedTeamStats.gamesLost > 0 ? "+" : ""}
+                        {selectedTeamStats.gamesWon - selectedTeamStats.gamesLost}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Performance Indicators */}
+                <div className="bg-muted/30 rounded-lg p-4 space-y-3">
+                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Rendimiento</h4>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">% Victorias</span>
+                      <span className="text-lg font-semibold">
+                        {selectedTeamStats.matchesPlayed > 0
+                          ? Math.round((selectedTeamStats.matchesWon / selectedTeamStats.matchesPlayed) * 100)
+                          : 0}%
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Promedio Sets/Partido</span>
+                      <span className="text-lg font-semibold">
+                        {selectedTeamStats.matchesPlayed > 0
+                          ? (selectedTeamStats.setsWon / selectedTeamStats.matchesPlayed).toFixed(1)
+                          : '0.0'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Promedio Games/Partido</span>
+                      <span className="text-lg font-semibold">
+                        {selectedTeamStats.matchesPlayed > 0
+                          ? (selectedTeamStats.gamesWon / selectedTeamStats.matchesPlayed).toFixed(1)
+                          : '0.0'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   )
 }
