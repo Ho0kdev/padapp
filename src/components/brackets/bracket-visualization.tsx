@@ -221,7 +221,7 @@ export function BracketVisualization({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Trophy className="h-5 w-5" />
-          <h3 className="text-lg font-semibold">
+          <h3 className="text-sm md:text-lg lg:text-xl font-semibold">
             Bracket - {bracket.totalRounds} Rondas
           </h3>
         </div>
@@ -241,7 +241,7 @@ export function BracketVisualization({
       </div>
 
       {Object.entries(bracket.rounds)
-        .sort(([a], [b]) => Number(a) - Number(b))
+        .sort(([a], [b]) => Number(b) - Number(a))
         .map(([roundNum, matches]) => {
           const firstMatch = matches[0]
           const phaseLabel = firstMatch
