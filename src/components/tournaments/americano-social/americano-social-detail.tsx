@@ -471,93 +471,147 @@ export function AmericanoSocialDetail({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div className="space-y-1">
-          <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold tracking-tight">{tournament.name}</h1>
-            <TournamentStatusManager
-              tournamentId={tournament.id}
-              currentStatus={tournament.status}
-              isOwner={isOwner}
-            />
+      <div className="space-y-4">
+        <div className="flex items-start justify-between gap-2">
+          <div className="space-y-1 min-w-0 flex-1">
+            <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight line-clamp-2">{tournament.name}</h1>
+              <TournamentStatusManager
+                tournamentId={tournament.id}
+                currentStatus={tournament.status}
+                isOwner={isOwner}
+              />
+            </div>
+            {tournament.description && (
+              <p className="text-sm md:text-base text-muted-foreground line-clamp-2">{tournament.description}</p>
+            )}
+            <div className="flex flex-wrap items-center gap-2 md:gap-4 text-xs md:text-sm text-muted-foreground">
+              <div className="flex items-center gap-1">
+                <Trophy className="h-3 w-3 md:h-4 md:w-4" />
+                <span className="line-clamp-1">{typeLabel}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Users className="h-3 w-3 md:h-4 md:w-4" />
+                {registrations.length} jugadores
+              </div>
+              <div className="flex items-center gap-1">
+                <Calendar className="h-3 w-3 md:h-4 md:w-4" />
+                {format(new Date(tournament.tournamentStart), "dd/MM/yyyy", { locale: es })}
+              </div>
+            </div>
           </div>
-          {tournament.description && (
-            <p className="text-muted-foreground">{tournament.description}</p>
-          )}
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <Trophy className="h-4 w-4" />
-              {typeLabel}
-            </div>
-            <div className="flex items-center gap-1">
-              <Users className="h-4 w-4" />
-              {registrations.length} jugadores
-            </div>
-            <div className="flex items-center gap-1">
-              <Calendar className="h-4 w-4" />
-              {format(new Date(tournament.tournamentStart), "dd/MM/yyyy", { locale: es })}
-            </div>
-          </div>
-        </div>
 
-        <div className="flex items-center gap-2">
-          {canManage && (
-            <Button variant="default" onClick={() => setPoolsSetupOpen(true)} disabled={generating}>
-              <Play className="mr-2 h-4 w-4" />
-              {hasPools ? "Regenerar Pools" : "Generar Pools"}
+          {/* Desktop Actions */}
+          <div className="hidden md:flex items-center gap-2">
+            {canManage && (
+              <Button variant="default" onClick={() => setPoolsSetupOpen(true)} disabled={generating}>
+                <Play className="mr-2 h-4 w-4" />
+                {hasPools ? "Regenerar Pools" : "Generar Pools"}
+              </Button>
+            )}
+
+            <Button variant="outline" onClick={handleCopyLink}>
+              <Copy className="mr-2 h-4 w-4" />
+              Copiar enlace
             </Button>
-          )}
 
-          <Button variant="outline" onClick={handleCopyLink}>
-            <Copy className="mr-2 h-4 w-4" />
-            Copiar enlace
-          </Button>
+            {isOwner && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem asChild>
+                    <Link href={`/dashboard/tournaments/${tournament.id}/edit`}>
+                      <Edit className="mr-2 h-4 w-4" />
+                      Editar
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Settings className="mr-2 h-4 w-4" />
+                    Configuración
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Download className="mr-2 h-4 w-4" />
+                    Exportar
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="text-red-600"
+                    onClick={() => setDeleteDialogOpen(true)}
+                    disabled={hasPools}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Eliminar
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
 
-          {isOwner && (
+          {/* Mobile Menu */}
+          <div className="md:hidden">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon">
+                <Button variant="outline" size="sm" className="h-8 w-8 p-0">
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem asChild>
-                  <Link href={`/dashboard/tournaments/${tournament.id}/edit`}>
-                    <Edit className="mr-2 h-4 w-4" />
-                    Editar
-                  </Link>
+                {canManage && (
+                  <DropdownMenuItem onClick={() => setPoolsSetupOpen(true)} disabled={generating}>
+                    <Play className="mr-2 h-4 w-4" />
+                    {hasPools ? "Regenerar Pools" : "Generar Pools"}
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem onClick={handleCopyLink}>
+                  <Copy className="mr-2 h-4 w-4" />
+                  Copiar enlace
                 </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Settings className="mr-2 h-4 w-4" />
-                  Configuración
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Download className="mr-2 h-4 w-4" />
-                  Exportar
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  className="text-red-600"
-                  onClick={() => setDeleteDialogOpen(true)}
-                  disabled={hasPools}
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Eliminar
-                </DropdownMenuItem>
+                {isOwner && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href={`/dashboard/tournaments/${tournament.id}/edit`}>
+                        <Edit className="mr-2 h-4 w-4" />
+                        Editar
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>
+                      <Settings className="mr-2 h-4 w-4" />
+                      Configuración
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>
+                      <Download className="mr-2 h-4 w-4" />
+                      Exportar
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="text-red-600"
+                      onClick={() => setDeleteDialogOpen(true)}
+                      disabled={hasPools}
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Eliminar
+                    </DropdownMenuItem>
+                  </>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
-          )}
+          </div>
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-3 md:gap-4 grid-cols-2 md:grid-cols-4">
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-3 md:p-6">
             <div className="flex items-start">
-              <Users className="h-4 w-4 text-muted-foreground mt-1" />
-              <div className="ml-3 flex-1">
-                <p className="text-sm font-medium text-muted-foreground mb-2">Jugadores</p>
+              <Users className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground mt-1" />
+              <div className="ml-2 md:ml-3 flex-1 min-w-0">
+                <p className="text-[10px] md:text-sm font-medium text-muted-foreground mb-1 md:mb-2">Jugadores</p>
                 <RegistrationStatusBreakdown
                   registrations={registrations}
                   maxParticipants={tournament.maxParticipants}
@@ -568,36 +622,36 @@ export function AmericanoSocialDetail({
         </Card>
 
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-3 md:p-6">
             <div className="flex items-center">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-              <div className="ml-3">
-                <p className="text-sm font-medium text-muted-foreground">Partidos</p>
-                <p className="text-2xl font-bold">{pools.length * 3}</p>
+              <Calendar className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
+              <div className="ml-2 md:ml-3">
+                <p className="text-[10px] md:text-sm font-medium text-muted-foreground">Partidos</p>
+                <p className="text-lg md:text-2xl font-bold">{pools.length * 3}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-3 md:p-6">
             <div className="flex items-center">
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-              <div className="ml-3">
-                <p className="text-sm font-medium text-muted-foreground">Premio</p>
-                <p className="text-2xl font-bold">${tournament.prizePool}</p>
+              <DollarSign className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
+              <div className="ml-2 md:ml-3">
+                <p className="text-[10px] md:text-sm font-medium text-muted-foreground">Premio</p>
+                <p className="text-lg md:text-2xl font-bold">${tournament.prizePool}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-3 md:p-6">
             <div className="flex items-center">
-              <Trophy className="h-4 w-4 text-muted-foreground" />
-              <div className="ml-3">
-                <p className="text-sm font-medium text-muted-foreground">Categorías</p>
-                <p className="text-2xl font-bold">{tournament.categories.length}</p>
+              <Trophy className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
+              <div className="ml-2 md:ml-3">
+                <p className="text-[10px] md:text-sm font-medium text-muted-foreground">Categorías</p>
+                <p className="text-lg md:text-2xl font-bold">{tournament.categories.length}</p>
               </div>
             </div>
           </CardContent>
@@ -606,13 +660,15 @@ export function AmericanoSocialDetail({
 
       {/* Tabs */}
       <Tabs defaultValue="info" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="info">Información</TabsTrigger>
-          <TabsTrigger value="players">Jugadores</TabsTrigger>
-          <TabsTrigger value="pools">Pools</TabsTrigger>
-          <TabsTrigger value="matches">Partidos</TabsTrigger>
-          <TabsTrigger value="ranking">Ranking</TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+          <TabsList className="inline-flex w-auto min-w-full md:w-full">
+            <TabsTrigger value="info" className="text-xs md:text-sm whitespace-nowrap">Información</TabsTrigger>
+            <TabsTrigger value="players" className="text-xs md:text-sm whitespace-nowrap">Jugadores</TabsTrigger>
+            <TabsTrigger value="pools" className="text-xs md:text-sm whitespace-nowrap">Pools</TabsTrigger>
+            <TabsTrigger value="matches" className="text-xs md:text-sm whitespace-nowrap">Partidos</TabsTrigger>
+            <TabsTrigger value="ranking" className="text-xs md:text-sm whitespace-nowrap">Ranking</TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* Tab: Info */}
         <TabsContent value="info" className="space-y-4">

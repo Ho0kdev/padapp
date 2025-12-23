@@ -214,29 +214,29 @@ export function PoolCard({ pool, tournament, category, onMatchUpdate, hasPreviou
         <CardContent className="space-y-6">
           {/* Jugadores */}
           <div>
-            <h4 className="font-semibold mb-3 flex items-center gap-2">
+            <h4 className="font-semibold mb-3 flex items-center gap-2 text-sm">
               <Trophy className="h-4 w-4" />
               Jugadores
             </h4>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
               {pool.players
                 .sort((a: any, b: any) => b.totalPoints - a.totalPoints)
                 .map((p: any) => (
                   <div
                     key={p.id}
-                    className="flex items-center justify-between p-3 border rounded-lg"
+                    className="flex items-center justify-between p-2 md:p-3 border rounded-lg"
                   >
-                    <div>
-                      <p className="font-medium text-sm">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-[10px] md:text-sm leading-tight line-clamp-1">
                         {p.player.firstName} {p.player.lastName}
                       </p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-[9px] md:text-xs text-muted-foreground">
                         {p.matchesWon}-{p.matchesLost} partidos
                       </p>
                     </div>
-                    <div className="text-right">
-                      <p className="font-bold text-lg">{p.totalPoints}</p>
-                      <p className="text-xs text-muted-foreground">pts</p>
+                    <div className="text-right ml-2">
+                      <p className="font-bold text-sm md:text-lg">{p.totalPoints}</p>
+                      <p className="text-[9px] md:text-xs text-muted-foreground">pts</p>
                     </div>
                   </div>
                 ))}
@@ -245,7 +245,7 @@ export function PoolCard({ pool, tournament, category, onMatchUpdate, hasPreviou
 
           {/* Partidos */}
           <div>
-            <h4 className="font-semibold mb-3">Partidos</h4>
+            <h4 className="font-semibold mb-3 text-sm">Partidos</h4>
             <div className="space-y-3">
               {pool.matches.map((match: any, index: number) => (
                 <AmericanoMatchCard

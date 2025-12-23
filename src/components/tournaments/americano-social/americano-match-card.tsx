@@ -97,7 +97,7 @@ export function AmericanoMatchCard({
     }
 
     return (
-      <Badge variant="outline" className={`text-xs ${styles[match.status] || styles.SCHEDULED}`}>
+      <Badge variant="outline" className={`text-[10px] md:text-xs px-1.5 py-0 ${styles[match.status] || styles.SCHEDULED}`}>
         {labels[match.status] || match.status}
       </Badge>
     )
@@ -105,10 +105,10 @@ export function AmericanoMatchCard({
 
   return (
     <Card className="hover:shadow-md transition-shadow">
-      <CardContent className="p-4">
-        <div className="space-y-3">
-          {/* Header: Round number/Pool info + Status */}
-          <div className="flex items-center justify-between">
+      <CardContent className="p-3 md:p-4">
+        <div className="space-y-2 md:space-y-3">
+          {/* Header: Desktop */}
+          <div className="hidden md:flex items-center justify-between">
             <div className="flex-1">
               {showPoolInfo && poolName ? (
                 <>
@@ -181,8 +181,71 @@ export function AmericanoMatchCard({
             </div>
           </div>
 
-          {/* Teams Grid */}
-          <div className="border rounded-md overflow-hidden">
+          {/* Header: Mobile (vertical layout) */}
+          <div className="md:hidden space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-semibold text-muted-foreground">
+                {matchNumber ? `Partido ${matchNumber}` : `Ronda ${match.roundNumber}`}
+              </span>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                    <MoreHorizontal className="h-3.5 w-3.5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem asChild>
+                    <Link href={`/dashboard/americano-matches/${match.id}`}>
+                      <Eye className="mr-2 h-4 w-4" />
+                      Ver detalle
+                    </Link>
+                  </DropdownMenuItem>
+
+                  {canManage && match.status !== "COMPLETED" && match.status !== "WALKOVER" && (
+                    <>
+                      <DropdownMenuSeparator />
+
+                      {onSchedule && (
+                        <DropdownMenuItem onClick={onSchedule}>
+                          <Calendar className="mr-2 h-4 w-4" />
+                          Programar partido
+                        </DropdownMenuItem>
+                      )}
+
+                      {match.status === "SCHEDULED" && onStartMatch && (
+                        <DropdownMenuItem
+                          onClick={onStartMatch}
+                          disabled={statusLoading}
+                        >
+                          <Play className="mr-2 h-4 w-4" />
+                          Iniciar partido
+                        </DropdownMenuItem>
+                      )}
+
+                      {onLoadResult && (
+                        <DropdownMenuItem
+                          onClick={hasPreviousRoundsIncomplete ? undefined : onLoadResult}
+                          disabled={hasPreviousRoundsIncomplete}
+                          className={hasPreviousRoundsIncomplete ? "opacity-50 cursor-not-allowed" : ""}
+                        >
+                          <CheckCircle className="mr-2 h-4 w-4" />
+                          {hasPreviousRoundsIncomplete
+                            ? "Completar rondas anteriores primero"
+                            : "Cargar resultado"}
+                        </DropdownMenuItem>
+                      )}
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {getStatusBadge()}
+            </div>
+          </div>
+
+          {/* Teams Grid - Desktop */}
+          <div className="hidden md:block border rounded-md overflow-hidden">
             <div className="grid grid-cols-[1fr_auto] divide-x">
               {/* Team Names Column */}
               <div className="divide-y">
@@ -228,11 +291,60 @@ export function AmericanoMatchCard({
             </div>
           </div>
 
+          {/* Teams Grid - Mobile (compact vertical) */}
+          <div className="md:hidden border rounded-md overflow-hidden">
+            <div className="divide-y">
+              {/* Team A */}
+              <div className="flex items-center gap-1">
+                <div
+                  className={cn(
+                    "flex-1 p-1.5 text-[10px] leading-tight min-w-0",
+                    teamAWon && "bg-green-50 dark:bg-green-950 font-semibold"
+                  )}
+                >
+                  <span className="line-clamp-2">{getTeamADisplay()}</span>
+                </div>
+                {isCompleted && match.teamAScore !== null && (
+                  <div
+                    className={cn(
+                      "w-10 h-10 flex items-center justify-center text-[10px] font-mono border-l",
+                      teamAWon && "bg-green-100 dark:bg-green-900 font-bold"
+                    )}
+                  >
+                    {match.teamAScore}
+                  </div>
+                )}
+              </div>
+
+              {/* Team B */}
+              <div className="flex items-center gap-1">
+                <div
+                  className={cn(
+                    "flex-1 p-1.5 text-[10px] leading-tight min-w-0",
+                    teamBWon && "bg-green-50 dark:bg-green-950 font-semibold"
+                  )}
+                >
+                  <span className="line-clamp-2">{getTeamBDisplay()}</span>
+                </div>
+                {isCompleted && match.teamBScore !== null && (
+                  <div
+                    className={cn(
+                      "w-10 h-10 flex items-center justify-center text-[10px] font-mono border-l",
+                      teamBWon && "bg-green-100 dark:bg-green-900 font-bold"
+                    )}
+                  >
+                    {match.teamBScore}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
           {/* Date and Court info */}
           {(match.scheduledFor || poolCourt) && (
-            <div className="pt-2 space-y-1 border-t">
+            <div className="pt-1 md:pt-2 space-y-0.5 md:space-y-1 border-t">
               {match.scheduledFor && (
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <div className="flex items-center gap-1 text-[10px] md:text-xs text-muted-foreground">
                   <Calendar className="h-3 w-3" />
                   {format(
                     typeof match.scheduledFor === 'string' ? new Date(match.scheduledFor) : match.scheduledFor,
@@ -243,7 +355,7 @@ export function AmericanoMatchCard({
               )}
 
               {poolCourt && (
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <div className="flex items-center gap-1 text-[10px] md:text-xs text-muted-foreground">
                   <MapPin className="h-3 w-3" />
                   {poolCourt.name}
                 </div>
