@@ -168,7 +168,7 @@ export function ManualPaymentDialog({
                     <SelectContent>
                       <SelectItem value="MANUAL">Confirmación Manual</SelectItem>
                       <SelectItem value="CASH">Efectivo</SelectItem>
-                      <SelectItem value="BANK_TRANSFER">Transferencia Bancaria</SelectItem>
+                      <SelectItem value="BANK_TRANSFER">Transferencia</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormDescription>

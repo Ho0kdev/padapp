@@ -117,7 +117,7 @@ export const registrationStatusOptions = [
 // Opciones para métodos de pago
 export const paymentMethodOptions = [
   { value: "CASH", label: "Efectivo" },
-  { value: "TRANSFER", label: "Transferencia Bancaria" },
+  { value: "TRANSFER", label: "Transferencia" },
   { value: "CREDIT_CARD", label: "Tarjeta de Crédito" },
   { value: "DEBIT_CARD", label: "Tarjeta de Débito" },
   { value: "MERCADOPAGO", label: "Mercado Pago" },

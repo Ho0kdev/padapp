@@ -374,7 +374,7 @@ export const getPaymentStatusLabel = (status: string) => {
 export const paymentMethodOptions = [
   { value: "MERCADOPAGO_CARD", label: "Tarjeta (MercadoPago)", color: "primary", css: "bg-primary/10 text-primary border-primary/20" },
   { value: "MERCADOPAGO_WALLET", label: "Wallet Digital", color: "purple", css: "bg-purple-100 text-purple-800 border-purple-200" },
-  { value: "BANK_TRANSFER", label: "Transferencia Bancaria", color: "teal", css: "bg-teal-100 text-teal-800 border-teal-200" },
+  { value: "BANK_TRANSFER", label: "Transferencia", color: "teal", css: "bg-teal-100 text-teal-800 border-teal-200" },
   { value: "CASH", label: "Efectivo", color: "green", css: "bg-green-100 text-green-800 border-green-200" },
   { value: "MANUAL", label: "Manual", color: "orange", css: "bg-orange-100 text-orange-800 border-orange-200" },
 ] as const

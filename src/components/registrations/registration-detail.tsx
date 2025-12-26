@@ -260,111 +260,159 @@ export function RegistrationDetail({ registration, isAdmin = false }: Registrati
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div className="space-y-1">
-          <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold tracking-tight">{getPlayerName()}</h1>
+      <div className="space-y-4">
+        <div className="flex items-start justify-between gap-2">
+          <div className="space-y-1 min-w-0 flex-1">
+            <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight line-clamp-2">{getPlayerName()}</h1>
+              {isAdmin && (
+                <RegistrationStatusManager
+                  registrationId={registration.id}
+                  currentStatus={registration.registrationStatus}
+                  tournamentStatus={registration.tournament.status}
+                />
+              )}
+              {!isAdmin && getStatusBadge(registration.registrationStatus)}
+            </div>
+            <div className="flex flex-wrap items-center gap-2 md:gap-4 text-xs md:text-sm text-muted-foreground">
+              <div className="flex items-center gap-1">
+                <Trophy className="h-3 w-3 md:h-4 md:w-4" />
+                <span className="line-clamp-1">{registration.tournament.name}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Users className="h-3 w-3 md:h-4 md:w-4" />
+                <span className="line-clamp-1">{registration.category.name}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Calendar className="h-3 w-3 md:h-4 md:w-4" />
+                Inscrito {format(new Date(registration.registeredAt), "dd/MM/yyyy", { locale: es })}
+              </div>
+            </div>
+          </div>
+
+          {/* Desktop Actions */}
+          <div className="hidden md:flex items-center gap-2">
+            <Button variant="outline" onClick={handleCopyLink}>
+              <Copy className="mr-2 h-4 w-4" />
+              Copiar enlace
+            </Button>
+
             {isAdmin && (
-              <RegistrationStatusManager
-                registrationId={registration.id}
-                currentStatus={registration.registrationStatus}
-                tournamentStatus={registration.tournament.status}
-              />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem asChild>
+                    <Link href={`/dashboard/registrations/${registration.id}/edit`}>
+                      <Edit className="mr-2 h-4 w-4" />
+                      Editar
+                    </Link>
+                  </DropdownMenuItem>
+                  {registrationFee > 0 && (
+                    <DropdownMenuItem asChild>
+                      <Link href={`/dashboard/registrations/${registration.id}/payment`}>
+                        <CreditCard className="mr-2 h-4 w-4" />
+                        Gestionar Pago
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="text-red-600"
+                    onClick={() => setDeleteDialogOpen(true)}
+                    disabled={!canDelete}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Eliminar
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
-            {!isAdmin && getStatusBadge(registration.registrationStatus)}
           </div>
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <Trophy className="h-4 w-4" />
-              {registration.tournament.name}
-            </div>
-            <div className="flex items-center gap-1">
-              <Users className="h-4 w-4" />
-              {registration.category.name}
-            </div>
-            <div className="flex items-center gap-1">
-              <Calendar className="h-4 w-4" />
-              Inscrito {format(new Date(registration.registeredAt), "dd/MM/yyyy", { locale: es })}
-            </div>
-          </div>
-        </div>
 
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={handleCopyLink}>
-            <Copy className="mr-2 h-4 w-4" />
-            Copiar enlace
-          </Button>
-
-          {isAdmin && (
+          {/* Mobile Menu */}
+          <div className="md:hidden">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon">
+                <Button variant="outline" size="sm" className="h-8 w-8 p-0">
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem asChild>
-                  <Link href={`/dashboard/registrations/${registration.id}/edit`}>
-                    <Edit className="mr-2 h-4 w-4" />
-                    Editar
-                  </Link>
+                <DropdownMenuItem onClick={handleCopyLink}>
+                  <Copy className="mr-2 h-4 w-4" />
+                  Copiar enlace
                 </DropdownMenuItem>
-                {registrationFee > 0 && (
-                  <DropdownMenuItem asChild>
-                    <Link href={`/dashboard/registrations/${registration.id}/payment`}>
-                      <CreditCard className="mr-2 h-4 w-4" />
-                      Gestionar Pago
-                    </Link>
-                  </DropdownMenuItem>
+                {isAdmin && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href={`/dashboard/registrations/${registration.id}/edit`}>
+                        <Edit className="mr-2 h-4 w-4" />
+                        Editar
+                      </Link>
+                    </DropdownMenuItem>
+                    {registrationFee > 0 && (
+                      <DropdownMenuItem asChild>
+                        <Link href={`/dashboard/registrations/${registration.id}/payment`}>
+                          <CreditCard className="mr-2 h-4 w-4" />
+                          Gestionar Pago
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="text-red-600"
+                      onClick={() => setDeleteDialogOpen(true)}
+                      disabled={!canDelete}
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Eliminar
+                    </DropdownMenuItem>
+                  </>
                 )}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  className="text-red-600"
-                  onClick={() => setDeleteDialogOpen(true)}
-                  disabled={!canDelete}
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Eliminar
-                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          )}
+          </div>
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-3 md:gap-4 grid-cols-2 md:grid-cols-4">
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-3 md:p-6">
             <div className="flex items-center">
-              <Trophy className="h-4 w-4 text-muted-foreground" />
-              <div className="ml-3">
-                <p className="text-sm font-medium text-muted-foreground">Estado</p>
-                <p className="text-2xl font-bold">{statusConfig?.label}</p>
+              <Trophy className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
+              <div className="ml-2 md:ml-3">
+                <p className="text-[10px] md:text-sm font-medium text-muted-foreground">Estado</p>
+                <p className="text-lg md:text-2xl font-bold">{statusConfig?.label}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-3 md:p-6">
             <div className="flex items-center">
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-              <div className="ml-3">
-                <p className="text-sm font-medium text-muted-foreground">Pagado</p>
-                <p className="text-2xl font-bold">${totalPaid}</p>
+              <DollarSign className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
+              <div className="ml-2 md:ml-3">
+                <p className="text-[10px] md:text-sm font-medium text-muted-foreground">Pagado</p>
+                <p className="text-lg md:text-2xl font-bold">${totalPaid}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-3 md:p-6">
             <div className="flex items-center">
-              <CreditCard className="h-4 w-4 text-muted-foreground" />
-              <div className="ml-3">
-                <p className="text-sm font-medium text-muted-foreground">Pendiente</p>
-                <p className="text-2xl font-bold">${amountDue}</p>
+              <CreditCard className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
+              <div className="ml-2 md:ml-3">
+                <p className="text-[10px] md:text-sm font-medium text-muted-foreground">Pendiente</p>
+                <p className="text-lg md:text-2xl font-bold">${amountDue}</p>
               </div>
             </div>
           </CardContent>
@@ -373,9 +421,9 @@ export function RegistrationDetail({ registration, isAdmin = false }: Registrati
 
       {/* Tabs */}
       <Tabs defaultValue="info" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="info">Información</TabsTrigger>
-          <TabsTrigger value="players">Jugadores</TabsTrigger>
+        <TabsList className="w-full grid grid-cols-3">
+          <TabsTrigger value="info">Info</TabsTrigger>
+          <TabsTrigger value="players">Jugador</TabsTrigger>
           <TabsTrigger value="payments">Pagos</TabsTrigger>
         </TabsList>
 
