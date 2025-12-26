@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **PDLShot** is a comprehensive paddle tennis (pádel) tournament management system built with Next.js 16, React 19, TypeScript, Prisma, and PostgreSQL. The system handles tournament creation, player registrations, bracket generation (6 different formats), match management, rankings, and administrative tasks with full RBAC (Role-Based Access Control) and audit logging.
 
-**Current Status**: 99% core functionality complete, production-ready with 46 API endpoints (100% RBAC protected), 91+ React components, 30+ database tables, and advanced UI/UX system with sorting, filtering, and clickable navigation on 8 main pages.
+**Current Status**: 97% core functionality complete, production-ready with 46 API endpoints (100% RBAC protected), 90+ React components, 30+ database tables, and advanced UI/UX system with sorting, filtering, and clickable navigation on 8 main pages.
 
 ## Essential Commands
 
@@ -475,13 +475,13 @@ npm run db:seed     # Loads test data
 
 ## Technology Stack
 
-- **Next.js 15** with App Router (Turbopack)
-- **React 19** with Server Components
-- **TypeScript 5** (strict mode)
+- **Next.js 16.0.10** with App Router (Turbopack)
+- **React 19.2** with Server Components
+- **TypeScript 5.9** (strict mode)
 - **Prisma 6** ORM with PostgreSQL
 - **NextAuth.js 4** with JWT strategy
 - **Tailwind CSS 4** + shadcn/ui components
-- **Zod 4** for validation
+- **Zod 3** for validation
 - **React Hook Form 7** for forms
 - **date-fns 4** for dates
 - **Recharts 3** for charts
