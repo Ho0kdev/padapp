@@ -357,45 +357,66 @@ export default async function TeamDetailPage({ params }: TeamDetailPageProps) {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <Link href="/dashboard/teams">
-              <Button variant="ghost" size="sm" className="mb-2">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Volver
-              </Button>
-            </Link>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
-              {team.name || (team.tournament.type === 'AMERICANO_SOCIAL'
-                ? `${team.registration1.player.lastName}, ${team.registration1.player.firstName} / ${team.registration2.player.lastName}, ${team.registration2.player.firstName}`
-                : `${team.registration1.player.firstName} ${team.registration1.player.lastName} / ${team.registration2.player.firstName} ${team.registration2.player.lastName}`
-              )}
-            </h1>
-            <p className="text-muted-foreground">
-              Detalles del equipo
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            {isAdmin ? (
-              <TeamStatusManager
-                teamId={team.id}
-                currentStatus={team.status}
-                tournamentStatus={team.tournament.status}
-              />
-            ) : (
-              <Badge className={getTeamStatusStyle(team.status)}>
-                {getTeamStatusLabel(team.status)}
-              </Badge>
-            )}
-            {isAdmin && (
-              <TeamDetailActions
-                teamId={team.id}
-                teamName={team.name || (team.tournament.type === 'AMERICANO_SOCIAL'
-                  ? `${team.registration1.player.lastName}, ${team.registration1.player.firstName} / ${team.registration2.player.lastName}, ${team.registration2.player.firstName}`
-                  : `${team.registration1.player.firstName} ${team.registration1.player.lastName} / ${team.registration2.player.firstName} ${team.registration2.player.lastName}`
+        <div className="space-y-4">
+          <Link href="/dashboard/teams">
+            <Button variant="ghost" size="sm">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Volver
+            </Button>
+          </Link>
+
+          <div className="flex items-start justify-between gap-2">
+            <div className="space-y-1 min-w-0 flex-1">
+              <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3">
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight line-clamp-2">
+                  {team.name || (team.tournament.type === 'AMERICANO_SOCIAL'
+                    ? `${team.registration1.player.lastName}, ${team.registration1.player.firstName} / ${team.registration2.player.lastName}, ${team.registration2.player.firstName}`
+                    : `${team.registration1.player.firstName} ${team.registration1.player.lastName} / ${team.registration2.player.firstName} ${team.registration2.player.lastName}`
+                  )}
+                </h1>
+                {isAdmin ? (
+                  <TeamStatusManager
+                    teamId={team.id}
+                    currentStatus={team.status}
+                    tournamentStatus={team.tournament.status}
+                  />
+                ) : (
+                  <Badge className={getTeamStatusStyle(team.status)}>
+                    {getTeamStatusLabel(team.status)}
+                  </Badge>
                 )}
-                tournamentStatus={team.tournament.status}
-              />
+              </div>
+              <p className="text-xs md:text-sm text-muted-foreground">
+                Detalles del equipo
+              </p>
+            </div>
+
+            {/* Desktop Actions */}
+            {isAdmin && (
+              <div className="hidden md:block">
+                <TeamDetailActions
+                  teamId={team.id}
+                  teamName={team.name || (team.tournament.type === 'AMERICANO_SOCIAL'
+                    ? `${team.registration1.player.lastName}, ${team.registration1.player.firstName} / ${team.registration2.player.lastName}, ${team.registration2.player.firstName}`
+                    : `${team.registration1.player.firstName} ${team.registration1.player.lastName} / ${team.registration2.player.firstName} ${team.registration2.player.lastName}`
+                  )}
+                  tournamentStatus={team.tournament.status}
+                />
+              </div>
+            )}
+
+            {/* Mobile Actions */}
+            {isAdmin && (
+              <div className="md:hidden">
+                <TeamDetailActions
+                  teamId={team.id}
+                  teamName={team.name || (team.tournament.type === 'AMERICANO_SOCIAL'
+                    ? `${team.registration1.player.lastName}, ${team.registration1.player.firstName} / ${team.registration2.player.lastName}, ${team.registration2.player.firstName}`
+                    : `${team.registration1.player.firstName} ${team.registration1.player.lastName} / ${team.registration2.player.firstName} ${team.registration2.player.lastName}`
+                  )}
+                  tournamentStatus={team.tournament.status}
+                />
+              </div>
             )}
           </div>
         </div>
@@ -403,43 +424,43 @@ export default async function TeamDetailPage({ params }: TeamDetailPageProps) {
         {/* Información del Torneo */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Trophy className="h-5 w-5" />
+            <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+              <Trophy className="h-4 w-4 md:h-5 md:w-5" />
               Información del Torneo
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
               <div>
-                <p className="text-sm text-muted-foreground">Torneo</p>
+                <p className="text-xs md:text-sm text-muted-foreground">Torneo</p>
                 <Link href={`/dashboard/tournaments/${team.tournament.id}`}>
-                  <p className="font-medium hover:underline">{team.tournament.name}</p>
+                  <p className="font-medium hover:underline text-sm md:text-base line-clamp-2">{team.tournament.name}</p>
                 </Link>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Categoría</p>
-                <p className="font-medium">{team.category.name}</p>
+                <p className="text-xs md:text-sm text-muted-foreground">Categoría</p>
+                <p className="font-medium text-sm md:text-base">{team.category.name}</p>
               </div>
               {team.tournamentCategory?.registrationFee && (
                 <div>
-                  <p className="text-sm text-muted-foreground">Costo de Inscripción (por jugador)</p>
-                  <p className="font-medium flex items-center gap-1">
-                    <DollarSign className="h-4 w-4" />
+                  <p className="text-xs md:text-sm text-muted-foreground">Costo de Inscripción (por jugador)</p>
+                  <p className="font-medium flex items-center gap-1 text-sm md:text-base">
+                    <DollarSign className="h-3 w-3 md:h-4 md:w-4" />
                     {team.tournamentCategory.registrationFee}
                   </p>
                 </div>
               )}
               {team.seed && (
                 <div>
-                  <p className="text-sm text-muted-foreground">Semilla (Seed)</p>
-                  <p className="font-medium">{team.seed}</p>
+                  <p className="text-xs md:text-sm text-muted-foreground">Semilla (Seed)</p>
+                  <p className="font-medium text-sm md:text-base">{team.seed}</p>
                 </div>
               )}
             </div>
             {team.notes && (
               <div className="pt-3 border-t">
-                <p className="text-sm text-muted-foreground">Notas</p>
-                <p className="text-sm mt-1">{team.notes}</p>
+                <p className="text-xs md:text-sm text-muted-foreground">Notas</p>
+                <p className="text-xs md:text-sm mt-1">{team.notes}</p>
               </div>
             )}
           </CardContent>
@@ -448,53 +469,53 @@ export default async function TeamDetailPage({ params }: TeamDetailPageProps) {
         {/* Información de los Jugadores */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
+            <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+              <Users className="h-4 w-4 md:h-5 md:w-5" />
               Jugadores del Equipo
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3 md:space-y-4">
             {/* Jugador 1 */}
-            <div className="border rounded-lg p-4">
-              <div className="flex items-start justify-between mb-3">
-                <div>
+            <div className="border rounded-lg p-3 md:p-4">
+              <div className="flex items-start justify-between mb-2 md:mb-3 gap-2">
+                <div className="min-w-0 flex-1">
                   <Link href={`/dashboard/registrations/${team.registration1.id}`}>
-                    <h3 className="font-semibold text-lg hover:underline">
+                    <h3 className="font-semibold text-sm md:text-lg hover:underline line-clamp-2">
                       {team.registration1.player.firstName} {team.registration1.player.lastName}
                     </h3>
                   </Link>
-                  <p className="text-sm text-muted-foreground">{team.registration1.player.user.email}</p>
+                  <p className="text-xs md:text-sm text-muted-foreground truncate">{team.registration1.player.user.email}</p>
                 </div>
-                <Badge className={getRegistrationStatusStyle(team.registration1.registrationStatus)}>
+                <Badge className={`${getRegistrationStatusStyle(team.registration1.registrationStatus)} text-[10px] md:text-xs shrink-0`}>
                   {getRegistrationStatusLabel(team.registration1.registrationStatus)}
                 </Badge>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-1.5 md:gap-2">
                 {team.registration1.player.gender && (
-                  <Badge variant="outline" className={getGenderRestrictionStyle(team.registration1.player.gender)}>
+                  <Badge variant="outline" className={`${getGenderRestrictionStyle(team.registration1.player.gender)} text-[10px] md:text-xs`}>
                     {getGenderRestrictionLabel(team.registration1.player.gender)}
                   </Badge>
                 )}
-                <Badge variant="outline">
+                <Badge variant="outline" className="text-[10px] md:text-xs">
                   {team.registration1.player.rankingPoints} pts
                 </Badge>
                 {team.registration1.player.primaryCategory && (
-                  <Badge variant="outline" className={getCategoryLevelStyle(team.registration1.player.primaryCategory.level || 10)}>
+                  <Badge variant="outline" className={`${getCategoryLevelStyle(team.registration1.player.primaryCategory.level || 10)} text-[10px] md:text-xs`}>
                     {formatCategoryLevel(team.registration1.player.primaryCategory.name, team.registration1.player.primaryCategory.level || 10)}
                   </Badge>
                 )}
               </div>
 
               {team.registration1.payments && team.registration1.payments.length > 0 && (
-                <div className="mt-3 pt-3 border-t">
-                  <p className="text-sm text-muted-foreground">Estado del Pago</p>
+                <div className="mt-2 md:mt-3 pt-2 md:pt-3 border-t">
+                  <p className="text-xs md:text-sm text-muted-foreground">Estado del Pago</p>
                   <div className="flex items-center gap-2 mt-1">
-                    <Badge className={getRegistrationStatusStyle(team.registration1.payments[0].paymentStatus)}>
+                    <Badge className={`${getRegistrationStatusStyle(team.registration1.payments[0].paymentStatus)} text-[10px] md:text-xs`}>
                       {team.registration1.payments[0].paymentStatus}
                     </Badge>
                     {team.registration1.payments[0].paidAt && (
-                      <span className="text-sm text-muted-foreground flex items-center gap-1">
+                      <span className="text-xs md:text-sm text-muted-foreground flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
                         {new Date(team.registration1.payments[0].paidAt).toLocaleDateString()}
                       </span>
@@ -505,46 +526,46 @@ export default async function TeamDetailPage({ params }: TeamDetailPageProps) {
             </div>
 
             {/* Jugador 2 */}
-            <div className="border rounded-lg p-4">
-              <div className="flex items-start justify-between mb-3">
-                <div>
+            <div className="border rounded-lg p-3 md:p-4">
+              <div className="flex items-start justify-between mb-2 md:mb-3 gap-2">
+                <div className="min-w-0 flex-1">
                   <Link href={`/dashboard/registrations/${team.registration2.id}`}>
-                    <h3 className="font-semibold text-lg hover:underline">
+                    <h3 className="font-semibold text-sm md:text-lg hover:underline line-clamp-2">
                       {team.registration2.player.firstName} {team.registration2.player.lastName}
                     </h3>
                   </Link>
-                  <p className="text-sm text-muted-foreground">{team.registration2.player.user.email}</p>
+                  <p className="text-xs md:text-sm text-muted-foreground truncate">{team.registration2.player.user.email}</p>
                 </div>
-                <Badge className={getRegistrationStatusStyle(team.registration2.registrationStatus)}>
+                <Badge className={`${getRegistrationStatusStyle(team.registration2.registrationStatus)} text-[10px] md:text-xs shrink-0`}>
                   {getRegistrationStatusLabel(team.registration2.registrationStatus)}
                 </Badge>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-1.5 md:gap-2">
                 {team.registration2.player.gender && (
-                  <Badge variant="outline" className={getGenderRestrictionStyle(team.registration2.player.gender)}>
+                  <Badge variant="outline" className={`${getGenderRestrictionStyle(team.registration2.player.gender)} text-[10px] md:text-xs`}>
                     {getGenderRestrictionLabel(team.registration2.player.gender)}
                   </Badge>
                 )}
-                <Badge variant="outline">
+                <Badge variant="outline" className="text-[10px] md:text-xs">
                   {team.registration2.player.rankingPoints} pts
                 </Badge>
                 {team.registration2.player.primaryCategory && (
-                  <Badge variant="outline" className={getCategoryLevelStyle(team.registration2.player.primaryCategory.level || 10)}>
+                  <Badge variant="outline" className={`${getCategoryLevelStyle(team.registration2.player.primaryCategory.level || 10)} text-[10px] md:text-xs`}>
                     {formatCategoryLevel(team.registration2.player.primaryCategory.name, team.registration2.player.primaryCategory.level || 10)}
                   </Badge>
                 )}
               </div>
 
               {team.registration2.payments && team.registration2.payments.length > 0 && (
-                <div className="mt-3 pt-3 border-t">
-                  <p className="text-sm text-muted-foreground">Estado del Pago</p>
+                <div className="mt-2 md:mt-3 pt-2 md:pt-3 border-t">
+                  <p className="text-xs md:text-sm text-muted-foreground">Estado del Pago</p>
                   <div className="flex items-center gap-2 mt-1">
-                    <Badge className={getRegistrationStatusStyle(team.registration2.payments[0].paymentStatus)}>
+                    <Badge className={`${getRegistrationStatusStyle(team.registration2.payments[0].paymentStatus)} text-[10px] md:text-xs`}>
                       {team.registration2.payments[0].paymentStatus}
                     </Badge>
                     {team.registration2.payments[0].paidAt && (
-                      <span className="text-sm text-muted-foreground flex items-center gap-1">
+                      <span className="text-xs md:text-sm text-muted-foreground flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
                         {new Date(team.registration2.payments[0].paidAt).toLocaleDateString()}
                       </span>
@@ -558,14 +579,14 @@ export default async function TeamDetailPage({ params }: TeamDetailPageProps) {
 
         {/* Partidos */}
         {(upcomingMatches.length > 0 || recentMatches.length > 0) && (
-          <div className="space-y-6">
+          <div className="space-y-4 md:space-y-6">
             {upcomingMatches.length > 0 && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Próximos Partidos</CardTitle>
+                  <CardTitle className="text-base md:text-lg">Próximos Partidos</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
                     {upcomingMatches.map((match) => (
                       <MatchCard
                         key={match.id}
@@ -580,10 +601,10 @@ export default async function TeamDetailPage({ params }: TeamDetailPageProps) {
             {recentMatches.length > 0 && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Últimos 4 Partidos Jugados</CardTitle>
+                  <CardTitle className="text-base md:text-lg">Últimos 4 Partidos Jugados</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
                     {recentMatches.map((match) => (
                       <MatchCard
                         key={match.id}
@@ -600,20 +621,20 @@ export default async function TeamDetailPage({ params }: TeamDetailPageProps) {
         {/* Metadata */}
         <Card>
           <CardHeader>
-            <CardTitle>Información del Sistema</CardTitle>
+            <CardTitle className="text-base md:text-lg">Información del Sistema</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2 text-sm text-muted-foreground">
-            <div className="flex justify-between">
+          <CardContent className="space-y-2 text-xs md:text-sm text-muted-foreground">
+            <div className="flex justify-between gap-2">
               <span>ID del Equipo:</span>
-              <span className="font-mono">{team.id}</span>
+              <span className="font-mono truncate">{team.id}</span>
             </div>
-            <div className="flex justify-between">
+            <div className="flex justify-between gap-2">
               <span>Creado:</span>
-              <span>{new Date(team.createdAt).toLocaleString()}</span>
+              <span className="text-right">{new Date(team.createdAt).toLocaleString()}</span>
             </div>
-            <div className="flex justify-between">
+            <div className="flex justify-between gap-2">
               <span>Última actualización:</span>
-              <span>{new Date(team.updatedAt).toLocaleString()}</span>
+              <span className="text-right">{new Date(team.updatedAt).toLocaleString()}</span>
             </div>
           </CardContent>
         </Card>
