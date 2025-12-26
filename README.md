@@ -10,7 +10,7 @@
 
 PDLShot es una aplicación web completa para la gestión integral de torneos de pádel. Desarrollada con tecnologías modernas, permite administrar torneos, jugadores, clubes, rankings y mucho más de manera eficiente y profesional.
 
-**Estado Actual**: ✅ **99% completo** - Sistema production-ready con 46 API endpoints (100% RBAC protegidos), 91+ componentes React, 30+ tablas de base de datos, y sistema de UI/UX profesional con ordenamiento, filtros y navegación avanzada en 8 páginas principales.
+**Estado Actual**: ✅ **97% completo** - Sistema production-ready con 46 API endpoints (100% RBAC protegidos), 90+ componentes React, 30+ tablas de base de datos, y sistema de UI/UX profesional con ordenamiento, filtros y navegación avanzada en 8 páginas principales.
 
 ### 🎯 Objetivos Principales
 - **Gestión Completa de Torneos**: Crear, administrar y seguir torneos de pádel
@@ -300,49 +300,14 @@ padelshot/
 - **Protección RBAC**: Permisos granulares por rol
 
 ### ✅ **Sistema de Pagos Completo** ⭐ NUEVO (Diciembre 2025) 🔒 SEGURO
-- **Integración con Mercado Pago**:
-  - SDK oficial de Mercado Pago instalado
-  - Creación automática de preferencias de pago
-  - Soporte para tarjetas de crédito/débito y wallets digitales
-  - Redirección a checkout seguro de Mercado Pago
-  - Webhook con **validación de firma x-signature** (HMAC-SHA256) ✅
-  - Modo sandbox para testing con tarjetas de prueba
-- **Gestión de Pagos Manual**:
-  - Solo para ADMIN y CLUB_ADMIN
-  - Métodos: Efectivo, Transferencia Bancaria, Confirmación Manual
-  - Registro de comprobantes de pago (URL opcional)
-  - Auditoría completa (quién confirmó y cuándo)
-  - Campo de notas para información adicional
-- **Estados de Pago**: PENDING, PAID, FAILED, CANCELLED, REFUNDED
-- **Componentes UI**:
-  - `PaymentSelector`: Selección de método de pago integrado en inscripciones
-  - `ManualPaymentDialog`: Modal para pagos manuales (solo admins)
-  - Visualización de historial de pagos
-  - Badges de estado con colores (verde=pagado, amarillo=pendiente, rojo=fallido)
-- **API Endpoints**:
-  - `POST /api/registrations/[id]/payment/mercadopago` - Crear preferencia de pago
-  - `POST /api/webhooks/mercadopago` - Recibir notificaciones de Mercado Pago (🔒 firma validada)
-  - `POST /api/registrations/[id]/payment/manual` - Confirmar pago manualmente
-  - `GET /api/registrations/[id]/payment` - Obtener historial de pagos
-- **🔒 Seguridad Avanzada** (Auditoría Diciembre 2025):
-  - **Validación de firma x-signature**: Webhooks verificados criptográficamente
-  - **Validación de timestamp**: Prevención de replay attacks (máx. 5 minutos)
-  - **Validación de monto**: Verifica que el monto pagado coincida exactamente
-  - **Idempotencia**: Previene procesamiento duplicado de pagos
-  - **Búsqueda estricta**: Solo busca pagos por IDs únicos (sin fallbacks peligrosos)
-  - **Usuario 'system'**: Logs de webhooks con usuario dedicado para mejor auditoría
-  - **Puntuación de seguridad**: 9/10 ⭐
-- **Auditoría y Logs**:
-  - PaymentLogService con 9 acciones diferentes
-  - Logs de IP, User Agent, timestamps
-  - Trazabilidad completa de operaciones
-  - RBAC en todos los endpoints
-- **Configuración**:
-  - Variables de entorno para credenciales de Mercado Pago
-  - `MERCADOPAGO_WEBHOOK_SECRET` para validación de firma (obligatorio en producción)
-  - Modo test/production automático
-  - URL de webhook configurable
-- 📄 [Documentación completa del sistema de pagos](PAYMENT_SYSTEM.md) (incluye auditoría de seguridad)
+- **Integración con MercadoPago**: SDK oficial, checkout seguro, webhooks con validación de firma (HMAC-SHA256)
+- **Pagos Manuales**: Efectivo, transferencia, confirmación manual (solo ADMIN/CLUB_ADMIN)
+- **Estados**: PENDING, PAID, FAILED, CANCELLED, REFUNDED
+- **🔒 Seguridad**: Puntuación 9/10 - Validación de firma, timestamp, monto e idempotencia
+- **Auditoría completa**: PaymentLogService con logs de IP, User Agent y trazabilidad total
+- **Soporte de pagos parciales**: Sistema flexible para múltiples pagos
+
+📄 **Documentación completa**: Ver [PAYMENT_SYSTEM.md](PAYMENT_SYSTEM.md) para auditoría de seguridad, configuración completa y guía de testing.
 
 ### ✅ **Sistema de Equipos**
 - **Formación de Equipos**: 2 jugadores registrados forman un equipo
@@ -656,386 +621,72 @@ Los seeds incluyen:
 - Torneo de ejemplo con equipos inscritos
 - Rankings iniciales
 
-## 📊 Sistema de Puntos - Guía Detallada
+## 📊 Sistema de Puntos Automático
 
-### Cómo Funciona el Cálculo de Puntos
+Puntos configurables por torneo (100-5,000 pts) basados en **4 factores**:
 
-El sistema otorga puntos basándose en **4 factores principales**:
+1. **Participación base**: 50 puntos fijos
+2. **Posición final**: Proporcional al `rankingPoints` del torneo (1° = 100%, 2° = 70%, 3° = 50%, etc.)
+3. **Rendimiento**: Victorias (+25 pts) y sets ganados (+5 pts)
+4. **Multiplicadores**: Por tipo de torneo (×1.0-1.4) y participantes (×1.0-1.5)
 
-#### 1. **Puntos Base por Participación**
-- **50 puntos** automáticos por participar en cualquier torneo
-- Se otorgan solo por inscribirse y jugar
+**Fórmula**: `[(Base + Posición + Rendimiento) × MultTorneo × MultParticipantes]`
 
-#### 2. **Puntos por Posición Final**
-| Posición | Puntos | Descripción |
-|----------|--------|-------------|
-| 🥇 1er Lugar | 1,000 pts | Campeón del torneo |
-| 🥈 2do Lugar | 700 pts | Subcampeón |
-| 🥉 3er Lugar | 500 pts | Tercer puesto |
-| 4to Lugar | 400 pts | Cuarto puesto |
-| 5to-8vo | 300 pts | Cuartos de final |
-| 9no-16vo | 200 pts | Octavos de final |
-| 17+ | 100 pts | Primera ronda |
+**Ejemplo**: Campeón de torneo Premium (1000 pts base) con 5 victorias → **~1,900 puntos finales**
 
-#### 3. **Puntos por Rendimiento**
-- **+25 puntos** por cada partida ganada
-- **+5 puntos** por cada set ganado
-- Sin límite de puntos adicionales
+### Niveles de Torneo Sugeridos
+- **Premium/Nacional**: 1000-1500 pts
+- **Regional Alto**: 600-900 pts
+- **Regional**: 400-600 pts
+- **Local/Club**: 100-300 pts
 
-#### 4. **Multiplicadores**
-
-**Por Tipo de Torneo:**
-- Eliminación Doble: ×1.3
-- Eliminación Simple: ×1.2
-- Fase de Grupos + Eliminación: ×1.4
-- Round Robin: ×1.1
-- Americano: ×1.0
-- Suizo: ×1.1 (Pendiente)
-
-**Por Número de Participantes:**
-- 32+ jugadores: ×1.5
-- 16-31 jugadores: ×1.3
-- 8-15 jugadores: ×1.1
-- Menos de 8: ×1.0
-
-### Fórmula Completa
-```
-PUNTOS FINALES = [
-    (PARTICIPACIÓN + POSICIÓN + VICTORIAS + SETS)
-    × MULTIPLICADOR_TORNEO
-    × MULTIPLICADOR_PARTICIPANTES
-] redondeado
-```
-
-### Ejemplo Práctico
-**Jugador**: Campeón de torneo
-**Torneo**: Eliminación Simple, 24 jugadores
-**Resultado**: 1er lugar, 5 victorias, 10 sets ganados
-
-**Cálculo**:
-1. Participación: 50 pts
-2. Posición (1°): 1,000 pts
-3. Victorias: 5 × 25 = 125 pts
-4. Sets: 10 × 5 = 50 pts
-5. **Subtotal**: 1,225 pts
-
-**Multiplicadores**:
-6. Eliminación Simple: ×1.2
-7. 16-31 jugadores: ×1.3
-8. **Multiplicador total**: 1.2 × 1.3 = 1.56
-
-**PUNTOS FINALES**: 1,225 × 1.56 = **1,911 puntos**
-
-### Uso del Sistema
-
-#### Para Administradores
-```bash
-# Completar torneo y calcular puntos automáticamente
-POST /api/tournaments/{id}/calculate-points
-
-# Verificar logs de cálculo
-GET /api/admin/logs
-```
-
-#### Rankings Automáticos
-- Los puntos se suman por categoría durante todo el año
-- Rankings actualizados automáticamente tras cada torneo
+### Rankings Automáticos
+- Puntos sumados por categoría durante todo el año
+- Actualización automática tras completar torneos
 - Histórico completo por temporadas
 
-## 🔒 Sistema de Autenticación y RBAC (Role-Based Access Control)
+📄 **Documentación completa**: Ver [POINTS_CALCULATION.md](POINTS_CALCULATION.md) para fórmulas detalladas, tablas de puntos por posición y ejemplos prácticos.
 
-PDLShot implementa un sistema completo de control de acceso basado en roles con permisos granulares, auditoría y validaciones de seguridad en todos los niveles.
+## 🔒 Sistema de Autenticación y RBAC
 
-### 🎭 Roles de Usuario
+Sistema completo de control de acceso basado en roles con permisos granulares y auditoría.
 
-#### 🔴 **ADMIN (Administrador del Sistema)**
-**Acceso Total** - Puede realizar cualquier acción en el sistema
-- Gestión completa de usuarios y roles
-- Crear, editar y eliminar cualquier recurso
-- Acceso a logs de auditoría y sistema
-- Cálculo manual de puntos y rankings
-- Configuración global del sistema
-- Gestión de todos los clubes y torneos
+### 🎭 Cuatro Roles de Usuario
+- **ADMIN**: Acceso total al sistema
+- **CLUB_ADMIN**: Gestión limitada a su club
+- **PLAYER**: Acceso personal (inscripciones, rankings propios)
+- **REFEREE**: Gestión de partidos y resultados
 
-#### 🟡 **CLUB_ADMIN (Administrador de Club)**
-**Acceso a Recursos del Club** - Gestión limitada a su club
-- Crear y gestionar torneos en su club
-- Administrar canchas y recursos del club
-- Ver inscripciones de torneos de su club
-- Ver estadísticas y reportes del club
-- Gestionar categorías disponibles
-- **NO puede**: Acceder a otros clubes, modificar usuarios, ver logs del sistema
+### 📊 Cobertura Completa
+- **46 rutas API protegidas** (100% de cobertura RBAC)
+- **9 servicios de logging** con auditoría completa
+- **4 acciones principales**: CREATE, READ, UPDATE, DELETE
+- **9 recursos**: Tournament, Club, User, Category, Registration, Payment, Ranking, Match, Team
 
-#### 🟢 **PLAYER (Jugador)**
-**Acceso Personal** - Solo sus datos y funcionalidades públicas
-- Inscribirse en torneos disponibles
-- Ver sus propias inscripciones y equipos
-- Ver sus estadísticas y rankings
-- Actualizar su perfil personal
-- Ver historial de partidos jugados
-- **NO puede**: Ver otras inscripciones, modificar torneos, acceder a admin
-
-#### 🔵 **REFEREE (Árbitro)**
-**Acceso a Partidos** - Gestión de resultados y arbitraje
-- Cargar resultados de partidos
-- Gestionar partidos asignados
-- Ver detalles de equipos y jugadores
-- Acceso a herramientas de arbitraje
-- **NO puede**: Modificar torneos, gestionar inscripciones
-
-### 🛡️ Sistema de Permisos (RBAC)
-
-El sistema RBAC se basa en **Actions** (acciones) y **Resources** (recursos):
-
-#### Actions (Acciones)
-```typescript
-enum Action {
-  CREATE = 'create',
-  READ = 'read',
-  UPDATE = 'update',
-  DELETE = 'delete',
-  MANAGE = 'manage'
-}
-```
-
-#### Resources (Recursos)
-```typescript
-enum Resource {
-  TOURNAMENT = 'tournament',
-  CLUB = 'club',
-  USER = 'user',
-  CATEGORY = 'category',
-  RANKING = 'ranking',
-  REGISTRATION = 'registration',
-  MATCH = 'match',
-  PAYMENT = 'payment',
-  LOG = 'log'
-}
-```
-
-#### Matriz de Permisos
-
-| Recurso | ADMIN | CLUB_ADMIN | PLAYER | REFEREE |
-|---------|-------|------------|--------|---------|
-| Torneos | ✅ MANAGE | ✅ MANAGE (solo su club) | 🟡 READ | 🟡 READ |
-| Clubes | ✅ MANAGE | ✅ UPDATE (solo su club) | 🟡 READ | 🟡 READ |
-| Usuarios | ✅ MANAGE | 🟡 READ | 🔴 UPDATE (solo perfil) | 🔴 - |
-| Categorías | ✅ MANAGE | 🟡 READ | 🟡 READ | 🟡 READ |
-| Rankings | ✅ MANAGE | 🟡 READ | 🟡 READ | 🟡 READ |
-| Inscripciones | ✅ MANAGE | ✅ READ (su club) | 🟡 CREATE, READ (solo suyas) | 🔴 - |
-| Partidos | ✅ MANAGE | 🟡 READ (su club) | 🟡 READ (suyos) | ✅ UPDATE (asignados) |
-| Pagos | ✅ MANAGE | ✅ MANAGE (su club) | 🟡 READ (suyos) | 🔴 - |
-| Logs | ✅ READ | 🔴 - | 🔴 - | 🔴 - |
-
-### 🔐 Implementación Técnica
-
-#### Funciones de Autorización
+### 🔐 Quick Reference
 
 ```typescript
-// lib/rbac/index.ts
+import { requireAuth, authorize, Action, Resource } from '@/lib/rbac'
 
-// Requiere autenticación (cualquier usuario logueado)
-export async function requireAuth(): Promise<Session> {
-  const session = await getServerSession(authOptions)
-  if (!session) throw new AuthorizationError('No autorizado')
-  return session
-}
+// Autenticación básica
+await requireAuth()
 
-// Requiere autorización para acción específica
-export async function authorize(
-  action: Action,
-  resource: Resource,
-  resourceId?: string
-): Promise<Session> {
-  const session = await requireAuth()
-  const hasPermission = await checkPermission(session, action, resource, resourceId)
+// Autorización con permisos
+const session = await authorize(Action.CREATE, Resource.TOURNAMENT)
 
-  if (!hasPermission) {
-    throw new AuthorizationError(`Sin permisos para ${action} en ${resource}`)
-  }
-
-  return session
-}
-
-// Verificar permiso sin lanzar error
-export async function can(
-  session: Session,
-  action: Action,
-  resource: Resource,
-  resourceId?: string
-): Promise<boolean> {
-  return checkPermission(session, action, resource, resourceId)
-}
+// Verificación condicional
+const canEdit = await can(session, Action.UPDATE, Resource.TOURNAMENT, id)
 ```
 
-#### Uso en API Routes
+| Operación | RBAC Requerido | Ejemplo |
+|-----------|---------------|---------|
+| Listar recursos | `requireAuth()` | GET /api/tournaments |
+| Crear recurso | `authorize(CREATE, Resource)` | POST /api/tournaments |
+| Actualizar propio | `requireAuth()` + ownership | PUT /api/users/[id] |
+| Actualizar cualquiera | `authorize(UPDATE, Resource)` | PUT /api/tournaments/[id] |
+| Eliminar | `authorize(DELETE, Resource)` | DELETE /api/clubs/[id] |
 
-```typescript
-// src/app/api/tournaments/route.ts
-
-// GET - Requiere solo autenticación
-export async function GET(request: NextRequest) {
-  const session = await requireAuth()
-  // ... lógica
-}
-
-// POST - Requiere permiso CREATE en TOURNAMENT
-export async function POST(request: NextRequest) {
-  const session = await authorize(Action.CREATE, Resource.TOURNAMENT)
-  // ... lógica
-}
-```
-
-```typescript
-// src/app/api/tournaments/[id]/route.ts
-
-// PUT - Requiere permiso UPDATE en torneo específico
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  const session = await authorize(Action.UPDATE, Resource.TOURNAMENT, params.id)
-  // ... lógica
-}
-
-// DELETE - Solo ADMIN puede eliminar
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  const session = await authorize(Action.DELETE, Resource.TOURNAMENT, params.id)
-  // ... lógica
-}
-```
-
-#### Sistema de Auditoría
-
-Todas las acciones sensibles se registran automáticamente:
-
-```typescript
-// Registrar acción en logs de auditoría
-await AuditLogger.log(session, {
-  action: Action.CREATE,
-  resource: Resource.TOURNAMENT,
-  resourceId: tournament.id,
-  description: `Torneo ${tournament.name} creado`,
-  oldData: null,
-  newData: tournament,
-}, request)
-```
-
-**Información capturada:**
-- Usuario que realizó la acción
-- Timestamp exacto
-- IP address y User Agent
-- Datos anteriores y nuevos (diff)
-- Metadata adicional
-
-### 🔒 Rutas Protegidas
-
-```typescript
-// middleware.ts
-export const config = {
-  matcher: [
-    '/dashboard/:path*',      // Requiere login
-    '/api/admin/:path*',      // Solo ADMIN
-    '/api/tournaments/:path*', // Autenticado + permisos
-    '/api/clubs/:path*',
-    '/api/users/:path*',
-    '/api/registrations/:path*'
-  ]
-}
-```
-
-### 🎯 Configuración de NextAuth
-
-```typescript
-// lib/auth.ts
-export const authOptions: NextAuthOptions = {
-  providers: [
-    CredentialsProvider({
-      credentials: {
-        email: { type: "email" },
-        password: { type: "password" }
-      },
-      async authorize(credentials) {
-        // Validación con bcrypt
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email }
-        })
-
-        if (!user || !await bcrypt.compare(credentials.password, user.password)) {
-          return null
-        }
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role
-        }
-      }
-    })
-  ],
-  pages: {
-    signIn: '/auth/login',
-    signUp: '/auth/register'
-  },
-  callbacks: {
-    jwt: ({ token, user }) => {
-      if (user) {
-        token.id = user.id
-        token.role = user.role
-      }
-      return token
-    },
-    session: ({ session, token }) => ({
-      ...session,
-      user: {
-        ...session.user,
-        id: token.id as string,
-        role: token.role as Role
-      }
-    })
-  },
-  session: { strategy: 'jwt' }
-}
-```
-
-### 📊 Cobertura de Endpoints RBAC
-
-El sistema cuenta con **46 rutas API** completamente protegidas:
-
-| Módulo | Rutas | Protección RBAC | Logs |
-|--------|-------|----------------|------|
-| 👤 Usuarios | 7 | ✅ 100% | UserLogService |
-| 🏆 Torneos | 17 | ✅ 100% | TournamentLogService |
-| 🏢 Clubes/Canchas | 11 | ✅ 100% | ClubLogService + CourtLogService |
-| 📂 Categorías | 6 | ✅ 100% | CategoryLogService |
-| 🏅 Rankings | 4 | ✅ 100% | RankingsLogService |
-| 📝 Inscripciones | 8 | ✅ 100% | RegistrationLogService |
-| 👥 Equipos | 6 | ✅ 100% | TeamLogService |
-| ⚽ Partidos | 5 | ✅ 100% | MatchLogService |
-| 🛠️ Admin | 3 | ✅ 100% | Sistema de Auditoría |
-| **Total** | **46** | **✅ 100%** | **9 servicios** |
-
-**Tipos de Protección**:
-- `requireAuth()` - Autenticación básica (25 rutas)
-- `authorize(Action, Resource)` - Autorización granular (30 rutas)
-- `can()` - Verificación condicional (2 rutas)
-- Rate Limiting - Endpoints públicos (1 ruta)
-
-### 📚 Documentación Adicional
-
-Para información completa sobre el sistema RBAC incluyendo:
-- Mapeo completo de todos los endpoints
-- Implementación detallada de permisos
-- Validaciones de seguridad
-- Reglas de negocio
-- Ejemplos de uso
-- Troubleshooting
-
-Ver: **[RBAC_GUIA_DEFINITIVA.md](RBAC_GUIA_DEFINITIVA.md)**
+📄 **Documentación completa**: Ver [RBAC_GUIA_DEFINITIVA.md](RBAC_GUIA_DEFINITIVA.md) para mapeo detallado de todos los endpoints, matriz de permisos y ejemplos completos.
 
 ## 🧪 Testing y Calidad de Código
 
@@ -1684,7 +1335,7 @@ Para preguntas, sugerencias o reportar problemas:
 - **Programación y calendario** con asignación de canchas
 
 #### Frontend & Componentes
-- **91+ componentes React 19** organizados por módulos
+- **90+ componentes React 19** organizados por módulos
 - **30+ tablas en base de datos** con relaciones complejas
 - **Full TypeScript** con modo strict
 - **Validaciones Zod** en todas las operaciones (100% validado en backend y frontend)
@@ -1693,6 +1344,6 @@ Para preguntas, sugerencias o reportar problemas:
 #### Progreso General
 - **🎯 97% de funcionalidad core completa**
 - **📈 100% RBAC implementado y documentado**
-- **📝 5 documentos técnicos** (README, RBAC_GUIA_DEFINITIVA, LOGGING_SYSTEM, POINTS_CALCULATION, TOURNAMENT_FORMATS)
+- **📝 7 documentos técnicos** (README, CLAUDE, RBAC_GUIA, LOGGING_SYSTEM, POINTS_CALCULATION, TOURNAMENT_FORMATS, PAYMENT_SYSTEM)
 
-*Última actualización: Octubre 20, 2025*
+*Última actualización: Diciembre 26, 2025*
