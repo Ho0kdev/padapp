@@ -130,10 +130,10 @@ export function TournamentDetail({ tournament, currentUserId }: TournamentDetail
 
       {/* Header */}
       <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-          <div className="space-y-1 flex-1">
-            <div className="flex items-center gap-3 flex-wrap">
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{tournament.name}</h1>
+        <div className="flex items-start justify-between gap-2">
+          <div className="space-y-1 min-w-0 flex-1">
+            <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight line-clamp-2">{tournament.name}</h1>
               <TournamentStatusManager
                 tournamentId={tournament.id}
                 currentStatus={tournament.status}
@@ -141,33 +141,36 @@ export function TournamentDetail({ tournament, currentUserId }: TournamentDetail
               />
             </div>
             {tournament.description && (
-              <p className="text-muted-foreground">{tournament.description}</p>
+              <p className="text-sm md:text-base text-muted-foreground line-clamp-2">{tournament.description}</p>
             )}
-            <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
+            <div className="flex flex-wrap items-center gap-2 md:gap-4 text-xs md:text-sm text-muted-foreground">
               <div className="flex items-center gap-1">
-                <Trophy className="h-4 w-4" />
-                {typeLabel}
+                <Trophy className="h-3 w-3 md:h-4 md:w-4" />
+                <span className="line-clamp-1">{typeLabel}</span>
               </div>
               <div className="flex items-center gap-1">
-                <Users className="h-4 w-4" />
+                <Users className="h-3 w-3 md:h-4 md:w-4" />
                 {tournament.teams.length} equipos
               </div>
               <div className="flex items-center gap-1">
-                <Calendar className="h-4 w-4" />
+                <Calendar className="h-3 w-3 md:h-4 md:w-4" />
                 {format(new Date(tournament.tournamentStart), "dd/MM/yyyy", { locale: es })}
               </div>
             </div>
           </div>
 
-          {isOwner && (
-            <div className="flex items-center gap-2 sm:shrink-0">
-              <Link href={`/dashboard/tournaments/${tournament.id}/brackets`} className="flex-1 sm:flex-initial">
-                <Button variant="default" className="w-full">
+          {/* Desktop Actions */}
+          <div className="hidden md:flex items-center gap-2">
+            {isOwner && (
+              <Link href={`/dashboard/tournaments/${tournament.id}/brackets`}>
+                <Button variant="default">
                   <GitBranch className="mr-2 h-4 w-4" />
                   Gestionar Brackets
                 </Button>
               </Link>
+            )}
 
+            {isOwner && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="icon">
@@ -200,19 +203,68 @@ export function TournamentDetail({ tournament, currentUserId }: TournamentDetail
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            </div>
-          )}
+            )}
+          </div>
+
+          {/* Mobile Menu */}
+          <div className="md:hidden">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="h-8 w-8 p-0">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {isOwner && (
+                  <DropdownMenuItem asChild>
+                    <Link href={`/dashboard/tournaments/${tournament.id}/brackets`}>
+                      <GitBranch className="mr-2 h-4 w-4" />
+                      Gestionar Brackets
+                    </Link>
+                  </DropdownMenuItem>
+                )}
+                {isOwner && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href={`/dashboard/tournaments/${tournament.id}/edit`}>
+                        <Edit className="mr-2 h-4 w-4" />
+                        Editar
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>
+                      <Settings className="mr-2 h-4 w-4" />
+                      Configuración
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>
+                      <Download className="mr-2 h-4 w-4" />
+                      Exportar
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="text-red-600"
+                      onClick={() => setDeleteDialogOpen(true)}
+                      disabled={tournament.teams.length > 0}
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Eliminar
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-3 md:gap-4 grid-cols-2 md:grid-cols-4">
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-3 md:p-6">
             <div className="flex items-start">
-              <Users className="h-4 w-4 text-muted-foreground mt-1" />
-              <div className="ml-3 flex-1">
-                <p className="text-sm font-medium text-muted-foreground mb-2">Inscripciones</p>
+              <Users className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground mt-1" />
+              <div className="ml-2 md:ml-3 flex-1 min-w-0">
+                <p className="text-[10px] md:text-sm font-medium text-muted-foreground mb-1 md:mb-2">Inscripciones</p>
                 {tournament.registrations && tournament.registrations.length > 0 ? (
                   <RegistrationStatusBreakdown
                     registrations={tournament.registrations}
@@ -220,11 +272,11 @@ export function TournamentDetail({ tournament, currentUserId }: TournamentDetail
                   />
                 ) : (
                   <div>
-                    <p className="text-2xl font-bold">
+                    <p className="text-lg md:text-2xl font-bold">
                       {tournament.teams.length} equipos
                       {tournament.maxParticipants && ` / ${tournament.maxParticipants}`}
                     </p>
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
                       No hay inscripciones individuales
                     </p>
                   </div>
@@ -235,36 +287,36 @@ export function TournamentDetail({ tournament, currentUserId }: TournamentDetail
         </Card>
 
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-3 md:p-6">
             <div className="flex items-center">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-              <div className="ml-3">
-                <p className="text-sm font-medium text-muted-foreground">Partidos</p>
-                <p className="text-2xl font-bold">{tournament._count.matches}</p>
+              <Calendar className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
+              <div className="ml-2 md:ml-3">
+                <p className="text-[10px] md:text-sm font-medium text-muted-foreground">Partidos</p>
+                <p className="text-lg md:text-2xl font-bold">{tournament._count.matches}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-3 md:p-6">
             <div className="flex items-center">
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-              <div className="ml-3">
-                <p className="text-sm font-medium text-muted-foreground">Premio</p>
-                <p className="text-2xl font-bold">${tournament.prizePool}</p>
+              <DollarSign className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
+              <div className="ml-2 md:ml-3">
+                <p className="text-[10px] md:text-sm font-medium text-muted-foreground">Premio</p>
+                <p className="text-lg md:text-2xl font-bold">${tournament.prizePool}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-3 md:p-6">
             <div className="flex items-center">
-              <Trophy className="h-4 w-4 text-muted-foreground" />
-              <div className="ml-3">
-                <p className="text-sm font-medium text-muted-foreground">Categorías</p>
-                <p className="text-2xl font-bold">{tournament.categories.length}</p>
+              <Trophy className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
+              <div className="ml-2 md:ml-3">
+                <p className="text-[10px] md:text-sm font-medium text-muted-foreground">Categorías</p>
+                <p className="text-lg md:text-2xl font-bold">{tournament.categories.length}</p>
               </div>
             </div>
           </CardContent>
