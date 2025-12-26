@@ -377,6 +377,23 @@ src/
 7. **Don't bypass ownership checks**: `authorize()` checks ownership automatically
 8. **Don't forget Prisma client regeneration**: After schema changes run `npx prisma generate`
 
+## Recent Fixes (December 26, 2025)
+
+### Teams Filter Endpoint 404 Error
+
+**Issue**: `/api/teams/_filters` returning 404 error
+
+**Root Cause**: Next.js App Router treats folders starting with underscore (`_filters`) as private/internal folders and doesn't expose them as routes.
+
+**Solution**: Renamed directory from `_filters` to `filters` to follow the same pattern as other resources:
+- ✅ `/api/registrations/filters` (working)
+- ✅ `/api/clubs/filters` (working)
+- ✅ `/api/teams/filters` (fixed from `_filters`)
+
+**Files Modified**:
+- `src/app/api/teams/_filters/` → `src/app/api/teams/filters/`
+- `src/components/teams/teams-header.tsx:29` - Updated fetch URL
+
 ## Troubleshooting Common Issues
 
 ### Prisma Client Out of Sync

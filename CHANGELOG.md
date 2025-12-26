@@ -4,6 +4,34 @@ Historial detallado de cambios y mejoras del proyecto PDLShot.
 
 ## December 2025
 
+### 🐛 Teams Filter Endpoint Fix (Dec 26, 2025)
+
+**Fixed 404 error for teams filter endpoint**
+
+**Summary**: Corrected Next.js routing issue causing `/api/teams/_filters` to return 404 errors.
+
+**Issue**: Teams filter endpoint was not accessible due to Next.js App Router treating underscore-prefixed folders as private.
+
+**Root Cause**: Directory named `_filters` instead of `filters`. Next.js App Router reserves folders starting with `_` as private/internal folders that are not exposed as public routes.
+
+**Solution Applied**:
+1. **Directory Rename**: `src/app/api/teams/_filters/` → `src/app/api/teams/filters/`
+2. **Frontend Update**: Changed fetch URL from `/api/teams/_filters` to `/api/teams/filters` in `teams-header.tsx:29`
+
+**Pattern Consistency**: Now follows same pattern as other filter endpoints:
+- `/api/registrations/filters` ✅
+- `/api/clubs/filters` ✅
+- `/api/teams/filters` ✅ (fixed)
+
+**Impact**:
+- ✅ Teams page filters now load correctly
+- ✅ Tournament and category dropdowns functional
+- ✅ Consistent naming across all filter endpoints
+
+**Files Modified**: 2 files (directory rename + component update)
+
+---
+
 ### 📅 Americano Social - Match Scheduling & PDF Enhancements (Dec 18, 2025)
 
 **Complete match scheduling functionality and enhanced scoresheet generation**
