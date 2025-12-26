@@ -77,7 +77,7 @@ export async function GET(
               }
             }
           },
-          orderBy: { matchNumber: 'asc' }
+          orderBy: { roundNumber: 'asc' }
         }
       },
       orderBy: [
