@@ -276,6 +276,10 @@ export function AmericanoSocialDetail({
       // Importar jsPDF dinámicamente
       const { jsPDF } = await import('jspdf')
 
+      // Obtener la categoría actual
+      const currentCategory = tournament.categories.find((c: any) => c.categoryId === categoryId)
+      const categoryName = currentCategory?.category?.name || ''
+
       // Crear PDF
       const doc = new jsPDF({
         orientation: 'portrait',
@@ -292,10 +296,11 @@ export function AmericanoSocialDetail({
         }
         isFirstPage = false
 
-        // Header - Torneo
+        // Header - Torneo (Categoría)
         doc.setFontSize(14)
         doc.setFont('helvetica', 'normal')
-        doc.text(tournament.name, 20, 20)
+        const headerText = categoryName ? `${tournament.name} (${categoryName})` : tournament.name
+        doc.text(headerText, 20, 20)
 
         // Header - Pool
         doc.setFontSize(24)
