@@ -19,7 +19,9 @@
       "Bash(netstat:*)",
       "Bash(findstr:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(tasklist:*)",
+      "Bash(timeout 120 npx prisma generate:*)"
     ],
     "deny": [],
     "ask": []
