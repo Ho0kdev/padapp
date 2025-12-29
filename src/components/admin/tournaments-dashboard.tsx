@@ -184,23 +184,38 @@ export function AdminTournamentsDashboard({ stats }: AdminTournamentsDashboardPr
 
       {/* Tabs con diferentes vistas */}
       <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="overview">Resumen</TabsTrigger>
-          <TabsTrigger value="status">Estados</TabsTrigger>
-          <TabsTrigger value="trends">Tendencias</TabsTrigger>
-          <TabsTrigger value="attention">Atención</TabsTrigger>
-          <TabsTrigger value="system-logs">Logs</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-5 h-auto p-1">
+          <TabsTrigger value="overview" className="text-[10px] sm:text-xs md:text-sm px-1 sm:px-3">
+            <span className="hidden sm:inline">Resumen</span>
+            <span className="sm:hidden">Res</span>
+          </TabsTrigger>
+          <TabsTrigger value="status" className="text-[10px] sm:text-xs md:text-sm px-1 sm:px-3">
+            <span className="hidden sm:inline">Estados</span>
+            <span className="sm:hidden">Est</span>
+          </TabsTrigger>
+          <TabsTrigger value="trends" className="text-[10px] sm:text-xs md:text-sm px-1 sm:px-3">
+            <span className="hidden sm:inline">Tendencias</span>
+            <span className="sm:hidden">Ten</span>
+          </TabsTrigger>
+          <TabsTrigger value="attention" className="text-[10px] sm:text-xs md:text-sm px-1 sm:px-3">
+            <span className="hidden sm:inline">Atención</span>
+            <span className="sm:hidden">Ate</span>
+          </TabsTrigger>
+          <TabsTrigger value="system-logs" className="text-[10px] sm:text-xs md:text-sm px-1 sm:px-3">
+            <span className="hidden sm:inline">Logs</span>
+            <span className="sm:hidden">Log</span>
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="space-y-6">
-          <div className="grid gap-6 md:grid-cols-2">
+        <TabsContent value="overview" className="space-y-4 sm:space-y-6">
+          <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
             {/* Gráfico de tipos de torneo */}
             <Card>
-              <CardHeader>
-                <CardTitle>Tipos de Torneo</CardTitle>
+              <CardHeader className="pb-3 sm:pb-6">
+                <CardTitle className="text-base sm:text-lg">Tipos de Torneo</CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
+                <ResponsiveContainer width="100%" height={250} className="sm:h-[300px]">
                   <PieChart>
                     <Pie
                       data={typeStatsWithLabels}
@@ -224,15 +239,15 @@ export function AdminTournamentsDashboard({ stats }: AdminTournamentsDashboardPr
 
             {/* Gráfico de visibilidad */}
             <Card>
-              <CardHeader>
-                <CardTitle>Visibilidad</CardTitle>
+              <CardHeader className="pb-3 sm:pb-6">
+                <CardTitle className="text-base sm:text-lg">Visibilidad</CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
+                <ResponsiveContainer width="100%" height={250} className="sm:h-[300px]">
                   <BarChart data={visibilityStatsWithLabels}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="label" />
-                    <YAxis />
+                    <XAxis dataKey="label" tick={{ fontSize: 12 }} />
+                    <YAxis tick={{ fontSize: 12 }} />
                     <Tooltip />
                     <Bar dataKey="count" fill="#8884d8" />
                   </BarChart>
@@ -243,43 +258,47 @@ export function AdminTournamentsDashboard({ stats }: AdminTournamentsDashboardPr
 
           {/* Top Organizadores */}
           <Card>
-            <CardHeader>
-              <CardTitle>Top Organizadores</CardTitle>
+            <CardHeader className="pb-3 sm:pb-6">
+              <CardTitle className="text-base sm:text-lg">Top Organizadores</CardTitle>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Organizador</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead className="text-right">Torneos</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {stats.topOrganizers.map((org, index) => (
-                    <TableRow key={org.organizerId}>
-                      <TableCell className="font-medium">
-                        {org.organizer?.name || "Usuario desconocido"}
-                      </TableCell>
-                      <TableCell>{org.organizer?.email || "N/A"}</TableCell>
-                      <TableCell className="text-right">{org._count.id}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              <div className="rounded-md border overflow-hidden">
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="min-w-[150px]">Organizador</TableHead>
+                        <TableHead className="min-w-[200px]">Email</TableHead>
+                        <TableHead className="text-right min-w-[100px]">Torneos</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {stats.topOrganizers.map((org, index) => (
+                        <TableRow key={org.organizerId}>
+                          <TableCell className="font-medium">
+                            {org.organizer?.name || "Usuario desconocido"}
+                          </TableCell>
+                          <TableCell className="text-sm">{org.organizer?.email || "N/A"}</TableCell>
+                          <TableCell className="text-right font-semibold">{org._count.id}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="status" className="space-y-6">
-          <div className="grid gap-6 md:grid-cols-2">
+        <TabsContent value="status" className="space-y-4 sm:space-y-6">
+          <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
             {/* Gráfico de estados */}
             <Card>
-              <CardHeader>
-                <CardTitle>Distribución por Estados</CardTitle>
+              <CardHeader className="pb-3 sm:pb-6">
+                <CardTitle className="text-base sm:text-lg">Distribución por Estados</CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={400}>
+                <ResponsiveContainer width="100%" height={350} className="sm:h-[400px]">
                   <BarChart data={statusStatsWithLabels}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis
@@ -287,8 +306,10 @@ export function AdminTournamentsDashboard({ stats }: AdminTournamentsDashboardPr
                       angle={-45}
                       textAnchor="end"
                       height={80}
+                      tick={{ fontSize: 10 }}
+                      className="sm:text-xs"
                     />
-                    <YAxis />
+                    <YAxis tick={{ fontSize: 12 }} />
                     <Tooltip />
                     <Bar
                       dataKey="count"
@@ -305,23 +326,23 @@ export function AdminTournamentsDashboard({ stats }: AdminTournamentsDashboardPr
 
             {/* Detalles por estado */}
             <Card>
-              <CardHeader>
-                <CardTitle>Detalles por Estado</CardTitle>
+              <CardHeader className="pb-3 sm:pb-6">
+                <CardTitle className="text-base sm:text-lg">Detalles por Estado</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   {statusStatsWithLabels.map((stat) => (
                     <div key={stat.status} className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
                         <div
-                          className="w-4 h-4 rounded"
+                          className="w-3 h-3 sm:w-4 sm:h-4 rounded shrink-0"
                           style={{ backgroundColor: stat.color }}
                         />
-                        <span className="font-medium">{stat.label}</span>
+                        <span className="font-medium text-sm sm:text-base truncate">{stat.label}</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-2xl font-bold">{stat.count}</span>
-                        <span className="text-sm text-muted-foreground">
+                      <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+                        <span className="text-xl sm:text-2xl font-bold">{stat.count}</span>
+                        <span className="text-xs sm:text-sm text-muted-foreground">
                           ({Math.round((stat.count / stats.overview.total) * 100)}%)
                         </span>
                       </div>
@@ -333,25 +354,26 @@ export function AdminTournamentsDashboard({ stats }: AdminTournamentsDashboardPr
           </div>
         </TabsContent>
 
-        <TabsContent value="trends" className="space-y-6">
+        <TabsContent value="trends" className="space-y-4 sm:space-y-6">
           <Card>
-            <CardHeader>
-              <CardTitle>Tendencias Mensuales (Últimos 6 meses)</CardTitle>
+            <CardHeader className="pb-3 sm:pb-6">
+              <CardTitle className="text-base sm:text-lg">Tendencias Mensuales (Últimos 6 meses)</CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={400}>
+              <ResponsiveContainer width="100%" height={350} className="sm:h-[400px]">
                 <LineChart data={monthlyChartData}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
+                  <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+                  <YAxis tick={{ fontSize: 11 }} />
                   <Tooltip />
-                  <Legend />
+                  <Legend wrapperStyle={{ fontSize: '12px' }} />
                   <Line
                     type="monotone"
                     dataKey="total"
                     stroke="#8884d8"
                     name="Total Creados"
-                    strokeWidth={3}
+                    strokeWidth={2}
+                    className="sm:stroke-[3]"
                   />
                   {['DRAFT', 'PUBLISHED', 'REGISTRATION_OPEN', 'IN_PROGRESS', 'COMPLETED'].map((status, index) => (
                     <Line
@@ -361,6 +383,7 @@ export function AdminTournamentsDashboard({ stats }: AdminTournamentsDashboardPr
                       stroke={statusColors[status]}
                       name={tournamentStatusOptions.find(s => s.value === status)?.label || status}
                       strokeDasharray="5 5"
+                      strokeWidth={1}
                     />
                   ))}
                 </LineChart>
@@ -369,58 +392,62 @@ export function AdminTournamentsDashboard({ stats }: AdminTournamentsDashboardPr
           </Card>
         </TabsContent>
 
-        <TabsContent value="attention" className="space-y-6">
+        <TabsContent value="attention" className="space-y-4 sm:space-y-6">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-yellow-500" />
+            <CardHeader className="pb-3 sm:pb-6">
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-500" />
                 Torneos que Requieren Atención
               </CardTitle>
             </CardHeader>
             <CardContent>
               {stats.tournamentsNeedingUpdate.length === 0 ? (
-                <div className="text-center py-8">
-                  <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
-                  <p className="text-lg font-medium">¡Todo está al día!</p>
-                  <p className="text-muted-foreground">No hay torneos que requieran actualización automática</p>
+                <div className="text-center py-8 sm:py-12">
+                  <CheckCircle className="h-10 w-10 sm:h-12 sm:w-12 text-green-500 mx-auto mb-3 sm:mb-4" />
+                  <p className="text-base sm:text-lg font-medium">¡Todo está al día!</p>
+                  <p className="text-sm sm:text-base text-muted-foreground">No hay torneos que requieran actualización automática</p>
                 </div>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Torneo</TableHead>
-                      <TableHead>Estado Actual</TableHead>
-                      <TableHead>Estado Sugerido</TableHead>
-                      <TableHead>Razón</TableHead>
-                      <TableHead>Acción</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {stats.tournamentsNeedingUpdate.map((tournament) => (
-                      <TableRow key={tournament.id}>
-                        <TableCell className="font-medium">{tournament.name}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline">
-                            {tournamentStatusOptions.find(s => s.value === tournament.status)?.label || tournament.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge>
-                            {tournamentStatusOptions.find(s => s.value === tournament.suggestedStatus)?.label || tournament.suggestedStatus}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {tournament.reason}
-                        </TableCell>
-                        <TableCell>
-                          <Button variant="outline" size="sm">
-                            Actualizar
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                <div className="rounded-md border overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="min-w-[200px]">Torneo</TableHead>
+                          <TableHead className="min-w-[150px]">Estado Actual</TableHead>
+                          <TableHead className="min-w-[150px]">Estado Sugerido</TableHead>
+                          <TableHead className="min-w-[200px]">Razón</TableHead>
+                          <TableHead className="min-w-[120px]">Acción</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {stats.tournamentsNeedingUpdate.map((tournament) => (
+                          <TableRow key={tournament.id}>
+                            <TableCell className="font-medium">{tournament.name}</TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className="text-xs">
+                                {tournamentStatusOptions.find(s => s.value === tournament.status)?.label || tournament.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge className="text-xs">
+                                {tournamentStatusOptions.find(s => s.value === tournament.suggestedStatus)?.label || tournament.suggestedStatus}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-xs sm:text-sm text-muted-foreground">
+                              {tournament.reason}
+                            </TableCell>
+                            <TableCell>
+                              <Button variant="outline" size="sm" className="text-xs">
+                                Actualizar
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
               )}
             </CardContent>
           </Card>

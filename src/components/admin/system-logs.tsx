@@ -473,42 +473,45 @@ export function SystemLogs() {
         <CardContent>
           {/* Tabs por módulo */}
           <Tabs value={activeModule} onValueChange={setActiveModule} className="mb-6">
-            <TabsList className="flex flex-wrap h-auto gap-1 p-1">
-              <TabsTrigger value="all" className="flex-shrink-0">Todos</TabsTrigger>
-              <TabsTrigger value="users" className="flex items-center gap-1 flex-shrink-0">
-                <Users className="h-3 w-3" />
+            <TabsList className="grid grid-cols-5 w-full h-auto gap-0.5 p-0.5">
+              <TabsTrigger value="all" className="text-[10px] sm:text-xs md:text-sm px-0.5 sm:px-2">
+                <span className="hidden sm:inline">Todos</span>
+                <span className="sm:hidden">All</span>
+              </TabsTrigger>
+              <TabsTrigger value="users" className="flex items-center gap-0.5 sm:gap-1 justify-center text-[10px] sm:text-xs md:text-sm px-0.5 sm:px-2">
+                <Users className="h-3 w-3 shrink-0" />
                 <span className="hidden sm:inline">Usuarios</span>
               </TabsTrigger>
-              <TabsTrigger value="registrations" className="flex items-center gap-1 flex-shrink-0">
-                <UserPlus className="h-3 w-3" />
+              <TabsTrigger value="registrations" className="flex items-center gap-0.5 sm:gap-1 justify-center text-[10px] sm:text-xs md:text-sm px-0.5 sm:px-2">
+                <UserPlus className="h-3 w-3 shrink-0" />
                 <span className="hidden sm:inline">Inscripciones</span>
               </TabsTrigger>
-              <TabsTrigger value="teams" className="flex items-center gap-1 flex-shrink-0">
-                <UsersRound className="h-3 w-3" />
+              <TabsTrigger value="teams" className="flex items-center gap-0.5 sm:gap-1 justify-center text-[10px] sm:text-xs md:text-sm px-0.5 sm:px-2">
+                <UsersRound className="h-3 w-3 shrink-0" />
                 <span className="hidden sm:inline">Equipos</span>
               </TabsTrigger>
-              <TabsTrigger value="tournaments" className="flex items-center gap-1 flex-shrink-0">
-                <Trophy className="h-3 w-3" />
+              <TabsTrigger value="tournaments" className="flex items-center gap-0.5 sm:gap-1 justify-center text-[10px] sm:text-xs md:text-sm px-0.5 sm:px-2">
+                <Trophy className="h-3 w-3 shrink-0" />
                 <span className="hidden sm:inline">Torneos</span>
               </TabsTrigger>
-              <TabsTrigger value="clubs" className="flex items-center gap-1 flex-shrink-0">
-                <Building className="h-3 w-3" />
+              <TabsTrigger value="clubs" className="flex items-center gap-0.5 sm:gap-1 justify-center text-[10px] sm:text-xs md:text-sm px-0.5 sm:px-2">
+                <Building className="h-3 w-3 shrink-0" />
                 <span className="hidden sm:inline">Clubes</span>
               </TabsTrigger>
-              <TabsTrigger value="courts" className="flex items-center gap-1 flex-shrink-0">
-                <MapPin className="h-3 w-3" />
+              <TabsTrigger value="courts" className="flex items-center gap-0.5 sm:gap-1 justify-center text-[10px] sm:text-xs md:text-sm px-0.5 sm:px-2">
+                <MapPin className="h-3 w-3 shrink-0" />
                 <span className="hidden sm:inline">Canchas</span>
               </TabsTrigger>
-              <TabsTrigger value="categories" className="flex items-center gap-1 flex-shrink-0">
-                <Tag className="h-3 w-3" />
+              <TabsTrigger value="categories" className="flex items-center gap-0.5 sm:gap-1 justify-center text-[10px] sm:text-xs md:text-sm px-0.5 sm:px-2">
+                <Tag className="h-3 w-3 shrink-0" />
                 <span className="hidden sm:inline">Categorías</span>
               </TabsTrigger>
-              <TabsTrigger value="rankings" className="flex items-center gap-1 flex-shrink-0">
-                <Medal className="h-3 w-3" />
+              <TabsTrigger value="rankings" className="flex items-center gap-0.5 sm:gap-1 justify-center text-[10px] sm:text-xs md:text-sm px-0.5 sm:px-2">
+                <Medal className="h-3 w-3 shrink-0" />
                 <span className="hidden sm:inline">Rankings</span>
               </TabsTrigger>
-              <TabsTrigger value="matches" className="flex items-center gap-1 flex-shrink-0">
-                <Swords className="h-3 w-3" />
+              <TabsTrigger value="matches" className="flex items-center gap-0.5 sm:gap-1 justify-center text-[10px] sm:text-xs md:text-sm px-0.5 sm:px-2">
+                <Swords className="h-3 w-3 shrink-0" />
                 <span className="hidden sm:inline">Partidos</span>
               </TabsTrigger>
             </TabsList>
@@ -569,64 +572,130 @@ export function SystemLogs() {
             </div>
           </div>
 
-          {/* Tabla de logs */}
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Fecha</TableHead>
-                  <TableHead>Entidad</TableHead>
-                  <TableHead>Acción</TableHead>
-                  <TableHead>Usuario</TableHead>
-                  <TableHead>Descripción</TableHead>
-                  <TableHead>Campos Modificados</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredLogs.length === 0 ? (
+          {/* Mobile cards view */}
+          <div className="lg:hidden space-y-3 mb-6">
+            {filteredLogs.length === 0 ? (
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center py-16">
+                  <Clock className="h-12 w-12 text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No se encontraron logs</h3>
+                  <p className="text-muted-foreground text-center text-sm">
+                    No hay logs con los filtros aplicados
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              filteredLogs.map((log) => (
+                <Card key={log.id} className="overflow-hidden">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        {getActionIcon(log.action)}
+                        <Badge variant="outline" className={`${actionColors[log.action]} text-[10px] sm:text-xs`}>
+                          {actionLabels[log.action] || log.action}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
+                        <Clock className="h-3 w-3" />
+                        <span className="font-mono">{formatDate(log.createdAt)}</span>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-3 pb-4">
+                    {/* Entidad */}
+                    <div className="flex items-start justify-between text-sm">
+                      <span className="text-muted-foreground">Entidad</span>
+                      <span className="font-medium text-right break-words max-w-[60%]">{getEntityName(log)}</span>
+                    </div>
+
+                    {/* Usuario */}
+                    <div className="flex items-start justify-between text-sm">
+                      <span className="text-muted-foreground">Usuario</span>
+                      <div className="text-right max-w-[60%]">
+                        <div className="font-medium truncate">{log.user.name}</div>
+                        <div className="text-xs text-muted-foreground truncate">{log.user.email}</div>
+                      </div>
+                    </div>
+
+                    {/* Descripción */}
+                    <div className="pt-2 border-t">
+                      <p className="text-xs text-muted-foreground mb-1">Descripción</p>
+                      <p className="text-sm break-words">{log.description}</p>
+                    </div>
+
+                    {/* Campos modificados */}
+                    {getChangedFields(log) !== "-" && (
+                      <div className="pt-2 border-t">
+                        <p className="text-xs text-muted-foreground mb-1">Campos modificados</p>
+                        <p className="text-sm break-words">{getChangedFields(log)}</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
+
+          {/* Desktop table view */}
+          <div className="hidden lg:block rounded-md border">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8">
-                      No se encontraron logs con los filtros aplicados
-                    </TableCell>
+                    <TableHead className="min-w-[140px]">Fecha</TableHead>
+                    <TableHead className="min-w-[150px]">Entidad</TableHead>
+                    <TableHead className="min-w-[180px]">Acción</TableHead>
+                    <TableHead className="min-w-[200px]">Usuario</TableHead>
+                    <TableHead className="min-w-[250px]">Descripción</TableHead>
+                    <TableHead className="min-w-[150px]">Campos Modificados</TableHead>
                   </TableRow>
-                ) : (
-                  filteredLogs.map((log) => (
-                    <TableRow key={log.id}>
-                      <TableCell className="font-mono text-sm">
-                        {formatDate(log.createdAt)}
-                      </TableCell>
-                      <TableCell>
-                        {getEntityName(log)}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          {getActionIcon(log.action)}
-                          <Badge variant="outline" className={actionColors[log.action]}>
-                            {actionLabels[log.action] || log.action}
-                          </Badge>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-col">
-                          <span className="font-medium">{log.user.name}</span>
-                          <span className="text-xs text-muted-foreground">{log.user.email}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="max-w-md">
-                        <div className="truncate" title={log.description}>
-                          {log.description}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-sm text-muted-foreground">
-                          {getChangedFields(log)}
-                        </span>
+                </TableHeader>
+                <TableBody>
+                  {filteredLogs.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8">
+                        No se encontraron logs con los filtros aplicados
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+                  ) : (
+                    filteredLogs.map((log) => (
+                      <TableRow key={log.id}>
+                        <TableCell className="font-mono text-sm">
+                          {formatDate(log.createdAt)}
+                        </TableCell>
+                        <TableCell>
+                          {getEntityName(log)}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            {getActionIcon(log.action)}
+                            <Badge variant="outline" className={actionColors[log.action]}>
+                              {actionLabels[log.action] || log.action}
+                            </Badge>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-col">
+                            <span className="font-medium">{log.user.name}</span>
+                            <span className="text-xs text-muted-foreground">{log.user.email}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="max-w-md">
+                          <div className="truncate" title={log.description}>
+                            {log.description}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-sm text-muted-foreground">
+                            {getChangedFields(log)}
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           </div>
 
           {/* Estadísticas resumidas */}
