@@ -350,13 +350,13 @@ export function MatchesTable() {
               <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
                 <Trophy className="h-3 w-3 flex-shrink-0" />
                 <p className="truncate">
-                  {match.tournament.name} - {match.category.name}
+                  {match.tournament.name}
                 </p>
               </div>
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="flex-shrink-0">
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 flex-shrink-0">
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
@@ -401,29 +401,7 @@ export function MatchesTable() {
             </DropdownMenu>
           </div>
         </CardHeader>
-        <CardContent className="space-y-2 pb-4">
-          {/* Fecha y hora - PRIMERO si existe */}
-          {match.scheduledAt && (
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Fecha y hora</span>
-              <div className="flex items-center gap-1 font-medium">
-                <Calendar className="h-3 w-3 text-muted-foreground" />
-                <span>{format(new Date(match.scheduledAt), "dd/MM/yyyy HH:mm", { locale: es })}</span>
-              </div>
-            </div>
-          )}
-
-          {/* Cancha - SEGUNDO si existe */}
-          {match.court && (
-            <div className="flex items-center justify-between text-sm gap-2">
-              <span className="text-muted-foreground flex-shrink-0">Cancha</span>
-              <div className="flex items-center gap-1 text-right">
-                <MapPin className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-                <span className="font-medium break-words">{match.court.name} - {match.court.club.name}</span>
-              </div>
-            </div>
-          )}
-
+        <CardContent className="space-y-3 pb-4">
           {/* Estado */}
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Estado</span>
@@ -432,29 +410,56 @@ export function MatchesTable() {
             </Badge>
           </div>
 
-          {/* Resultado si está completado */}
-          {(match.status === "COMPLETED" || match.status === "WALKOVER") && match.winnerTeam && (
+          {/* Categoría */}
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Categoría</span>
+            <span className="truncate max-w-[180px]">{match.category.name}</span>
+          </div>
+
+          {/* Fase */}
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Fase</span>
+            <Badge variant="outline" className="font-mono text-xs">
+              {getPhaseLabel(match.phaseType)}
+              {match.matchNumber && ` #${match.matchNumber}`}
+            </Badge>
+          </div>
+
+          {/* Grupo (si existe) */}
+          {match.zone && (
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Resultado</span>
-              <Badge variant="secondary" className="font-mono font-semibold text-xs">
-                {formatMatchScore(match)}
+              <span className="text-muted-foreground">Grupo</span>
+              <Badge variant="secondary" className="font-mono text-xs">
+                {match.zone.name}
               </Badge>
             </div>
           )}
 
-          {/* Fase y grupo al final */}
-          <div className="flex items-center justify-between text-sm pt-2 border-t">
-            <span className="text-muted-foreground text-xs">Fase</span>
-            <span className="text-xs font-medium">
-              {getPhaseLabel(match.phaseType)}
-              {match.matchNumber && ` #${match.matchNumber}`}
-            </span>
-          </div>
-
-          {match.zone && (
+          {/* Fecha y hora (si existe) */}
+          {match.scheduledAt && (
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground text-xs">Grupo</span>
-              <span className="text-xs font-medium">{match.zone.name}</span>
+              <span className="text-muted-foreground">Fecha</span>
+              <span className="text-muted-foreground text-xs">
+                {format(new Date(match.scheduledAt), "dd/MM/yyyy HH:mm", { locale: es })}
+              </span>
+            </div>
+          )}
+
+          {/* Cancha (si existe) */}
+          {match.court && (
+            <div className="flex items-center justify-between text-sm gap-2">
+              <span className="text-muted-foreground flex-shrink-0">Cancha</span>
+              <span className="text-xs text-right truncate">{match.court.name}</span>
+            </div>
+          )}
+
+          {/* Resultado si está completado */}
+          {(match.status === "COMPLETED" || match.status === "WALKOVER") && match.winnerTeam && (
+            <div className="flex items-center justify-between text-sm pt-2 border-t">
+              <span className="text-muted-foreground">Resultado</span>
+              <Badge variant="secondary" className="font-mono font-semibold text-xs">
+                {formatMatchScore(match)}
+              </Badge>
             </div>
           )}
         </CardContent>
@@ -463,7 +468,13 @@ export function MatchesTable() {
   }
 
   if (loading) {
-    return <div className="text-center py-8">Cargando partidos...</div>
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center py-16">
+          <div className="text-muted-foreground">Cargando partidos...</div>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
@@ -471,9 +482,15 @@ export function MatchesTable() {
       {/* Mobile cards view */}
       <div className="lg:hidden space-y-3">
         {matches.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            No se encontraron partidos
-          </div>
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-16">
+              <Users className="h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold mb-2">No se encontraron partidos</h3>
+              <p className="text-muted-foreground text-center">
+                No hay partidos que coincidan con los filtros seleccionados
+              </p>
+            </CardContent>
+          </Card>
         ) : (
           matches.map((match) => (
             <MatchCard key={match.id} match={match} />
@@ -481,39 +498,40 @@ export function MatchesTable() {
         )}
       </div>
 
-      {/* Desktop table view */}
-      <div className="hidden lg:block rounded-md border overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Torneo</TableHead>
-              <TableHead>Grupo</TableHead>
-              <TableHead>Fase</TableHead>
-              <TableHead>Equipos</TableHead>
-              <TableHead>Resultado</TableHead>
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  onClick={() => handleSort('scheduledAt')}
-                  className="h-8 px-2 lg:px-3 hover:bg-transparent"
-                >
-                  Horario / Cancha
-                  {getSortIcon('scheduledAt')}
-                </Button>
-              </TableHead>
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  onClick={() => handleSort('status')}
-                  className="h-8 px-2 lg:px-3 hover:bg-transparent"
-                >
-                  Estado
-                  {getSortIcon('status')}
-                </Button>
-              </TableHead>
-              <TableHead className="w-[50px]"></TableHead>
-            </TableRow>
-          </TableHeader>
+      {/* Desktop/Tablet table view */}
+      <div className="hidden lg:block rounded-md border">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="min-w-[180px]">Torneo</TableHead>
+                <TableHead className="min-w-[100px]">Grupo</TableHead>
+                <TableHead className="min-w-[140px]">Fase</TableHead>
+                <TableHead className="min-w-[280px]">Equipos</TableHead>
+                <TableHead className="min-w-[120px]">Resultado</TableHead>
+                <TableHead className="min-w-[200px]">
+                  <Button
+                    variant="ghost"
+                    onClick={() => handleSort('scheduledAt')}
+                    className="h-8 px-2 lg:px-3 hover:bg-transparent"
+                  >
+                    Horario / Cancha
+                    {getSortIcon('scheduledAt')}
+                  </Button>
+                </TableHead>
+                <TableHead className="min-w-[140px]">
+                  <Button
+                    variant="ghost"
+                    onClick={() => handleSort('status')}
+                    className="h-8 px-2 lg:px-3 hover:bg-transparent"
+                  >
+                    Estado
+                    {getSortIcon('status')}
+                  </Button>
+                </TableHead>
+                <TableHead className="w-[50px]"></TableHead>
+              </TableRow>
+            </TableHeader>
           <TableBody>
             {matches.length === 0 ? (
               <TableRow>
@@ -652,6 +670,7 @@ export function MatchesTable() {
             )}
           </TableBody>
         </Table>
+        </div>
       </div>
 
       {/* Desktop table pagination */}

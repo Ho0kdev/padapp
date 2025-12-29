@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import {
   Table,
   TableBody,
@@ -335,27 +336,164 @@ export function RankingsTable() {
     )
   }
 
+  // Componente de Card para mobile
+  const RankingCard = ({ ranking }: { ranking: Ranking }) => {
+    return (
+      <Card
+        className="overflow-hidden cursor-pointer hover:bg-muted/50 transition-colors"
+        onClick={(e) => handleRowClick(ranking.id, e)}
+      >
+        <CardHeader className="pb-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <Trophy className="h-4 w-4 text-muted-foreground shrink-0" />
+                {getPositionBadge(ranking.position)}
+              </div>
+              <h3 className="font-semibold text-base break-words">
+                {ranking.player.firstName} {ranking.player.lastName}
+              </h3>
+              <p className="text-xs text-muted-foreground truncate">{ranking.player.user.email}</p>
+            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 shrink-0">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                  <Link href={`/dashboard/rankings/${ranking.id}`}>
+                    <Eye className="mr-2 h-4 w-4" />
+                    Ver detalle
+                  </Link>
+                </DropdownMenuItem>
+                {isAdminOrClubAdmin && (
+                  <>
+                    <DropdownMenuItem asChild>
+                      <Link href={`/dashboard/users/${ranking.player.user.id}`}>
+                        <Eye className="mr-2 h-4 w-4" />
+                        Ver jugador
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setRankingToEdit(ranking)
+                        setNewPoints(ranking.currentPoints.toString())
+                        setEditDialogOpen(true)
+                      }}
+                    >
+                      <Edit className="mr-2 h-4 w-4" />
+                      Editar puntos
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => openDeleteDialog(ranking)}
+                      className="text-red-600 focus:text-red-600"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Eliminar del ranking
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3 pb-4">
+          {/* Puntos */}
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Puntos</span>
+            <div className="flex items-center gap-1 font-semibold">
+              <Award className="h-4 w-4 text-muted-foreground" />
+              <span>{ranking.currentPoints}</span>
+              <span className="text-xs text-muted-foreground">pts</span>
+            </div>
+          </div>
+
+          {/* Categoría */}
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Categoría</span>
+            <span className="truncate max-w-[180px]">{ranking.category.name}</span>
+          </div>
+
+          {/* Temporada */}
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Temporada</span>
+            <div className="flex items-center gap-1">
+              <Calendar className="h-3 w-3 text-muted-foreground" />
+              <span>{ranking.seasonYear}</span>
+            </div>
+          </div>
+
+          {/* Última actualización */}
+          <div className="flex items-center justify-between text-sm pt-2 border-t">
+            <span className="text-muted-foreground text-xs">Última actualización</span>
+            <span className="text-xs text-muted-foreground">
+              {new Date(ranking.lastUpdated).toLocaleDateString('es-ES', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+              })}
+            </span>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
   if (loading) {
-    return <div className="text-center py-8">Cargando rankings...</div>
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center py-16">
+          <div className="text-muted-foreground">Cargando rankings...</div>
+        </CardContent>
+      </Card>
+    )
   }
 
   if (!currentCategoryId) {
     return (
-      <div className="text-center py-12 text-muted-foreground">
-        <Trophy className="mx-auto h-12 w-12 mb-4 text-muted-foreground/50" />
-        <h3 className="text-lg font-semibold mb-2">Selecciona una categoría</h3>
-        <p>Para ver los rankings, primero selecciona una categoría específica en el filtro de arriba.</p>
-      </div>
+      <Card>
+        <CardContent className="flex flex-col items-center justify-center py-16">
+          <Trophy className="h-12 w-12 text-muted-foreground mb-4" />
+          <h3 className="text-lg font-semibold mb-2">Selecciona una categoría</h3>
+          <p className="text-muted-foreground text-center">
+            Para ver los rankings, primero selecciona una categoría específica en el filtro de arriba.
+          </p>
+        </CardContent>
+      </Card>
     )
   }
 
   return (
     <div className="space-y-4">
-      <div className="rounded-md border">
-        <Table>
+      {/* Mobile cards view */}
+      <div className="lg:hidden space-y-3">
+        {rankings.length === 0 ? (
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-16">
+              <Trophy className="h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold mb-2">No se encontraron rankings</h3>
+              <p className="text-muted-foreground text-center">
+                No hay rankings para esta categoría y temporada
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          rankings.map((ranking) => (
+            <RankingCard key={ranking.id} ranking={ranking} />
+          ))
+        )}
+      </div>
+
+      {/* Desktop table view */}
+      <div className="hidden lg:block rounded-md border">
+        <div className="overflow-x-auto">
+          <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>
+              <TableHead className="min-w-[120px]">
                 <Button
                   variant="ghost"
                   onClick={() => handleSort('position')}
@@ -365,9 +503,8 @@ export function RankingsTable() {
                   {getSortIcon('position')}
                 </Button>
               </TableHead>
-              <TableHead>Jugador</TableHead>
-              <TableHead>Categoría</TableHead>
-              <TableHead>
+              <TableHead className="min-w-[220px]">Jugador</TableHead>
+              <TableHead className="min-w-[120px]">
                 <Button
                   variant="ghost"
                   onClick={() => handleSort('currentPoints')}
@@ -377,7 +514,7 @@ export function RankingsTable() {
                   {getSortIcon('currentPoints')}
                 </Button>
               </TableHead>
-              <TableHead>
+              <TableHead className="min-w-[120px]">
                 <Button
                   variant="ghost"
                   onClick={() => handleSort('seasonYear')}
@@ -387,14 +524,14 @@ export function RankingsTable() {
                   {getSortIcon('seasonYear')}
                 </Button>
               </TableHead>
-              <TableHead>Última Actualización</TableHead>
+              <TableHead className="min-w-[150px]">Última Actualización</TableHead>
               <TableHead className="w-[50px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {rankings.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                   No se encontraron rankings para esta categoría
                 </TableCell>
               </TableRow>
@@ -418,15 +555,6 @@ export function RankingsTable() {
                       </div>
                       <div className="text-sm text-muted-foreground">
                         {ranking.player.user.email}
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="space-y-1">
-                      <div className="font-medium">{ranking.category.name}</div>
-                      <div className="flex items-center gap-2">
-                        {getTypeBadge(ranking.category.type)}
-                        {ranking.category.genderRestriction && getGenderBadge(ranking.category.genderRestriction)}
                       </div>
                     </div>
                   </TableCell>
@@ -502,6 +630,7 @@ export function RankingsTable() {
             )}
           </TableBody>
         </Table>
+        </div>
       </div>
 
       <DataTablePagination

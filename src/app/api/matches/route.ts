@@ -8,7 +8,7 @@ const querySchema = z.object({
   limit: z.string().optional().default("10"),
   tournamentId: z.string().optional(),
   categoryId: z.string().optional(),
-  status: z.enum(["SCHEDULED", "IN_PROGRESS", "COMPLETED", "CANCELLED", "all"]).optional(),
+  status: z.enum(["SCHEDULED", "IN_PROGRESS", "COMPLETED", "CANCELLED", "WALKOVER", "all"]).optional(),
   courtId: z.string().optional(),
   phaseType: z.string().optional(),
   includeAmericano: z.string().optional().default("true"), // Incluir partidos de Americano Social
@@ -43,7 +43,7 @@ function buildOrderBy(orderBy?: string, order?: string): any {
  * - limit: items por página (default: 10)
  * - tournamentId: filtrar por torneo
  * - categoryId: filtrar por categoría
- * - status: filtrar por estado (SCHEDULED, IN_PROGRESS, COMPLETED, CANCELLED, all)
+ * - status: filtrar por estado (SCHEDULED, IN_PROGRESS, COMPLETED, CANCELLED, WALKOVER, all)
  * - courtId: filtrar por cancha
  * - phaseType: filtrar por fase (FINAL, SEMIFINALS, etc)
  * - orderBy: columna para ordenar (scheduledAt, status, roundNumber, matchNumber, createdAt)

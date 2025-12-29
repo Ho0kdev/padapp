@@ -163,112 +163,154 @@ export function MatchDetail({ match }: MatchDetailProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={() => router.back()}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Volver
-            </Button>
+      <div className="space-y-4">
+        <Link href="/dashboard/matches">
+          <Button variant="ghost" size="sm">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Volver
+          </Button>
+        </Link>
+
+        <div className="flex items-start justify-between gap-2">
+          <div className="space-y-1 min-w-0 flex-1">
+            <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight line-clamp-2">
+                {getPhaseLabel(match.phaseType)} {match.matchNumber && `- Partido ${match.matchNumber}`}
+              </h1>
+              {getStatusBadge()}
+            </div>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
+              <div className="flex items-center gap-1">
+                <Trophy className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                <Link
+                  href={`/dashboard/tournaments/${match.tournament.id}`}
+                  className="hover:underline truncate"
+                >
+                  {match.tournament.name}
+                </Link>
+              </div>
+              <div className="flex items-center gap-1">
+                <Users className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                <span className="truncate">{match.category.name}</span>
+              </div>
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold tracking-tight">
-              {getPhaseLabel(match.phaseType)} {match.matchNumber && `- Partido ${match.matchNumber}`}
-            </h1>
-            {getStatusBadge()}
-          </div>
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <Trophy className="h-4 w-4" />
-              <Link
-                href={`/dashboard/tournaments/${match.tournament.id}`}
-                className="hover:underline"
+
+          {/* Desktop Actions */}
+          {canManage && (
+            <div className="hidden md:flex items-center gap-2">
+              {match.status === "SCHEDULED" && (
+                <Button
+                  variant="outline"
+                  onClick={handleStartMatch}
+                  disabled={statusLoading}
+                >
+                  <Play className="mr-2 h-4 w-4" />
+                  Iniciar partido
+                </Button>
+              )}
+
+              {!isCompleted && match.team1 && match.team2 && (
+                <Button onClick={() => setResultDialogOpen(true)}>
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  Cargar resultado
+                </Button>
+              )}
+
+              {isCompleted && (
+                <Button
+                  variant="destructive"
+                  onClick={handleRevertResult}
+                  disabled={revertLoading}
+                >
+                  <RotateCcw className="mr-2 h-4 w-4" />
+                  {revertLoading ? "Revirtiendo..." : "Revertir resultado"}
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Mobile Actions */}
+        {canManage && (
+          <div className="md:hidden flex flex-col gap-2">
+            {match.status === "SCHEDULED" && (
+              <Button
+                variant="outline"
+                onClick={handleStartMatch}
+                disabled={statusLoading}
+                className="w-full"
               >
-                {match.tournament.name}
-              </Link>
-            </div>
-            <div className="flex items-center gap-1">
-              <Users className="h-4 w-4" />
-              {match.category.name}
-            </div>
+                <Play className="mr-2 h-4 w-4" />
+                Iniciar partido
+              </Button>
+            )}
+
+            {!isCompleted && match.team1 && match.team2 && (
+              <Button onClick={() => setResultDialogOpen(true)} className="w-full">
+                <CheckCircle className="mr-2 h-4 w-4" />
+                Cargar resultado
+              </Button>
+            )}
+
+            {isCompleted && (
+              <Button
+                variant="destructive"
+                onClick={handleRevertResult}
+                disabled={revertLoading}
+                className="w-full"
+              >
+                <RotateCcw className="mr-2 h-4 w-4" />
+                {revertLoading ? "Revirtiendo..." : "Revertir resultado"}
+              </Button>
+            )}
           </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {canManage && match.status === "SCHEDULED" && (
-            <Button
-              variant="outline"
-              onClick={handleStartMatch}
-              disabled={statusLoading}
-            >
-              <Play className="mr-2 h-4 w-4" />
-              Iniciar partido
-            </Button>
-          )}
-
-          {canManage && !isCompleted && match.team1 && match.team2 && (
-            <Button onClick={() => setResultDialogOpen(true)}>
-              <CheckCircle className="mr-2 h-4 w-4" />
-              Cargar resultado
-            </Button>
-          )}
-
-          {canManage && isCompleted && (
-            <Button
-              variant="destructive"
-              onClick={handleRevertResult}
-              disabled={revertLoading}
-            >
-              <RotateCcw className="mr-2 h-4 w-4" />
-              {revertLoading ? "Revirtiendo..." : "Revertir resultado"}
-            </Button>
-          )}
-        </div>
+        )}
       </div>
 
       {/* Match Details */}
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-4 md:gap-6 md:grid-cols-2">
         {/* Teams Card */}
         <Card>
           <CardHeader>
-            <CardTitle>Equipos</CardTitle>
-            <CardDescription>Parejas del partido</CardDescription>
+            <CardTitle className="text-base md:text-lg">Equipos</CardTitle>
+            <CardDescription className="text-xs md:text-sm">Parejas del partido</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="border rounded-md overflow-hidden">
+            <div className="border rounded-md overflow-hidden overflow-x-auto">
               {/* Team 1 Row */}
               <div
                 className="grid border-b"
                 style={{
                   gridTemplateColumns: isCompleted && match.sets && match.sets.length > 0
-                    ? `1fr ${match.sets.map(() => 'auto').join(' ')}`
-                    : '1fr auto'
+                    ? `minmax(140px, 1fr) ${match.sets.map(() => 'auto').join(' ')}`
+                    : 'minmax(140px, 1fr) auto'
                 }}
               >
                 {/* Team 1 Info */}
                 <div
                   className={cn(
-                    "p-4 border-r",
+                    "p-2 sm:p-3 md:p-4 border-r",
                     team1Won && "bg-green-50 dark:bg-green-950 font-semibold"
                   )}
                 >
-                  <div className="flex flex-col gap-2">
-                    <div className={cn("font-semibold", team1Won && "text-green-700 dark:text-green-400")}>
+                  <div className="flex flex-col gap-1 md:gap-2">
+                    <div className={cn("font-semibold text-sm md:text-base line-clamp-2", team1Won && "text-green-700 dark:text-green-400")}>
                       {getTeamDisplay(match.team1)} {team1Won && "🏆"}
                     </div>
                     {match.team1 && match.team1.registration1 && match.team1.registration2 && (
-                      <div className="space-y-1 text-xs text-muted-foreground">
-                        <div className="flex items-center justify-between">
-                          <span>{match.team1.registration1.player.firstName} {match.team1.registration1.player.lastName}</span>
-                          <Badge variant="outline" className="text-xs ml-2">
+                      <div className="space-y-0.5 md:space-y-1 text-[10px] sm:text-xs text-muted-foreground">
+                        <div className="flex items-center justify-between gap-1">
+                          <span className="truncate">{match.team1.registration1.player.firstName} {match.team1.registration1.player.lastName}</span>
+                          <Badge variant="outline" className="text-[9px] sm:text-[10px] shrink-0">
                             {match.team1.registration1.player.rankings?.[0]?.currentPoints ?? match.team1.registration1.player.rankingPoints} pts
                           </Badge>
                         </div>
-                        <div className="flex items-center justify-between">
-                          <span>{match.team1.registration2.player.firstName} {match.team1.registration2.player.lastName}</span>
-                          <Badge variant="outline" className="text-xs ml-2">
+                        <div className="flex items-center justify-between gap-1">
+                          <span className="truncate">{match.team1.registration2.player.firstName} {match.team1.registration2.player.lastName}</span>
+                          <Badge variant="outline" className="text-[9px] sm:text-[10px] shrink-0">
                             {match.team1.registration2.player.rankings?.[0]?.currentPoints ?? match.team1.registration2.player.rankingPoints} pts
                           </Badge>
                         </div>
@@ -284,21 +326,21 @@ export function MatchDetail({ match }: MatchDetailProps) {
                       <div
                         key={set.setNumber}
                         className={cn(
-                          "p-4 text-center font-mono text-lg flex items-center justify-center min-w-[60px] border-r last:border-r-0",
+                          "p-2 sm:p-3 md:p-4 text-center font-mono text-base sm:text-lg flex items-center justify-center min-w-[50px] sm:min-w-[60px] border-r last:border-r-0",
                           set.team1Games > set.team2Games && "bg-green-100 dark:bg-green-900 font-bold"
                         )}
                       >
                         <div>
                           {set.team1Games}
                           {set.team1TiebreakPoints !== null && (
-                            <sup className="text-xs ml-0.5">{set.team1TiebreakPoints}</sup>
+                            <sup className="text-[9px] sm:text-xs ml-0.5">{set.team1TiebreakPoints}</sup>
                           )}
                         </div>
                       </div>
                     ))}
                   </>
                 ) : (
-                  <div className="p-4 text-center text-muted-foreground min-w-[100px] flex items-center justify-center">
+                  <div className="p-2 sm:p-3 md:p-4 text-center text-muted-foreground text-xs sm:text-sm min-w-[80px] sm:min-w-[100px] flex items-center justify-center">
                     Sin resultado
                   </div>
                 )}
@@ -309,32 +351,32 @@ export function MatchDetail({ match }: MatchDetailProps) {
                 className="grid"
                 style={{
                   gridTemplateColumns: isCompleted && match.sets && match.sets.length > 0
-                    ? `1fr ${match.sets.map(() => 'auto').join(' ')}`
-                    : '1fr auto'
+                    ? `minmax(140px, 1fr) ${match.sets.map(() => 'auto').join(' ')}`
+                    : 'minmax(140px, 1fr) auto'
                 }}
               >
                 {/* Team 2 Info */}
                 <div
                   className={cn(
-                    "p-4 border-r",
+                    "p-2 sm:p-3 md:p-4 border-r",
                     team2Won && "bg-green-50 dark:bg-green-950 font-semibold"
                   )}
                 >
-                  <div className="flex flex-col gap-2">
-                    <div className={cn("font-semibold", team2Won && "text-green-700 dark:text-green-400")}>
+                  <div className="flex flex-col gap-1 md:gap-2">
+                    <div className={cn("font-semibold text-sm md:text-base line-clamp-2", team2Won && "text-green-700 dark:text-green-400")}>
                       {getTeamDisplay(match.team2)} {team2Won && "🏆"}
                     </div>
                     {match.team2 && match.team2.registration1 && match.team2.registration2 && (
-                      <div className="space-y-1 text-xs text-muted-foreground">
-                        <div className="flex items-center justify-between">
-                          <span>{match.team2.registration1.player.firstName} {match.team2.registration1.player.lastName}</span>
-                          <Badge variant="outline" className="text-xs ml-2">
+                      <div className="space-y-0.5 md:space-y-1 text-[10px] sm:text-xs text-muted-foreground">
+                        <div className="flex items-center justify-between gap-1">
+                          <span className="truncate">{match.team2.registration1.player.firstName} {match.team2.registration1.player.lastName}</span>
+                          <Badge variant="outline" className="text-[9px] sm:text-[10px] shrink-0">
                             {match.team2.registration1.player.rankings?.[0]?.currentPoints ?? match.team2.registration1.player.rankingPoints} pts
                           </Badge>
                         </div>
-                        <div className="flex items-center justify-between">
-                          <span>{match.team2.registration2.player.firstName} {match.team2.registration2.player.lastName}</span>
-                          <Badge variant="outline" className="text-xs ml-2">
+                        <div className="flex items-center justify-between gap-1">
+                          <span className="truncate">{match.team2.registration2.player.firstName} {match.team2.registration2.player.lastName}</span>
+                          <Badge variant="outline" className="text-[9px] sm:text-[10px] shrink-0">
                             {match.team2.registration2.player.rankings?.[0]?.currentPoints ?? match.team2.registration2.player.rankingPoints} pts
                           </Badge>
                         </div>
@@ -350,21 +392,21 @@ export function MatchDetail({ match }: MatchDetailProps) {
                       <div
                         key={set.setNumber}
                         className={cn(
-                          "p-4 text-center font-mono text-lg flex items-center justify-center min-w-[60px] border-r last:border-r-0",
+                          "p-2 sm:p-3 md:p-4 text-center font-mono text-base sm:text-lg flex items-center justify-center min-w-[50px] sm:min-w-[60px] border-r last:border-r-0",
                           set.team2Games > set.team1Games && "bg-green-100 dark:bg-green-900 font-bold"
                         )}
                       >
                         <div>
                           {set.team2Games}
                           {set.team2TiebreakPoints !== null && (
-                            <sup className="text-xs ml-0.5">{set.team2TiebreakPoints}</sup>
+                            <sup className="text-[9px] sm:text-xs ml-0.5">{set.team2TiebreakPoints}</sup>
                           )}
                         </div>
                       </div>
                     ))}
                   </>
                 ) : (
-                  <div className="p-4 text-center text-muted-foreground min-w-[100px] flex items-center justify-center">
+                  <div className="p-2 sm:p-3 md:p-4 text-center text-muted-foreground text-xs sm:text-sm min-w-[80px] sm:min-w-[100px] flex items-center justify-center">
                     Sin resultado
                   </div>
                 )}
@@ -376,40 +418,40 @@ export function MatchDetail({ match }: MatchDetailProps) {
         {/* Match Info Card */}
         <Card>
           <CardHeader>
-            <CardTitle>Información del Partido</CardTitle>
-            <CardDescription>Detalles y configuración</CardDescription>
+            <CardTitle className="text-base md:text-lg">Información del Partido</CardTitle>
+            <CardDescription className="text-xs md:text-sm">Detalles y configuración</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3 md:space-y-4">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Fase</p>
-              <p>{getPhaseLabel(match.phaseType)}</p>
+              <p className="text-xs md:text-sm font-medium text-muted-foreground">Fase</p>
+              <p className="text-sm md:text-base">{getPhaseLabel(match.phaseType)}</p>
             </div>
 
             {match.roundNumber && (
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Ronda</p>
-                <p>Ronda {match.roundNumber}</p>
+                <p className="text-xs md:text-sm font-medium text-muted-foreground">Ronda</p>
+                <p className="text-sm md:text-base">Ronda {match.roundNumber}</p>
               </div>
             )}
 
             {match.zone && (
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Grupo</p>
-                <p>{match.zone.name}</p>
+                <p className="text-xs md:text-sm font-medium text-muted-foreground">Grupo</p>
+                <p className="text-sm md:text-base">{match.zone.name}</p>
               </div>
             )}
 
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Estado</p>
+              <p className="text-xs md:text-sm font-medium text-muted-foreground">Estado</p>
               <div className="mt-1">{getStatusBadge()}</div>
             </div>
 
             {match.scheduledAt && (
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Programado para</p>
+                <p className="text-xs md:text-sm font-medium text-muted-foreground">Programado para</p>
                 <div className="flex items-center gap-1 mt-1">
-                  <Calendar className="h-4 w-4" />
-                  <span>
+                  <Calendar className="h-3 w-3 md:h-4 md:w-4 shrink-0" />
+                  <span className="text-sm md:text-base">
                     {format(new Date(match.scheduledAt), "dd/MM/yyyy HH:mm", { locale: es })}
                   </span>
                 </div>
@@ -418,24 +460,24 @@ export function MatchDetail({ match }: MatchDetailProps) {
 
             {match.court && (
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Cancha</p>
+                <p className="text-xs md:text-sm font-medium text-muted-foreground">Cancha</p>
                 <div className="flex items-center gap-1 mt-1">
-                  <MapPin className="h-4 w-4" />
-                  <span>{match.court.name} - {match.court.club.name}</span>
+                  <MapPin className="h-3 w-3 md:h-4 md:w-4 shrink-0" />
+                  <span className="text-sm md:text-base break-words">{match.court.name} - {match.court.club.name}</span>
                 </div>
               </div>
             )}
 
             {match.durationMinutes && (
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Duración</p>
-                <p>{match.durationMinutes} minutos</p>
+                <p className="text-xs md:text-sm font-medium text-muted-foreground">Duración</p>
+                <p className="text-sm md:text-base">{match.durationMinutes} minutos</p>
               </div>
             )}
 
             {!isCompleted && canManage && (
               <div className="pt-2">
-                <Button variant="outline" onClick={() => setScheduleDialogOpen(true)} className="w-full">
+                <Button variant="outline" onClick={() => setScheduleDialogOpen(true)} className="w-full text-sm md:text-base">
                   <Calendar className="mr-2 h-4 w-4" />
                   Programar partido
                 </Button>
