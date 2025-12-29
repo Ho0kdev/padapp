@@ -5,6 +5,7 @@ import { requireAuth, authorize, handleAuthError, Action, Resource, AuditLogger 
 import { invalidateUserCache } from '@/lib/rbac/cache'
 import { checkRateLimit } from '@/lib/rbac/rate-limit'
 import { UserLogService } from '@/lib/services/user-log-service'
+import bcrypt from 'bcryptjs'
 
 interface RouteContext {
   params: Promise<{ id: string }>
@@ -169,6 +170,7 @@ export async function PUT(
       firstName,
       lastName,
       email,
+      password,
       role,
       status,
       createPlayer,
@@ -282,6 +284,11 @@ export async function PUT(
     } else {
       // Regular users can only update their name
       if (name !== undefined) userUpdate.name = name
+    }
+
+    // Hash password if provided (admins and own profile)
+    if (password) {
+      userUpdate.password = await bcrypt.hash(password, 10)
     }
 
     // Check if there's something to update
