@@ -6,7 +6,7 @@ import { z } from 'zod'
  */
 export const forgotPasswordSchema = z.object({
   email: z
-    .string({ required_error: 'El email es requerido' })
+    .string({ message: 'El email es requerido' })
     .email('Formato de email inválido')
     .toLowerCase()
     .trim(),
@@ -20,15 +20,15 @@ export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>
 export const resetPasswordSchema = z
   .object({
     token: z
-      .string({ required_error: 'El token es requerido' })
+      .string({ message: 'El token es requerido' })
       .min(64, 'Token inválido')
       .max(64, 'Token inválido'),
     password: z
-      .string({ required_error: 'La contraseña es requerida' })
+      .string({ message: 'La contraseña es requerida' })
       .min(6, 'La contraseña debe tener al menos 6 caracteres')
       .max(100, 'La contraseña debe tener máximo 100 caracteres'),
     confirmPassword: z
-      .string({ required_error: 'La confirmación de contraseña es requerida' }),
+      .string({ message: 'La confirmación de contraseña es requerida' }),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: 'Las contraseñas no coinciden',
@@ -42,7 +42,7 @@ export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>
  */
 export const verifyTokenSchema = z.object({
   token: z
-    .string({ required_error: 'El token es requerido' })
+    .string({ message: 'El token es requerido' })
     .min(64, 'Token inválido')
     .max(64, 'Token inválido'),
 })
