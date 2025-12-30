@@ -2,11 +2,10 @@
 
 interface PasswordChangedTemplateParams {
   name: string
-  baseUrl?: string
 }
 
 export function getPasswordChangedEmailTemplate(params: PasswordChangedTemplateParams): string {
-  const { name, baseUrl = 'https://padelshot.app' } = params
+  const { name } = params
 
   return `
 <!DOCTYPE html>
