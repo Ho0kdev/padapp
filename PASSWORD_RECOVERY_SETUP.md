@@ -359,8 +359,9 @@ console.log(`Tokens expirados eliminados: ${deletedCount}`)
 - [x] Validaciones Zod creadas
 - [x] Páginas frontend creadas (forgot, reset)
 - [x] Login form actualizado con link de recuperación
-- [ ] Testing manual completo
-- [ ] Resend API key configurada y dominio verificado
+- [x] Bug de MobileNav redirect solucionado (`useAuth(false)`)
+- [x] Testing manual completo
+- [x] Resend API key configurada y dominio verificado
 
 ---
 
