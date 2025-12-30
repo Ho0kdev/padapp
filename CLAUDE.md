@@ -1,553 +1,540 @@
-# CLAUDE.md
+# CLAUDE.md - Quick Start para Desarrolladores
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+> **Guía rápida para Claude Code y desarrolladores**
+> Para documentación completa del proyecto ver [README.md](README.md)
 
-## Project Overview
+---
 
-**PDLShot** is a comprehensive paddle tennis (pádel) tournament management system built with Next.js 16, React 19, TypeScript, Prisma, and PostgreSQL. The system handles tournament creation, player registrations, bracket generation (6 different formats), match management, rankings, and administrative tasks with full RBAC (Role-Based Access Control) and audit logging.
+## 🎯 Estado del Proyecto
 
-**Current Status**: 97% core functionality complete, production-ready with 46 API endpoints (100% RBAC protected), 90+ React components, 30+ database tables, and advanced UI/UX system with sorting, filtering, and clickable navigation on 8 main pages.
+**PDLShot** - Sistema completo de gestión de torneos de pádel
+**Estado**: ✅ **97% completo** - Production-ready
 
-## Essential Commands
+- 46 API endpoints (100% RBAC protegidos)
+- 90+ componentes React
+- 30+ tablas de base de datos
+- 6/7 formatos de torneo implementados
 
-### Development
+---
+
+## ⚡ Comandos Esenciales
+
+### Desarrollo
+
 ```bash
-npm run dev              # Start dev server with Turbopack
-npm run dev-select       # Select database (local/remote) and start dev
-npm run build            # Production build
-npm run lint             # Run ESLint
+npm run dev              # Dev server con Turbopack (http://localhost:3000)
+npm run dev-select       # Selector de DB + dev server
+npm run build            # Build para producción
+npm run lint             # ESLint
 npm run type-check       # TypeScript type checking
 ```
 
-### Database Operations
+### Base de Datos
+
 ```bash
-npm run db:select        # Interactive database selector (local/remote)
-npm run db:push          # Push schema changes to DB (development)
-npm run db:migrate       # Create and apply migrations
-npm run db:studio        # Open Prisma Studio
-npm run db:reset         # Reset database completely
-npm run db:seed          # Load seed data
+npm run db:select        # Selector interactivo (local/remoto)
+npm run db:push          # Push schema changes (desarrollo)
+npm run db:migrate       # Crear y aplicar migraciones
+npm run db:studio        # Prisma Studio (GUI)
+npm run db:reset         # Reset completo
+npm run db:seed          # Cargar datos de prueba
 ```
 
-### Environment Variables Required
-```bash
-DATABASE_URL="postgresql://postgres:padelshot123@localhost:5432/padelshot"
-NEXTAUTH_URL="http://localhost:3000"
-NEXTAUTH_SECRET="your-secret-key-here"
-HOSTNAME="0.0.0.0" # REQUIRED for Docker/Dokploy
+### Credenciales de Test
 
-# MercadoPago (Payment System)
-MERCADOPAGO_ACCESS_TOKEN="TEST-your-access-token"
-MERCADOPAGO_PUBLIC_KEY="TEST-your-public-key"
-NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY="TEST-your-public-key"
-MERCADOPAGO_WEBHOOK_SECRET="your-webhook-secret" # REQUIRED in production
-
-# Resend (Email Service - Password Recovery)
-RESEND_API_KEY="re_xxxxxxxxxxxxxxxxxxxxx"
-RESEND_FROM_EMAIL="PadelShot <noreply@padelshot.app>"
+```
+Admin:      admin@padelshot.app / 123456
+Club Admin: clubadmin@padelshot.app / 123456
+Player:     player@padelshot.app / 123456
 ```
 
-### Default Test Credentials
-- Admin: `admin@padelshot.app` / `123456`
-- Club Admin: `clubadmin@padelshot.app` / `123456`
-- Player: `player@padelshot.app` / `123456`
+---
 
-## Architecture & Core Concepts
+## 📁 Arquitectura del Proyecto
 
-### RBAC System (Role-Based Access Control)
+```
+src/
+├── app/
+│   ├── api/                    # 46 API routes (Next.js App Router)
+│   │   ├── auth/               # Login, registro, password reset
+│   │   ├── tournaments/        # CRUD torneos + brackets (17 endpoints)
+│   │   ├── registrations/      # Inscripciones + pagos (8 endpoints)
+│   │   ├── teams/              # Equipos (6 endpoints)
+│   │   ├── matches/            # Partidos (5 endpoints)
+│   │   ├── clubs/              # Clubes + canchas (11 endpoints)
+│   │   ├── categories/         # Categorías (6 endpoints)
+│   │   ├── rankings/           # Rankings (4 endpoints)
+│   │   ├── users/              # Usuarios (7 endpoints)
+│   │   └── webhooks/           # MercadoPago webhooks
+│   ├── auth/                   # Páginas: login, registro, reset password
+│   └── dashboard/              # 8 páginas principales protegidas
+│
+├── components/                 # 90+ componentes React organizados por módulo
+│   ├── [entity]/               # Componentes específicos por entidad
+│   └── ui/                     # shadcn/ui base components
+│
+├── hooks/
+│   └── use-auth.ts            # Hook principal: isAdmin, hasRole, etc.
+│
+├── lib/
+│   ├── rbac/                  # Sistema RBAC completo (14 archivos)
+│   │   ├── helpers.ts         # requireAuth(), authorize(), handleAuthError()
+│   │   ├── ability.ts         # Motor de permisos
+│   │   ├── types.ts           # Action, Resource, Session
+│   │   └── policies/          # Políticas por recurso
+│   ├── services/              # 19 servicios de negocio
+│   │   ├── bracket-service.ts           # Generación de brackets (1,700+ líneas)
+│   │   ├── americano-social-service.ts  # Pools de 4 jugadores
+│   │   ├── points-calculation-service.ts # Sistema de puntos
+│   │   ├── payment-service.ts           # MercadoPago
+│   │   ├── email-service.ts             # Resend emails
+│   │   └── *-log-service.ts             # 9 servicios de auditoría
+│   ├── validations/           # Zod schemas
+│   ├── auth.ts                # NextAuth config
+│   └── prisma.ts              # Prisma client singleton
+│
+└── types/                     # TypeScript definitions
+```
 
-**Critical**: This project has a comprehensive RBAC system that MUST be used in all protected routes.
+---
 
-**Four Roles**: `ADMIN`, `CLUB_ADMIN`, `PLAYER`, `REFEREE`
+## 🔐 Sistema RBAC - Quick Reference
 
-**Key Functions** (from `src/lib/rbac/`):
+### En API Routes
+
 ```typescript
 import { requireAuth, authorize, handleAuthError, Action, Resource } from '@/lib/rbac'
 
-// Authentication only
-await requireAuth()  // Checks if user is logged in
-
-// Authorization with permission check
-const session = await authorize(Action.CREATE, Resource.TOURNAMENT)
-
-// Check permission without throwing
-const canEdit = await can(session, Action.UPDATE, Resource.TOURNAMENT, tournamentId)
-```
-
-**Actions**: CREATE, READ, UPDATE, DELETE, MANAGE, LIST, APPROVE, REJECT
-**Resources**: TOURNAMENT, CLUB, USER, CATEGORY, REGISTRATION, PAYMENT, RANKING, MATCH, TEAM, COURT, LOG
-
-**Frontend Usage**:
-```typescript
-import { useAuth } from '@/hooks/use-auth'
-const { user, isAdmin, isClubAdmin, isAdminOrClubAdmin, hasRole } = useAuth()
-```
-
-**Quick Reference**:
-| Operation | RBAC Required | Example |
-|-----------|---------------|---------|
-| List resources | `requireAuth()` | GET /api/tournaments |
-| Create resource | `authorize(Action.CREATE, Resource.X)` | POST /api/tournaments |
-| Update own | `requireAuth()` + ownership | PUT /api/users/[id] |
-| Update any | `authorize(Action.UPDATE, Resource.X)` | PUT /api/tournaments/[id] |
-| Delete | `authorize(Action.DELETE, Resource.X)` | DELETE /api/clubs/[id] |
-
-📄 **Complete RBAC Documentation**: See [RBAC_GUIA_DEFINITIVA.md](RBAC_GUIA_DEFINITIVA.md) for detailed endpoint mapping and permission rules.
-
-**Match Management Permissions**:
-- View: Any authenticated user (`requireAuth()`)
-- Manage (start/load result/schedule/revert): ADMIN, CLUB_ADMIN, REFEREE, or Tournament Organizer
-- Client pattern: `canManage = isOwner || isAdminOrClubAdmin || isReferee`
-- API pattern: `authorize(Action.UPDATE, Resource.TOURNAMENT)`
-
-### Audit Logging System
-
-**All sensitive operations MUST be logged**. Use the 9 logging services:
-
-```typescript
-import { UserLogService } from '@/lib/services/user-log-service'
-// ... etc for Tournament, Registration, Team, Match, Club, Court, Category, Rankings
-
-// CREATE
-await UserLogService.logUserCreated({ userId, targetUserId }, newUser)
-
-// UPDATE (includes oldData/newData diff)
-await TournamentLogService.logTournamentUpdated({ userId, tournamentId }, oldTournament, newTournament)
-
-// DELETE
-await TournamentLogService.logTournamentDeleted({ userId, tournamentId }, tournament)
-```
-
-Logs capture: action, userId, targetId, ipAddress, userAgent, oldData, newData, metadata, timestamp.
-
-📄 **Complete Logging Documentation**: See [LOGGING_SYSTEM.md](LOGGING_SYSTEM.md)
-
-### Database Architecture
-
-**Key Models**:
-- **User** → **Player** (1:1 extended profile)
-- **Tournament** → **TournamentCategory** → **Registration** → **Team** (pairs)
-- **Match** → **MatchSet** → **MatchGame** (hierarchical structure)
-- **Tournament** → **TournamentZone** (groups) → **ZoneTeam**
-- **AmericanoPool** → **AmericanoPoolPlayer** / **AmericanoPoolMatch**
-
-**Critical Relationships**:
-1. **Registration → Team**: Individual players register first, then form teams. One player = ONE team per category.
-2. **Match Progression**: Matches reference `team1FromMatchId`/`team2FromMatchId` for automatic winner progression.
-3. **Logging**: Every entity has a `*Log` table.
-
-### Tournament Formats
-
-7 formats (6 implemented):
-1. **SINGLE_ELIMINATION** ✅
-2. **DOUBLE_ELIMINATION** ✅ (upper/lower brackets)
-3. **ROUND_ROBIN** ✅
-4. **GROUP_STAGE_ELIMINATION** ✅ (groups + knockout)
-5. **AMERICANO** ✅ (fixed teams, round-robin)
-6. **AMERICANO_SOCIAL** ✅ (individual players in pools of 4, multi-round support)
-7. **SWISS** ⏳ (pending)
-
-**Services**:
-- `bracket-service.ts` (1,700+ lines): Auto-generates brackets, handles seeding, winner progression
-- `americano-social-service.ts`: Pools of 4, intelligent pairing algorithm (1-10 rounds), minimizes repetitions
-
-📄 **Complete Format Documentation**: See [TOURNAMENT_FORMATS.md](TOURNAMENT_FORMATS.md)
-
-### Validation Pattern
-
-**All API routes MUST validate input with Zod schemas** (in `src/lib/utils/validations/`):
-
-```typescript
-import { tournamentSchema } from '@/lib/utils/validations/tournament'
-const validatedData = tournamentSchema.parse(await request.json())
-```
-
-**Forms** use React Hook Form + Zod:
-```typescript
-const form = useForm({ resolver: zodResolver(tournamentSchema) })
-```
-
-### Points Calculation System
-
-Tournaments have configurable `rankingPoints` (100-5000):
-- **Premium/National**: 1000-1500 pts
-- **Regional**: 400-900 pts
-- **Local**: 100-300 pts
-
-Calculation via `POST /api/tournaments/[id]/calculate-points`:
-1. Base participation (50 pts)
-2. Position finish (proportional)
-3. Performance bonuses (wins/sets)
-4. Multipliers (type + participant count)
-
-📄 **Complete Points Documentation**: See [POINTS_CALCULATION.md](POINTS_CALCULATION.md)
-
-### Payment System & MercadoPago
-
-**Complete payment system** with MercadoPago SDK and manual payment support.
-
-**Key Features**:
-- MercadoPago integration (cards, wallets, transfers)
-- Manual payment confirmation (ADMIN/CLUB_ADMIN only)
-- Webhook with signature validation (HMAC-SHA256) 🔒
-- Audit trail with PaymentLogService
-- Partial payment support
-
-**Security Score**: **9/10** ⭐ (audited Dec 2025, 5 vulnerabilities corrected)
-
-📄 **Complete Payment Documentation**: See [PAYMENT_SYSTEM.md](PAYMENT_SYSTEM.md) for security audit, configuration, API endpoints, and testing.
-
-## Important Patterns & Conventions
-
-### API Route Structure
-
-```typescript
-// GET - List with pagination
+// GET - Solo autenticación
 export async function GET(request: NextRequest) {
   try {
-    await requireAuth()
-    const { searchParams } = new URL(request.url)
-    const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '10')
-
-    const data = await prisma.model.findMany({
-      skip: (page - 1) * limit,
-      take: limit,
-      include: { /* relations */ }
-    })
+    await requireAuth()  // Verifica que esté logged in
+    const data = await prisma.resource.findMany()
     return NextResponse.json(data)
   } catch (error) {
     return handleAuthError(error)
   }
 }
 
-// POST - Create with validation and logging
+// POST - Con autorización
 export async function POST(request: NextRequest) {
   try {
-    const session = await authorize(Action.CREATE, Resource.MODEL)
-    const validatedData = schema.parse(await request.json())
-    const created = await prisma.model.create({ data: validatedData })
-    await LogService.logCreated({ userId: session.user.id, modelId: created.id }, created)
+    const session = await authorize(Action.CREATE, Resource.TOURNAMENT)
+    const body = await request.json()
+    const created = await prisma.tournament.create({ data: body })
     return NextResponse.json(created, { status: 201 })
+  } catch (error) {
+    return handleAuthError(error)
+  }
+}
+
+// PUT - Con ownership check
+export async function PUT(request: NextRequest, { params }: RouteContext) {
+  try {
+    const session = await requireAuth()
+    const { id } = await params
+    const existing = await prisma.tournament.findUnique({ where: { id } })
+
+    // Valida ownership o rol ADMIN automáticamente
+    await authorize(Action.UPDATE, Resource.TOURNAMENT, existing)
+
+    const updated = await prisma.tournament.update({ where: { id }, data: body })
+    return NextResponse.json(updated)
   } catch (error) {
     return handleAuthError(error)
   }
 }
 ```
 
-### Component Patterns
+### En Frontend
 
-**Forms** (shadcn/ui + React Hook Form + Zod):
-- Select: Use `value={field.value}` (NOT `defaultValue`)
-- Include loading states and error handling
-- Use `toast` from `sonner` for feedback
-
-**Data Tables**:
-- Header component with filters/actions
-- Table component with data display
-- Detail/edit dialogs
-
-### Status Badges
-
-**Centralized system** in `src/lib/utils/status-styles.ts`:
-
-11 badge systems: Tournament Status, Registration Status, Payment Status, Payment Method, Match Status, Team Status, Club Status, Court Status, Category Type, Gender Restriction, Phase Type.
-
-**Usage**:
 ```typescript
-import { getPaymentStatusStyle, getPaymentStatusLabel } from '@/lib/utils/status-styles'
+import { useAuth } from '@/hooks/use-auth'
 
+function MyComponent() {
+  const { user, isAdmin, isClubAdmin, isAdminOrClubAdmin, hasRole } = useAuth()
+
+  if (isAdmin) return <AdminPanel />
+  if (isAdminOrClubAdmin) return <ManagementPanel />
+  return <PlayerView />
+}
+```
+
+**Quick Reference Table**:
+
+| Operación | RBAC Requerido | Ejemplo |
+|-----------|---------------|---------|
+| Listar recursos | `requireAuth()` | GET /api/tournaments |
+| Crear recurso | `authorize(CREATE, Resource)` | POST /api/tournaments |
+| Actualizar propio | `requireAuth()` + ownership | PUT /api/users/[id] |
+| Actualizar cualquiera | `authorize(UPDATE, Resource)` | PUT /api/tournaments/[id] |
+| Eliminar | `authorize(DELETE, Resource)` | DELETE /api/clubs/[id] |
+
+📄 **Doc completa**: [RBAC_GUIA_DEFINITIVA.md](RBAC_GUIA_DEFINITIVA.md) (46 endpoints documentados)
+
+---
+
+## 🏆 Formatos de Torneo
+
+### 6 Formatos Implementados
+
+1. **SINGLE_ELIMINATION** ✅ - Con byes automáticos
+2. **DOUBLE_ELIMINATION** ✅ - Upper/lower brackets
+3. **ROUND_ROBIN** ✅ - Todos contra todos
+4. **GROUP_STAGE_ELIMINATION** ✅ - Grupos + knockout
+5. **AMERICANO** ✅ - Parejas fijas, Circle Method
+6. **AMERICANO_SOCIAL** ✅ - Individual players, pools de 4, multi-ronda
+
+📄 **Algoritmos detallados**: [TOURNAMENT_FORMATS.md](TOURNAMENT_FORMATS.md)
+
+### Validaciones de Generación de Brackets
+
+**CRÍTICO**: Brackets solo se generan cuando `status = REGISTRATION_CLOSED` o `IN_PROGRESS`
+
+```typescript
+// Estados permitidos
+✅ REGISTRATION_CLOSED
+✅ IN_PROGRESS
+
+// Estados NO permitidos
+❌ DRAFT → Error: "Torneo debe estar publicado"
+❌ PUBLISHED → Error: "Inscripciones deben estar cerradas"
+❌ REGISTRATION_OPEN → Error: "Inscripciones deben estar cerradas"
+❌ COMPLETED → Error: "No se puede regenerar bracket completado"
+```
+
+### Limpieza Automática (→ IN_PROGRESS)
+
+Cuando torneo cambia a `IN_PROGRESS`, sistema cancela automáticamente:
+
+- Inscripciones NO `CONFIRMED`/`PAID` sin pagos parciales
+- Equipos con al menos una inscripción cancelada
+- **Preserva**: Inscripciones con pagos parciales
+
+---
+
+## 💰 Sistema de Pagos (MercadoPago)
+
+### Variables de Entorno
+
+```bash
+MERCADOPAGO_ACCESS_TOKEN="TEST-your-token"
+MERCADOPAGO_PUBLIC_KEY="TEST-your-public-key"
+NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY="TEST-your-public-key"
+MERCADOPAGO_WEBHOOK_SECRET="your-secret"  # REQUERIDO en producción
+```
+
+### Tarjetas de Test
+
+```
+Aprobada:   5031 7557 3453 0604 (Mastercard)
+Rechazada:  4444 4444 4444 4444 (Visa)
+CVV:        123
+Nombre:     APRO (aprobar) / OTHE (rechazar)
+```
+
+### Seguridad
+
+- ✅ Validación de firma HMAC-SHA256
+- ✅ Validación de timestamp (< 5 min)
+- ✅ Validación de monto
+- ✅ Idempotencia (no procesa pagos ya PAID)
+
+**Seguridad Score**: 9/10
+
+📄 **Auditoría completa**: [PAYMENT_SYSTEM.md](PAYMENT_SYSTEM.md)
+
+---
+
+## 📊 Sistema de Puntos
+
+### Configuración por Torneo
+
+Cada torneo define `rankingPoints` (100-5,000 pts):
+
+- **Premium/Nacional**: 1000-1500 pts
+- **Regional**: 400-900 pts
+- **Local/Club**: 100-300 pts
+
+### Fórmula
+
+```
+PUNTOS FINALES = [
+    (PARTICIPACIÓN + POSICIÓN + VICTORIAS + SETS)
+    × MULT_TORNEO
+    × MULT_PARTICIPANTES
+]
+
+Donde:
+- PARTICIPACIÓN = 50 pts (fijo)
+- POSICIÓN = porcentaje × rankingPoints
+- VICTORIAS = partidas_ganadas × (rankingPoints/1000) × 25
+- SETS = sets_ganados × (rankingPoints/1000) × 5
+```
+
+### Ejemplo
+
+Torneo Premium (1000 pts), Campeón, 5 victorias, 10 sets:
+```
+50 + 1000 + 125 + 50 = 1,225 pts
+1,225 × 1.2 (eliminación simple) × 1.3 (24 jugadores) = 1,911 pts
+```
+
+📄 **Fórmulas y tablas**: [POINTS_CALCULATION.md](POINTS_CALCULATION.md)
+
+---
+
+## 🔧 Patrones de Código Comunes
+
+### API Route Completo
+
+```typescript
+import { requireAuth, authorize, handleAuthError, Action, Resource } from '@/lib/rbac'
+import { tournamentSchema } from '@/lib/validations/tournament'
+
+export async function POST(request: NextRequest) {
+  try {
+    // 1. Autorizar
+    const session = await authorize(Action.CREATE, Resource.TOURNAMENT)
+
+    // 2. Validar input con Zod
+    const body = await request.json()
+    const validatedData = tournamentSchema.parse(body)
+
+    // 3. Crear en BD
+    const tournament = await prisma.tournament.create({ data: validatedData })
+
+    // 4. Log (opcional pero recomendado)
+    await TournamentLogService.logTournamentCreated(
+      { userId: session.user.id, tournamentId: tournament.id },
+      tournament
+    )
+
+    // 5. Retornar
+    return NextResponse.json(tournament, { status: 201 })
+  } catch (error) {
+    return handleAuthError(error)
+  }
+}
+```
+
+### Componente con React Hook Form + Zod
+
+```typescript
+'use client'
+
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { tournamentSchema } from '@/lib/validations/tournament'
+
+export function TournamentForm() {
+  const form = useForm({
+    resolver: zodResolver(tournamentSchema),
+    defaultValues: { ... }
+  })
+
+  const onSubmit = async (data) => {
+    const res = await fetch('/api/tournaments', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    })
+    if (res.ok) toast.success('Torneo creado')
+  }
+
+  return (
+    <form onSubmit={form.handleSubmit(onSubmit)}>
+      {/* Form fields con Controller de react-hook-form */}
+    </form>
+  )
+}
+```
+
+### Select con React Hook Form (IMPORTANTE)
+
+```typescript
+// ❌ INCORRECTO (no sincroniza)
+<Select defaultValue={field.value}>
+
+// ✅ CORRECTO
+<Select value={field.value} onValueChange={field.onChange}>
+```
+
+---
+
+## 📝 Sistema de Auditoría
+
+### 9 Servicios de Logging
+
+```typescript
+import { UserLogService } from '@/lib/services/user-log-service'
+import { TournamentLogService } from '@/lib/services/tournament-log-service'
+// ... etc (9 servicios total)
+
+// CREATE
+await UserLogService.logUserCreated({ userId, targetUserId }, newUser)
+
+// UPDATE (con diff)
+await TournamentLogService.logTournamentUpdated(
+  { userId, tournamentId },
+  oldTournament,
+  newTournament
+)
+
+// DELETE
+await TournamentLogService.logTournamentDeleted({ userId, tournamentId }, tournament)
+```
+
+**Información capturada**: action, userId, targetId, ipAddress, userAgent, oldData, newData, metadata, timestamp
+
+📄 **Sistema completo**: [LOGGING_SYSTEM.md](LOGGING_SYSTEM.md)
+
+---
+
+## 🛡️ Sistema de Badges (Status Styles)
+
+**IMPORTANTE**: Usa helpers centralizados, NO hardcodees estilos.
+
+```typescript
+import {
+  getTournamentStatusStyle,
+  getTournamentStatusLabel,
+  getPaymentStatusStyle,
+  getPaymentStatusLabel,
+  getRegistrationStatusStyle,
+  getRegistrationStatusLabel,
+  // ... etc (11 sistemas)
+} from '@/lib/utils/status-styles'
+
+// Uso
 <Badge className={getPaymentStatusStyle(payment.paymentStatus)}>
   {getPaymentStatusLabel(payment.paymentStatus)}
 </Badge>
 ```
 
-**IMPORTANT**: ALWAYS use helper functions from `status-styles.ts`, NEVER hardcode styles/labels.
+**11 sistemas de badges**: Tournament Status, Registration Status, Payment Status, Payment Method, Match Status, Team Status, Club Status, Court Status, Category Type, Gender Restriction, Phase Type.
 
-### Password Recovery System
+---
 
-**Complete password recovery system** with secure tokens and email notifications.
-
-**Key Features**:
-- Secure tokens (crypto.randomBytes, 1 hour expiry)
-- Resend email service integration
-- Anti-user enumeration protection
-- Full audit logging (3 new log actions)
-- Professional HTML email templates
-- One-time use tokens
-
-**Endpoints**:
-```typescript
-POST /api/auth/forgot-password      // Public: Request reset link
-POST /api/auth/verify-reset-token   // Public: Validate token
-POST /api/auth/reset-password       // Public: Change password
-```
-
-**Frontend Pages**:
-```
-/auth/forgot-password   // Request reset
-/auth/reset-password    // Change password (with token)
-```
-
-**Services**:
-```typescript
-import { PasswordResetService } from '@/lib/services/password-reset-service'
-import { EmailService } from '@/lib/services/email-service'
-
-// Create reset token
-const { token } = await PasswordResetService.createResetToken({
-  userId: user.id,
-  ipAddress: req.ip
-})
-
-// Send recovery email
-await EmailService.sendPasswordResetEmail({
-  to: user.email,
-  name: userName,
-  resetToken: token,
-  expiresInMinutes: 60
-})
-
-// Validate token
-const validation = await PasswordResetService.validateResetToken(token)
-```
-
-**Security Score**: **9.5/10** ⭐ (Dec 2025)
-
-📄 **Complete Password Recovery Documentation**: See [PASSWORD_RECOVERY_SETUP.md](PASSWORD_RECOVERY_SETUP.md) for setup, testing, and security details.
-
-### Bracket & Match Management
-
-**Key Flows**:
-
-1. **Generate Bracket**: `POST /api/tournaments/[id]/generate-bracket`
-   - **VALIDATION**: Only allowed when `status = REGISTRATION_CLOSED` or `IN_PROGRESS`
-   - **ERROR**: Returns error if `status = PUBLISHED` or `REGISTRATION_OPEN`
-   - Creates matches, assigns teams, sets progression links
-   - Applies to all 7 formats (conventional + Americano Social via `/americano-social/generate`)
-
-2. **Load Match Result**: `POST /api/matches/[id]/result`
-   - Validates scores/sets/tiebreaks
-   - Calls `BracketService.progressWinner()`
-   - Auto-classifies groups when complete
-
-3. **Group Classification**: Automatic on last group match
-   - Calculates standings (points → set diff → game diff → sets won)
-   - Selects top N + best seconds/thirds
-   - Assigns to playoff bracket
-
-4. **Tournament Start (IN_PROGRESS)**: Automatic cleanup
-   - Cancels registrations NOT in `CONFIRMED` or `PAID` (without partial payments)
-   - Cancels teams with cancelled registrations
-   - Triggered automatically (by date) or manually (status change)
-   - Full audit logging via `TournamentStatusService.cancelUnconfirmedRegistrations()`
-
-### Critical Business Rules
-
-1. **Registration Anti-Duplicates**: One player = ONE team per tournament category (`/api/registrations/check-players`)
-2. **Team Formation**: 2 individual registrations first, then create Team
-3. **Match Score Validation**: Sets array required, tiebreak at 7-6 needs points, winner team specified
-4. **Bracket Progression**: Winners auto-advance via match references
-5. **Group Standings**: Ordered by points → set diff → game diff → sets won
-6. **Bracket Generation Validation**: Brackets/pools can ONLY be generated when `status = REGISTRATION_CLOSED` or `IN_PROGRESS`. Error if `PUBLISHED` or `REGISTRATION_OPEN`.
-7. **Automatic Registration Cleanup**: When tournament → `IN_PROGRESS`, system automatically cancels:
-   - Registrations NOT in `CONFIRMED`/`PAID` AND without partial payments
-   - Teams with at least one cancelled registration
-   - Preserves registrations with partial payments (at least one `PAID` payment)
-
-## UI/UX Patterns - Data Tables
-
-All main tables (Users, Clubs, Categories, Teams, Matches, Rankings, Tournaments, Registrations) follow a consistent pattern:
-
-1. **Dynamic Sorting**: Click headers, URL persistence (`orderBy`, `order` params)
-2. **Advanced Filtering**: Multiple dropdowns (up to 3), dynamic options
-3. **Clickable Rows**: Navigate to detail page, intelligent click detection
-4. **Mobile Responsive**: Cards on mobile, table on desktop
-
-**Standard Pattern**:
-```typescript
-// Sorting handler
-const handleSort = (column: string) => {
-  const params = new URLSearchParams(searchParams)
-  if (orderBy === column) {
-    params.set('order', order === 'asc' ? 'desc' : 'asc')
-  } else {
-    params.set('orderBy', column)
-    params.set('order', 'asc')
-  }
-  params.set('page', '1')
-  router.push(`/dashboard/entity?${params.toString()}`)
-}
-
-// Row click handler
-const handleRowClick = (id: string, e: React.MouseEvent) => {
-  const target = e.target as HTMLElement
-  if (target.closest('button') || target.closest('[role="menuitem"]') || target.closest('a')) {
-    return
-  }
-  router.push(`/dashboard/entity/${id}`)
-}
-```
-
-**API Pattern**:
-```typescript
-const buildOrderBy = () => {
-  const validColumns = ['col1', 'col2', 'col3']
-  const sortOrder = (order === 'asc' ? 'asc' : 'desc') as 'asc' | 'desc'
-  return validColumns.includes(orderBy) ? { [orderBy]: sortOrder } : { defaultColumn: 'asc' as const }
-}
-```
-
-**Header Pattern**: Use `DataTableHeader` component with `filterLabel`, `secondaryFilter`, `tertiaryFilter` support.
-
-## File Organization
-
-```
-src/
-├── app/
-│   ├── api/                    # API routes (Next.js 15 App Router)
-│   ├── auth/                   # Login/register pages
-│   └── dashboard/              # Protected dashboard pages
-├── components/
-│   ├── [entity]/               # Entity-specific components
-│   └── ui/                     # Shadcn/ui base components
-├── hooks/
-│   └── use-auth.ts            # Authentication hook
-├── lib/
-│   ├── rbac/                  # RBAC system (CRITICAL)
-│   ├── services/              # Business logic & logging
-│   ├── utils/validations/     # Zod schemas
-│   ├── auth.ts                # NextAuth configuration
-│   └── prisma.ts              # Prisma client singleton
-└── types/                     # TypeScript definitions
-```
-
-## Common Pitfalls to Avoid
-
-1. **Don't skip RBAC checks**: Every protected API route needs `requireAuth()` or `authorize()`
-2. **Don't forget logging**: All CUD operations need log service calls
-3. **Don't use `defaultValue` in Select**: Use `value` for React Hook Form sync
-4. **Don't modify brackets manually**: Use `BracketService` methods
-5. **Don't forget Zod validation**: All API input must be validated
-6. **Don't create teams directly**: Create individual registrations first
-7. **Don't bypass ownership checks**: `authorize()` checks ownership automatically
-8. **Don't forget Prisma client regeneration**: After schema changes run `npx prisma generate`
-
-## Recent Fixes (December 26, 2025)
-
-### Teams Filter Endpoint 404 Error
-
-**Issue**: `/api/teams/_filters` returning 404 error
-
-**Root Cause**: Next.js App Router treats folders starting with underscore (`_filters`) as private/internal folders and doesn't expose them as routes.
-
-**Solution**: Renamed directory from `_filters` to `filters` to follow the same pattern as other resources:
-- ✅ `/api/registrations/filters` (working)
-- ✅ `/api/clubs/filters` (working)
-- ✅ `/api/teams/filters` (fixed from `_filters`)
-
-**Files Modified**:
-- `src/app/api/teams/_filters/` → `src/app/api/teams/filters/`
-- `src/components/teams/teams-header.tsx:29` - Updated fetch URL
-
-## Troubleshooting Common Issues
+## 🐛 Troubleshooting Común
 
 ### Prisma Client Out of Sync
 
-**Error**: `Unknown field 'X' for include statement on model 'Y'`
-
-**Solution**:
 ```bash
-# Stop dev server (Ctrl+C)
+# Detener dev server (Ctrl+C)
 npx prisma generate
 npm run dev
 ```
 
-Regenerate Prisma client when:
-- Modifying `prisma/schema.prisma`
-- Adding/removing fields or relationships
-- Pulling schema changes from git
+**Cuándo**: Después de modificar `schema.prisma`
 
-### Dev Server File Lock on Windows
+### Build Errors
 
-**Error**: `EPERM: operation not permitted, rename '...query_engine-windows.dll.node'`
-
-**Solution**: Stop dev server → `npx prisma generate` → Restart dev server
-
-### Player Statistics Incorrect (Double-Counting)
-
-**Problem**: Player stats show incorrect values (e.g., 3 matches showing as 6W-6L)
-
-**Cause**: Stats were counted twice, usually from a failed recalculate operation
-
-**Solution**:
 ```bash
-# Run recalculate-stats endpoint for the affected tournament
-POST /api/tournaments/[tournamentId]/recalculate-stats
+rm -rf .next node_modules
+npm install
+npm run build
 ```
 
-**Technical Details**:
-- The recalculate endpoint now uses an optimized approach (Dec 15, 2025)
-- Calculates all stats in memory first, then uses transaction for delete + createMany
-- This prevents double-counting issues that occurred with the old increment approach
-- Safe to run multiple times - it will always produce correct results
+### Error de Base de Datos
 
-## Testing Workflows
-
-### Complete Tournament Flow
-1. Create tournament (ADMIN/CLUB_ADMIN)
-2. Publish → Change status to REGISTRATION_OPEN
-3. Players create registrations
-4. Form teams (2 registrations → 1 team)
-5. **Close registrations** → Change status to REGISTRATION_CLOSED
-6. Generate bracket (⚠️ ONLY works when REGISTRATION_CLOSED or IN_PROGRESS)
-7. **Start tournament** → Change status to IN_PROGRESS
-   - System automatically cancels unconfirmed registrations/teams
-   - Only CONFIRMED/PAID participants remain
-8. Load match results (auto-progresses winners)
-9. Complete tournament
-10. Calculate points: `POST /api/tournaments/[id]/calculate-points`
-
-**Important Status Transitions**:
-- `DRAFT` → `PUBLISHED` → `REGISTRATION_OPEN` → `REGISTRATION_CLOSED` → `IN_PROGRESS` → `COMPLETED`
-- ⚠️ Cannot generate brackets in `PUBLISHED` or `REGISTRATION_OPEN`
-- ⚠️ When → `IN_PROGRESS`: automatic cleanup of unconfirmed registrations
-
-### Database Reset
 ```bash
-npm run db:reset    # Drops DB, runs migrations
-npm run db:seed     # Loads test data
+npm run db:studio  # Verificar datos
+npm run db:reset   # Reset si necesario (desarrollo)
+npm run db:seed    # Recargar datos
 ```
 
-## Key Documentation Files
+### File Lock en Windows (Prisma)
 
-- `README.md` - Complete project documentation with roadmap
-- `RBAC_GUIA_DEFINITIVA.md` - Detailed RBAC guide (46 endpoints)
-- `POINTS_CALCULATION.md` - Points system documentation
-- `LOGGING_SYSTEM.md` - Audit logging guide (9 services)
-- `TOURNAMENT_FORMATS.md` - All bracket formats (1,637 lines)
-- `PAYMENT_SYSTEM.md` - Payment system + security audit
-- `CHANGELOG.md` - Detailed changelog (Dec 2025+)
+```bash
+# Detener dev server
+npx prisma generate
+npm run dev
+```
 
-## Technology Stack
+---
 
-- **Next.js 16.0.10** with App Router (Turbopack)
-- **React 19.2** with Server Components
-- **TypeScript 5.9** (strict mode)
-- **Prisma 6** ORM with PostgreSQL
-- **NextAuth.js 4** with JWT strategy
-- **Tailwind CSS 4** + shadcn/ui components
-- **Zod 3** for validation
-- **React Hook Form 7** for forms
-- **date-fns 4** for dates
-- **Recharts 3** for charts
+## 📚 Documentación Completa
 
-## Architecture Decision Records
+### Sistemas Principales
 
-1. **Decoupled Registration System**: Individual registrations separate from teams (flexible, easier to manage)
-2. **Match Progression via References**: Automatic winner advancement using source match references
-3. **Service Layer for Business Logic**: Complex operations (brackets, points, americano) in services, not API routes
-4. **Comprehensive Logging**: 9 separate services (one per entity) for detailed audit trails with IP, user agent, data diffs
-5. **Configurable Tournament Points**: Each tournament defines `rankingPoints` (100-5000) for flexible ranking
-6. **Americano Social as Separate Tables**: Independent from main Match system (different structure: 4 players vs 2 teams)
-7. **Multiple Rounds for Americano Social**: Tournament-level config (1-10 rounds) with greedy algorithm minimizing pool repetitions
+- 🔐 **[RBAC_GUIA_DEFINITIVA.md](RBAC_GUIA_DEFINITIVA.md)** - 46 endpoints documentados, matriz de permisos
+- 📊 **[POINTS_CALCULATION.md](POINTS_CALCULATION.md)** - Fórmulas, ejemplos, estrategias
+- 💰 **[PAYMENT_SYSTEM.md](PAYMENT_SYSTEM.md)** - Setup MercadoPago, seguridad 9/10
+- 🏆 **[TOURNAMENT_FORMATS.md](TOURNAMENT_FORMATS.md)** - 6 algoritmos implementados
+
+### Funcionalidades
+
+- 📝 **[LOGGING_SYSTEM.md](LOGGING_SYSTEM.md)** - 9 servicios de auditoría
+- 🔑 **[PASSWORD_RECOVERY_SETUP.md](PASSWORD_RECOVERY_SETUP.md)** - Tokens seguros, emails HTML
+
+### General
+
+- 📘 **[README.md](README.md)** - Overview completo del proyecto
+
+---
+
+## 🚨 Reglas Críticas
+
+### RBAC
+1. **SIEMPRE** usa `requireAuth()` o `authorize()` en API routes
+2. **NUNCA** hagas checks manuales de roles
+3. **USA** `handleAuthError(error)` para manejo de errores
+
+### Validaciones
+1. **TODOS** los inputs deben validarse con Zod
+2. **CREA** schemas en `src/lib/validations/`
+3. **USA** `zodResolver` en React Hook Form
+
+### Logging
+1. **REGISTRA** todas las operaciones CUD (Create, Update, Delete)
+2. **USA** servicios específicos (`UserLogService`, `TournamentLogService`, etc.)
+3. **INCLUYE** oldData/newData en updates
+
+### Forms
+1. **USA** `value` (NO `defaultValue`) en Select components
+2. **VALIDA** con Zod en cliente Y servidor
+3. **MANEJA** loading states
+
+### Base de Datos
+1. **REGENERA** Prisma client después de cambios en schema
+2. **CREA** migraciones en producción (`db:migrate`)
+3. **USA** `db:push` solo en desarrollo
+
+---
+
+## ⚡ Tips de Productividad
+
+### Database Selector
+
+```bash
+npm run dev-select      # Selector + dev en un comando
+npm run db:seed-select  # Selector + seed
+```
+
+### Prisma Studio
+
+```bash
+npm run db:studio  # GUI para ver/editar datos
+```
+
+### Type Checking Continuo
+
+```bash
+npm run type-check  # Verificar tipos sin build
+```
+
+---
+
+## 🔗 Links Útiles
+
+- **Prisma Docs**: https://www.prisma.io/docs
+- **Next.js 16 Docs**: https://nextjs.org/docs
+- **shadcn/ui**: https://ui.shadcn.com
+- **Zod**: https://zod.dev
+- **MercadoPago Docs**: https://www.mercadopago.com.ar/developers
+
+---
+
+**Last Updated**: Diciembre 2025
+**Version**: 1.0.0
+**Status**: Production Ready (97% complete)

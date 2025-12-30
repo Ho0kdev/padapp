@@ -24,7 +24,9 @@
       "Bash(timeout 120 npx prisma generate:*)",
       "Bash(wc:*)",
       "Bash(git push)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(pnpm run type-check:*)",
+      "Bash(dir:*)"
     ],
     "deny": [],
     "ask": []
