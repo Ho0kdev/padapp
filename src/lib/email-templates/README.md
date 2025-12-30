@@ -46,23 +46,29 @@ Los colores principales están en línea (inline styles). Puedes cambiarlos:
 <div style="background: linear-gradient(135deg, #YOUR_COLOR_1 0%, #YOUR_COLOR_2 100%);">
 ```
 
-**Colores actuales**:
-- **Header**: `#667eea` → `#764ba2` (azul/morado)
-- **Success**: `#28a745` (verde)
-- **Warning**: `#ffc107` (amarillo)
-- **Danger**: `#dc3545` (rojo)
+**Colores de la Aplicación**:
+- **Primary** (azul): `#3B82F6` → `#8884d8` (gradiente header password reset)
+- **Success** (verde): `#10B981` → `#059669` (gradiente header password changed)
+- **Warning** (naranja): `#F59E0B` (advertencias de expiración)
+- **Danger** (rojo): `#EF4444` (alertas de seguridad)
 
 ### 3. Cambiar el Logo
 
-Reemplaza el emoji por tu logo:
+Los templates ya usan el logo SVG de la aplicación:
 
 ```html
-<!-- Actual (emoji) -->
-<h1 style="color: white; margin: 0; font-size: 28px;">🎾 PadelShot</h1>
+<!-- Logo actual -->
+<img src="https://padelshot.app/images/logo-white.svg" alt="PadelShot" style="height: 50px;">
 
-<!-- Con imagen -->
-<img src="https://tudominio.com/logo.png" alt="PadelShot" style="height: 50px;" />
+<!-- Para cambiar el tamaño -->
+<img src="https://padelshot.app/images/logo-white.svg" alt="PadelShot" style="height: 60px;">
 ```
+
+**Logos disponibles**:
+- `logo-white.svg` - Logo blanco (para headers con fondo oscuro/colorido)
+- `logo-black.svg` - Logo negro (para fondos claros)
+- `logo-full.svg` - Logo completo
+- `logo.svg` - Logo estándar
 
 ### 4. Modificar Textos
 
@@ -97,20 +103,22 @@ Cambia el texto y estilo del botón CTA:
 
 ## 🎨 Ejemplos de Personalización
 
-### Ejemplo 1: Cambiar Colores de Marca
+### Ejemplo 1: Cambiar Colores del Header
 
 ```typescript
-// password-reset.ts (líneas 21-23)
-<div style="background: linear-gradient(135deg, #FF6B6B 0%, #4ECDC4 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-  <h1 style="color: white; margin: 0; font-size: 28px;">⚡ TuMarca</h1>
-</div>
+// password-reset.ts - Actualmente usa colores de la app (azul)
+<div style="background: linear-gradient(135deg, #3B82F6 0%, #8884d8 100%); ...">
+
+// Para personalizar con otros colores:
+<div style="background: linear-gradient(135deg, #FF6B6B 0%, #4ECDC4 100%); ...">
 ```
 
-### Ejemplo 2: Agregar Logo
+### Ejemplo 2: Usar Logo Negro en Fondo Blanco
 
 ```typescript
+// Para emails con header blanco
 <div style="background: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-  <img src="https://padelshot.app/logo.png" alt="PadelShot" style="height: 60px;" />
+  <img src="https://padelshot.app/images/logo-black.svg" alt="PadelShot" style="height: 50px;">
 </div>
 ```
 

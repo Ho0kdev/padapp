@@ -19,13 +19,13 @@ export function getPasswordResetEmailTemplate(params: PasswordResetTemplateParam
 </head>
 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
   <!-- Header con logo -->
-  <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-    <h1 style="color: white; margin: 0; font-size: 28px;">🎾 PadelShot</h1>
+  <div style="background: linear-gradient(135deg, #3B82F6 0%, #8884d8 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+    <img src="https://padelshot.app/images/logo-white.svg" alt="PadelShot" style="height: 50px;">
   </div>
 
   <!-- Contenido principal -->
   <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-    <h2 style="color: #667eea; margin-top: 0;">Recuperación de Contraseña</h2>
+    <h2 style="color: #3B82F6; margin-top: 0;">Recuperación de Contraseña</h2>
 
     <p>Hola <strong>${name}</strong>,</p>
 
@@ -36,7 +36,7 @@ export function getPasswordResetEmailTemplate(params: PasswordResetTemplateParam
     <!-- Botón CTA -->
     <div style="text-align: center; margin: 30px 0;">
       <a href="${resetUrl}"
-         style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+         style="background: linear-gradient(135deg, #3B82F6 0%, #8884d8 100%);
                 color: white;
                 padding: 14px 28px;
                 text-decoration: none;
@@ -52,19 +52,19 @@ export function getPasswordResetEmailTemplate(params: PasswordResetTemplateParam
     <p style="color: #666; font-size: 14px;">
       Si el botón no funciona, copia y pega este enlace en tu navegador:
     </p>
-    <p style="background: #fff; padding: 10px; border: 1px solid #ddd; border-radius: 4px; word-break: break-all; font-size: 12px; color: #667eea;">
+    <p style="background: #fff; padding: 10px; border: 1px solid #ddd; border-radius: 4px; word-break: break-all; font-size: 12px; color: #3B82F6;">
       ${resetUrl}
     </p>
 
     <!-- Advertencia de expiración -->
-    <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 12px; margin: 20px 0; border-radius: 4px;">
+    <div style="background: #fff3cd; border-left: 4px solid #F59E0B; padding: 12px; margin: 20px 0; border-radius: 4px;">
       <p style="margin: 0; color: #856404; font-size: 14px;">
         ⏰ <strong>Este enlace expirará en ${expiresInMinutes} minutos.</strong>
       </p>
     </div>
 
     <!-- Nota de seguridad -->
-    <div style="background: #f8d7da; border-left: 4px solid #dc3545; padding: 12px; margin: 20px 0; border-radius: 4px;">
+    <div style="background: #f8d7da; border-left: 4px solid #EF4444; padding: 12px; margin: 20px 0; border-radius: 4px;">
       <p style="margin: 0; color: #721c24; font-size: 14px;">
         🔒 <strong>¿No solicitaste este cambio?</strong><br>
         Si no solicitaste restablecer tu contraseña, ignora este correo. Tu contraseña permanecerá sin cambios.
