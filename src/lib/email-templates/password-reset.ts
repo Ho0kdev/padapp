@@ -19,13 +19,13 @@ export function getPasswordResetEmailTemplate(params: PasswordResetTemplateParam
 </head>
 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
   <!-- Header con logo -->
-  <div style="background: linear-gradient(135deg, #3B82F6 0%, #8884d8 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-    <img src="https://padelshot.app/images/logo-white.svg" alt="PadelShot" style="height: 50px;">
+  <div style="background: #50b4d3; padding: 10px; text-align: center; border-radius: 10px 10px 0 0;">
+    <img src="https://padelshot.app/icon-512.png" alt="PadelShot" style="height: 140px; width: 140px;" />
   </div>
 
   <!-- Contenido principal -->
   <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-    <h2 style="color: #3B82F6; margin-top: 0;">Recuperación de Contraseña</h2>
+    <h2 style="color: #50b4d3; margin-top: 0;">Recuperación de Contraseña</h2>
 
     <p>Hola <strong>${name}</strong>,</p>
 
@@ -36,7 +36,7 @@ export function getPasswordResetEmailTemplate(params: PasswordResetTemplateParam
     <!-- Botón CTA -->
     <div style="text-align: center; margin: 30px 0;">
       <a href="${resetUrl}"
-         style="background: linear-gradient(135deg, #3B82F6 0%, #8884d8 100%);
+         style="background: #50b4d3;
                 color: white;
                 padding: 14px 28px;
                 text-decoration: none;

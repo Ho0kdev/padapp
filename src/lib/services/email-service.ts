@@ -49,6 +49,7 @@ export class EmailService {
           name,
           resetUrl,
           expiresInMinutes,
+          baseUrl,
         }),
       })
 
@@ -77,12 +78,13 @@ export class EmailService {
     name: string
   ): Promise<{ success: boolean; messageId?: string; error?: string }> {
     try {
+      const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
       const resend = getResendClient()
       const { data, error } = await resend.emails.send({
         from: process.env.RESEND_FROM_EMAIL || 'PadelShot <noreply@padelshot.app>',
         to: [to],
         subject: 'Contraseña Actualizada - PadelShot',
-        html: getPasswordChangedEmailTemplate({ name }),
+        html: getPasswordChangedEmailTemplate({ name, baseUrl }),
       })
 
       if (error) {
