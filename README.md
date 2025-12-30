@@ -611,7 +611,7 @@ npm run db:seed
 ```
 
 **Credenciales de administrador por defecto:**
-- Email: `admin@padelshot.com`
+- Email: `admin@padelshot.app`
 - Contraseña: `123456`
 
 Los seeds incluyen:

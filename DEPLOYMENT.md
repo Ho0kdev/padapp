@@ -185,7 +185,7 @@ EMAIL_SERVER_HOST="smtp.gmail.com"
 EMAIL_SERVER_PORT=587
 EMAIL_SERVER_USER="your-email@gmail.com"
 EMAIL_SERVER_PASSWORD="your-app-password"
-EMAIL_FROM="noreply@padelshot.com"
+EMAIL_FROM="noreply@padelshot.app"
 
 # Build optimization
 NEXT_SKIP_LINT=1  # Saltear ESLint en build (más rápido)

@@ -33,7 +33,7 @@ EMAIL_SERVER_HOST="smtp.gmail.com"
 EMAIL_SERVER_PORT=587
 EMAIL_SERVER_USER="tu-email@gmail.com"
 EMAIL_SERVER_PASSWORD="tu-app-password"
-EMAIL_FROM="noreply@padelshot.com"
+EMAIL_FROM="noreply@padelshot.app"
 ```
 
 ---

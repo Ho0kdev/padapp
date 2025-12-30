@@ -8,6 +8,9 @@ export type UserLogAction =
   | "USER_STATUS_CHANGED"
   | "USER_ROLE_CHANGED"
   | "USER_ACTION"
+  | "PASSWORD_RESET_REQUESTED"
+  | "PASSWORD_RESET_COMPLETED"
+  | "PASSWORD_RESET_FAILED"
 
 interface LogContext {
   userId: string
@@ -174,6 +177,58 @@ export class UserLogService {
         userName: userData.name,
         userEmail: userData.email,
         roleTransition: `${oldRole} → ${newRole}`
+      }
+    })
+  }
+
+  /**
+   * Log específico para solicitud de reset de contraseña
+   */
+  static async logPasswordResetRequested(
+    context: LogContext,
+    userData: any
+  ) {
+    return this.log(context, {
+      action: "PASSWORD_RESET_REQUESTED",
+      description: `Solicitud de recuperación de contraseña: "${userData.email}"`,
+      metadata: {
+        email: userData.email,
+        userName: userData.name,
+      }
+    })
+  }
+
+  /**
+   * Log específico para reset de contraseña completado
+   */
+  static async logPasswordResetCompleted(
+    context: LogContext,
+    userData: any
+  ) {
+    return this.log(context, {
+      action: "PASSWORD_RESET_COMPLETED",
+      description: `Contraseña restablecida exitosamente: "${userData.email}"`,
+      metadata: {
+        email: userData.email,
+        userName: userData.name,
+      }
+    })
+  }
+
+  /**
+   * Log específico para intento fallido de reset de contraseña
+   */
+  static async logPasswordResetFailed(
+    context: LogContext,
+    email: string,
+    reason: string
+  ) {
+    return this.log(context, {
+      action: "PASSWORD_RESET_FAILED",
+      description: `Intento fallido de reset de contraseña: "${email}" - ${reason}`,
+      metadata: {
+        email,
+        reason,
       }
     })
   }

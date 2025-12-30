@@ -10,7 +10,7 @@ import { useEffect, useRef } from "react"
 
 export function MobileNav() {
   const pathname = usePathname()
-  const { user } = useAuth()
+  const { user } = useAuth(false) // ← NO requiere autenticación
   const navRef = useRef<HTMLDivElement>(null)
 
   // Fix iOS Safari address bar hiding issue

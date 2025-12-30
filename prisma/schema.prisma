@@ -67,6 +67,7 @@ model User {
   confirmedPayments    RegistrationPayment[] @relation("PaymentConfirmer")
   refundedPayments     RegistrationPayment[] @relation("PaymentRefunder")
   paymentLogs          PaymentLog[]
+  passwordResetTokens  PasswordResetToken[]
 
   @@map("users")
 }
@@ -78,6 +79,23 @@ model VerificationToken {
 
   @@unique([identifier, token])
   @@map("verificationtokens")
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  token     String    @unique
+  userId    String
+  expiresAt DateTime
+  used      Boolean   @default(false)
+  usedAt    DateTime?
+  ipAddress String?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token, expiresAt])
+  @@index([userId])
+  @@map("password_reset_tokens")
 }
 
 model Player {
@@ -982,6 +1000,9 @@ enum LogAction {
   USER_DELETED
   USER_STATUS_CHANGED
   USER_ROLE_CHANGED
+  PASSWORD_RESET_REQUESTED
+  PASSWORD_RESET_COMPLETED
+  PASSWORD_RESET_FAILED
   REGISTRATION_CREATED
   REGISTRATION_UPDATED
   REGISTRATION_DELETED
