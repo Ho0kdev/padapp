@@ -342,35 +342,37 @@ export function TeamsTable() {
       </div>
 
       {/* Vista desktop con tabla clickeable */}
-      <div className="hidden lg:block rounded-md border overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>
-                <Button variant="ghost" onClick={() => handleSort('name')} className="h-8 px-2 lg:px-3 hover:bg-transparent">
-                  Equipo
-                  {getSortIcon('name')}
-                </Button>
-              </TableHead>
-              <TableHead>Torneo</TableHead>
-              <TableHead>Categoría</TableHead>
-              <TableHead>Jugadores</TableHead>
-              <TableHead>
-                <Button variant="ghost" onClick={() => handleSort('status')} className="h-8 px-2 lg:px-3 hover:bg-transparent">
-                  Estado
-                  {getSortIcon('status')}
-                </Button>
-              </TableHead>
-              <TableHead>
-                <Button variant="ghost" onClick={() => handleSort('createdAt')} className="h-8 px-2 lg:px-3 hover:bg-transparent">
-                  Fecha
-                  {getSortIcon('createdAt')}
-                </Button>
-              </TableHead>
-              <TableHead className="text-right">Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+      <Card className="hidden lg:block">
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>
+                    <Button variant="ghost" onClick={() => handleSort('name')} className="h-8 px-2 lg:px-3 hover:bg-transparent">
+                      Equipo
+                      {getSortIcon('name')}
+                    </Button>
+                  </TableHead>
+                  <TableHead>Torneo</TableHead>
+                  <TableHead>Categoría</TableHead>
+                  <TableHead>Jugadores</TableHead>
+                  <TableHead>
+                    <Button variant="ghost" onClick={() => handleSort('status')} className="h-8 px-2 lg:px-3 hover:bg-transparent">
+                      Estado
+                      {getSortIcon('status')}
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                    <Button variant="ghost" onClick={() => handleSort('createdAt')} className="h-8 px-2 lg:px-3 hover:bg-transparent">
+                      Fecha
+                      {getSortIcon('createdAt')}
+                    </Button>
+                  </TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
             {teams.map((team) => (
               <TableRow
                 key={team.id}
@@ -450,9 +452,11 @@ export function TeamsTable() {
                 </TableCell>
               </TableRow>
             ))}
-          </TableBody>
-        </Table>
-      </div>
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Paginación */}
       <DataTablePagination

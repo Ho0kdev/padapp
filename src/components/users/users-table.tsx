@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import {
   Table,
@@ -37,7 +38,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   Search,
@@ -562,9 +562,11 @@ export function UsersTable() {
       {/* Vista de tarjetas para mobile */}
       <div className="lg:hidden space-y-3">
         {users.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            No se encontraron usuarios
-          </div>
+          <Card>
+            <CardContent className="p-6 text-center text-muted-foreground">
+              No se encontraron usuarios
+            </CardContent>
+          </Card>
         ) : (
           users.map((user) => (
             <UserCard key={user.id} user={user} />
@@ -573,8 +575,9 @@ export function UsersTable() {
       </div>
 
       {/* Vista de tabla para desktop */}
-      <div className="hidden lg:block rounded-md border overflow-x-auto">
-        <Table>
+      <Card className="hidden lg:block">
+        <CardContent className="p-0">
+          <Table>
           <TableHeader>
             <TableRow>
               <TableHead>
@@ -587,17 +590,6 @@ export function UsersTable() {
                   {getSortIcon('name')}
                 </Button>
               </TableHead>
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  onClick={() => handleSort('email')}
-                  className="h-8 px-2 lg:px-3 hover:bg-transparent"
-                >
-                  Email
-                  {getSortIcon('email')}
-                </Button>
-              </TableHead>
-              <TableHead>Teléfono</TableHead>
               <TableHead>
                 <Button
                   variant="ghost"
@@ -646,7 +638,7 @@ export function UsersTable() {
             <TableBody>
               {users.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                     No se encontraron usuarios
                   </TableCell>
                 </TableRow>
@@ -674,17 +666,6 @@ export function UsersTable() {
                             </div>
                           </div>
                         </div>
-                      </TableCell>
-                      <TableCell className="font-mono text-sm">{user.email}</TableCell>
-                      <TableCell>
-                        {user.player?.phone ? (
-                          <div className="flex items-center gap-1 text-sm">
-                            <Phone className="h-3 w-3 text-muted-foreground" />
-                            {user.player.phone}
-                          </div>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">-</span>
-                        )}
                       </TableCell>
                       <TableCell>{getRoleBadge(user.role)}</TableCell>
                       <TableCell>{getStatusBadge(user.status)}</TableCell>
@@ -787,7 +768,8 @@ export function UsersTable() {
               )}
             </TableBody>
           </Table>
-        </div>
+        </CardContent>
+      </Card>
 
       <DataTablePagination
         currentPage={pagination.page}

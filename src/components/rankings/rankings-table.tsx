@@ -488,47 +488,48 @@ export function RankingsTable() {
       </div>
 
       {/* Desktop table view */}
-      <div className="hidden lg:block rounded-md border">
-        <div className="overflow-x-auto">
-          <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="min-w-[120px]">
-                <Button
-                  variant="ghost"
-                  onClick={() => handleSort('position')}
-                  className="h-8 px-2 lg:px-3 hover:bg-transparent"
-                >
-                  Posición
-                  {getSortIcon('position')}
-                </Button>
-              </TableHead>
-              <TableHead className="min-w-[220px]">Jugador</TableHead>
-              <TableHead className="min-w-[120px]">
-                <Button
-                  variant="ghost"
-                  onClick={() => handleSort('currentPoints')}
-                  className="h-8 px-2 lg:px-3 hover:bg-transparent"
-                >
-                  Puntos
-                  {getSortIcon('currentPoints')}
-                </Button>
-              </TableHead>
-              <TableHead className="min-w-[120px]">
-                <Button
-                  variant="ghost"
-                  onClick={() => handleSort('seasonYear')}
-                  className="h-8 px-2 lg:px-3 hover:bg-transparent"
-                >
-                  Temporada
-                  {getSortIcon('seasonYear')}
-                </Button>
-              </TableHead>
-              <TableHead className="min-w-[150px]">Última Actualización</TableHead>
-              <TableHead className="w-[50px]"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+      <Card className="hidden lg:block">
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="min-w-[120px]">
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort('position')}
+                      className="h-8 px-2 lg:px-3 hover:bg-transparent"
+                    >
+                      Posición
+                      {getSortIcon('position')}
+                    </Button>
+                  </TableHead>
+                  <TableHead className="min-w-[220px]">Jugador</TableHead>
+                  <TableHead className="min-w-[120px]">
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort('currentPoints')}
+                      className="h-8 px-2 lg:px-3 hover:bg-transparent"
+                    >
+                      Puntos
+                      {getSortIcon('currentPoints')}
+                    </Button>
+                  </TableHead>
+                  <TableHead className="min-w-[120px]">
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort('seasonYear')}
+                      className="h-8 px-2 lg:px-3 hover:bg-transparent"
+                    >
+                      Temporada
+                      {getSortIcon('seasonYear')}
+                    </Button>
+                  </TableHead>
+                  <TableHead className="min-w-[150px]">Última Actualización</TableHead>
+                  <TableHead className="w-[50px]"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
             {rankings.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
@@ -628,10 +629,11 @@ export function RankingsTable() {
                 </TableRow>
               ))
             )}
-          </TableBody>
-        </Table>
-        </div>
-      </div>
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
 
       <DataTablePagination
         currentPage={pagination.page}

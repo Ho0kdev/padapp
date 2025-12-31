@@ -443,9 +443,11 @@ export function RegistrationsTable() {
       {/* Mobile cards view */}
       <div className="lg:hidden space-y-3">
         {registrations.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            No se encontraron inscripciones.
-          </div>
+          <Card>
+            <CardContent className="p-6 text-center text-muted-foreground">
+              No se encontraron inscripciones.
+            </CardContent>
+          </Card>
         ) : (
           registrations.map((registration) => (
             <RegistrationCard key={registration.id} registration={registration} />
@@ -454,39 +456,40 @@ export function RegistrationsTable() {
       </div>
 
       {/* Desktop table view */}
-      <div className="hidden lg:block rounded-md border overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Jugador</TableHead>
-              <TableHead>Torneo</TableHead>
-              <TableHead>Categoría</TableHead>
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  onClick={() => handleSort('registrationStatus')}
-                  className="h-8 px-2 lg:px-3 hover:bg-transparent"
-                >
-                  Estado
-                  {getSortIcon('registrationStatus')}
-                </Button>
-              </TableHead>
-              <TableHead>Pago</TableHead>
-              <TableHead>Equipo</TableHead>
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  onClick={() => handleSort('createdAt')}
-                  className="h-8 px-2 lg:px-3 hover:bg-transparent"
-                >
-                  Fecha
-                  {getSortIcon('createdAt')}
-                </Button>
-              </TableHead>
-              <TableHead className="w-[70px]"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+      <Card className="hidden lg:block">
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Jugador</TableHead>
+                <TableHead>Torneo</TableHead>
+                <TableHead>Categoría</TableHead>
+                <TableHead>
+                  <Button
+                    variant="ghost"
+                    onClick={() => handleSort('registrationStatus')}
+                    className="h-8 px-2 lg:px-3 hover:bg-transparent"
+                  >
+                    Estado
+                    {getSortIcon('registrationStatus')}
+                  </Button>
+                </TableHead>
+                <TableHead>Pago</TableHead>
+                <TableHead>Equipo</TableHead>
+                <TableHead>
+                  <Button
+                    variant="ghost"
+                    onClick={() => handleSort('createdAt')}
+                    className="h-8 px-2 lg:px-3 hover:bg-transparent"
+                  >
+                    Fecha
+                    {getSortIcon('createdAt')}
+                  </Button>
+                </TableHead>
+                <TableHead className="w-[70px]"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
             {registrations.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} className="h-24 text-center">
@@ -580,9 +583,10 @@ export function RegistrationsTable() {
                 </TableRow>
               ))
             )}
-          </TableBody>
-        </Table>
-      </div>
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
       <DataTablePagination
         currentPage={pagination?.page || 1}

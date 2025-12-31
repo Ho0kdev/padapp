@@ -499,40 +499,41 @@ export function MatchesTable() {
       </div>
 
       {/* Desktop/Tablet table view */}
-      <div className="hidden lg:block rounded-md border">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="min-w-[180px]">Torneo</TableHead>
-                <TableHead className="min-w-[100px]">Grupo</TableHead>
-                <TableHead className="min-w-[140px]">Fase</TableHead>
-                <TableHead className="min-w-[280px]">Equipos</TableHead>
-                <TableHead className="min-w-[120px]">Resultado</TableHead>
-                <TableHead className="min-w-[200px]">
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleSort('scheduledAt')}
-                    className="h-8 px-2 lg:px-3 hover:bg-transparent"
-                  >
-                    Horario / Cancha
-                    {getSortIcon('scheduledAt')}
-                  </Button>
-                </TableHead>
-                <TableHead className="min-w-[140px]">
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleSort('status')}
-                    className="h-8 px-2 lg:px-3 hover:bg-transparent"
-                  >
-                    Estado
-                    {getSortIcon('status')}
-                  </Button>
-                </TableHead>
-                <TableHead className="w-[50px]"></TableHead>
-              </TableRow>
-            </TableHeader>
-          <TableBody>
+      <Card className="hidden lg:block">
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="min-w-[180px]">Torneo</TableHead>
+                  <TableHead className="min-w-[100px]">Grupo</TableHead>
+                  <TableHead className="min-w-[140px]">Fase</TableHead>
+                  <TableHead className="min-w-[280px]">Equipos</TableHead>
+                  <TableHead className="min-w-[120px]">Resultado</TableHead>
+                  <TableHead className="min-w-[200px]">
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort('scheduledAt')}
+                      className="h-8 px-2 lg:px-3 hover:bg-transparent"
+                    >
+                      Horario / Cancha
+                      {getSortIcon('scheduledAt')}
+                    </Button>
+                  </TableHead>
+                  <TableHead className="min-w-[140px]">
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort('status')}
+                      className="h-8 px-2 lg:px-3 hover:bg-transparent"
+                    >
+                      Estado
+                      {getSortIcon('status')}
+                    </Button>
+                  </TableHead>
+                  <TableHead className="w-[50px]"></TableHead>
+                </TableRow>
+              </TableHeader>
+            <TableBody>
             {matches.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
@@ -668,10 +669,11 @@ export function MatchesTable() {
                 </TableRow>
               ))
             )}
-          </TableBody>
-        </Table>
-        </div>
-      </div>
+            </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Desktop table pagination */}
       <DataTablePagination

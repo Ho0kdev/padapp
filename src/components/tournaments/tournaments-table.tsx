@@ -305,9 +305,11 @@ export function TournamentsTable() {
       {/* Vista de tarjetas para mobile */}
       <div className="lg:hidden space-y-3">
         {tournaments.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            No se encontraron torneos
-          </div>
+          <Card>
+            <CardContent className="p-6 text-center text-muted-foreground">
+              No se encontraron torneos
+            </CardContent>
+          </Card>
         ) : (
           tournaments.map((tournament) => (
             <TournamentCard key={tournament.id} tournament={tournament} />
@@ -316,48 +318,50 @@ export function TournamentsTable() {
       </div>
 
       {/* Vista de tabla para desktop */}
-      <div className="hidden lg:block rounded-md border overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  onClick={() => handleSort('name')}
-                  className="h-8 px-2 lg:px-3 hover:bg-transparent"
-                >
-                  Nombre
-                  {getSortIcon('name')}
-                </Button>
-              </TableHead>
-              <TableHead>Tipo</TableHead>
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  onClick={() => handleSort('status')}
-                  className="h-8 px-2 lg:px-3 hover:bg-transparent"
-                >
-                  Estado
-                  {getSortIcon('status')}
-                </Button>
-              </TableHead>
-              <TableHead>Club Principal</TableHead>
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  onClick={() => handleSort('tournamentStart')}
-                  className="h-8 px-2 lg:px-3 hover:bg-transparent"
-                >
-                  Fechas
-                  {getSortIcon('tournamentStart')}
-                </Button>
-              </TableHead>
-              <TableHead>Participantes</TableHead>
-              <TableHead>Categorías</TableHead>
-              <TableHead className="w-[50px]"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+      <Card className="hidden lg:block">
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort('name')}
+                      className="h-8 px-2 lg:px-3 hover:bg-transparent"
+                    >
+                      Nombre
+                      {getSortIcon('name')}
+                    </Button>
+                  </TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort('status')}
+                      className="h-8 px-2 lg:px-3 hover:bg-transparent"
+                    >
+                      Estado
+                      {getSortIcon('status')}
+                    </Button>
+                  </TableHead>
+                  <TableHead>Club Principal</TableHead>
+                  <TableHead>
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort('tournamentStart')}
+                      className="h-8 px-2 lg:px-3 hover:bg-transparent"
+                    >
+                      Fechas
+                      {getSortIcon('tournamentStart')}
+                    </Button>
+                  </TableHead>
+                  <TableHead>Participantes</TableHead>
+                  <TableHead>Categorías</TableHead>
+                  <TableHead className="w-[50px]"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
             {tournaments.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
@@ -472,9 +476,11 @@ export function TournamentsTable() {
                 </TableRow>
               ))
             )}
-          </TableBody>
-        </Table>
-      </div>
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
 
       <DataTablePagination
         currentPage={pagination.page}

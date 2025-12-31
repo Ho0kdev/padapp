@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
 import {
   Table,
   TableBody,
@@ -48,7 +49,6 @@ import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/hooks/use-auth"
 import { DataTablePagination } from "@/components/ui/data-table-pagination"
 import { getCategoryTypeStyle, getCategoryTypeLabel, getGenderRestrictionStyle, getGenderRestrictionLabel, formatAgeRange, formatRankingRange } from "@/lib/utils/status-styles"
-import { Card, CardContent } from "@/components/ui/card"
 
 interface Category {
   id: string
@@ -265,9 +265,11 @@ export function CategoriesTable() {
       {/* Vista mobile con cards clickeables */}
       <div className="lg:hidden space-y-3">
         {categories.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            No se encontraron categorías
-          </div>
+          <Card>
+            <CardContent className="p-6 text-center text-muted-foreground">
+              No se encontraron categorías
+            </CardContent>
+          </Card>
         ) : (
           categories.map((category) => (
             <Card
@@ -378,8 +380,9 @@ export function CategoriesTable() {
       </div>
 
       {/* Vista desktop con tabla clickeable */}
-      <div className="hidden lg:block rounded-md border overflow-x-auto">
-        <Table>
+      <Card className="hidden lg:block">
+        <CardContent className="p-0">
+          <Table>
           <TableHeader>
             <TableRow>
               <TableHead>
@@ -530,7 +533,8 @@ export function CategoriesTable() {
               )}
             </TableBody>
           </Table>
-        </div>
+        </CardContent>
+      </Card>
 
       <DataTablePagination
         currentPage={pagination.page}
