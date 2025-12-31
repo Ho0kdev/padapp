@@ -24,7 +24,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   }
 
   return (
-    <div className="flex min-h-dvh bg-background max-w-full">
+    <div className="flex min-h-dvh bg-sidebar/10 max-w-full">
       {/* Sidebar Desktop - Hidden on mobile */}
       <div className="hidden lg:block">
         <Sidebar />

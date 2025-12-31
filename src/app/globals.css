@@ -264,3 +264,10 @@ body[data-scroll-locked] {
     }
   }
 }
+
+/* Brand Gradient - PadelShot Logo Background */
+@layer utilities {
+  .bg-brand-gradient {
+    background: radial-gradient(closest-side at 50% 50%, #41769D 0%, #3C6B90 10%, #294261 51%, #1D2844 82%, #191F3A 100%);
+  }
+}

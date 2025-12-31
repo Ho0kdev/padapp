@@ -75,7 +75,7 @@ export function MobileNav() {
     },
   ]
 
-  if (pathname?.startsWith("/auth") || pathname === "/") {
+  if (pathname?.startsWith("/auth") || pathname === "/" || pathname === "/maintenance") {
     return null
   }
 

@@ -2,6 +2,7 @@
 import { withAuth } from "next-auth/middleware"
 import { NextRequest, NextResponse } from "next/server"
 import { checkRoleAccess } from "@/lib/navigation"
+import { getToken } from 'next-auth/jwt'
 
 /**
  * Agregar headers de seguridad HTTP a la respuesta
@@ -52,14 +53,82 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
 }
 
 /**
+ * Middleware para modo mantenimiento
+ *
+ * Cuando MAINTENANCE_MODE=true:
+ * - Usuarios no logueados → Página de mantenimiento
+ * - Usuarios con rol PLAYER/CLUB_ADMIN/REFEREE → Página de mantenimiento
+ * - Usuarios con rol ADMIN → Acceso completo al sistema
+ */
+async function checkMaintenanceMode(request: NextRequest): Promise<NextResponse | null> {
+  const { pathname } = request.nextUrl
+  const isMaintenanceMode = process.env.NEXT_PUBLIC_MAINTENANCE_MODE === 'true'
+
+  // Si no está en modo mantenimiento, continuar normalmente
+  if (!isMaintenanceMode) {
+    return null
+  }
+
+  // Rutas que siempre deben estar accesibles (incluso en modo mantenimiento)
+  const publicPaths = [
+    '/maintenance',
+    '/auth/login',
+    '/auth/register',
+    '/auth/forgot-password',
+    '/auth/reset-password',
+    '/api/auth', // NextAuth routes
+  ]
+
+  // Si la ruta es pública, permitir acceso
+  if (publicPaths.some(path => pathname.startsWith(path))) {
+    return null
+  }
+
+  // Rutas estáticas (CSS, JS, imágenes, fuentes, etc.)
+  if (
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/static') ||
+    pathname.includes('/favicon.ico') ||
+    pathname.match(/\.(ico|png|jpg|jpeg|svg|css|js|woff|woff2|ttf|eot)$/)
+  ) {
+    return null
+  }
+
+  // Obtener el token de sesión
+  const token = await getToken({
+    req: request,
+    secret: process.env.NEXTAUTH_SECRET
+  })
+
+  // Si no hay token (usuario no logueado), redirigir a mantenimiento
+  if (!token) {
+    return NextResponse.redirect(new URL('/maintenance', request.url))
+  }
+
+  // Si el usuario NO es ADMIN, redirigir a mantenimiento
+  if (token.role !== 'ADMIN') {
+    return NextResponse.redirect(new URL('/maintenance', request.url))
+  }
+
+  // Si es ADMIN, continuar con el flujo normal
+  return null
+}
+
+/**
  * Proxy mejorado con separación de autenticación y autorización
  * Usa el nuevo sistema RBAC para verificar permisos
- * Incluye headers de seguridad HTTP
+ * Incluye headers de seguridad HTTP y modo mantenimiento
  */
 export default withAuth(
-  function proxy(req: any) {
+  async function proxy(req: any) {
     const { pathname } = req.nextUrl
     const token = req.nextauth.token
+
+    // PRIMERO: Verificar modo mantenimiento
+    const maintenanceResponse = await checkMaintenanceMode(req)
+    if (maintenanceResponse) {
+      return addSecurityHeaders(maintenanceResponse)
+    }
 
     if (!token) {
       const response = NextResponse.next()
@@ -127,5 +196,14 @@ export default withAuth(
 )
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/auth/:path*']
+  matcher: [
+    /*
+     * Interceptar todas las rutas excepto:
+     * - api/webhooks (webhooks de MercadoPago)
+     * - _next/static (archivos estáticos)
+     * - _next/image (optimización de imágenes)
+     * - favicon.ico (favicon)
+     */
+    '/((?!api/webhooks|_next/static|_next/image|favicon.ico).*)',
+  ],
 }
