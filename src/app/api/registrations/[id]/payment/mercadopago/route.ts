@@ -22,6 +22,15 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const session = await requireAuth()
     const { id: registrationId } = await params
 
+    // Verificar si MercadoPago está habilitado
+    const isMercadoPagoEnabled = process.env.NEXT_PUBLIC_MERCADOPAGO_ENABLED === 'true'
+    if (!isMercadoPagoEnabled) {
+      return NextResponse.json(
+        { error: "Los pagos con MercadoPago están deshabilitados temporalmente" },
+        { status: 503 } // Service Unavailable
+      )
+    }
+
     // Buscar la inscripción
     const registration = await prisma.registration.findUnique({
       where: { id: registrationId },

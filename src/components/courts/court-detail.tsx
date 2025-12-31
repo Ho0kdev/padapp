@@ -5,6 +5,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Breadcrumbs } from "@/components/ui/breadcrumbs"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -213,25 +214,29 @@ export function CourtDetail({ court, currentUserId }: CourtDetailProps) {
 
   return (
     <div className="space-y-6">
+      {/* Breadcrumbs */}
+      <Breadcrumbs
+        items={[
+          { label: "Clubes", href: "/dashboard/clubs" },
+          { label: court.club.name, href: `/dashboard/clubs/${court.club.id}` },
+          { label: court.name }
+        ]}
+      />
+
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-2 flex-1 min-w-0">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight truncate">{court.name}</h1>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={() => router.back()} className="flex-shrink-0">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight truncate">{court.name}</h1>
-          </div>
-          <div className="flex items-center gap-2 ml-10 md:ml-12">
             <Badge variant="outline" className={getCourtStatusStyle(court.status)}>
               {getCourtStatusLabel(court.status)}
             </Badge>
           </div>
-          <p className="text-sm md:text-base text-muted-foreground ml-10 md:ml-12">
+          <p className="text-sm md:text-base text-muted-foreground">
             {court.club.name}
           </p>
           {court.notes && (
-            <p className="text-sm text-muted-foreground max-w-3xl ml-10 md:ml-12">{court.notes}</p>
+            <p className="text-sm text-muted-foreground max-w-3xl">{court.notes}</p>
           )}
         </div>
 

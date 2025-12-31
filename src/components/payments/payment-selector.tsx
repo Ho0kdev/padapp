@@ -39,6 +39,9 @@ export function PaymentSelector({
   const [loading, setLoading] = useState(false)
   const [manualPaymentOpen, setManualPaymentOpen] = useState(false)
 
+  // Check if MercadoPago is enabled via environment variable
+  const isMercadoPagoEnabled = process.env.NEXT_PUBLIC_MERCADOPAGO_ENABLED === 'true'
+
   // Check if payment is complete based on amount, not just status
   const isPaid = amountPaid >= amount
   const isPending = currentStatus === 'PENDING' && amountPaid < amount
@@ -193,30 +196,32 @@ export function PaymentSelector({
         <CardContent className="space-y-3">
           {/* Botones en desktop: lado a lado, mobile: apilados */}
           <div className="flex flex-col md:flex-row gap-3 max-w-2xl">
-            {/* Opción: Mercado Pago */}
-            <div className="flex-1 space-y-1.5">
-              <Button
-                onClick={handleMercadoPagoPayment}
-                disabled={loading}
-                className="w-full"
-                size="sm"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
-                    Procesando...
-                  </>
-                ) : (
-                  <>
-                    <CreditCard className="mr-2 h-3.5 w-3.5" />
-                    Mercado Pago
-                  </>
-                )}
-              </Button>
-              <p className="text-xs text-muted-foreground">
-                Tarjeta de crédito/débito o wallet
-              </p>
-            </div>
+            {/* Opción: Mercado Pago - Solo si está habilitado */}
+            {isMercadoPagoEnabled && (
+              <div className="flex-1 space-y-1.5">
+                <Button
+                  onClick={handleMercadoPagoPayment}
+                  disabled={loading}
+                  className="w-full"
+                  size="sm"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                      Procesando...
+                    </>
+                  ) : (
+                    <>
+                      <CreditCard className="mr-2 h-3.5 w-3.5" />
+                      Mercado Pago
+                    </>
+                  )}
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  Tarjeta de crédito/débito o wallet
+                </p>
+              </div>
+            )}
 
             {/* Opción: Pago Manual (solo admins) */}
             {isAdminOrClubAdmin && (
@@ -236,6 +241,13 @@ export function PaymentSelector({
               </div>
             )}
           </div>
+
+          {/* Mensaje informativo si MercadoPago está deshabilitado */}
+          {!isMercadoPagoEnabled && !isAdminOrClubAdmin && (
+            <p className="text-sm text-muted-foreground text-center py-2">
+              Los pagos online están temporalmente deshabilitados. Por favor, contacta al organizador del torneo para coordinar el pago.
+            </p>
+          )}
         </CardContent>
       </Card>
 

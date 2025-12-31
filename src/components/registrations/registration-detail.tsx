@@ -5,6 +5,7 @@ import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Breadcrumbs } from "@/components/ui/breadcrumbs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -259,6 +260,14 @@ export function RegistrationDetail({ registration, isAdmin = false }: Registrati
 
   return (
     <div className="space-y-6">
+      {/* Breadcrumbs */}
+      <Breadcrumbs
+        items={[
+          { label: "Inscripciones", href: "/dashboard/registrations" },
+          { label: getPlayerName() }
+        ]}
+      />
+
       {/* Header */}
       <div className="space-y-4">
         <div className="flex items-start justify-between gap-2">
@@ -311,14 +320,6 @@ export function RegistrationDetail({ registration, isAdmin = false }: Registrati
                       Editar
                     </Link>
                   </DropdownMenuItem>
-                  {registrationFee > 0 && (
-                    <DropdownMenuItem asChild>
-                      <Link href={`/dashboard/registrations/${registration.id}/payment`}>
-                        <CreditCard className="mr-2 h-4 w-4" />
-                        Gestionar Pago
-                      </Link>
-                    </DropdownMenuItem>
-                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     className="text-red-600"
@@ -355,14 +356,6 @@ export function RegistrationDetail({ registration, isAdmin = false }: Registrati
                         Editar
                       </Link>
                     </DropdownMenuItem>
-                    {registrationFee > 0 && (
-                      <DropdownMenuItem asChild>
-                        <Link href={`/dashboard/registrations/${registration.id}/payment`}>
-                          <CreditCard className="mr-2 h-4 w-4" />
-                          Gestionar Pago
-                        </Link>
-                      </DropdownMenuItem>
-                    )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       className="text-red-600"

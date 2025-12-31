@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
+import { Breadcrumbs } from "@/components/ui/breadcrumbs"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -291,14 +292,24 @@ export function RankingDetail({ ranking, currentUserId }: RankingDetailProps) {
 
   const totalPointsEarned = tournamentStats.reduce((sum, stat) => sum + stat.pointsEarned, 0)
 
+  const playerName = `${ranking.player.firstName} ${ranking.player.lastName}`
+
   return (
     <div className="space-y-6">
+      {/* Breadcrumbs */}
+      <Breadcrumbs
+        items={[
+          { label: "Rankings", href: "/dashboard/rankings" },
+          { label: playerName }
+        ]}
+      />
+
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="space-y-1">
           <div className="flex items-center gap-3">
             <h1 className="text-3xl font-bold tracking-tight">
-              {ranking.player.firstName} {ranking.player.lastName}
+              {playerName}
             </h1>
             <Badge variant="outline" className="bg-yellow-100 text-yellow-800">
               Ranking

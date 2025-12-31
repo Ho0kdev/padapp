@@ -221,8 +221,14 @@ Cuando torneo cambia a `IN_PROGRESS`, sistema cancela automáticamente:
 MERCADOPAGO_ACCESS_TOKEN="TEST-your-token"
 MERCADOPAGO_PUBLIC_KEY="TEST-your-public-key"
 NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY="TEST-your-public-key"
+NEXT_PUBLIC_MERCADOPAGO_ENABLED=true  # Habilitar/deshabilitar MercadoPago
 MERCADOPAGO_WEBHOOK_SECRET="your-secret"  # REQUERIDO en producción
 ```
+
+**Habilitar/Deshabilitar MercadoPago**:
+- `NEXT_PUBLIC_MERCADOPAGO_ENABLED=true` → Botón visible, pagos habilitados
+- `NEXT_PUBLIC_MERCADOPAGO_ENABLED=false` → Botón oculto, solo pagos manuales (admins)
+- ⚠️ **IMPORTANTE**: Reiniciar servidor después de cambiar este valor
 
 ### Tarjetas de Test
 

@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
+import { Breadcrumbs } from "@/components/ui/breadcrumbs"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
@@ -162,22 +163,25 @@ export function MatchDetail({ match }: MatchDetailProps) {
     }
   }
 
+  const matchTitle = `${getPhaseLabel(match.phaseType)}${match.matchNumber ? ` - Partido ${match.matchNumber}` : ''}`
+
   return (
     <div className="space-y-4 md:space-y-6">
+      {/* Breadcrumbs */}
+      <Breadcrumbs
+        items={[
+          { label: "Partidos", href: "/dashboard/matches" },
+          { label: matchTitle }
+        ]}
+      />
+
       {/* Header */}
       <div className="space-y-4">
-        <Link href="/dashboard/matches">
-          <Button variant="ghost" size="sm">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Volver
-          </Button>
-        </Link>
-
         <div className="flex items-start justify-between gap-2">
           <div className="space-y-1 min-w-0 flex-1">
             <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3">
               <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight line-clamp-2">
-                {getPhaseLabel(match.phaseType)} {match.matchNumber && `- Partido ${match.matchNumber}`}
+                {matchTitle}
               </h1>
               {getStatusBadge()}
             </div>

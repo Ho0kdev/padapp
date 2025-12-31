@@ -36,7 +36,6 @@ import {
   Eye,
   Edit,
   Trash2,
-  CreditCard,
   ArrowUpDown,
   ArrowUp,
   ArrowDown
@@ -382,14 +381,6 @@ export function RegistrationsTable() {
                         Editar
                       </Link>
                     </DropdownMenuItem>
-                    {(registration.tournamentCategory?.registrationFee || 0) > 0 && (
-                      <DropdownMenuItem asChild>
-                        <Link href={`/dashboard/registrations/${registration.id}/payment`}>
-                          <CreditCard className="mr-2 h-4 w-4" />
-                          Gestionar Pago
-                        </Link>
-                      </DropdownMenuItem>
-                    )}
                     <DropdownMenuItem
                       className="text-destructive"
                       disabled={['IN_PROGRESS', 'COMPLETED'].includes(registration.tournament.status)}
@@ -570,14 +561,6 @@ export function RegistrationsTable() {
                                 Editar
                               </Link>
                             </DropdownMenuItem>
-                            {(registration.tournamentCategory?.registrationFee || 0) > 0 && (
-                              <DropdownMenuItem asChild>
-                                <Link href={`/dashboard/registrations/${registration.id}/payment`}>
-                                  <CreditCard className="mr-2 h-4 w-4" />
-                                  Gestionar Pago
-                                </Link>
-                              </DropdownMenuItem>
-                            )}
                             <DropdownMenuItem
                               className="text-destructive"
                               disabled={['IN_PROGRESS', 'COMPLETED'].includes(registration.tournament.status)}

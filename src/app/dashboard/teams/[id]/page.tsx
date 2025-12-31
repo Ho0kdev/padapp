@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Breadcrumbs } from "@/components/ui/breadcrumbs"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Users, Trophy, Calendar, DollarSign } from "lucide-react"
 import Link from "next/link"
@@ -353,26 +354,29 @@ export default async function TeamDetailPage({ params }: TeamDetailPageProps) {
     take: 4
   })
 
+  const teamDisplayName = team.name || (team.tournament.type === 'AMERICANO_SOCIAL'
+    ? `${team.registration1.player.lastName}, ${team.registration1.player.firstName} / ${team.registration2.player.lastName}, ${team.registration2.player.firstName}`
+    : `${team.registration1.player.firstName} ${team.registration1.player.lastName} / ${team.registration2.player.firstName} ${team.registration2.player.lastName}`
+  )
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
+        {/* Breadcrumbs */}
+        <Breadcrumbs
+          items={[
+            { label: "Equipos", href: "/dashboard/teams" },
+            { label: teamDisplayName }
+          ]}
+        />
+
         {/* Header */}
         <div className="space-y-4">
-          <Link href="/dashboard/teams">
-            <Button variant="ghost" size="sm">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Volver
-            </Button>
-          </Link>
-
           <div className="flex items-start justify-between gap-2">
             <div className="space-y-1 min-w-0 flex-1">
               <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3">
                 <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight line-clamp-2">
-                  {team.name || (team.tournament.type === 'AMERICANO_SOCIAL'
-                    ? `${team.registration1.player.lastName}, ${team.registration1.player.firstName} / ${team.registration2.player.lastName}, ${team.registration2.player.firstName}`
-                    : `${team.registration1.player.firstName} ${team.registration1.player.lastName} / ${team.registration2.player.firstName} ${team.registration2.player.lastName}`
-                  )}
+                  {teamDisplayName}
                 </h1>
                 {isAdmin ? (
                   <TeamStatusManager
@@ -396,10 +400,7 @@ export default async function TeamDetailPage({ params }: TeamDetailPageProps) {
               <div className="hidden md:block">
                 <TeamDetailActions
                   teamId={team.id}
-                  teamName={team.name || (team.tournament.type === 'AMERICANO_SOCIAL'
-                    ? `${team.registration1.player.lastName}, ${team.registration1.player.firstName} / ${team.registration2.player.lastName}, ${team.registration2.player.firstName}`
-                    : `${team.registration1.player.firstName} ${team.registration1.player.lastName} / ${team.registration2.player.firstName} ${team.registration2.player.lastName}`
-                  )}
+                  teamName={teamDisplayName}
                   tournamentStatus={team.tournament.status}
                 />
               </div>
@@ -410,10 +411,7 @@ export default async function TeamDetailPage({ params }: TeamDetailPageProps) {
               <div className="md:hidden">
                 <TeamDetailActions
                   teamId={team.id}
-                  teamName={team.name || (team.tournament.type === 'AMERICANO_SOCIAL'
-                    ? `${team.registration1.player.lastName}, ${team.registration1.player.firstName} / ${team.registration2.player.lastName}, ${team.registration2.player.firstName}`
-                    : `${team.registration1.player.firstName} ${team.registration1.player.lastName} / ${team.registration2.player.firstName} ${team.registration2.player.lastName}`
-                  )}
+                  teamName={teamDisplayName}
                   tournamentStatus={team.tournament.status}
                 />
               </div>
