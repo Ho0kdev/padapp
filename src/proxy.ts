@@ -203,7 +203,8 @@ export const config = {
      * - _next/static (archivos estáticos)
      * - _next/image (optimización de imágenes)
      * - favicon.ico (favicon)
+     * - maintenance (página de mantenimiento)
      */
-    '/((?!api/webhooks|_next/static|_next/image|favicon.ico).*)',
+    '/((?!api/webhooks|_next/static|_next/image|favicon.ico|maintenance).*)',
   ],
 }
