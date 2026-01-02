@@ -64,10 +64,18 @@ async function checkMaintenanceMode(request: NextRequest): Promise<NextResponse 
   const { pathname } = request.nextUrl
   const isMaintenanceMode = process.env.NEXT_PUBLIC_MAINTENANCE_MODE === 'true'
 
+  // DEBUG: Log para verificar que el proxy se ejecuta
+  console.log('[PROXY DEBUG] Pathname:', pathname)
+  console.log('[PROXY DEBUG] NEXT_PUBLIC_MAINTENANCE_MODE:', process.env.NEXT_PUBLIC_MAINTENANCE_MODE)
+  console.log('[PROXY DEBUG] isMaintenanceMode:', isMaintenanceMode)
+
   // Si no está en modo mantenimiento, continuar normalmente
   if (!isMaintenanceMode) {
+    console.log('[PROXY DEBUG] Maintenance mode OFF - continuing normally')
     return null
   }
+
+  console.log('[PROXY DEBUG] Maintenance mode ON - checking access')
 
   // Rutas que siempre deben estar accesibles (incluso en modo mantenimiento)
   const publicPaths = [
