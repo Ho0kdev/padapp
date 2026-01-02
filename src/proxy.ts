@@ -215,11 +215,12 @@ export const config = {
     /*
      * Interceptar todas las rutas excepto:
      * - api/webhooks (webhooks de MercadoPago)
+     * - api/health (health check de Dokploy)
      * - _next/static (archivos estáticos)
      * - _next/image (optimización de imágenes)
      * - favicon.ico (favicon)
      * - maintenance (página de mantenimiento)
      */
-    '/((?!api/webhooks|_next/static|_next/image|favicon.ico|maintenance).*)',
+    '/((?!api/webhooks|api/health|_next/static|_next/image|favicon.ico|maintenance).*)',
   ],
 }
