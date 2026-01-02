@@ -89,6 +89,7 @@ async function checkMaintenanceMode(request: NextRequest): Promise<NextResponse 
 
   // Si la ruta es pública, permitir acceso
   if (publicPaths.some(path => pathname.startsWith(path))) {
+    console.log('[PROXY DEBUG] ✅ Public path - allowing access')
     return null
   }
 
@@ -99,6 +100,7 @@ async function checkMaintenanceMode(request: NextRequest): Promise<NextResponse 
     pathname.includes('/favicon.ico') ||
     pathname.match(/\.(ico|png|jpg|jpeg|svg|css|js|woff|woff2|ttf|eot)$/)
   ) {
+    console.log('[PROXY DEBUG] ✅ Static resource - allowing access')
     return null
   }
 
@@ -108,17 +110,22 @@ async function checkMaintenanceMode(request: NextRequest): Promise<NextResponse 
     secret: process.env.NEXTAUTH_SECRET
   })
 
+  console.log('[PROXY DEBUG] Token:', token ? `EXISTS (role: ${token.role})` : 'NULL')
+
   // Si no hay token (usuario no logueado), redirigir a mantenimiento
   if (!token) {
+    console.log('[PROXY DEBUG] 🚫 No token → REDIRECTING to /maintenance')
     return NextResponse.redirect(new URL('/maintenance', request.url))
   }
 
   // Si el usuario NO es ADMIN, redirigir a mantenimiento
   if (token.role !== 'ADMIN') {
+    console.log('[PROXY DEBUG] 🚫 Non-ADMIN (role:', token.role, ') → REDIRECTING to /maintenance')
     return NextResponse.redirect(new URL('/maintenance', request.url))
   }
 
   // Si es ADMIN, continuar con el flujo normal
+  console.log('[PROXY DEBUG] ✅ ADMIN user - allowing full access')
   return null
 }
 
