@@ -22,11 +22,12 @@ export async function GET(
     }
 
     const pools = await AmericanoSocialService.getPools(id, categoryId)
-    const ranking = await AmericanoSocialService.getGlobalRanking(id, categoryId)
+    // Obtener ranking de TODAS las categorías del torneo
+    const allRankings = await AmericanoSocialService.getAllCategoriesRanking(id)
 
     return NextResponse.json({
       pools,
-      ranking
+      ranking: allRankings
     })
 
   } catch (error) {

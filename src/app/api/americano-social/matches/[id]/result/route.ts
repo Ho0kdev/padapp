@@ -51,7 +51,7 @@ export async function POST(
     // Validar que las rondas anteriores estén completadas (para torneos multi-ronda)
     const currentRound = match.pool.roundNumber
     if (currentRound > 1) {
-      // Verificar si todos los partidos de rondas anteriores están completados
+      // Verificar si todos los partidos de rondas anteriores están completados (por categoría)
       const incompleteMatches = await prisma.americanoPoolMatch.count({
         where: {
           pool: {
@@ -60,6 +60,7 @@ export async function POST(
               lt: currentRound // Rondas anteriores
             }
           },
+          categoryId: match.categoryId, // Filtrar por categoría
           status: {
             not: 'COMPLETED'
           }
@@ -69,7 +70,7 @@ export async function POST(
       if (incompleteMatches > 0) {
         return NextResponse.json(
           {
-            error: `No se puede cargar el resultado de la Ronda ${currentRound}. Aún hay ${incompleteMatches} partido(s) pendiente(s) en rondas anteriores.`,
+            error: `No se puede cargar el resultado de la Ronda ${currentRound}. Aún hay ${incompleteMatches} partido(s) pendiente(s) en rondas anteriores de esta categoría.`,
             incompleteMatches,
             currentRound
           },

@@ -628,6 +628,63 @@ export class AmericanoSocialService {
   }
 
   /**
+   * Obtiene el ranking de TODAS las categorías del torneo
+   */
+  static async getAllCategoriesRanking(tournamentId: string) {
+    // Obtener el ranking
+    const rankings = await prisma.americanoGlobalRanking.findMany({
+      where: { tournamentId },
+      include: {
+        player: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            profileImageUrl: true
+          }
+        }
+      },
+      orderBy: [
+        { categoryId: 'asc' },
+        { position: 'asc' },
+        { totalPoints: 'desc' }
+      ]
+    })
+
+    // Obtener las categorías del torneo
+    const tournament = await prisma.tournament.findUnique({
+      where: { id: tournamentId },
+      include: {
+        categories: {
+          include: {
+            category: {
+              select: {
+                id: true,
+                name: true
+              }
+            }
+          }
+        }
+      }
+    })
+
+    // Crear un mapa de categoryId -> categoryName
+    const categoryMap = new Map<string, string>()
+    tournament?.categories.forEach((tc) => {
+      categoryMap.set(tc.categoryId, tc.category.name)
+    })
+
+    // Agregar la información de categoría a cada ranking
+    return rankings.map((ranking) => ({
+      ...ranking,
+      category: {
+        id: ranking.categoryId,
+        name: categoryMap.get(ranking.categoryId) || 'Sin categoría'
+      }
+    }))
+  }
+
+  /**
    * Asigna una cancha a un pool
    */
   static async assignCourtToPool(poolId: string, courtId: string | null) {
