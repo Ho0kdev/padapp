@@ -1,7 +1,8 @@
 "use client"
 
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useState, useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -31,6 +32,7 @@ interface PointsBreakdown {
 interface PlayerStats {
   id: string
   playerId: string
+  categoryId: string
   matchesPlayed: number
   matchesWon: number
   setsWon: number
@@ -47,6 +49,10 @@ interface PlayerStats {
       email: string
     }
   }
+  category?: {
+    id: string
+    name: string
+  }
 }
 
 interface TournamentPointsProps {
@@ -61,27 +67,81 @@ export function TournamentPoints({ tournamentId, tournamentStatus }: TournamentP
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set())
 
   useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        setIsLoading(true)
+        setError(null)
+
+        const response = await fetch(`/api/tournaments/${tournamentId}/stats`)
+
+        if (!response.ok) {
+          throw new Error("Error al cargar estadísticas")
+        }
+
+        const data = await response.json()
+        setStats(data.stats || [])
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Error desconocido")
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
     fetchStats()
   }, [tournamentId])
 
-  const fetchStats = async () => {
-    try {
-      setIsLoading(true)
-      setError(null)
+  // Agrupar stats por categoría - DEBE estar antes de los early returns
+  const statsByCategory = useMemo(() => {
+    const grouped = new Map<string, { categoryId: string; categoryName: string; players: PlayerStats[] }>()
 
-      const response = await fetch(`/api/tournaments/${tournamentId}/stats`)
+    stats.forEach((stat) => {
+      const categoryId = stat.categoryId
+      const categoryName = stat.category?.name || 'Sin categoría'
 
-      if (!response.ok) {
-        throw new Error("Error al cargar estadísticas")
+      if (!grouped.has(categoryId)) {
+        grouped.set(categoryId, {
+          categoryId,
+          categoryName,
+          players: []
+        })
       }
 
-      const data = await response.json()
-      setStats(data.stats || [])
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error desconocido")
-    } finally {
-      setIsLoading(false)
+      grouped.get(categoryId)!.players.push(stat)
+    })
+
+    // Ordenar jugadores dentro de cada categoría por puntos
+    grouped.forEach((group) => {
+      group.players.sort((a, b) => b.pointsEarned - a.pointsEarned)
+    })
+
+    return Array.from(grouped.values())
+  }, [stats])
+
+  const totalPointsAwarded = useMemo(() =>
+    stats.reduce((sum, stat) => sum + stat.pointsEarned, 0),
+    [stats]
+  )
+
+  // Ordenar por puntos ganados (mayor a menor) - para el podio global
+  const sortedStats = useMemo(() =>
+    [...stats].sort((a, b) => b.pointsEarned - a.pointsEarned),
+    [stats]
+  )
+
+  // Top 3
+  const topThree = useMemo(() =>
+    sortedStats.slice(0, 3),
+    [sortedStats]
+  )
+
+  const toggleRow = (statId: string) => {
+    const newExpanded = new Set(expandedRows)
+    if (newExpanded.has(statId)) {
+      newExpanded.delete(statId)
+    } else {
+      newExpanded.add(statId)
     }
+    setExpandedRows(newExpanded)
   }
 
   if (isLoading) {
@@ -114,24 +174,6 @@ export function TournamentPoints({ tournamentId, tournamentStatus }: TournamentP
         </AlertDescription>
       </Alert>
     )
-  }
-
-  const totalPointsAwarded = stats.reduce((sum, stat) => sum + stat.pointsEarned, 0)
-
-  // Ordenar por puntos ganados (mayor a menor)
-  const sortedStats = [...stats].sort((a, b) => b.pointsEarned - a.pointsEarned)
-
-  // Top 3
-  const topThree = sortedStats.slice(0, 3)
-
-  const toggleRow = (statId: string) => {
-    const newExpanded = new Set(expandedRows)
-    if (newExpanded.has(statId)) {
-      newExpanded.delete(statId)
-    } else {
-      newExpanded.add(statId)
-    }
-    setExpandedRows(newExpanded)
   }
 
   return (
@@ -240,6 +282,53 @@ export function TournamentPoints({ tournamentId, tournamentStatus }: TournamentP
           <CardTitle>Puntos Asignados al Ranking</CardTitle>
         </CardHeader>
         <CardContent>
+          {statsByCategory.length === 1 ? (
+            // Una sola categoría: mostrar directamente
+            <RenderCategoryTable
+              stats={statsByCategory[0].players}
+              expandedRows={expandedRows}
+              toggleRow={toggleRow}
+            />
+          ) : (
+            // Múltiples categorías: usar Tabs
+            <Tabs defaultValue={statsByCategory[0]?.categoryId || ''} className="space-y-4">
+              <TabsList className="w-full justify-start overflow-x-auto flex-wrap h-auto">
+                {statsByCategory.map((categoryGroup) => (
+                  <TabsTrigger key={categoryGroup.categoryId} value={categoryGroup.categoryId}>
+                    {categoryGroup.categoryName}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+
+              {statsByCategory.map((categoryGroup) => (
+                <TabsContent key={categoryGroup.categoryId} value={categoryGroup.categoryId}>
+                  <RenderCategoryTable
+                    stats={categoryGroup.players}
+                    expandedRows={expandedRows}
+                    toggleRow={toggleRow}
+                  />
+                </TabsContent>
+              ))}
+            </Tabs>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+// Helper component para renderizar la tabla de una categoría
+function RenderCategoryTable({
+  stats,
+  expandedRows,
+  toggleRow
+}: {
+  stats: PlayerStats[],
+  expandedRows: Set<string>,
+  toggleRow: (id: string) => void
+}) {
+  return (
+    <div>
           <div className="overflow-x-auto">
             {/* Desktop Table */}
             <table className="w-full hidden md:table">
@@ -257,7 +346,7 @@ export function TournamentPoints({ tournamentId, tournamentStatus }: TournamentP
                 </tr>
               </thead>
               <tbody>
-                {sortedStats.map((stat, index) => (
+                {stats.map((stat, index) => (
                   <React.Fragment key={stat.id}>
                     <tr
                       className={cn(
@@ -403,7 +492,7 @@ export function TournamentPoints({ tournamentId, tournamentStatus }: TournamentP
                 </tr>
               </thead>
               <tbody>
-                {sortedStats.map((stat, index) => (
+                {stats.map((stat, index) => (
                   <React.Fragment key={`mobile-${stat.id}`}>
                     <tr
                       className={cn(
@@ -529,8 +618,6 @@ export function TournamentPoints({ tournamentId, tournamentStatus }: TournamentP
               </tbody>
             </table>
           </div>
-        </CardContent>
-      </Card>
     </div>
   )
 }

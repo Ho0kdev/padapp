@@ -65,14 +65,16 @@ async function updateTournamentStats(matchId: string) {
   for (const playerId of team1Players) {
     await prisma.tournamentStats.upsert({
       where: {
-        tournamentId_playerId: {
+        tournamentId_playerId_categoryId: {
           tournamentId: match.tournamentId,
-          playerId
+          playerId,
+          categoryId: match.categoryId
         }
       },
       create: {
         tournamentId: match.tournamentId,
         playerId,
+        categoryId: match.categoryId,
         matchesPlayed: 1,
         matchesWon: team1Won ? 1 : 0,
         setsWon: team1SetsWon,
@@ -95,14 +97,16 @@ async function updateTournamentStats(matchId: string) {
   for (const playerId of team2Players) {
     await prisma.tournamentStats.upsert({
       where: {
-        tournamentId_playerId: {
+        tournamentId_playerId_categoryId: {
           tournamentId: match.tournamentId,
-          playerId
+          playerId,
+          categoryId: match.categoryId
         }
       },
       create: {
         tournamentId: match.tournamentId,
         playerId,
+        categoryId: match.categoryId,
         matchesPlayed: 1,
         matchesWon: !team1Won ? 1 : 0,
         setsWon: team2SetsWon,
@@ -183,9 +187,10 @@ async function revertTournamentStats(matchId: string) {
   for (const playerId of team1Players) {
     const stat = await prisma.tournamentStats.findUnique({
       where: {
-        tournamentId_playerId: {
+        tournamentId_playerId_categoryId: {
           tournamentId: match.tournamentId,
-          playerId
+          playerId,
+          categoryId: match.categoryId
         }
       }
     })
@@ -209,9 +214,10 @@ async function revertTournamentStats(matchId: string) {
   for (const playerId of team2Players) {
     const stat = await prisma.tournamentStats.findUnique({
       where: {
-        tournamentId_playerId: {
+        tournamentId_playerId_categoryId: {
           tournamentId: match.tournamentId,
-          playerId
+          playerId,
+          categoryId: match.categoryId
         }
       }
     })

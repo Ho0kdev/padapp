@@ -207,6 +207,7 @@ model Category {
   registrations        Registration[]
   teams                Team[]
   tournamentCategories TournamentCategory[]
+  tournamentStats      TournamentStats[]
   zones                TournamentZone[]
 
   @@map("categories")
@@ -520,6 +521,7 @@ model TournamentStats {
   id            String     @id @default(cuid())
   tournamentId  String
   playerId      String
+  categoryId    String?
   matchesPlayed Int        @default(0)
   matchesWon    Int        @default(0)
   setsWon       Int        @default(0)
@@ -530,10 +532,12 @@ model TournamentStats {
   finalPosition Int?
   player        Player     @relation(fields: [playerId], references: [id], onDelete: Cascade)
   tournament    Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  category      Category?  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
-  @@unique([tournamentId, playerId])
+  @@unique([tournamentId, playerId, categoryId])
   @@index([tournamentId])
   @@index([playerId])
+  @@index([categoryId])
   @@map("tournament_stats")
 }
 

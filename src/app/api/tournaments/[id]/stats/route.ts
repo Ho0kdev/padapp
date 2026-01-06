@@ -31,17 +31,7 @@ export async function GET(
         rankingPoints: true,
         teams: {
           select: {
-            categoryId: true,
-            registration1: {
-              select: {
-                playerId: true
-              }
-            },
-            registration2: {
-              select: {
-                playerId: true
-              }
-            }
+            categoryId: true
           }
         }
       }
@@ -68,9 +58,16 @@ export async function GET(
               }
             }
           }
+        },
+        category: {
+          select: {
+            id: true,
+            name: true
+          }
         }
       },
       orderBy: [
+        { categoryId: 'asc' },
         { pointsEarned: 'desc' },
         { finalPosition: 'asc' }
       ]
@@ -78,21 +75,17 @@ export async function GET(
 
     // Calcular breakdown para cada jugador
     const statsWithBreakdown = stats.map(stat => {
-      // Encontrar el equipo del jugador para obtener la categoría
-      const playerTeam = tournament.teams.find(team =>
-        team.registration1.playerId === stat.playerId ||
-        team.registration2.playerId === stat.playerId
-      )
+      const categoryId = stat.categoryId || ''
 
       const participantCount = tournament.teams.filter(team =>
-        team.categoryId === playerTeam?.categoryId
+        team.categoryId === categoryId
       ).length * 2 // Multiplicar por 2 ya que son equipos de 2 jugadores
 
       // Calcular el breakdown de puntos
       const breakdown = PointsCalculationService.calculatePlayerTournamentPointsWithBreakdown({
         tournamentId,
         playerId: stat.playerId,
-        categoryId: playerTeam?.categoryId || '',
+        categoryId,
         finalPosition: stat.finalPosition,
         matchesPlayed: stat.matchesPlayed,
         matchesWon: stat.matchesWon,
