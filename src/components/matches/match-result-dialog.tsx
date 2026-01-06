@@ -200,27 +200,40 @@ const createResultSchema = (setsToWin: number, gamesToWinSet: number, tiebreakAt
   }).superRefine((data, ctx) => {
     // Validar que uno de los equipos haya ganado setsToWin sets
     // Considerar tiebreak points para determinar ganador del set
-    const team1Sets = data.sets.filter((s: any) => {
-      // Ignorar sets vacíos o inválidos
-      if (typeof s.team1Games !== 'number' || typeof s.team2Games !== 'number') return false
-      if (isNaN(s.team1Games) || isNaN(s.team2Games)) return false
-      if (s.team1Games > s.team2Games) return true
-      if (s.team1Games === s.team2Games && s.team1TiebreakPoints && s.team2TiebreakPoints) {
-        return s.team1TiebreakPoints > s.team2TiebreakPoints
-      }
-      return false
-    }).length
+    let team1Sets = 0
+    let team2Sets = 0
+    let matchEnded = false
 
-    const team2Sets = data.sets.filter((s: any) => {
+    // Iterar sobre cada set en orden
+    data.sets.forEach((s: any, index: number) => {
       // Ignorar sets vacíos o inválidos
-      if (typeof s.team1Games !== 'number' || typeof s.team2Games !== 'number') return false
-      if (isNaN(s.team1Games) || isNaN(s.team2Games)) return false
-      if (s.team2Games > s.team1Games) return true
-      if (s.team1Games === s.team2Games && s.team1TiebreakPoints && s.team2TiebreakPoints) {
-        return s.team2TiebreakPoints > s.team1TiebreakPoints
+      if (typeof s.team1Games !== 'number' || typeof s.team2Games !== 'number') return
+      if (isNaN(s.team1Games) || isNaN(s.team2Games)) return
+
+      // Si el partido ya terminó (un equipo llegó a setsToWin), este set no debería existir
+      if (matchEnded) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `No se puede cargar el Set ${index + 1}. El partido ya terminó cuando un equipo ganó ${setsToWin} sets.`,
+          path: ["sets"]
+        })
+        return
       }
-      return false
-    }).length
+
+      // Determinar ganador del set
+      const team1WonSet = s.team1Games > s.team2Games ||
+        (s.team1Games === s.team2Games && s.team1TiebreakPoints && s.team2TiebreakPoints && s.team1TiebreakPoints > s.team2TiebreakPoints)
+      const team2WonSet = s.team2Games > s.team1Games ||
+        (s.team1Games === s.team2Games && s.team1TiebreakPoints && s.team2TiebreakPoints && s.team2TiebreakPoints > s.team1TiebreakPoints)
+
+      if (team1WonSet) team1Sets++
+      if (team2WonSet) team2Sets++
+
+      // Verificar si el partido terminó después de este set
+      if (team1Sets >= setsToWin || team2Sets >= setsToWin) {
+        matchEnded = true
+      }
+    })
 
     // Uno de los equipos debe tener setsToWin sets ganados
     if (team1Sets < setsToWin && team2Sets < setsToWin) {
@@ -300,8 +313,8 @@ export function MatchResultDialog({
 
   const form = useForm<ResultFormData>({
     resolver: zodResolver(resultSchema),
-    mode: "onSubmit", // Validar solo al hacer submit
-    reValidateMode: "onSubmit", // Re-validar solo al hacer submit
+    mode: "all", // Actualizar y validar en cada cambio
+    reValidateMode: "onChange", // Re-validar en cada cambio
     defaultValues: {
       sets: [
         { team1Games: undefined, team2Games: undefined, team1TiebreakPoints: undefined, team2TiebreakPoints: undefined },
@@ -314,42 +327,70 @@ export function MatchResultDialog({
 
   const sets = form.watch("sets")
 
-  // Calcular ganador actual basado en sets (memoizado para evitar re-cálculos)
+  // Serializar sets para que useMemo detecte cambios profundos
+  const setsKey = JSON.stringify(sets)
+
+  // Calcular ganador actual y conteo de sets (memoizado para evitar re-cálculos)
   // Considerar tiebreak points para determinar ganador del set
-  const winner = useMemo(() => {
-    const team1Sets = sets.filter((s: any) => {
-      // Ignorar sets vacíos o inválidos
-      if (typeof s.team1Games !== 'number' || typeof s.team2Games !== 'number') return false
-      if (isNaN(s.team1Games) || isNaN(s.team2Games)) return false
-      if (s.team1Games > s.team2Games) return true
-      if (s.team1Games === s.team2Games && s.team1TiebreakPoints && s.team2TiebreakPoints) {
-        return s.team1TiebreakPoints > s.team2TiebreakPoints
-      }
-      return false
-    }).length
+  const { winner, team1Sets, team2Sets, matchEnded, canAddSet } = useMemo(() => {
+    let team1Count = 0
+    let team2Count = 0
+    let ended = false
 
-    const team2Sets = sets.filter((s: any) => {
-      // Ignorar sets vacíos o inválidos
-      if (typeof s.team1Games !== 'number' || typeof s.team2Games !== 'number') return false
-      if (isNaN(s.team1Games) || isNaN(s.team2Games)) return false
-      if (s.team2Games > s.team1Games) return true
-      if (s.team1Games === s.team2Games && s.team1TiebreakPoints && s.team2TiebreakPoints) {
-        return s.team2TiebreakPoints > s.team1TiebreakPoints
+    // Contar sets ganados por cada equipo
+    sets.forEach((s: any) => {
+      // Ignorar sets incompletos
+      if (typeof s.team1Games !== 'number' || typeof s.team2Games !== 'number' ||
+          isNaN(s.team1Games) || isNaN(s.team2Games)) {
+        return
       }
-      return false
-    }).length
 
-    if (team1Sets > team2Sets) return "team1"
-    if (team2Sets > team1Sets) return "team2"
-    return null
-  }, [sets])
+      const team1WonSet = s.team1Games > s.team2Games ||
+        (s.team1Games === s.team2Games && s.team1TiebreakPoints && s.team2TiebreakPoints && s.team1TiebreakPoints > s.team2TiebreakPoints)
+      const team2WonSet = s.team2Games > s.team1Games ||
+        (s.team1Games === s.team2Games && s.team1TiebreakPoints && s.team2TiebreakPoints && s.team2TiebreakPoints > s.team1TiebreakPoints)
+
+      if (team1WonSet) team1Count++
+      if (team2WonSet) team2Count++
+
+      // Verificar si el partido terminó después de este set
+      if (team1Count >= match.tournament.setsToWin || team2Count >= match.tournament.setsToWin) {
+        ended = true
+      }
+    })
+
+    let winnerTeam = null
+    if (team1Count > team2Count) winnerTeam = "team1"
+    if (team2Count > team1Count) winnerTeam = "team2"
+
+    // Verificar que TODOS los sets existentes estén completos (con datos válidos)
+    const allSetsComplete = sets.every((s: any) =>
+      typeof s.team1Games === 'number' && !isNaN(s.team1Games) &&
+      typeof s.team2Games === 'number' && !isNaN(s.team2Games)
+    )
+
+    // Permitir agregar set solo si:
+    // 1. Todos los sets actuales están completos
+    // 2. El partido no ha terminado (ningún equipo llegó a setsToWin)
+    // 3. No se alcanzó el máximo de sets permitidos
+    const maxSets = (match.tournament.setsToWin * 2) - 1
+    const canAdd = allSetsComplete && !ended && sets.length < maxSets
+
+    return {
+      winner: winnerTeam,
+      team1Sets: team1Count,
+      team2Sets: team2Count,
+      matchEnded: ended,
+      canAddSet: canAdd
+    }
+  }, [setsKey, match.tournament.setsToWin]) // Usar setsKey en lugar de sets para detectar cambios profundos
 
   const addSet = () => {
+    // Solo agregar set si está permitido
+    if (!canAddSet) return
+
     const currentSets = form.getValues("sets")
-    const maxSets = (match.tournament.setsToWin * 2) - 1
-    if (currentSets.length < maxSets) {
-      form.setValue("sets", [...currentSets, { team1Games: undefined, team2Games: undefined, team1TiebreakPoints: undefined, team2TiebreakPoints: undefined }])
-    }
+    form.setValue("sets", [...currentSets, { team1Games: undefined, team2Games: undefined, team1TiebreakPoints: undefined, team2TiebreakPoints: undefined }])
   }
 
   const removeSet = (index: number) => {
@@ -818,12 +859,31 @@ export function MatchResultDialog({
                   variant="outline"
                   size="sm"
                   onClick={addSet}
-                  disabled={sets.length >= (match.tournament.setsToWin * 2) - 1}
+                  disabled={!canAddSet}
+                  title={
+                    matchEnded
+                      ? "El partido ya terminó, no se pueden agregar más sets"
+                      : !canAddSet && sets.length >= (match.tournament.setsToWin * 2) - 1
+                      ? "Se alcanzó el máximo de sets permitidos"
+                      : !canAddSet
+                      ? "Complete todos los sets antes de agregar uno nuevo"
+                      : undefined
+                  }
                 >
                   <Plus className="h-4 w-4 mr-1" />
                   Agregar Set
                 </Button>
               </div>
+
+              {/* Alerta cuando el partido ya terminó */}
+              {matchEnded && (
+                <Alert className="bg-green-50 border-green-200">
+                  <Trophy className="h-4 w-4 text-green-600" />
+                  <AlertDescription className="text-green-800">
+                    Partido finalizado: {winner === "team1" ? "Equipo 1" : "Equipo 2"} ganó {Math.max(team1Sets, team2Sets)} sets. No se pueden agregar más sets.
+                  </AlertDescription>
+                </Alert>
+              )}
 
               {/* Error general de sets (solo después de submit) */}
               {form.formState.isSubmitted && form.formState.errors.sets?.message && (
