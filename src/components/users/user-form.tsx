@@ -379,7 +379,7 @@ export function UserForm({ initialData, userId, currentUserRole, isOwnProfile }:
                         </FormControl>
                         <SelectContent>
                           <SelectItem value="PLAYER">Jugador</SelectItem>
-                          <SelectItem value="ORGANIZER">Administrador de Club</SelectItem>
+                          <SelectItem value="ORGANIZER">Organizador</SelectItem>
                           <SelectItem value="REFEREE">Árbitro</SelectItem>
                           <SelectItem value="ADMIN">Administrador</SelectItem>
                         </SelectContent>

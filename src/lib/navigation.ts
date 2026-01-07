@@ -29,7 +29,7 @@ export interface NavigationItem {
  *
  * ROLES DISPONIBLES:
  * - ADMIN: Administrador del sistema (acceso total)
- * - ORGANIZER: Administrador de club (gestión de su club)
+ * - ORGANIZER: Organizador de Torneos (gestión de torneos)
  * - PLAYER: Jugador (inscripciones, ver rankings)
  * - REFEREE: Árbitro (gestión de partidos)
  *
