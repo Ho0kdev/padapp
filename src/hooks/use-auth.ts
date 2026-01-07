@@ -23,8 +23,8 @@ export function useAuth(requireAuth = true) {
     [session]
   )
 
-  const isClubAdmin = useMemo(
-    () => session?.user?.role === UserRole.CLUB_ADMIN,
+  const isOrganizer = useMemo(
+    () => session?.user?.role === UserRole.ORGANIZER,
     [session]
   )
 
@@ -46,10 +46,10 @@ export function useAuth(requireAuth = true) {
     [session]
   )
 
-  // Helper combinado para Admin o ClubAdmin (para permisos de gestión)
-  const isAdminOrClubAdmin = useMemo(
-    () => isAdmin || isClubAdmin,
-    [isAdmin, isClubAdmin]
+  // Helper combinado para Admin o Organizer (para permisos de gestión)
+  const isAdminOrOrganizer = useMemo(
+    () => isAdmin || isOrganizer,
+    [isAdmin, isOrganizer]
   )
 
   return {
@@ -58,10 +58,10 @@ export function useAuth(requireAuth = true) {
     authenticated: status === "authenticated",
     // Helpers de roles
     isAdmin,
-    isClubAdmin,
+    isOrganizer,
     isPlayer,
     isReferee,
-    isAdminOrClubAdmin,
+    isAdminOrOrganizer,
     hasRole,
   }
 }

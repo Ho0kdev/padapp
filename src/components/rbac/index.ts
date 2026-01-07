@@ -1,2 +1,2 @@
 // src/components/rbac/index.ts
-export { Can, AdminOnly, AdminOrClubAdmin, NotPlayer } from './Can'
+export { Can, AdminOnly, AdminOrOrganizer, NotPlayer } from './Can'

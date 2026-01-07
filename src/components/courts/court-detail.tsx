@@ -139,7 +139,7 @@ export function CourtDetail({ court, currentUserId }: CourtDetailProps) {
   const [loading, setLoading] = useState(false)
   const { toast } = useToast()
   const router = useRouter()
-  const { isAdminOrClubAdmin } = useAuth()
+  const { isAdminOrOrganizer } = useAuth()
 
   const handleDelete = async () => {
     try {
@@ -240,7 +240,7 @@ export function CourtDetail({ court, currentUserId }: CourtDetailProps) {
           )}
         </div>
 
-        {isAdminOrClubAdmin && (
+        {isAdminOrOrganizer && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="flex-shrink-0">

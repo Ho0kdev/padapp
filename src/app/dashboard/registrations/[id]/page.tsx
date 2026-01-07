@@ -106,7 +106,7 @@ export default async function RegistrationDetailPage({ params }: RegistrationDet
     notFound()
   }
 
-  const isAdmin = session.user.role === 'ADMIN' || session.user.role === 'CLUB_ADMIN'
+  const isAdmin = session.user.role === 'ADMIN' || session.user.role === 'ORGANIZER'
 
   return (
     <DashboardLayout>

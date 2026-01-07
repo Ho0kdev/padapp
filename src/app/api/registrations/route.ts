@@ -60,7 +60,7 @@ const getRegistrationsSchema = z.object({
  *
  * Lista todas las inscripciones individuales con paginación y filtros.
  * Aplica permisos RBAC:
- * - ADMIN y CLUB_ADMIN: Ven todas las inscripciones
+ * - ADMIN y ORGANIZER: Ven todas las inscripciones
  * - Otros usuarios: Solo ven sus propias inscripciones
  *
  * Cada inscripción representa a un jugador individual inscrito en un torneo/categoría.
@@ -155,7 +155,7 @@ export async function GET(request: NextRequest) {
     // Aplicar filtrado basado en permisos RBAC
     // Si se está consultando inscripciones de un torneo específico, son públicas (cualquiera puede ver la lista de jugadores)
     // Si NO se especifica torneo, solo admins o el propio jugador pueden ver inscripciones
-    if (!tournamentId && session.user.role !== 'ADMIN' && session.user.role !== 'CLUB_ADMIN') {
+    if (!tournamentId && session.user.role !== 'ADMIN' && session.user.role !== 'ORGANIZER') {
       const userPlayer = await prisma.player.findUnique({
         where: { userId: session.user.id }
       })
@@ -426,7 +426,7 @@ export async function POST(request: NextRequest) {
 
     // Permitir que ADMINs establezcan el estado inicial manualmente
     let registrationStatus
-    if (validatedData.registrationStatus && (session.user.role === 'ADMIN' || session.user.role === 'CLUB_ADMIN')) {
+    if (validatedData.registrationStatus && (session.user.role === 'ADMIN' || session.user.role === 'ORGANIZER')) {
       registrationStatus = validatedData.registrationStatus as "PENDING" | "CONFIRMED" | "PAID" | "CANCELLED" | "WAITLIST"
     } else {
       // Para jugadores normales, calcular automáticamente

@@ -14,7 +14,7 @@ Sistema completo de pagos integrado con Mercado Pago y gestión manual de pagos.
 - ✅ Modo sandbox para testing
 
 ### 2. Pago Manual
-- ✅ Solo disponible para ADMIN y CLUB_ADMIN
+- ✅ Solo disponible para ADMIN y ORGANIZER
 - ✅ Métodos: Efectivo, Transferencia Bancaria, Confirmación Manual
 - ✅ Registro de comprobantes de pago
 - ✅ Auditoría completa (quién confirmó y cuándo)
@@ -49,7 +49,7 @@ POST   /api/webhooks/mercadopago
        Recibe notificaciones de Mercado Pago (webhook)
 
 POST   /api/registrations/[id]/payment/manual
-       Marca pago como confirmado manualmente (ADMIN/CLUB_ADMIN)
+       Marca pago como confirmado manualmente (ADMIN/ORGANIZER)
 
 GET    /api/registrations/[id]/payment
        Obtiene historial de pagos de una inscripción
@@ -64,7 +64,7 @@ POST   /api/registrations/[id]/payment
 - **PaymentSelector** (`src/components/payments/payment-selector.tsx`)
   - Muestra opciones de pago disponibles
   - Botón para Mercado Pago (todos los usuarios)
-  - Botón para pago manual (solo ADMIN/CLUB_ADMIN)
+  - Botón para pago manual (solo ADMIN/ORGANIZER)
   - Estados: PAID, PENDING, sin pago
 
 - **ManualPaymentDialog** (`src/components/payments/manual-payment-dialog.tsx`)
@@ -148,7 +148,7 @@ Para probar con diferentes roles:
 # Admin (puede confirmar pagos manualmente)
 admin@padelshot.app / 123456
 
-# Club Admin (puede confirmar pagos de sus torneos)
+# Organizer (puede confirmar pagos de sus torneos)
 clubadmin@padelshot.app / 123456
 
 # Player (solo puede pagar con Mercado Pago)
@@ -186,11 +186,11 @@ export function RegistrationPage({ registration }) {
 import { useAuth } from "@/hooks/use-auth"
 
 export function MyComponent() {
-  const { isAdminOrClubAdmin } = useAuth()
+  const { isAdminOrOrganizer } = useAuth()
 
   return (
     <div>
-      {isAdminOrClubAdmin && (
+      {isAdminOrOrganizer && (
         <Button>Confirmar pago manualmente</Button>
       )}
     </div>
@@ -227,7 +227,7 @@ export function MyComponent() {
 ### Flujo 2: Pago Manual
 
 ```
-1. ADMIN/CLUB_ADMIN hace clic en "Registrar pago manual"
+1. ADMIN/ORGANIZER hace clic en "Registrar pago manual"
    ↓
 2. Completa formulario:
    - Monto
@@ -238,7 +238,7 @@ export function MyComponent() {
    ↓
 3. Frontend llama POST /api/registrations/[id]/payment/manual
    ↓
-4. Backend valida permisos (solo ADMIN/CLUB_ADMIN)
+4. Backend valida permisos (solo ADMIN/ORGANIZER)
    ↓
 5. Se crea/actualiza RegistrationPayment con estado PAID
    ↓
@@ -314,7 +314,7 @@ El sistema implementa **validación completa de firma** para todos los webhooks 
 ### RBAC (Control de Acceso)
 
 - **Crear preferencia de Mercado Pago**: Usuario dueño de la inscripción, organizador del torneo, o ADMIN
-- **Confirmar pago manual**: Solo ADMIN o CLUB_ADMIN (organizador del torneo)
+- **Confirmar pago manual**: Solo ADMIN o ORGANIZER (organizador del torneo)
 - **Ver historial de pagos**: Usuario autenticado con acceso a la inscripción
 - **Webhook de MercadoPago**: Sin autenticación RBAC (validado por firma x-signature)
 

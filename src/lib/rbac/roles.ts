@@ -5,7 +5,7 @@ import { UserRole } from '@prisma/client'
  * Gestión de jerarquía de roles
  *
  * Jerarquía:
- * ADMIN > CLUB_ADMIN > REFEREE > PLAYER
+ * ADMIN > ORGANIZER > REFEREE > PLAYER
  *
  * Un rol hereda todos los permisos de los roles inferiores en la jerarquía.
  */
@@ -16,10 +16,10 @@ export class RoleHierarchy {
    */
   private static hierarchy: Map<UserRole, UserRole[]> = new Map([
     // ADMIN hereda de todos los demás roles
-    [UserRole.ADMIN, [UserRole.CLUB_ADMIN, UserRole.REFEREE, UserRole.PLAYER]],
+    [UserRole.ADMIN, [UserRole.ORGANIZER, UserRole.REFEREE, UserRole.PLAYER]],
 
-    // CLUB_ADMIN hereda de PLAYER
-    [UserRole.CLUB_ADMIN, [UserRole.PLAYER]],
+    // ORGANIZER hereda de PLAYER
+    [UserRole.ORGANIZER, [UserRole.PLAYER]],
 
     // REFEREE hereda de PLAYER
     [UserRole.REFEREE, [UserRole.PLAYER]],
@@ -75,7 +75,7 @@ export class RoleHierarchy {
   static getAllRolesInHierarchy(): UserRole[] {
     return [
       UserRole.ADMIN,
-      UserRole.CLUB_ADMIN,
+      UserRole.ORGANIZER,
       UserRole.REFEREE,
       UserRole.PLAYER,
     ]
@@ -125,8 +125,8 @@ export class RoleHierarchy {
       return true
     }
 
-    // CLUB_ADMIN puede gestionar PLAYER y REFEREE
-    if (managerRole === UserRole.CLUB_ADMIN) {
+    // ORGANIZER puede gestionar PLAYER y REFEREE
+    if (managerRole === UserRole.ORGANIZER) {
       return targetRole === UserRole.PLAYER || targetRole === UserRole.REFEREE
     }
 

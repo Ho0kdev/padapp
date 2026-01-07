@@ -64,12 +64,12 @@ export async function GET(request: NextRequest) {
     const page = parseInt(validatedQuery.page)
     const limit = parseInt(validatedQuery.limit)
 
-    // Obtener el playerId del usuario actual (si no es ADMIN o CLUB_ADMIN)
+    // Obtener el playerId del usuario actual (si no es ADMIN o ORGANIZER)
     const userRole = session.user.role
-    const isAdminOrClubAdmin = userRole === "ADMIN" || userRole === "CLUB_ADMIN"
+    const isAdminOrOrganizer = userRole === "ADMIN" || userRole === "ORGANIZER"
 
     let currentPlayerId: string | null = null
-    if (!isAdminOrClubAdmin) {
+    if (!isAdminOrOrganizer) {
       const player = await prisma.player.findUnique({
         where: { userId: session.user.id },
         select: { id: true }

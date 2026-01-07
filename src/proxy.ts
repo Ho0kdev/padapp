@@ -57,7 +57,7 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
  *
  * Cuando MAINTENANCE_MODE=true:
  * - Usuarios no logueados → Página de mantenimiento
- * - Usuarios con rol PLAYER/CLUB_ADMIN/REFEREE → Página de mantenimiento
+ * - Usuarios con rol PLAYER/ORGANIZER/REFEREE → Página de mantenimiento
  * - Usuarios con rol ADMIN → Acceso completo al sistema
  */
 async function checkMaintenanceMode(request: NextRequest): Promise<NextResponse | null> {

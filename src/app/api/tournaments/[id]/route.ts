@@ -271,16 +271,16 @@ export async function PUT(
       )
     }
 
-    // Verificar permisos (solo el organizador, club_admin o admin puede editar)
+    // Verificar permisos (solo el organizador o admin puede editar)
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
       select: { role: true }
     })
 
     const isOwner = existingTournament.organizerId === session.user.id
-    const isAdminOrClubAdmin = user?.role === "ADMIN" || user?.role === "CLUB_ADMIN"
+    const isAdminOrOrganizer = user?.role === "ADMIN" || user?.role === "ORGANIZER"
 
-    if (!isOwner && !isAdminOrClubAdmin) {
+    if (!isOwner && !isAdminOrOrganizer) {
       return NextResponse.json(
         { error: "No tienes permisos para editar este torneo" },
         { status: 403 }
@@ -599,9 +599,9 @@ export async function DELETE(
     })
 
     const isOwner = existingTournament.organizerId === session.user.id
-    const isAdminOrClubAdmin = user?.role === "ADMIN" || user?.role === "CLUB_ADMIN"
+    const isAdminOrOrganizer = user?.role === "ADMIN" || user?.role === "ORGANIZER"
 
-    if (!isOwner && !isAdminOrClubAdmin) {
+    if (!isOwner && !isAdminOrOrganizer) {
       return NextResponse.json(
         { error: "No tienes permisos para eliminar este torneo" },
         { status: 403 }

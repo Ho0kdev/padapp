@@ -90,7 +90,7 @@ export function BracketVisualization({
   const [resultDialogOpen, setResultDialogOpen] = useState(false)
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false)
   const [statusLoading, setStatusLoading] = useState<string | null>(null)
-  const { isAdminOrClubAdmin, isReferee } = useAuth()
+  const { isAdminOrOrganizer, isReferee } = useAuth()
   const { toast } = useToast()
 
   const fetchBracket = async () => {
@@ -120,7 +120,7 @@ export function BracketVisualization({
   }, [tournamentId, categoryId, refreshTrigger])
 
   const canManageMatch = () => {
-    return isAdminOrClubAdmin || isReferee
+    return isAdminOrOrganizer || isReferee
   }
 
   const handleLoadResult = (match: any) => {

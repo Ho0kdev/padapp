@@ -42,7 +42,7 @@ export default async function NewRegistrationPage() {
 
   // Los admins pueden inscribir a cualquier jugador
   // Los jugadores solo pueden inscribirse a sí mismos
-  const isAdmin = user.role === "ADMIN" || user.role === "CLUB_ADMIN"
+  const isAdmin = user.role === "ADMIN" || user.role === "ORGANIZER"
   const currentPlayerId = user.player?.id || null
 
   return (

@@ -110,7 +110,7 @@ export function ClubDetail({ club, currentUserId }: ClubDetailProps) {
   const [loading, setLoading] = useState(false)
   const { toast } = useToast()
   const router = useRouter()
-  const { isAdminOrClubAdmin } = useAuth()
+  const { isAdminOrOrganizer } = useAuth()
 
   const handleDelete = async () => {
     try {
@@ -245,7 +245,7 @@ export function ClubDetail({ club, currentUserId }: ClubDetailProps) {
           )}
         </div>
 
-        {isAdminOrClubAdmin && (
+        {isAdminOrOrganizer && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">

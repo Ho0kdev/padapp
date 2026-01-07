@@ -197,7 +197,7 @@ export async function GET(request: NextRequest) {
       prisma.user.count({
         where: {
           OR: [
-            { role: UserRole.CLUB_ADMIN },
+            { role: UserRole.ORGANIZER },
             { role: UserRole.ADMIN }
           ]
         }

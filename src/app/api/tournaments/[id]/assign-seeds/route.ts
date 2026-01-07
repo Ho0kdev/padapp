@@ -18,14 +18,14 @@ interface RouteContext {
  * - Empates: Se desempatan por fecha de creación del equipo (primero inscrito = mejor seed)
  * - Jugadores sin ranking (0 points): Van al final
  *
- * Permisos: Solo ADMIN y CLUB_ADMIN
+ * Permisos: Solo ADMIN y ORGANIZER
  */
 export async function POST(
   request: NextRequest,
   { params }: RouteContext
 ) {
   try {
-    // Solo ADMIN y CLUB_ADMIN pueden asignar seeds
+    // Solo ADMIN y ORGANIZER pueden asignar seeds
     const session = await authorize(Action.UPDATE, Resource.TOURNAMENT)
     const { id: tournamentId } = await params
 

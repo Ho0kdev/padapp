@@ -10,7 +10,7 @@ const statusOptions = [
 
 const roleOptions = [
   { value: "ADMIN", label: "Admin" },
-  { value: "CLUB_ADMIN", label: "Admin Club" },
+  { value: "ORGANIZER", label: "Admin Club" },
   { value: "PLAYER", label: "Jugador" },
   { value: "REFEREE", label: "Árbitro" }
 ]

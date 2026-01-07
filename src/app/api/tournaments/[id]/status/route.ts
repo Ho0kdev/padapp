@@ -115,7 +115,7 @@ export async function PATCH(
           break
 
         case "COMPLETED":
-          // Solo admins y club admins pueden retroceder torneos completados
+          // Solo admins y organizers pueden retroceder torneos completados
           // Esta validación ya está cubierta por RBAC con el ownership check
           break
 

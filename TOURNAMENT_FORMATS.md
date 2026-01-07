@@ -1480,7 +1480,7 @@ Los PDFs ahora incluyen información de programación:
 - **Spacing dinámico**: Layout se ajusta si hay cancha o no
 
 **Validaciones**:
-- ✅ Solo usuarios autorizados pueden programar (ADMIN, CLUB_ADMIN, REFEREE, Organizer)
+- ✅ Solo usuarios autorizados pueden programar (ADMIN, ORGANIZER, REFEREE, Organizer)
 - ✅ Solo partidos en estado SCHEDULED pueden iniciarse
 - ✅ Fecha/hora se valida en el frontend (campo requerido)
 - ✅ Confirmación antes de cambiar estado del partido
@@ -2096,7 +2096,7 @@ await BracketService.progressWinner(
 
 ### Generar Bracket
 - **Permiso**: `Action.UPDATE` sobre `Resource.TOURNAMENT`
-- **Roles**: ADMIN, CLUB_ADMIN
+- **Roles**: ADMIN, ORGANIZER
 - **Validación**: Solo el organizador del torneo o un admin
 
 ### Ver Bracket
@@ -2105,11 +2105,11 @@ await BracketService.progressWinner(
 
 ### Cargar Resultados
 - **Permiso**: `Action.UPDATE` sobre `Resource.TOURNAMENT`
-- **Roles**: ADMIN, CLUB_ADMIN, REFEREE
+- **Roles**: ADMIN, ORGANIZER, REFEREE
 
 ### Clasificar a Eliminatorias
 - **Permiso**: `Action.UPDATE` sobre `Resource.TOURNAMENT`
-- **Roles**: ADMIN, CLUB_ADMIN
+- **Roles**: ADMIN, ORGANIZER
 
 ---
 

@@ -11,7 +11,7 @@ interface RouteContext {
  * PATCH /api/teams/[id]/status
  *
  * Actualiza el estado de un equipo
- * Solo ADMIN y CLUB_ADMIN pueden cambiar estados
+ * Solo ADMIN y ORGANIZER pueden cambiar estados
  */
 export async function PATCH(request: NextRequest, context: RouteContext) {
   try {

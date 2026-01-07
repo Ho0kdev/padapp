@@ -14,7 +14,7 @@ import { UserRole } from '@prisma/client'
  * </Can>
  *
  * @example
- * <Can roles={['ADMIN', 'CLUB_ADMIN']} fallback={<p>No autorizado</p>}>
+ * <Can roles={['ADMIN', 'ORGANIZER']} fallback={<p>No autorizado</p>}>
  *   <AdminPanel />
  * </Can>
  */
@@ -46,10 +46,10 @@ export function AdminOnly({ children, fallback }: { children: ReactNode; fallbac
 }
 
 /**
- * Componente para mostrar contenido a ADMIN y CLUB_ADMIN
+ * Componente para mostrar contenido a ADMIN y ORGANIZER
  */
-export function AdminOrClubAdmin({ children, fallback }: { children: ReactNode; fallback?: ReactNode }) {
-  return <Can roles={[UserRole.ADMIN, UserRole.CLUB_ADMIN]} fallback={fallback}>{children}</Can>
+export function AdminOrOrganizer({ children, fallback }: { children: ReactNode; fallback?: ReactNode }) {
+  return <Can roles={[UserRole.ADMIN, UserRole.ORGANIZER]} fallback={fallback}>{children}</Can>
 }
 
 /**

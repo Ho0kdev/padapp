@@ -25,7 +25,7 @@ function buildOrderBy(orderBy?: string, order?: string): any {
  *
  * Lista todos los equipos con paginación y filtros.
  * Aplica permisos RBAC:
- * - ADMIN y CLUB_ADMIN: Ven todos los equipos
+ * - ADMIN y ORGANIZER: Ven todos los equipos
  * - Otros usuarios: Solo ven sus propios equipos
  */
 export async function GET(request: NextRequest) {
@@ -146,7 +146,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Aplicar filtrado basado en permisos RBAC
-    if (session.user.role !== 'ADMIN' && session.user.role !== 'CLUB_ADMIN') {
+    if (session.user.role !== 'ADMIN' && session.user.role !== 'ORGANIZER') {
       const userPlayer = await prisma.player.findUnique({
         where: { userId: session.user.id }
       })

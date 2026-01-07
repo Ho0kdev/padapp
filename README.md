@@ -15,7 +15,7 @@ PDLShot es una aplicación web completa para la gestión integral de torneos de 
 ### 🎯 Características Principales
 
 - ✅ **6 Formatos de Torneo**: Eliminación Simple/Doble, Round Robin, Fase de Grupos, Americano, Americano Social
-- ✅ **Sistema RBAC Completo**: 4 roles (ADMIN, CLUB_ADMIN, PLAYER, REFEREE) con permisos granulares
+- ✅ **Sistema RBAC Completo**: 4 roles (ADMIN, ORGANIZER, PLAYER, REFEREE) con permisos granulares
 - ✅ **Pagos Integrados**: MercadoPago + pagos manuales con auditoría completa
 - ✅ **Rankings Automáticos**: Cálculo configurable de puntos (100-5000 pts por torneo)
 - ✅ **Auditoría Total**: 9 servicios de logging para trazabilidad completa
@@ -82,7 +82,7 @@ RESEND_FROM_EMAIL="PadelShot <noreply@padelshot.app>"
 
 ```
 Admin:      admin@padelshot.app / 123456
-Club Admin: clubadmin@padelshot.app / 123456
+Organizer: clubadmin@padelshot.app / 123456
 Player:     player@padelshot.app / 123456
 ```
 
@@ -199,7 +199,7 @@ npm run db:seed          # Cargar seeds
 ### Sistema de Pagos Seguro 🔒
 
 - **MercadoPago**: Tarjetas, wallets, transferencias
-- **Pagos Manuales**: Efectivo, transferencia (solo ADMIN/CLUB_ADMIN)
+- **Pagos Manuales**: Efectivo, transferencia (solo ADMIN/ORGANIZER)
 - **Seguridad 9/10**: Validación de firma HMAC-SHA256, timestamp, monto, idempotencia
 - **Auditoría**: PaymentLogService con IP, User-Agent, trazabilidad total
 
@@ -207,7 +207,7 @@ npm run db:seed          # Cargar seeds
 
 ### Sistema RBAC (100% Cobertura)
 
-- **4 Roles**: ADMIN, CLUB_ADMIN, PLAYER, REFEREE
+- **4 Roles**: ADMIN, ORGANIZER, PLAYER, REFEREE
 - **46 Rutas Protegidas**: 100% con RBAC implementado
 - **9 Servicios de Logging**: Auditoría completa de todas las operaciones
 - **Ownership Contextual**: Permisos basados en relaciones (userId, organizerId, etc.)
@@ -252,7 +252,7 @@ npm run db:seed          # Cargar seeds
 ```bash
 # Usuarios de prueba (creados por seeds)
 Admin:      admin@padelshot.app / 123456
-Club Admin: clubadmin@padelshot.app / 123456
+Organizer: clubadmin@padelshot.app / 123456
 Player:     player@padelshot.app / 123456
 
 # Tarjetas de prueba MercadoPago

@@ -20,11 +20,11 @@ export async function GET(
 
     const { playerId } = await params
 
-    // Verificar ownership: solo el propio jugador o ADMIN/CLUB_ADMIN pueden ver las stats
-    const isAdminOrClubAdmin = session.user.role === 'ADMIN' || session.user.role === 'CLUB_ADMIN'
+    // Verificar ownership: solo el propio jugador o ADMIN/ORGANIZER pueden ver las stats
+    const isAdminOrOrganizer = session.user.role === 'ADMIN' || session.user.role === 'ORGANIZER'
 
-    // Si no es admin/club_admin, verificar que es el propio jugador
-    if (!isAdminOrClubAdmin) {
+    // Si no es admin/organizer, verificar que es el propio jugador
+    if (!isAdminOrOrganizer) {
       const userPlayer = await prisma.player.findUnique({
         where: { userId: session.user.id }
       })

@@ -111,7 +111,7 @@ export function TeamsTable() {
   const { toast } = useToast()
   const { user } = useAuth()
 
-  const isAdmin = user?.role === "ADMIN" || user?.role === "CLUB_ADMIN"
+  const isAdmin = user?.role === "ADMIN" || user?.role === "ORGANIZER"
   const orderBy = searchParams.get('orderBy') || 'createdAt'
   const order = searchParams.get('order') || 'desc'
 

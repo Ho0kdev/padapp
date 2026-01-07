@@ -267,7 +267,7 @@ interface RouteParams {
  * Carga el resultado de un partido y progresa automáticamente al ganador en el bracket.
  * Soporta tanto partidos jugados normalmente como walkovers.
  *
- * **Permisos requeridos:** ADMIN, CLUB_ADMIN o REFEREE
+ * **Permisos requeridos:** ADMIN, ORGANIZER o REFEREE
  *
  * **Request Body:**
  * ```json
@@ -322,7 +322,7 @@ export async function POST(
   { params }: RouteParams
 ) {
   try {
-    // Autorización: Solo ADMIN, CLUB_ADMIN y REFEREE pueden cargar resultados
+    // Autorización: Solo ADMIN, ORGANIZER y REFEREE pueden cargar resultados
     const session = await authorize(Action.UPDATE, Resource.TOURNAMENT)
     const { id: matchId } = await params
 
@@ -638,7 +638,7 @@ export async function POST(
  * Revierte el resultado de un partido que ya fue cargado.
  * Limpia el resultado, los sets, y revierte la progresión en el bracket.
  *
- * **Permisos requeridos:** ADMIN o CLUB_ADMIN
+ * **Permisos requeridos:** ADMIN o ORGANIZER
  *
  * **Funcionalidad:**
  * 1. Valida que el partido tenga resultado cargado
@@ -662,14 +662,14 @@ export async function POST(
  * - 400: El partido no tiene resultado cargado
  * - 400: No se puede revertir porque hay partidos posteriores jugados
  * - 404: Partido no encontrado
- * - 403: Sin permisos (solo ADMIN y CLUB_ADMIN)
+ * - 403: Sin permisos (solo ADMIN y ORGANIZER)
  */
 export async function DELETE(
   request: NextRequest,
   { params }: RouteParams
 ) {
   try {
-    // Autorización: Solo ADMIN y CLUB_ADMIN pueden revertir resultados
+    // Autorización: Solo ADMIN y ORGANIZER pueden revertir resultados
     const session = await authorize(Action.UPDATE, Resource.TOURNAMENT)
     const { id: matchId } = await params
 

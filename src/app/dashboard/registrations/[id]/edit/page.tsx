@@ -16,8 +16,8 @@ async function getRegistration(id: string, userId: string) {
     select: { role: true }
   })
 
-  const isAdminOrClubAdmin = user?.role === "ADMIN" || user?.role === "CLUB_ADMIN"
-  if (!isAdminOrClubAdmin) {
+  const isAdminOrOrganizer = user?.role === "ADMIN" || user?.role === "ORGANIZER"
+  if (!isAdminOrOrganizer) {
     return null
   }
 

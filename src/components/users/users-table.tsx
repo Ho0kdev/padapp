@@ -66,7 +66,7 @@ interface User {
   id: string
   name: string
   email: string
-  role: 'ADMIN' | 'CLUB_ADMIN' | 'PLAYER' | 'REFEREE'
+  role: 'ADMIN' | 'ORGANIZER' | 'PLAYER' | 'REFEREE'
   status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED'
   createdAt: string
   player?: {
@@ -199,14 +199,14 @@ export function UsersTable() {
   const getRoleBadge = (role: string) => {
     const variants = {
       ADMIN: 'destructive',
-      CLUB_ADMIN: 'secondary',
+      ORGANIZER: 'secondary',
       REFEREE: 'outline',
       PLAYER: 'default'
     } as const
 
     const labels = {
       ADMIN: 'Admin',
-      CLUB_ADMIN: 'Admin Club',
+      ORGANIZER: 'Admin Club',
       REFEREE: 'Árbitro',
       PLAYER: 'Jugador'
     }

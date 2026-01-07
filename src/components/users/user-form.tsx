@@ -36,7 +36,7 @@ const userFormSchema = z.object({
   password: z.string().optional().refine((val) => !val || val.length >= 6, {
     message: 'La contraseña debe tener al menos 6 caracteres'
   }),
-  role: z.enum(['ADMIN', 'CLUB_ADMIN', 'PLAYER', 'REFEREE']).default('PLAYER'),
+  role: z.enum(['ADMIN', 'ORGANIZER', 'PLAYER', 'REFEREE']).default('PLAYER'),
   status: z.enum(['ACTIVE', 'INACTIVE']).default('ACTIVE'),
   createPlayer: z.boolean().default(true),
   // Player fields
@@ -379,7 +379,7 @@ export function UserForm({ initialData, userId, currentUserRole, isOwnProfile }:
                         </FormControl>
                         <SelectContent>
                           <SelectItem value="PLAYER">Jugador</SelectItem>
-                          <SelectItem value="CLUB_ADMIN">Administrador de Club</SelectItem>
+                          <SelectItem value="ORGANIZER">Administrador de Club</SelectItem>
                           <SelectItem value="REFEREE">Árbitro</SelectItem>
                           <SelectItem value="ADMIN">Administrador</SelectItem>
                         </SelectContent>

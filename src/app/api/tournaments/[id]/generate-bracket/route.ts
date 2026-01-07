@@ -12,7 +12,7 @@ const generateBracketSchema = z.object({
  * POST /api/tournaments/[id]/generate-bracket
  * Genera el bracket de un torneo para una categoría específica
  *
- * Requiere permisos: ADMIN o CLUB_ADMIN
+ * Requiere permisos: ADMIN o ORGANIZER
  *
  * Body:
  * {
@@ -24,7 +24,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // Solo ADMIN y CLUB_ADMIN pueden generar brackets
+    // Solo ADMIN y ORGANIZER pueden generar brackets
     const session = await authorize(Action.UPDATE, Resource.TOURNAMENT)
     const { id: tournamentId } = await params
 

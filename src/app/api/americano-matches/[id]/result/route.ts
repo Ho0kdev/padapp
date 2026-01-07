@@ -173,7 +173,7 @@ async function revertAmericanoGlobalRanking(matchId: string) {
  * Limpia el marcador, sets, y restaura el estado a SCHEDULED.
  * También revierte las estadísticas del pool y el ranking global.
  *
- * **Permisos requeridos:** ADMIN o CLUB_ADMIN
+ * **Permisos requeridos:** ADMIN o ORGANIZER
  *
  * **Validaciones:**
  * - El partido debe existir
@@ -197,7 +197,7 @@ export async function DELETE(
   { params }: RouteParams
 ) {
   try {
-    // Autorización: Solo ADMIN y CLUB_ADMIN pueden revertir resultados
+    // Autorización: Solo ADMIN y ORGANIZER pueden revertir resultados
     const session = await authorize(Action.UPDATE, Resource.TOURNAMENT)
     const { id: matchId } = await params
 

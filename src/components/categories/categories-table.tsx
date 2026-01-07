@@ -93,7 +93,7 @@ export function CategoriesTable() {
   const [activateDialogOpen, setActivateDialogOpen] = useState(false)
   const [categoryToActivate, setCategoryToActivate] = useState<Category | null>(null)
   const { toast } = useToast()
-  const { isAdminOrClubAdmin } = useAuth()
+  const { isAdminOrOrganizer } = useAuth()
 
   const orderBy = searchParams.get('orderBy') || 'name'
   const order = searchParams.get('order') || 'asc'
@@ -300,7 +300,7 @@ export function CategoriesTable() {
                           Ver detalle
                         </Link>
                       </DropdownMenuItem>
-                      {isAdminOrClubAdmin && (
+                      {isAdminOrOrganizer && (
                         <>
                           <DropdownMenuItem asChild>
                             <Link href={`/dashboard/categories/${category.id}/edit`}>
@@ -490,7 +490,7 @@ export function CategoriesTable() {
                               Ver detalle
                             </Link>
                           </DropdownMenuItem>
-                          {isAdminOrClubAdmin && (
+                          {isAdminOrOrganizer && (
                             <>
                               <DropdownMenuItem asChild>
                                 <Link href={`/dashboard/categories/${category.id}/edit`}>

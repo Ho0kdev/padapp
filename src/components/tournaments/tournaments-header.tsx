@@ -10,7 +10,7 @@ const statusOptions = tournamentStatusOptions.map(option => ({
 }))
 
 export function TournamentsHeader() {
-  const { isAdminOrClubAdmin } = useAuth()
+  const { isAdminOrOrganizer } = useAuth()
 
   return (
     <DataTableHeader
@@ -19,7 +19,7 @@ export function TournamentsHeader() {
       searchPlaceholder="Buscar por nombre, club, ciudad..."
       createButtonText="Nuevo Torneo"
       createButtonHref="/dashboard/tournaments/new"
-      showCreateButton={isAdminOrClubAdmin}
+      showCreateButton={isAdminOrOrganizer}
       filterLabel="Estado"
       filterOptions={statusOptions}
       basePath="/dashboard/tournaments"

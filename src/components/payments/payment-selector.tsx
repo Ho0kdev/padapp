@@ -34,7 +34,7 @@ export function PaymentSelector({
   currentStatus,
   onPaymentComplete,
 }: PaymentSelectorProps) {
-  const { isAdminOrClubAdmin } = useAuth()
+  const { isAdminOrOrganizer } = useAuth()
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [manualPaymentOpen, setManualPaymentOpen] = useState(false)
@@ -159,7 +159,7 @@ export function PaymentSelector({
               >
                 Cancelar e intentar de nuevo
               </Button>
-              {isAdminOrClubAdmin && (
+              {isAdminOrOrganizer && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -224,7 +224,7 @@ export function PaymentSelector({
             )}
 
             {/* Opción: Pago Manual (solo admins) */}
-            {isAdminOrClubAdmin && (
+            {isAdminOrOrganizer && (
               <div className="flex-1 space-y-1.5">
                 <Button
                   variant="outline"
@@ -243,7 +243,7 @@ export function PaymentSelector({
           </div>
 
           {/* Mensaje informativo si MercadoPago está deshabilitado */}
-          {!isMercadoPagoEnabled && !isAdminOrClubAdmin && (
+          {!isMercadoPagoEnabled && !isAdminOrOrganizer && (
             <p className="text-sm text-muted-foreground text-center py-2">
               Los pagos online están temporalmente deshabilitados. Por favor, contacta al organizador del torneo para coordinar el pago.
             </p>
@@ -252,7 +252,7 @@ export function PaymentSelector({
       </Card>
 
       {/* Dialog para pago manual */}
-      {isAdminOrClubAdmin && (
+      {isAdminOrOrganizer && (
         <ManualPaymentDialog
           open={manualPaymentOpen}
           onOpenChange={setManualPaymentOpen}

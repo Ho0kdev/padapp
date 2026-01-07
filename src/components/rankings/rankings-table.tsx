@@ -103,7 +103,7 @@ export function RankingsTable() {
   const [rankingToDelete, setRankingToDelete] = useState<Ranking | null>(null)
   const [deleting, setDeleting] = useState(false)
   const { toast } = useToast()
-  const { isAdminOrClubAdmin } = useAuth()
+  const { isAdminOrOrganizer } = useAuth()
   const currentCategoryId = searchParams.get("categoryId")
 
   const orderBy = searchParams.get('orderBy') || 'currentPoints'
@@ -368,7 +368,7 @@ export function RankingsTable() {
                     Ver detalle
                   </Link>
                 </DropdownMenuItem>
-                {isAdminOrClubAdmin && (
+                {isAdminOrOrganizer && (
                   <>
                     <DropdownMenuItem asChild>
                       <Link href={`/dashboard/users/${ranking.player.user.id}`}>
@@ -595,7 +595,7 @@ export function RankingsTable() {
                             Ver detalle
                           </Link>
                         </DropdownMenuItem>
-                        {isAdminOrClubAdmin && (
+                        {isAdminOrOrganizer && (
                           <>
                             <DropdownMenuItem asChild>
                               <Link href={`/dashboard/users/${ranking.player.user.id}`}>

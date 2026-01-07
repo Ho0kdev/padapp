@@ -32,13 +32,13 @@ interface MatchDetailProps {
 export function MatchDetail({ match }: MatchDetailProps) {
   const router = useRouter()
   const { toast } = useToast()
-  const { isAdminOrClubAdmin, isReferee } = useAuth()
+  const { isAdminOrOrganizer, isReferee } = useAuth()
   const [statusLoading, setStatusLoading] = useState(false)
   const [revertLoading, setRevertLoading] = useState(false)
   const [resultDialogOpen, setResultDialogOpen] = useState(false)
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false)
 
-  const canManage = isAdminOrClubAdmin || isReferee
+  const canManage = isAdminOrOrganizer || isReferee
   const isCompleted = match.status === "COMPLETED" || match.status === "WALKOVER"
   const team1Won = match.winnerTeam?.id === match.team1?.id
   const team2Won = match.winnerTeam?.id === match.team2?.id

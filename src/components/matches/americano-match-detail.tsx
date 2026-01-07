@@ -42,14 +42,14 @@ interface AmericanoMatchDetailProps {
 export function AmericanoMatchDetail({ match, currentUserId }: AmericanoMatchDetailProps) {
   const router = useRouter()
   const { toast } = useToast()
-  const { isAdminOrClubAdmin, isReferee } = useAuth()
+  const { isAdminOrOrganizer, isReferee } = useAuth()
   const [statusLoading, setStatusLoading] = useState(false)
   const [revertLoading, setRevertLoading] = useState(false)
   const [resultDialogOpen, setResultDialogOpen] = useState(false)
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false)
 
   const isOwner = match.tournament.organizerId === currentUserId
-  const canManage = isOwner || isAdminOrClubAdmin || isReferee
+  const canManage = isOwner || isAdminOrOrganizer || isReferee
 
   const isCompleted = match.status === "COMPLETED"
   const teamAWon = isCompleted && (match.teamAScore ?? 0) > (match.teamBScore ?? 0)

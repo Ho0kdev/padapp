@@ -102,7 +102,7 @@ export function ClubsTable() {
   const [maintenanceDialogOpen, setMaintenanceDialogOpen] = useState(false)
   const [clubToMaintenance, setClubToMaintenance] = useState<Club | null>(null)
   const { toast } = useToast()
-  const { isAdminOrClubAdmin } = useAuth()
+  const { isAdminOrOrganizer } = useAuth()
 
   const orderBy = searchParams.get('orderBy') || 'name'
   const order = searchParams.get('order') || 'asc'
@@ -317,7 +317,7 @@ export function ClubsTable() {
                   Ver detalles
                 </DropdownMenuItem>
               </Link>
-              {isAdminOrClubAdmin && (
+              {isAdminOrOrganizer && (
                 <>
                   <Link href={`/dashboard/clubs/${club.id}/edit`}>
                     <DropdownMenuItem>
@@ -593,7 +593,7 @@ export function ClubsTable() {
                               Ver detalles
                             </DropdownMenuItem>
                           </Link>
-                          {isAdminOrClubAdmin && (
+                          {isAdminOrOrganizer && (
                             <>
                               <Link href={`/dashboard/clubs/${club.id}/edit`}>
                                 <DropdownMenuItem>

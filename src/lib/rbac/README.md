@@ -521,7 +521,7 @@ invalidateUserCache(id)
 
 ## 🔒 Matriz de Permisos
 
-| Recurso | ADMIN | CLUB_ADMIN | PLAYER | REFEREE |
+| Recurso | ADMIN | ORGANIZER | PLAYER | REFEREE |
 |---------|-------|------------|--------|---------|
 | User | MANAGE | READ own | READ own | READ own |
 | Tournament | MANAGE | MANAGE | READ | READ |

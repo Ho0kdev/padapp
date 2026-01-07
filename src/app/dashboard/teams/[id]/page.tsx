@@ -147,7 +147,7 @@ export default async function TeamDetailPage({ params }: TeamDetailPageProps) {
     notFound()
   }
 
-  const isAdmin = session.user.role === 'ADMIN' || session.user.role === 'CLUB_ADMIN'
+  const isAdmin = session.user.role === 'ADMIN' || session.user.role === 'ORGANIZER'
 
   // Verificar que el usuario tenga permiso para ver este equipo
   // Admins pueden ver cualquier equipo, jugadores solo pueden ver sus propios equipos

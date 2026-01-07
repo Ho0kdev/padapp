@@ -20,7 +20,7 @@ export function TeamsHeader() {
   const [categories, setCategories] = useState<Category[]>([])
   const { user } = useAuth()
 
-  const isAdmin = user?.role === "ADMIN" || user?.role === "CLUB_ADMIN"
+  const isAdmin = user?.role === "ADMIN" || user?.role === "ORGANIZER"
 
   useEffect(() => {
     const fetchData = async () => {

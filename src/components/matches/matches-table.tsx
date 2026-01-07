@@ -156,7 +156,7 @@ export function MatchesTable() {
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false)
   const [statusLoading, setStatusLoading] = useState<string | null>(null)
   const { toast } = useToast()
-  const { isAdminOrClubAdmin, isReferee } = useAuth()
+  const { isAdminOrOrganizer, isReferee } = useAuth()
 
   const orderBy = searchParams.get('orderBy') || 'scheduledAt'
   const order = searchParams.get('order') || 'asc'
@@ -225,8 +225,8 @@ export function MatchesTable() {
   }
 
   const canManageMatch = (match: Match) => {
-    // ADMIN y CLUB_ADMIN pueden gestionar todos los partidos
-    if (isAdminOrClubAdmin) return true
+    // ADMIN y ORGANIZER pueden gestionar todos los partidos
+    if (isAdminOrOrganizer) return true
     // REFEREE puede gestionar sus partidos asignados
     // (TODO: agregar lógica cuando tengamos refereeId en el session)
     return isReferee

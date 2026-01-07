@@ -44,7 +44,7 @@ npm run db:seed          # Cargar datos de prueba
 
 ```
 Admin:      admin@padelshot.app / 123456
-Club Admin: clubadmin@padelshot.app / 123456
+Organizer: clubadmin@padelshot.app / 123456
 Player:     player@padelshot.app / 123456
 ```
 
@@ -152,10 +152,10 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
 import { useAuth } from '@/hooks/use-auth'
 
 function MyComponent() {
-  const { user, isAdmin, isClubAdmin, isAdminOrClubAdmin, hasRole } = useAuth()
+  const { user, isAdmin, isOrganizer, isAdminOrOrganizer, hasRole } = useAuth()
 
   if (isAdmin) return <AdminPanel />
-  if (isAdminOrClubAdmin) return <ManagementPanel />
+  if (isAdminOrOrganizer) return <ManagementPanel />
   return <PlayerView />
 }
 ```

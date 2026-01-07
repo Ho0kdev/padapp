@@ -89,7 +89,7 @@ Sistema de control de acceso basado en roles con:
 ### 4 Roles Definidos
 
 - **ADMIN** - Acceso total al sistema
-- **CLUB_ADMIN** - Gestión de clubes y torneos
+- **ORGANIZER** - Gestión de clubes y torneos
 - **PLAYER** - Lectura de información propia
 - **REFEREE** - Gestión de partidos asignados
 
@@ -108,7 +108,7 @@ Sistema de control de acceso basado en roles con:
 
 ### Matriz de Permisos Principales
 
-| Recurso | ADMIN | CLUB_ADMIN | PLAYER | REFEREE |
+| Recurso | ADMIN | ORGANIZER | PLAYER | REFEREE |
 |---------|-------|------------|--------|---------|
 | Users | MANAGE | READ own | READ own | READ own |
 | Tournaments | MANAGE | MANAGE | READ | READ |
@@ -223,19 +223,19 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
 import { useAuth } from '@/hooks/use-auth'
 
 function MyComponent() {
-  const { user, isAdmin, isClubAdmin, isAdminOrClubAdmin, hasRole } = useAuth()
+  const { user, isAdmin, isOrganizer, isAdminOrOrganizer, hasRole } = useAuth()
 
   if (isAdmin) {
     return <AdminPanel />
   }
 
   // Nuevo helper combinado (más conveniente)
-  if (isAdminOrClubAdmin) {
+  if (isAdminOrOrganizer) {
     return <ManagementPanel />
   }
 
   // O usando hasRole (más explícito)
-  if (hasRole([UserRole.ADMIN, UserRole.CLUB_ADMIN])) {
+  if (hasRole([UserRole.ADMIN, UserRole.ORGANIZER])) {
     return <ManagementPanel />
   }
 
@@ -257,8 +257,8 @@ function MyComponent() {
         <button onClick={deleteUser}>Eliminar Usuario</button>
       </AdminOnly>
 
-      {/* ADMIN o CLUB_ADMIN */}
-      <Can roles={[UserRole.ADMIN, UserRole.CLUB_ADMIN]}>
+      {/* ADMIN o ORGANIZER */}
+      <Can roles={[UserRole.ADMIN, UserRole.ORGANIZER]}>
         <CreateTournamentButton />
       </Can>
 
@@ -305,23 +305,23 @@ Esta sección documenta **TODAS** las rutas API del sistema con su implementaci�
 | Endpoint | Método | Implementación RBAC | Permisos |
 |----------|--------|-------------------|----------|
 | `/api/tournaments` | GET | `requireAuth()` | Todos los usuarios autenticados |
-| `/api/tournaments` | POST | `authorize(Action.CREATE, Resource.TOURNAMENT)` | ADMIN y CLUB_ADMIN |
+| `/api/tournaments` | POST | `authorize(Action.CREATE, Resource.TOURNAMENT)` | ADMIN y ORGANIZER |
 | `/api/tournaments/[id]` | GET | `requireAuth()` | Todos los usuarios autenticados |
-| `/api/tournaments/[id]` | PUT | `requireAuth()` + ownership/rol check | ADMIN o CLUB_ADMIN propietario |
-| `/api/tournaments/[id]` | DELETE | `authorize(Action.DELETE, Resource.TOURNAMENT)` + ownership | ADMIN o CLUB_ADMIN propietario |
-| `/api/tournaments/[id]/status` | PATCH | `authorize(Action.UPDATE, Resource.TOURNAMENT)` + ownership | ADMIN o CLUB_ADMIN propietario |
-| `/api/tournaments/[id]/generate-bracket` | POST | `authorize(Action.UPDATE, Resource.TOURNAMENT)` | ADMIN o CLUB_ADMIN |
+| `/api/tournaments/[id]` | PUT | `requireAuth()` + ownership/rol check | ADMIN o ORGANIZER propietario |
+| `/api/tournaments/[id]` | DELETE | `authorize(Action.DELETE, Resource.TOURNAMENT)` + ownership | ADMIN o ORGANIZER propietario |
+| `/api/tournaments/[id]/status` | PATCH | `authorize(Action.UPDATE, Resource.TOURNAMENT)` + ownership | ADMIN o ORGANIZER propietario |
+| `/api/tournaments/[id]/generate-bracket` | POST | `authorize(Action.UPDATE, Resource.TOURNAMENT)` | ADMIN o ORGANIZER |
 | `/api/tournaments/[id]/bracket` | GET | `requireAuth()` | Todos los usuarios autenticados |
 | `/api/tournaments/[id]/preview-bracket` | GET | `requireAuth()` | Todos los usuarios autenticados |
 | `/api/tournaments/[id]/groups` | GET | `requireAuth()` | Todos los usuarios autenticados |
-| `/api/tournaments/[id]/classify` | POST | `authorize(Action.UPDATE, Resource.TOURNAMENT)` | ADMIN o CLUB_ADMIN |
-| `/api/tournaments/[id]/force-classify` | POST | `authorize(Action.UPDATE, Resource.TOURNAMENT)` | ADMIN o CLUB_ADMIN |
+| `/api/tournaments/[id]/classify` | POST | `authorize(Action.UPDATE, Resource.TOURNAMENT)` | ADMIN o ORGANIZER |
+| `/api/tournaments/[id]/force-classify` | POST | `authorize(Action.UPDATE, Resource.TOURNAMENT)` | ADMIN o ORGANIZER |
 | `/api/tournaments/[id]/calculate-points` | POST | `authorize(Action.MANAGE, Resource.RANKING)` | Solo ADMIN |
 | `/api/tournaments/[id]/stats` | GET | `requireAuth()` | Todos los usuarios autenticados |
 | `/api/players/[playerId]/tournament-stats` | GET | `requireAuth()` | Todos los usuarios autenticados |
-| `/api/tournaments/[id]/americano-social/generate` | POST | `authorize(Action.UPDATE, Resource.TOURNAMENT)` | ADMIN o CLUB_ADMIN |
+| `/api/tournaments/[id]/americano-social/generate` | POST | `authorize(Action.UPDATE, Resource.TOURNAMENT)` | ADMIN o ORGANIZER |
 | `/api/tournaments/[id]/americano-social/pools` | GET | `requireAuth()` | Todos los usuarios autenticados |
-| `/api/tournaments/status-update` | PUT | `authorize()` | ADMIN o CLUB_ADMIN |
+| `/api/tournaments/status-update` | PUT | `authorize()` | ADMIN o ORGANIZER |
 | `/api/admin/tournaments/stats` | GET | `authorize(Action.READ, Resource.DASHBOARD)` | Solo ADMIN |
 | `/api/admin/tournaments/logs` | GET | `authorize(Action.READ, Resource.LOG)` | Solo ADMIN |
 
@@ -336,14 +336,14 @@ Esta sección documenta **TODAS** las rutas API del sistema con su implementaci�
 | `/api/clubs` | GET | `requireAuth()` | Todos los usuarios autenticados |
 | `/api/clubs` | POST | `authorize(Action.CREATE, Resource.CLUB)` | Solo ADMIN |
 | `/api/clubs/[id]` | GET | `requireAuth()` | Todos los usuarios autenticados |
-| `/api/clubs/[id]` | PUT | `authorize(Action.UPDATE, Resource.CLUB)` | ADMIN o CLUB_ADMIN del club |
+| `/api/clubs/[id]` | PUT | `authorize(Action.UPDATE, Resource.CLUB)` | ADMIN o ORGANIZER del club |
 | `/api/clubs/[id]` | DELETE | `authorize(Action.DELETE, Resource.CLUB)` | Solo ADMIN |
-| `/api/clubs/[id]` | PATCH | `authorize(Action.UPDATE, Resource.CLUB)` | ADMIN o CLUB_ADMIN del club |
+| `/api/clubs/[id]` | PATCH | `authorize(Action.UPDATE, Resource.CLUB)` | ADMIN o ORGANIZER del club |
 | `/api/clubs/[id]/courts` | GET | `requireAuth()` | Todos los usuarios autenticados |
-| `/api/clubs/[id]/courts` | POST | `authorize(Action.CREATE, Resource.COURT)` | ADMIN o CLUB_ADMIN del club |
+| `/api/clubs/[id]/courts` | POST | `authorize(Action.CREATE, Resource.COURT)` | ADMIN o ORGANIZER del club |
 | `/api/clubs/[id]/courts/[courtId]` | GET | `requireAuth()` | Todos los usuarios autenticados |
-| `/api/clubs/[id]/courts/[courtId]` | PUT | `authorize(Action.UPDATE, Resource.COURT)` | ADMIN o CLUB_ADMIN del club |
-| `/api/clubs/[id]/courts/[courtId]/delete` | DELETE | `authorize(Action.DELETE, Resource.COURT)` | ADMIN o CLUB_ADMIN del club |
+| `/api/clubs/[id]/courts/[courtId]` | PUT | `authorize(Action.UPDATE, Resource.COURT)` | ADMIN o ORGANIZER del club |
+| `/api/clubs/[id]/courts/[courtId]/delete` | DELETE | `authorize(Action.DELETE, Resource.COURT)` | ADMIN o ORGANIZER del club |
 
 **Logs**: ClubLogService y CourtLogService registran todas las operaciones
 
@@ -381,14 +381,14 @@ Esta sección documenta **TODAS** las rutas API del sistema con su implementaci�
 
 | Endpoint | Método | Implementación RBAC | Permisos |
 |----------|--------|-------------------|----------|
-| `/api/registrations` | GET | `requireAuth()` + filtro por rol | Jugadores ven solo sus inscripciones, ADMIN/CLUB_ADMIN ven todas |
+| `/api/registrations` | GET | `requireAuth()` + filtro por rol | Jugadores ven solo sus inscripciones, ADMIN/ORGANIZER ven todas |
 | `/api/registrations` | POST | `authorize(Action.CREATE, Resource.REGISTRATION)` | Todos los jugadores autenticados |
 | `/api/registrations/check-players` | GET | `requireAuth()` | Todos los usuarios autenticados |
 | `/api/registrations/eligibility` | GET | Role-based (internal) | Uso interno del sistema |
 | `/api/registrations/[id]` | GET | `requireAuth()` + ownership check | Usuario ve su inscripción, ADMIN ve todas |
-| `/api/registrations/[id]` | PUT | `authorize(Action.UPDATE, Resource.REGISTRATION)` | ADMIN o CLUB_ADMIN |
-| `/api/registrations/[id]/status` | PATCH | `authorize(Action.UPDATE, Resource.REGISTRATION)` | ADMIN o CLUB_ADMIN |
-| `/api/registrations/[id]/payment` | GET | `authorize()` | ADMIN o CLUB_ADMIN |
+| `/api/registrations/[id]` | PUT | `authorize(Action.UPDATE, Resource.REGISTRATION)` | ADMIN o ORGANIZER |
+| `/api/registrations/[id]/status` | PATCH | `authorize(Action.UPDATE, Resource.REGISTRATION)` | ADMIN o ORGANIZER |
+| `/api/registrations/[id]/payment` | GET | `authorize()` | ADMIN o ORGANIZER |
 
 **Logs**: RegistrationLogService registra CREATE, UPDATE, STATUS_CHANGE
 
@@ -398,12 +398,12 @@ Esta sección documenta **TODAS** las rutas API del sistema con su implementaci�
 
 | Endpoint | Método | Implementación RBAC | Permisos |
 |----------|--------|-------------------|----------|
-| `/api/teams` | GET | `requireAuth()` + filtro por rol | Jugadores ven sus equipos, ADMIN/CLUB_ADMIN ven todos |
+| `/api/teams` | GET | `requireAuth()` + filtro por rol | Jugadores ven sus equipos, ADMIN/ORGANIZER ven todos |
 | `/api/teams` | POST | `authorize(Action.CREATE, Resource.REGISTRATION)` | Todos los jugadores autenticados |
 | `/api/teams/[id]` | GET | `requireAuth()` | Todos los usuarios autenticados |
-| `/api/teams/[id]` | PUT | `authorize(Action.UPDATE, Resource.REGISTRATION)` | ADMIN o CLUB_ADMIN |
-| `/api/teams/[id]` | DELETE | `authorize(Action.DELETE, Resource.REGISTRATION)` | ADMIN o CLUB_ADMIN |
-| `/api/teams/[id]/status` | PATCH | `authorize(Action.UPDATE, Resource.REGISTRATION)` | ADMIN o CLUB_ADMIN |
+| `/api/teams/[id]` | PUT | `authorize(Action.UPDATE, Resource.REGISTRATION)` | ADMIN o ORGANIZER |
+| `/api/teams/[id]` | DELETE | `authorize(Action.DELETE, Resource.REGISTRATION)` | ADMIN o ORGANIZER |
+| `/api/teams/[id]/status` | PATCH | `authorize(Action.UPDATE, Resource.REGISTRATION)` | ADMIN o ORGANIZER |
 
 **Logs**: TeamLogService registra CREATE, UPDATE, DELETE
 
@@ -414,10 +414,10 @@ Esta sección documenta **TODAS** las rutas API del sistema con su implementaci�
 | Endpoint | Método | Implementación RBAC | Permisos |
 |----------|--------|-------------------|----------|
 | `/api/matches` | GET | `requireAuth()` | Todos los usuarios autenticados |
-| `/api/matches/[id]/result` | POST | `authorize(Action.UPDATE, Resource.TOURNAMENT)` | ADMIN, CLUB_ADMIN, REFEREE |
+| `/api/matches/[id]/result` | POST | `authorize(Action.UPDATE, Resource.TOURNAMENT)` | ADMIN, ORGANIZER, REFEREE |
 | `/api/matches/[id]/status` | GET | `requireAuth()` | Todos los usuarios autenticados |
-| `/api/matches/[id]/schedule` | PUT | `authorize()` | ADMIN o CLUB_ADMIN |
-| `/api/americano-social/matches/[id]/result` | POST | `authorize()` | ADMIN, CLUB_ADMIN, REFEREE |
+| `/api/matches/[id]/schedule` | PUT | `authorize()` | ADMIN o ORGANIZER |
+| `/api/americano-social/matches/[id]/result` | POST | `authorize()` | ADMIN, ORGANIZER, REFEREE |
 
 **Logs**: MatchLogService registra RESULT_UPDATED, SCHEDULE_UPDATED
 
@@ -486,9 +486,9 @@ Esta sección documenta **TODAS** las rutas API del sistema con su implementaci�
 
 | Acción | Cantidad de Rutas | Roles Permitidos |
 |--------|------------------|------------------|
-| CREATE | 10 | ADMIN, CLUB_ADMIN, PLAYER (según recurso) |
+| CREATE | 10 | ADMIN, ORGANIZER, PLAYER (según recurso) |
 | READ | 25 | Todos autenticados (con filtros por rol) |
-| UPDATE | 18 | ADMIN, CLUB_ADMIN (según recurso) |
+| UPDATE | 18 | ADMIN, ORGANIZER (según recurso) |
 | DELETE | 6 | Solo ADMIN (mayoría de recursos) |
 | MANAGE | 2 | Solo ADMIN (rankings, permisos especiales) |
 
@@ -891,9 +891,9 @@ LogStrategyRegistry.register(Resource.TOURNAMENT, new TournamentLogStrategy())
 - ✅ **Validación de fechas corregida** - Último día de inscripción incluido completo (hasta 23:59:59)
 - ✅ **Validación jugadores diferentes** - Select usa `value` en lugar de `defaultValue` para sync con RHF
 - ✅ **Filtros mejorados** - Soporte para "all" en filtros (tournamentId, status, categoryId)
-- ✅ **Hook isAdminOrClubAdmin** - Nuevo helper memoizado en useAuth para simplificar checks
+- ✅ **Hook isAdminOrOrganizer** - Nuevo helper memoizado en useAuth para simplificar checks
 - ✅ **Múltiples status en torneos** - Endpoint GET acepta múltiples parámetros status con `getAll()`
-- ✅ **Componentes actualizados** - 7+ componentes usan isAdminOrClubAdmin
+- ✅ **Componentes actualizados** - 7+ componentes usan isAdminOrOrganizer
 - 📚 **Documentación completa** - Nueva sección "Validaciones y Reglas de Negocio"
 
 ### 2025-09-29 21:00 - Migración 100% Completa 🎉
@@ -1073,8 +1073,8 @@ export async function authorize(
 // src/lib/rbac/role-hierarchy.ts
 export class RoleHierarchy {
   private static hierarchy = new Map([
-    [UserRole.ADMIN, [UserRole.CLUB_ADMIN, UserRole.REFEREE, UserRole.PLAYER]],
-    [UserRole.CLUB_ADMIN, [UserRole.PLAYER]],
+    [UserRole.ADMIN, [UserRole.ORGANIZER, UserRole.REFEREE, UserRole.PLAYER]],
+    [UserRole.ORGANIZER, [UserRole.PLAYER]],
     [UserRole.REFEREE, [UserRole.PLAYER]],
     [UserRole.PLAYER, []],
   ])
@@ -1167,7 +1167,7 @@ ability.can(Action.DELETE, Resource.TOURNAMENT, (tournament) =>
 ```
 
 **Matriz sugerida**:
-| Recurso | ADMIN | CLUB_ADMIN | PLAYER | REFEREE |
+| Recurso | ADMIN | ORGANIZER | PLAYER | REFEREE |
 |---------|-------|------------|--------|---------|
 | Users | CRUD | R | R (own) | R (own) |
 | Tournaments | CRUD | CRU* | R | R |

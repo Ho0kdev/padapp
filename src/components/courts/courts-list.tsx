@@ -106,7 +106,7 @@ export function CourtsList({ clubId }: CourtsListProps) {
   const [reserveDialogOpen, setReserveDialogOpen] = useState(false)
   const [courtToReserve, setCourtToReserve] = useState<Court | null>(null)
   const { toast } = useToast()
-  const { isAdminOrClubAdmin } = useAuth()
+  const { isAdminOrOrganizer } = useAuth()
 
   useEffect(() => {
     fetchCourts()
@@ -358,7 +358,7 @@ export function CourtsList({ clubId }: CourtsListProps) {
           <SquareSplitHorizontal className="h-5 w-5" />
           Canchas ({filteredCourts.length})
         </h3>
-        {isAdminOrClubAdmin && (
+        {isAdminOrOrganizer && (
           <Link href={`/dashboard/clubs/${clubId}/courts/new`}>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
@@ -402,7 +402,7 @@ export function CourtsList({ clubId }: CourtsListProps) {
                           Ver detalles
                         </DropdownMenuItem>
                       </Link>
-                      {isAdminOrClubAdmin && (
+                      {isAdminOrOrganizer && (
                         <>
                           <Link href={`/dashboard/clubs/${clubId}/courts/${court.id}/edit`}>
                             <DropdownMenuItem>
@@ -621,7 +621,7 @@ export function CourtsList({ clubId }: CourtsListProps) {
                               Ver detalles
                             </DropdownMenuItem>
                           </Link>
-                          {isAdminOrClubAdmin && (
+                          {isAdminOrOrganizer && (
                             <>
                               <Link href={`/dashboard/clubs/${clubId}/courts/${court.id}/edit`}>
                                 <DropdownMenuItem>

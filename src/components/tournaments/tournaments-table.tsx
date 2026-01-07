@@ -44,7 +44,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 export function TournamentsTable() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { isAdminOrClubAdmin } = useAuth()
+  const { isAdminOrOrganizer } = useAuth()
   const [tournaments, setTournaments] = useState<TournamentListItem[]>([])
   const [pagination, setPagination] = useState({
     page: 1,
@@ -216,7 +216,7 @@ export function TournamentsTable() {
                   Ver detalle
                 </Link>
               </DropdownMenuItem>
-              {isAdminOrClubAdmin && (
+              {isAdminOrOrganizer && (
                 <>
                   <DropdownMenuItem asChild>
                     <Link href={`/dashboard/tournaments/${tournament.id}/edit`}>
@@ -451,7 +451,7 @@ export function TournamentsTable() {
                             Ver detalle
                           </Link>
                         </DropdownMenuItem>
-                        {isAdminOrClubAdmin && (
+                        {isAdminOrOrganizer && (
                           <>
                             <DropdownMenuItem asChild>
                               <Link href={`/dashboard/tournaments/${tournament.id}/edit`}>

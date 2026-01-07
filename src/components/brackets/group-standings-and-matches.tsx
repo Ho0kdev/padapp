@@ -136,7 +136,7 @@ export function GroupStandingsAndMatches({
   const [statusLoading, setStatusLoading] = useState<string | null>(null)
   const [selectedTeamStats, setSelectedTeamStats] = useState<TeamStats | null>(null)
   const [statsSheetOpen, setStatsSheetOpen] = useState(false)
-  const { isAdminOrClubAdmin, isReferee } = useAuth()
+  const { isAdminOrOrganizer, isReferee } = useAuth()
   const { toast } = useToast()
 
   const fetchGroupsAndMatches = async () => {
@@ -206,7 +206,7 @@ export function GroupStandingsAndMatches({
   }, [tournamentId, categoryId, refreshTrigger])
 
   const canManageMatch = () => {
-    return isAdminOrClubAdmin || isReferee
+    return isAdminOrOrganizer || isReferee
   }
 
   const handleLoadResult = (match: Match) => {

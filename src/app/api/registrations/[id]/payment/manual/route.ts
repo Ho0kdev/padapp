@@ -2,7 +2,7 @@
  * POST /api/registrations/[id]/payment/manual
  *
  * Marca una inscripción como pagada manualmente
- * Solo puede ser usado por ADMIN o CLUB_ADMIN
+ * Solo puede ser usado por ADMIN o ORGANIZER
  * Se usa cuando el pago se recibe por efectivo, transferencia bancaria, etc.
  */
 
@@ -28,7 +28,7 @@ interface RouteParams {
 
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
-    // Solo ADMIN y CLUB_ADMIN pueden marcar pagos manualmente
+    // Solo ADMIN y ORGANIZER pueden marcar pagos manualmente
     const session = await authorize(Action.CREATE, Resource.PAYMENT)
 
     const { id: registrationId } = await params
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       )
     }
 
-    // Verificar que el usuario sea ADMIN o el organizador del torneo (CLUB_ADMIN)
+    // Verificar que el usuario sea ADMIN o el organizador del torneo (ORGANIZER)
     const isOrganizer = registration.tournament.organizerId === session.user.id
     if (session.user.role !== 'ADMIN' && !isOrganizer) {
       return NextResponse.json(

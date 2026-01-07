@@ -200,8 +200,8 @@ export function defineAbilitiesFor(context: AuthorizationContext): Ability {
       ])
       break
 
-    case UserRole.CLUB_ADMIN:
-      // CLUB_ADMIN - Principio de mínimo privilegio aplicado
+    case UserRole.ORGANIZER:
+      // ORGANIZER - Organizador de torneos (anteriormente ORGANIZER)
       ability.can([Action.READ, Action.LIST], Resource.USER)
       ability.can([Action.READ, Action.UPDATE], Resource.USER, ownsUser(userId))
 

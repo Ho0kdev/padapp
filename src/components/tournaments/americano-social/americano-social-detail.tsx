@@ -77,7 +77,7 @@ export function AmericanoSocialDetail({
 }: AmericanoSocialDetailProps) {
   const router = useRouter()
   const { toast } = useToast()
-  const { isAdminOrClubAdmin } = useAuth()
+  const { isAdminOrOrganizer } = useAuth()
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [regenerateDialogOpen, setRegenerateDialogOpen] = useState(false)
   const [existingPoolsInfo, setExistingPoolsInfo] = useState<{
@@ -97,7 +97,7 @@ export function AmericanoSocialDetail({
   const [categoriesSummary, setCategoriesSummary] = useState<any[]>([])
 
   const isOwner = tournament.organizerId === currentUserId
-  const canManage = isOwner || isAdminOrClubAdmin
+  const canManage = isOwner || isAdminOrOrganizer
   const statusConfig = tournamentStatusOptions.find(s => s.value === tournament.status)
   const typeLabel = tournamentTypeOptions.find(t => t.value === tournament.type)?.label
 

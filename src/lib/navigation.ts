@@ -12,7 +12,7 @@ import {
   FileText,
 } from "lucide-react"
 
-export type UserRole = "ADMIN" | "CLUB_ADMIN" | "PLAYER" | "REFEREE"
+export type UserRole = "ADMIN" | "ORGANIZER" | "PLAYER" | "REFEREE"
 
 export interface NavigationItem {
   name: string
@@ -29,7 +29,7 @@ export interface NavigationItem {
  *
  * ROLES DISPONIBLES:
  * - ADMIN: Administrador del sistema (acceso total)
- * - CLUB_ADMIN: Administrador de club (gestión de su club)
+ * - ORGANIZER: Administrador de club (gestión de su club)
  * - PLAYER: Jugador (inscripciones, ver rankings)
  * - REFEREE: Árbitro (gestión de partidos)
  *
@@ -58,19 +58,19 @@ export const navigation: NavigationItem[] = [
     name: "Clubes",
     href: "/dashboard/clubs",
     icon: Building,
-    roles: ["ADMIN", "CLUB_ADMIN"] // Admins y administradores de club
+    roles: ["ADMIN", "ORGANIZER"] // Admins y administradores de club
   },
   {
     name: "Categorías",
     href: "/dashboard/categories",
     icon: Tag,
-    roles: ["ADMIN", "CLUB_ADMIN"] // Admins y administradores de club
+    roles: ["ADMIN", "ORGANIZER"] // Admins y administradores de club
   },
   {
     name: "Torneos",
     href: "/dashboard/tournaments",
     icon: Trophy,
-    roles: ["ADMIN", "CLUB_ADMIN", "PLAYER", "REFEREE"], // Todos pueden ver torneos, solo admins/club admins pueden crear/gestionar
+    roles: ["ADMIN", "ORGANIZER", "PLAYER", "REFEREE"], // Todos pueden ver torneos, solo admins/organizers pueden crear/gestionar
     quickAccess: true // Aparece en accesos directos
   },
   {
@@ -90,7 +90,7 @@ export const navigation: NavigationItem[] = [
     name: "Partidos",
     href: "/dashboard/matches",
     icon: FileText,
-    roles: ["ADMIN", "CLUB_ADMIN", "REFEREE", "PLAYER"], // Todos pueden ver partidos, solo admins/club admins/referees pueden gestionarlos
+    roles: ["ADMIN", "ORGANIZER", "REFEREE", "PLAYER"], // Todos pueden ver partidos, solo admins/organizers/referees pueden gestionarlos
     quickAccess: true // Aparece en accesos directos
   },
   {
@@ -108,9 +108,9 @@ export const navigation: NavigationItem[] = [
   },
 
   // Opciones para futuro desarrollo con roles ya definidos:
-  // { name: "Partidos", href: "/dashboard/matches", icon: Calendar, roles: ["ADMIN", "CLUB_ADMIN", "REFEREE"] },
-  // { name: "Pagos", href: "/dashboard/payments", icon: CreditCard, roles: ["ADMIN", "CLUB_ADMIN"] },
-  // { name: "Reportes", href: "/dashboard/reports", icon: BarChart3, roles: ["ADMIN", "CLUB_ADMIN"] },
+  // { name: "Partidos", href: "/dashboard/matches", icon: Calendar, roles: ["ADMIN", "ORGANIZER", "REFEREE"] },
+  // { name: "Pagos", href: "/dashboard/payments", icon: CreditCard, roles: ["ADMIN", "ORGANIZER"] },
+  // { name: "Reportes", href: "/dashboard/reports", icon: BarChart3, roles: ["ADMIN", "ORGANIZER"] },
   // { name: "Notificaciones", href: "/dashboard/notifications", icon: Bell }, // Sin roles = todos
   // { name: "Configuración", href: "/dashboard/settings", icon: Settings }, // Sin roles = todos
 ]

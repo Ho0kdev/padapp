@@ -20,7 +20,7 @@ interface RouteParams {
  *
  * Asigna o actualiza el horario de un partido Americano Social.
  *
- * **Permisos requeridos:** ADMIN o CLUB_ADMIN
+ * **Permisos requeridos:** ADMIN o ORGANIZER
  *
  * **Request Body:**
  * ```json
@@ -50,7 +50,7 @@ export async function PATCH(
   { params }: RouteParams
 ) {
   try {
-    // Autorización: Solo ADMIN y CLUB_ADMIN pueden programar partidos
+    // Autorización: Solo ADMIN y ORGANIZER pueden programar partidos
     const session = await authorize(Action.UPDATE, Resource.TOURNAMENT)
     const { id: matchId } = await params
 

@@ -20,7 +20,7 @@ interface RouteParams {
  *
  * Cambia el estado de un partido Americano Social.
  *
- * **Permisos requeridos:** ADMIN, CLUB_ADMIN o REFEREE
+ * **Permisos requeridos:** ADMIN, ORGANIZER o REFEREE
  *
  * **Request Body:**
  * ```json
@@ -60,7 +60,7 @@ export async function PATCH(
   { params }: RouteParams
 ) {
   try {
-    // Autorización: Solo ADMIN, CLUB_ADMIN y REFEREE pueden cambiar estados
+    // Autorización: Solo ADMIN, ORGANIZER y REFEREE pueden cambiar estados
     const session = await authorize(Action.UPDATE, Resource.TOURNAMENT)
     const { id: matchId } = await params
 

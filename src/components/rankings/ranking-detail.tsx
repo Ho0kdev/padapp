@@ -141,7 +141,7 @@ interface TournamentStat {
 export function RankingDetail({ ranking, currentUserId }: RankingDetailProps) {
   const router = useRouter()
   const { toast } = useToast()
-  const { isAdminOrClubAdmin } = useAuth()
+  const { isAdminOrOrganizer } = useAuth()
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [newPoints, setNewPoints] = useState(ranking.currentPoints.toString())
   const [updating, setUpdating] = useState(false)
@@ -352,7 +352,7 @@ export function RankingDetail({ ranking, currentUserId }: RankingDetailProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              {(isAdminOrClubAdmin || ranking.player.user.id === currentUserId) && (
+              {(isAdminOrOrganizer || ranking.player.user.id === currentUserId) && (
                 <DropdownMenuItem asChild>
                   <Link href={`/dashboard/users/${ranking.player.user.id}`}>
                     <User className="mr-2 h-4 w-4" />
@@ -360,7 +360,7 @@ export function RankingDetail({ ranking, currentUserId }: RankingDetailProps) {
                   </Link>
                 </DropdownMenuItem>
               )}
-              {isAdminOrClubAdmin && (
+              {isAdminOrOrganizer && (
                 <>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem

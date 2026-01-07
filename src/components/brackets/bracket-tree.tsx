@@ -95,7 +95,7 @@ export function BracketTree({
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const [zones, setZones] = useState<any[]>([])
-  const { isAdminOrClubAdmin, isReferee } = useAuth()
+  const { isAdminOrOrganizer, isReferee } = useAuth()
 
   // Cargar grupos si hay fase de grupos
   useEffect(() => {
@@ -134,7 +134,7 @@ export function BracketTree({
   }, [matches])
 
   const canManageMatch = () => {
-    return isAdminOrClubAdmin || isReferee
+    return isAdminOrOrganizer || isReferee
   }
 
   // Drag to scroll

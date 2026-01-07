@@ -12,7 +12,7 @@ const classifySchema = z.object({
  * Clasifica equipos de fase de grupos a fase eliminatoria
  * (Asigna top 2 de cada grupo a los cuartos de final)
  *
- * Requiere: ADMIN o CLUB_ADMIN
+ * Requiere: ADMIN o ORGANIZER
  *
  * Body:
  * {
