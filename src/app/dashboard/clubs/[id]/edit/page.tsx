@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { ClubForm } from "@/components/clubs/club-form"
+import { UnauthorizedPage } from "@/components/ui/unauthorized-page"
 
 interface EditClubPageProps {
   params: Promise<{ id: string }>
@@ -27,7 +28,7 @@ async function getClub(id: string, userId: string) {
     })
 
     if (!club) {
-      return null
+      return { club: null, canEdit: false, reason: 'not_found' }
     }
 
     // Verificar permisos
@@ -36,14 +37,16 @@ async function getClub(id: string, userId: string) {
       select: { role: true }
     })
 
-    if (user?.role !== "ADMIN") {
-      return null
-    }
+    const canEdit = user?.role === "ADMIN"
 
-    return club
+    return {
+      club: canEdit ? club : null,
+      canEdit,
+      reason: canEdit ? null : 'insufficient_permissions'
+    }
   } catch (error) {
     console.error('Error fetching club:', error)
-    return null
+    return { club: null, canEdit: false, reason: 'error' }
   }
 }
 
@@ -55,8 +58,24 @@ export default async function EditClubPage({ params }: EditClubPageProps) {
   }
 
   const { id } = await params
-  const club = await getClub(id, session.user.id)
+  const { club, canEdit, reason } = await getClub(id, session.user.id)
 
+  if (!club && reason === 'not_found') {
+    notFound()
+  }
+
+  if (!canEdit) {
+    return (
+      <DashboardLayout>
+        <UnauthorizedPage
+          title="No puedes editar este club"
+          message="Solo los administradores pueden modificar la información de clubes."
+        />
+      </DashboardLayout>
+    )
+  }
+
+  // TypeScript guard - nunca debería llegar aquí si canEdit es true
   if (!club) {
     notFound()
   }

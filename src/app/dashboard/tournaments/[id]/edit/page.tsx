@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { TournamentForm } from "@/components/tournaments/tournament-form"
+import { UnauthorizedPage } from "@/components/ui/unauthorized-page"
 
 interface EditTournamentPageProps {
   params: Promise<{ id: string }>
@@ -27,7 +28,7 @@ async function getTournament(id: string, userId: string) {
   })
 
   if (!tournament) {
-    return null
+    return { tournament: null, canEdit: false, reason: 'not_found' }
   }
 
   // Verificar permisos
@@ -37,13 +38,16 @@ async function getTournament(id: string, userId: string) {
   })
 
   const isOwner = tournament.organizerId === userId
-  const isAdminOrOrganizer = user?.role === "ADMIN" || user?.role === "ORGANIZER"
+  const isAdmin = user?.role === "ADMIN"
 
-  if (!isOwner && !isAdminOrOrganizer) {
-    return null
+  // ADMIN puede editar cualquier torneo, ORGANIZER solo puede editar sus propios torneos
+  const canEdit = isAdmin || isOwner
+
+  return {
+    tournament: canEdit ? tournament : null,
+    canEdit,
+    reason: canEdit ? null : 'insufficient_permissions'
   }
-
-  return tournament
 }
 
 export default async function EditTournamentPage({ params }: EditTournamentPageProps) {
@@ -54,8 +58,24 @@ export default async function EditTournamentPage({ params }: EditTournamentPageP
   }
 
   const { id } = await params
-  const tournament = await getTournament(id, session.user.id)
+  const { tournament, canEdit, reason } = await getTournament(id, session.user.id)
 
+  if (!tournament && reason === 'not_found') {
+    notFound()
+  }
+
+  if (!canEdit) {
+    return (
+      <DashboardLayout>
+        <UnauthorizedPage
+          title="No puedes editar este torneo"
+          message="Solo los administradores o el organizador del torneo pueden modificar su configuración."
+        />
+      </DashboardLayout>
+    )
+  }
+
+  // TypeScript guard - nunca debería llegar aquí si canEdit es true
   if (!tournament) {
     notFound()
   }

@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { DashboardLayout } from '@/components/layout/dashboard-layout'
 import { UserForm } from '@/components/users/user-form'
+import { UnauthorizedPage } from '@/components/ui/unauthorized-page'
 
 export const metadata: Metadata = {
   title: 'Nuevo Usuario | PDLShot',
@@ -25,7 +26,14 @@ export default async function NewUserPage() {
   })
 
   if (user?.role !== 'ADMIN') {
-    redirect('/dashboard')
+    return (
+      <DashboardLayout>
+        <UnauthorizedPage
+          title="No puedes crear usuarios"
+          message="Solo los administradores pueden crear nuevos usuarios en el sistema."
+        />
+      </DashboardLayout>
+    )
   }
 
   return (

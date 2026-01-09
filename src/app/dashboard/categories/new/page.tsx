@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { CategoryForm } from "@/components/categories/category-form"
+import { UnauthorizedPage } from "@/components/ui/unauthorized-page"
 
 export default async function NewCategoryPage() {
   const session = await getServerSession(authOptions)
@@ -19,7 +20,14 @@ export default async function NewCategoryPage() {
   })
 
   if (user?.role !== "ADMIN") {
-    redirect("/dashboard")
+    return (
+      <DashboardLayout>
+        <UnauthorizedPage
+          title="No puedes crear categorías"
+          message="Solo los administradores pueden crear nuevas categorías en la plataforma."
+        />
+      </DashboardLayout>
+    )
   }
 
   return (

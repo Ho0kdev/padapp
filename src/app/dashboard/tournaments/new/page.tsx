@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { TournamentForm } from "@/components/tournaments/tournament-form"
+import { UnauthorizedPage } from "@/components/ui/unauthorized-page"
 
 export default async function NewTournamentPage() {
   const session = await getServerSession(authOptions)
@@ -12,14 +13,21 @@ export default async function NewTournamentPage() {
     redirect("/login")
   }
 
-  // Verificar que sea admin
+  // Verificar que sea admin u organizador
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     select: { role: true }
   })
 
-  if (user?.role !== "ADMIN") {
-    redirect("/dashboard")
+  if (user?.role !== "ADMIN" && user?.role !== "ORGANIZER") {
+    return (
+      <DashboardLayout>
+        <UnauthorizedPage
+          title="No puedes crear torneos"
+          message="Solo los administradores y organizadores pueden crear nuevos torneos."
+        />
+      </DashboardLayout>
+    )
   }
 
   return (

@@ -1,6 +1,7 @@
 "use client"
 
 import { DataTableHeader } from "@/components/ui/data-table-header"
+import { useAuth } from "@/hooks/use-auth"
 import { useEffect, useState } from "react"
 
 const statusOptions = [
@@ -10,6 +11,7 @@ const statusOptions = [
 ]
 
 export function ClubsHeader() {
+  const { isAdmin } = useAuth()
   const [cities, setCities] = useState<Array<{ value: string; label: string }>>([])
   const [countries, setCountries] = useState<Array<{ value: string; label: string }>>([])
 
@@ -37,6 +39,7 @@ export function ClubsHeader() {
       searchPlaceholder="Buscar por nombre, ciudad, dirección..."
       createButtonText="Nuevo Club"
       createButtonHref="/dashboard/clubs/new"
+      showCreateButton={isAdmin}
       filterLabel="Estado"
       filterOptions={statusOptions}
       filterParamKey="status"

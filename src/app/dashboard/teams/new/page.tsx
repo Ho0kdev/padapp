@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { TeamFormationForm } from "@/components/teams/team-formation-form"
+import { UnauthorizedPage } from "@/components/ui/unauthorized-page"
 
 export default async function NewTeamPage() {
   const session = await getServerSession(authOptions)
@@ -19,7 +20,14 @@ export default async function NewTeamPage() {
   })
 
   if (user?.role !== "ADMIN") {
-    redirect("/dashboard")
+    return (
+      <DashboardLayout>
+        <UnauthorizedPage
+          title="No puedes crear equipos"
+          message="Solo los administradores pueden crear equipos manualmente en el sistema."
+        />
+      </DashboardLayout>
+    )
   }
 
   return (

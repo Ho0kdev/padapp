@@ -1,15 +1,16 @@
-import { notFound } from "next/navigation"
+import { redirect } from "next/navigation"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { ClubForm } from "@/components/clubs/club-form"
+import { UnauthorizedPage } from "@/components/ui/unauthorized-page"
 
 export default async function NewClubPage() {
   const session = await getServerSession(authOptions)
 
   if (!session?.user?.id) {
-    notFound()
+    redirect("/auth/login")
   }
 
   // Verificar que sea admin
@@ -19,7 +20,14 @@ export default async function NewClubPage() {
   })
 
   if (user?.role !== "ADMIN") {
-    notFound()
+    return (
+      <DashboardLayout>
+        <UnauthorizedPage
+          title="No puedes crear clubes"
+          message="Solo los administradores pueden crear nuevos clubes en la plataforma."
+        />
+      </DashboardLayout>
+    )
   }
 
   return (

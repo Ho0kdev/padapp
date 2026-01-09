@@ -4,24 +4,14 @@ import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { RegistrationEditForm } from "@/components/registrations/registration-edit-form"
+import { UnauthorizedPage } from "@/components/ui/unauthorized-page"
 
 interface EditRegistrationPageProps {
   params: Promise<{ id: string }>
 }
 
 async function getRegistration(id: string, userId: string) {
-  // Verificar permisos primero
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { role: true }
-  })
-
-  const isAdminOrOrganizer = user?.role === "ADMIN" || user?.role === "ORGANIZER"
-  if (!isAdminOrOrganizer) {
-    return null
-  }
-
-  // Buscar la Registration individual
+  // Buscar la Registration individual primero
   const registration = await prisma.registration.findUnique({
     where: { id },
     include: {
@@ -49,7 +39,23 @@ async function getRegistration(id: string, userId: string) {
     }
   })
 
-  return registration
+  if (!registration) {
+    return { registration: null, canEdit: false, reason: 'not_found' }
+  }
+
+  // Verificar permisos
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true }
+  })
+
+  const canEdit = user?.role === "ADMIN" || user?.role === "ORGANIZER"
+
+  return {
+    registration: canEdit ? registration : null,
+    canEdit,
+    reason: canEdit ? null : 'insufficient_permissions'
+  }
 }
 
 export default async function EditRegistrationPage({ params }: EditRegistrationPageProps) {
@@ -60,8 +66,24 @@ export default async function EditRegistrationPage({ params }: EditRegistrationP
   }
 
   const { id } = await params
-  const registration = await getRegistration(id, session.user.id)
+  const { registration, canEdit, reason } = await getRegistration(id, session.user.id)
 
+  if (!registration && reason === 'not_found') {
+    notFound()
+  }
+
+  if (!canEdit) {
+    return (
+      <DashboardLayout>
+        <UnauthorizedPage
+          title="No puedes editar esta inscripción"
+          message="Solo los administradores y organizadores pueden modificar inscripciones."
+        />
+      </DashboardLayout>
+    )
+  }
+
+  // TypeScript guard - nunca debería llegar aquí si canEdit es true
   if (!registration) {
     notFound()
   }

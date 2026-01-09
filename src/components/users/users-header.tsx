@@ -1,6 +1,7 @@
 "use client"
 
 import { DataTableHeader } from "@/components/ui/data-table-header"
+import { useAuth } from "@/hooks/use-auth"
 
 const statusOptions = [
   { value: "ACTIVE", label: "Activos" },
@@ -22,6 +23,8 @@ const genderOptions = [
 ]
 
 export function UsersHeader() {
+  const { isAdmin } = useAuth()
+
   return (
     <DataTableHeader
       title="Usuarios"
@@ -29,6 +32,7 @@ export function UsersHeader() {
       searchPlaceholder="Buscar por nombre, email..."
       createButtonText="Nuevo Usuario"
       createButtonHref="/dashboard/users/new"
+      showCreateButton={isAdmin}
       filterLabel="Estado"
       filterOptions={statusOptions}
       filterParamKey="status"

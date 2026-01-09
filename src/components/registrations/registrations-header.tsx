@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { DataTableHeader } from "@/components/ui/data-table-header"
 import { registrationStatusOptions } from "@/lib/utils/status-styles"
+import { useAuth } from "@/hooks/use-auth"
 
 interface Tournament {
   id: string
@@ -15,6 +16,7 @@ interface Category {
 }
 
 export function RegistrationsHeader() {
+  const { isAdmin, isPlayer } = useAuth()
   const [tournaments, setTournaments] = useState<Tournament[]>([])
   const [categories, setCategories] = useState<Category[]>([])
 
@@ -53,6 +55,7 @@ export function RegistrationsHeader() {
       searchPlaceholder="Buscar por jugador, torneo, categoría..."
       createButtonText="Nueva Inscripción"
       createButtonHref="/dashboard/registrations/new"
+      showCreateButton={isAdmin || isPlayer}
       filterLabel="Estado"
       filterOptions={registrationStatusOptions as any}
       filterParamKey="status"

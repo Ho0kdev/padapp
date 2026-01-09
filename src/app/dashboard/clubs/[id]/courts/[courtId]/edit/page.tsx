@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { CourtForm } from "@/components/courts/court-form"
 import { Card, CardContent } from "@/components/ui/card"
+import { UnauthorizedPage } from "@/components/ui/unauthorized-page"
 
 interface PageProps {
   params: Promise<{
@@ -54,7 +55,14 @@ export default async function EditCourtPage({ params }: PageProps) {
   })
 
   if (user?.role !== "ADMIN") {
-    redirect("/dashboard")
+    return (
+      <DashboardLayout>
+        <UnauthorizedPage
+          title="No puedes editar canchas"
+          message="Solo los administradores pueden modificar canchas. Los organizadores pueden ver los detalles de las canchas existentes."
+        />
+      </DashboardLayout>
+    )
   }
 
   const { id: clubId, courtId } = await params

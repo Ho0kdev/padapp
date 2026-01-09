@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { CategoryForm } from "@/components/categories/category-form"
+import { UnauthorizedPage } from "@/components/ui/unauthorized-page"
 
 interface EditCategoryPageProps {
   params: Promise<{ id: string }>
@@ -15,7 +16,7 @@ async function getCategory(id: string, userId: string) {
   })
 
   if (!category) {
-    return null
+    return { category: null, canEdit: false, reason: 'not_found' }
   }
 
   // Verificar permisos
@@ -24,11 +25,13 @@ async function getCategory(id: string, userId: string) {
     select: { role: true }
   })
 
-  if (user?.role !== "ADMIN") {
-    return null
-  }
+  const canEdit = user?.role === "ADMIN"
 
-  return category
+  return {
+    category: canEdit ? category : null,
+    canEdit,
+    reason: canEdit ? null : 'insufficient_permissions'
+  }
 }
 
 export default async function EditCategoryPage({ params }: EditCategoryPageProps) {
@@ -39,8 +42,24 @@ export default async function EditCategoryPage({ params }: EditCategoryPageProps
   }
 
   const { id } = await params
-  const category = await getCategory(id, session.user.id)
+  const { category, canEdit, reason } = await getCategory(id, session.user.id)
 
+  if (!category && reason === 'not_found') {
+    notFound()
+  }
+
+  if (!canEdit) {
+    return (
+      <DashboardLayout>
+        <UnauthorizedPage
+          title="No puedes editar esta categoría"
+          message="Solo los administradores pueden modificar la configuración de categorías."
+        />
+      </DashboardLayout>
+    )
+  }
+
+  // TypeScript guard - nunca debería llegar aquí si canEdit es true
   if (!category) {
     notFound()
   }

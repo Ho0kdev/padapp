@@ -4,22 +4,13 @@ import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { TeamEditForm } from "@/components/teams/team-edit-form"
+import { UnauthorizedPage } from "@/components/ui/unauthorized-page"
 
 interface EditTeamPageProps {
   params: Promise<{ id: string }>
 }
 
 async function getTeam(id: string, userId: string) {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { role: true }
-  })
-
-  const isAdminOrOrganizer = user?.role === "ADMIN" || user?.role === "ORGANIZER"
-  if (!isAdminOrOrganizer) {
-    return null
-  }
-
   const team = await prisma.team.findUnique({
     where: { id },
     include: {
@@ -60,7 +51,23 @@ async function getTeam(id: string, userId: string) {
     }
   })
 
-  return team
+  if (!team) {
+    return { team: null, canEdit: false, reason: 'not_found' }
+  }
+
+  // Verificar permisos
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true }
+  })
+
+  const canEdit = user?.role === "ADMIN" || user?.role === "ORGANIZER"
+
+  return {
+    team: canEdit ? team : null,
+    canEdit,
+    reason: canEdit ? null : 'insufficient_permissions'
+  }
 }
 
 export default async function EditTeamPage({ params }: EditTeamPageProps) {
@@ -71,8 +78,24 @@ export default async function EditTeamPage({ params }: EditTeamPageProps) {
   }
 
   const { id } = await params
-  const team = await getTeam(id, session.user.id)
+  const { team, canEdit, reason } = await getTeam(id, session.user.id)
 
+  if (!team && reason === 'not_found') {
+    notFound()
+  }
+
+  if (!canEdit) {
+    return (
+      <DashboardLayout>
+        <UnauthorizedPage
+          title="No puedes editar este equipo"
+          message="Solo los administradores y organizadores pueden modificar equipos."
+        />
+      </DashboardLayout>
+    )
+  }
+
+  // TypeScript guard - nunca debería llegar aquí si canEdit es true
   if (!team) {
     notFound()
   }
